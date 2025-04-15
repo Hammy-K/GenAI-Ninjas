@@ -1,0 +1,43 @@
+Project Brief: “GenAI Quest” Interactive Web Mission
+🔥 Core Idea:
+We want to build an interactive web-based quest that introduces students (age 13–18) to Generative AI through a fun, challenge-based experience.
+The app should feel more like a game/interactive journey than a lesson — students click through stages, answer questions, interact with GenAI tools, and ultimately come up with a creative idea they’re excited to build.
+
+Think: Duolingo energy + coding bootcamp vibes + creative studio feel.
+in Saudi Arabia dialect RTL Language
+
+🧠 Learning Outcome:
+By the end of the quest, the student should:
+- Understand what GenAI is and how it works
+- Try 2–3 GenAI use cases (text, image, idea generation)
+- Learn how to write better prompts
+- Generate a project idea they're excited about
+- Be ready to start building that project (could be on another platform like Replit)
+
+
+🗺️ Experience Structure (High-Level Flow)
+Think of the app as a multi-stage quest — like levels in a game or challenges in a bootcamp. The experience might include:
+
+1. Welcome & Introduction
+2. GenAI Examples & Discovery (Guess what they have in common)
+3. Play with GenAI – Try a prompt or two
+4. Prompt Challenge – Fix or write better ones
+5. Generate your own project idea with GenAI help
+6. Wrap-up – Share what you’ve created, optionally download or continue elsewhere
+
+We might change, add, or reorder stages later — so keep it flexible.
+
+
+🧩 Core Requirements
+- Each stage should feel interactive (clickable, input fields, GenAI output, XP points, animations)
+- Should support simple GenAI interactions (e.g. using OpenAI API or equivalent)
+- Track progress with a visual progress bar or level tracker
+- Student does not need an account or login — data can be stored locally
+- Mobile-friendly is a must
+- Simple, joyful design — think: bold colors, emojis, friendly language, not overly technical
+
+🎨 Tone & Style
+Fun and empowering — feels like a game or creative studio, not a classroom
+Language is Saudi Arabia dialect RTL 
+Casual and energetic — like talking to a friend who’s hyping you up
+Visuals: clean, modern, playful (we can provide references later)
