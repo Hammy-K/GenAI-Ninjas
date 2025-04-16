@@ -22,6 +22,7 @@ interface TryAIState {
   generatedText: string;
   generatedImageUrl: string;
   hasCompleted: boolean;
+  messageHistory: Array<{ role: string; content: string }>;
 }
 
 export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryAIStageProps) {
