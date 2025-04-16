@@ -192,11 +192,11 @@ export function HTMLGeneratorStage({
   
   // Award badge when user continues to next stage
   const handleContinue = () => {
-    // Award web builder badge if not already awarded
+    // Award AI-Coder badge if not already awarded
     if (!state.hasUnlockedBadge) {
-      if (!isAlreadyAwarded('html_generator_badge', 'web_builder_badge')) {
-        onUnlockBadge('web_builder_badge', 'html_generator_badge');
-        markAsAwarded('html_generator_badge', 'web_builder_badge');
+      if (!isAlreadyAwarded('html_generator_badge', 'ai_coder_badge')) {
+        onUnlockBadge('ai_coder_badge', 'html_generator_badge');
+        markAsAwarded('html_generator_badge', 'ai_coder_badge');
         setState(prev => ({ ...prev, hasUnlockedBadge: true }));
       }
     }
@@ -340,8 +340,9 @@ export function HTMLGeneratorStage({
       }
       
       // Award the AI-Coder badge when project is saved
-      if (!state.hasUnlockedBadge) {
+      if (!state.hasUnlockedBadge && !isAlreadyAwarded('project_saving', 'ai_coder_badge')) {
         onUnlockBadge('ai_coder_badge', 'project_saving');
+        markAsAwarded('project_saving', 'ai_coder_badge');
         setState(prev => ({
           ...prev,
           hasUnlockedBadge: true
@@ -387,8 +388,9 @@ export function HTMLGeneratorStage({
         });
         
         // Award the AI-Coder badge when the user copies the share URL
-        if (!state.hasUnlockedBadge) {
+        if (!state.hasUnlockedBadge && !isAlreadyAwarded('project_sharing', 'ai_coder_badge')) {
           onUnlockBadge('ai_coder_badge', 'project_sharing');
+          markAsAwarded('project_sharing', 'ai_coder_badge');
           setState(prev => ({
             ...prev,
             hasUnlockedBadge: true

@@ -25,7 +25,7 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
     {
       id: 'ai_coder_badge',
       name: 'AI-Coder',
-      icon: <Sparkles className="h-6 w-6" />,
+      icon: <Sparkles className="h-8 w-8" />,
       description: 'Built a web app with AI'
     }
   ];
