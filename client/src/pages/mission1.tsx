@@ -23,7 +23,8 @@ export default function Mission1() {
     xp, 
     earnXp, 
     unlockBadge,
-    unlockedBadges
+    unlockedBadges,
+    completeMission
   } = useQuest();
   
   const [location, navigate] = useLocation();
@@ -92,6 +93,7 @@ export default function Mission1() {
             onRestart={restart}
             totalXp={xp}
             unlockedBadges={unlockedBadges}
+            onCompleteMission={completeMission}
           />
         );
       default:

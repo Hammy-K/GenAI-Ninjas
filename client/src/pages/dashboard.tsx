@@ -8,13 +8,13 @@ import journeyAvatar from '@/assets/JourneyAvatar.png';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
-  const { xp, currentStage, unlockedBadges } = useQuest();
+  const { xp, currentStage, unlockedBadges, completedMissions, isMissionCompleted } = useQuest();
   
   // Hard-coded student name for now (could be made dynamic in the future)
   const studentName = "Student";
   
-  // Check if Mission 1 is complete
-  const isMission1Complete = currentStage === 6; // If on final stage, Mission 1 is complete
+  // Check if Mission 1 is complete - using completedMissions array
+  const isMission1Complete = isMissionCompleted(1);
   
   const handleStartMission1 = () => {
     navigate('/mission1');
@@ -90,31 +90,41 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              {/* Mission 2 - Locked */}
+              {/* Mission 2 - Status depends on Mission 1 completion */}
               <div className="relative z-10 flex items-center mb-24">
                 <div className="w-full">
                   <div className="flex items-center mb-2">
                     <div className="flex-shrink-0 mr-3">
-                      <div className="w-16 h-16 rounded-lg bg-gray-300 flex items-center justify-center text-white font-bold text-xl">
-                        <Lock className="w-6 h-6 text-gray-500" />
+                      <div className={`w-16 h-16 rounded-lg ${isMission1Complete ? 'bg-primary' : 'bg-gray-300'} flex items-center justify-center text-white font-bold text-xl`}>
+                        {isMission1Complete ? (
+                          <span>2</span>
+                        ) : (
+                          <Lock className="w-6 h-6 text-gray-500" />
+                        )}
                       </div>
                     </div>
-                    <div className="flex-grow bg-white rounded-lg border border-gray-200 p-4 shadow-sm opacity-75">
-                      <h3 className="font-bold text-lg text-gray-500">Mission 2: Advanced GenAI Skills</h3>
-                      <p className="text-sm text-gray-400 mb-3">Complete Mission 1 to unlock this mission.</p>
+                    <div className={`flex-grow bg-white rounded-lg border p-4 shadow-sm ${!isMission1Complete && 'opacity-75 border-gray-200'}`}>
+                      <h3 className={`font-bold text-lg ${!isMission1Complete && 'text-gray-500'}`}>Mission 2: Advanced GenAI Skills</h3>
+                      <p className={`text-sm mb-3 ${!isMission1Complete ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {isMission1Complete ? 'Explore advanced GenAI techniques and build more complex projects.' : 'Complete Mission 1 to unlock this mission.'}
+                      </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
-                          <span className="text-xs text-gray-400">Badges: 0/3</span>
+                          <span className={`inline-block w-2 h-2 rounded-full ${isMission1Complete ? 'bg-primary' : 'bg-gray-300'}`}></span>
+                          <span className={`text-xs ${!isMission1Complete && 'text-gray-400'}`}>Badges: 0/3</span>
                         </div>
                         <Button 
-                          disabled
+                          disabled={!isMission1Complete}
                           size="sm"
-                          variant="outline"
-                          className="h-8 opacity-50"
+                          variant={isMission1Complete ? "default" : "outline"}
+                          className={`h-8 ${!isMission1Complete && 'opacity-50'}`}
                         >
-                          Locked
-                          <Lock className="w-3 h-3 ml-1" />
+                          {isMission1Complete ? 'Start' : 'Locked'}
+                          {isMission1Complete ? (
+                            <ArrowRight className="w-3 h-3 ml-1" />
+                          ) : (
+                            <Lock className="w-3 h-3 ml-1" />
+                          )}
                         </Button>
                       </div>
                     </div>

@@ -148,7 +148,7 @@ export function useQuest() {
   
   // Check if a mission is completed
   const isMissionCompleted = (missionId: number) => {
-    return state.completedMissions.includes(missionId);
+    return state.completedMissions?.includes(missionId) || false;
   };
   
   // Reset the quest
