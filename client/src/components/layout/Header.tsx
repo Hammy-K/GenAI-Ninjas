@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import logoImage from '../../assets/logo.png';
 
 interface HeaderProps {
   xp: number;
@@ -14,8 +15,8 @@ export function Header({ xp }: HeaderProps) {
   return (
     <header className="bg-primary px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-md">
       <div className="flex items-center space-x-reverse space-x-2">
-        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-          <span className="text-primary-dark text-xl font-bold">جن</span>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+          <img src={logoImage} alt="GenAI Quest Logo" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-white font-bold text-xl">{t('app_name')}</h1>
       </div>
