@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Image, Lightbulb, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
+import { CheckCircle, Image, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 
 interface WrapUpStageProps {
   onRestart: () => void;
@@ -13,13 +13,13 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
     {
       id: 'prompt_engineer_badge',
       name: 'Prompt Engineer',
-      icon: <MessageSquare className="h-6 w-6" />,
+      icon: <MessageSquare className="h-8 w-8" />,
       description: 'Created effective AI prompts'
     },
     {
       id: 'image_artist_badge',
       name: 'Image Artist',
-      icon: <Image className="h-6 w-6" />,
+      icon: <Image className="h-8 w-8" />,
       description: 'Generated AI images'
     },
     {
@@ -50,15 +50,17 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
             
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4 text-center">Badges Earned</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="flex justify-center gap-8 mx-auto">
                 {badges.map((badge) => {
                   const isUnlocked = unlockedBadges.includes(badge.id);
                   
                   return (
                     <div key={badge.id} className="flex flex-col items-center text-center">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 
+                      <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 
                         ${isUnlocked ? 'bg-primary text-white' : 'bg-neutral-200 text-neutral-400'}`}>
-                        {badge.icon}
+                        <span className="h-8 w-8">
+                          {badge.icon}
+                        </span>
                       </div>
                       <span className={`text-sm font-medium ${isUnlocked ? 'text-primary' : 'text-neutral-500'}`}>
                         {badge.name}
