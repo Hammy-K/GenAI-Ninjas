@@ -32,7 +32,8 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
     imagePrompt: '',
     generatedText: '',
     generatedImageUrl: '',
-    hasCompleted: false
+    hasCompleted: false,
+    messageHistory: []
   });
   
   // Create individual updater functions
@@ -55,7 +56,21 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
     setIsGeneratingText(true);
     
     try {
-      const response = await generateText({ prompt: state.textPrompt });
+      const response = await generateText({ 
+        prompt: state.textPrompt,
+        messageHistory: state.messageHistory
+      });
+      
+      if (!response.error) {
+        setState(prev => ({
+          ...prev,
+          messageHistory: [
+            ...prev.messageHistory,
+            { role: 'user', content: state.textPrompt },
+            { role: 'assistant', content: response.text }
+          ]
+        }));
+      }
       if (response.error) {
         // Check for quota exceeded error
         if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {

@@ -4,9 +4,15 @@ import { apiRequest } from './queryClient';
 const GPT_MODEL = "gpt-4o";
 const IMAGE_MODEL = "dall-e-3";
 
+type Message = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
 type TextGenerationOptions = {
   prompt: string;
   maxTokens?: number;
+  messageHistory?: Message[];
 };
 
 type ImageGenerationOptions = {

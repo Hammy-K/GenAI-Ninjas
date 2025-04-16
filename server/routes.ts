@@ -20,12 +20,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Prompt is required' });
       }
       
+      const { prompt, maxTokens = 500, messageHistory = [] } = req.body;
+      
+      const messages = [
+        { role: "system", content: "أنت مساعد ذكي للطلاب السعوديين الذين يتعلمون عن الذكاء الاصطناعي التوليدي. قدم إجابات واضحة ومفيدة باللغة العربية." },
+        ...messageHistory,
+        { role: "user", content: prompt }
+      ];
+
       const response = await openai.chat.completions.create({
         model: GPT_MODEL,
-        messages: [
-          { role: "system", content: "أنت مساعد ذكي للطلاب السعوديين الذين يتعلمون عن الذكاء الاصطناعي التوليدي. قدم إجابات واضحة ومفيدة باللغة العربية." },
-          { role: "user", content: prompt }
-        ],
+        messages,
         max_tokens: maxTokens
       });
       
