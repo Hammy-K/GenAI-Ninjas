@@ -15,13 +15,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Text generation endpoint
   app.post('/api/ai/text', async (req, res) => {
     try {
-      const { prompt, maxTokens = 500 } = req.body;
+      const { prompt, maxTokens = 500, messageHistory = [] } = req.body;
       
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
       }
-      
-      const { prompt, maxTokens = 500, messageHistory = [] } = req.body;
       
       // Check content moderation
       const moderationResult = await moderateContent(prompt, openai);
