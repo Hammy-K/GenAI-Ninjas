@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { useStageState } from '@/hooks/useStageState';
 
 interface DiscoveryStageProps {
   onComplete: () => void;
@@ -8,9 +9,24 @@ interface DiscoveryStageProps {
   onBack: () => void;
 }
 
+interface DiscoveryState {
+  hasEarnedXp: boolean;
+  hasExploredOptions: boolean;
+}
+
 export function DiscoveryStage({ onComplete, onEarnXp, onBack }: DiscoveryStageProps) {
+  // Use the custom hook to persist state
+  const [state, setState] = useStageState<DiscoveryState>('discovery', {
+    hasEarnedXp: false,
+    hasExploredOptions: false
+  });
+  
   const handleComplete = () => {
-    onEarnXp(30);
+    // Only award XP if not already awarded (prevents duplicates on navigation)
+    if (!state.hasEarnedXp) {
+      onEarnXp(30);
+      setState(prev => ({ ...prev, hasEarnedXp: true }));
+    }
     onComplete();
   };
   

@@ -6,6 +6,7 @@ import { AlertCircle, ArrowRight, ArrowLeft, Download, Loader2, Sparkles } from 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { generateProjectIdea } from '@/lib/openai';
+import { useStageState } from '@/hooks/useStageState';
 
 interface ProjectIdeaStageProps {
   onComplete: () => void;
@@ -14,20 +15,41 @@ interface ProjectIdeaStageProps {
   onBack: () => void;
 }
 
-export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: ProjectIdeaStageProps) {
-  const [interests, setInterests] = useState('');
-  const [goal, setGoal] = useState('');
-  const [tools, setTools] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [projectIdea, setProjectIdea] = useState<{
+interface ProjectIdeaState {
+  interests: string;
+  goal: string;
+  tools: string;
+  projectIdea: {
     title: string;
     description: string;
     steps: string[];
     tools: string[];
     difficulty: string;
-  } | null>(null);
+  } | null;
+  hasEarnedXp: boolean;
+  hasUnlockedBadge: boolean;
+}
+
+export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: ProjectIdeaStageProps) {
+  // Use custom hook for persisted state
+  const [state, setState] = useStageState<ProjectIdeaState>('projectIdea', {
+    interests: '',
+    goal: '',
+    tools: '',
+    projectIdea: null,
+    hasEarnedXp: false,
+    hasUnlockedBadge: false
+  });
+  
+  // Utility functions to update individual state properties
+  const setInterests = (value: string) => setState(prev => ({ ...prev, interests: value }));
+  const setGoal = (value: string) => setState(prev => ({ ...prev, goal: value }));
+  const setTools = (value: string) => setState(prev => ({ ...prev, tools: value }));
+  const setProjectIdea = (idea: typeof state.projectIdea) => setState(prev => ({ ...prev, projectIdea: idea }));
+  
+  // Local UI state - no need to persist
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
   
   const handleGenerateIdea = async () => {
     if (!interests.trim() || !goal.trim() || !tools.trim()) return;

@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { AlertCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
+import { useStageState } from '@/hooks/useStageState';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -12,27 +13,51 @@ interface PromptChallengeStageProps {
   onBack: () => void;
 }
 
+interface PromptChallengeState {
+  improvedPrompt: string;
+  analysis: { score: number; feedback: string; improvement: string } | null;
+  hasCompleted: boolean;
+  hasEarnedXp: boolean;
+}
+
 export function PromptChallengeStage({ onComplete, onEarnXp, onBack }: PromptChallengeStageProps) {
-  const [improvedPrompt, setImprovedPrompt] = useState('');
-  const [analysis, setAnalysis] = useState<{ score: number; feedback: string; improvement: string } | null>(null);
+  // Use custom hook for persisted state
+  const [state, setState] = useStageState<PromptChallengeState>('promptChallenge', {
+    improvedPrompt: '',
+    analysis: null,
+    hasCompleted: false,
+    hasEarnedXp: false
+  });
+  
+  // Utility functions to update individual state properties
+  const setImprovedPrompt = (prompt: string) => setState(prev => ({ ...prev, improvedPrompt: prompt }));
+  const setAnalysis = (analysisData: { score: number; feedback: string; improvement: string } | null) => 
+    setState(prev => ({ ...prev, analysis: analysisData }));
+  const setHasCompleted = (completed: boolean) => setState(prev => ({ ...prev, hasCompleted: completed }));
+  const setHasEarnedXp = (earned: boolean) => setState(prev => ({ ...prev, hasEarnedXp: earned }));
+  
+  // Local UI state - no need to persist
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState('');
-  const [hasCompleted, setHasCompleted] = useState(false);
   
   const weakPrompt = "Create an image of a cat";
   
   const handleSubmitImprovement = async () => {
-    if (!improvedPrompt.trim()) return;
+    if (!state.improvedPrompt.trim()) return;
     
     setError('');
     setIsAnalyzing(true);
     
     try {
-      const result = await analyzePrompt(improvedPrompt);
+      const result = await analyzePrompt(state.improvedPrompt);
       setAnalysis(result);
       
       if (result.score >= 7) {
-        onEarnXp(15);
+        // Only award XP once
+        if (!state.hasEarnedXp) {
+          onEarnXp(15);
+          setHasEarnedXp(true);
+        }
         setHasCompleted(true);
       }
     } catch (err: any) {
@@ -77,14 +102,14 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onBack }: PromptCha
                 <h3 className="font-bold mb-3">Your Improved Prompt:</h3>
                 <Textarea 
                   placeholder="Rewrite the prompt to make it more specific and detailed..."
-                  value={improvedPrompt}
+                  value={state.improvedPrompt}
                   onChange={(e) => setImprovedPrompt(e.target.value)}
                   className="min-h-[100px] mb-4"
                 />
                 
                 <Button 
                   onClick={handleSubmitImprovement} 
-                  disabled={isAnalyzing || !improvedPrompt.trim()}
+                  disabled={isAnalyzing || !state.improvedPrompt.trim()}
                   className="w-full"
                 >
                   {isAnalyzing ? (
@@ -107,20 +132,20 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onBack }: PromptCha
               </Alert>
             )}
             
-            {analysis && (
+            {state.analysis && (
               <div className="bg-neutral-50 p-4 rounded-lg border mb-6">
                 <h3 className="font-bold mb-2">Analysis:</h3>
                 <div className="mb-2">
-                  <span className="font-medium">Score: {analysis.score}/10</span>
+                  <span className="font-medium">Score: {state.analysis.score}/10</span>
                   <div className="w-full bg-neutral-200 h-2 rounded-full mt-1">
                     <div 
-                      className={`h-2 rounded-full ${analysis.score >= 7 ? 'bg-green-500' : 'bg-orange-500'}`}
-                      style={{ width: `${analysis.score * 10}%` }}
+                      className={`h-2 rounded-full ${state.analysis.score >= 7 ? 'bg-green-500' : 'bg-orange-500'}`}
+                      style={{ width: `${state.analysis.score * 10}%` }}
                     />
                   </div>
                 </div>
-                <p className="mb-3">{analysis.feedback}</p>
-                <p className="text-sm text-neutral-600">{analysis.improvement}</p>
+                <p className="mb-3">{state.analysis.feedback}</p>
+                <p className="text-sm text-neutral-600">{state.analysis.improvement}</p>
               </div>
             )}
           </CardContent>
