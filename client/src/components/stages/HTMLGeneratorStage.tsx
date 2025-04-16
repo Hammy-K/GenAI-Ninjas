@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useXpTracker } from '@/hooks/useXpTracker';
 import { useStageState } from '@/hooks/useStageState';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,6 +114,9 @@ export function HTMLGeneratorStage({
 
   // Initialize state with localStorage values or defaults
   const [state, setState] = useStageState<HTMLGeneratorState>('html_generator', initialState);
+  
+  // Initialize toast hook for notifications
+  const { toast } = useToast();
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -364,7 +368,12 @@ export function HTMLGeneratorStage({
     
     navigator.clipboard.writeText(state.shareUrl)
       .then(() => {
-        // Success notification goes here
+        // Show minimalist toast notification
+        toast({
+          description: "Copied to clipboard",
+          duration: 2000,
+          className: "bg-green-50 text-green-800 border-green-200",
+        });
       })
       .catch(err => {
         setState(prev => ({ 
