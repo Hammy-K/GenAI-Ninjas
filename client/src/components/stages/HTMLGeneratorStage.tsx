@@ -638,7 +638,7 @@ export function HTMLGeneratorStage({
             >
               <img 
                 src={penguinAvatar} 
-                alt="AI Assistant" 
+                alt="Dr. Pengy" 
                 className="w-16 h-16 object-cover"
               />
             </Button>
@@ -652,10 +652,10 @@ export function HTMLGeneratorStage({
                 <div className="flex items-center">
                   <img 
                     src={penguinAvatar} 
-                    alt="AI Assistant" 
+                    alt="Dr. Pengy" 
                     className="h-6 w-6 rounded-full mr-2"
                   />
-                  <span className="font-medium text-sm">Chat with AI</span>
+                  <span className="font-medium text-sm">Chat with Dr. Pengy</span>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -697,10 +697,10 @@ export function HTMLGeneratorStage({
                             <div className="flex items-center">
                               <img 
                                 src={penguinAvatar} 
-                                alt="AI Assistant" 
+                                alt="Dr. Pengy" 
                                 className="h-5 w-5 rounded-full mr-1.5"
                               />
-                              <div className="font-medium text-xs">AI Assistant</div>
+                              <div className="font-medium text-xs">Dr. Pengy</div>
                             </div>
                           )}
                         </div>
@@ -715,10 +715,10 @@ export function HTMLGeneratorStage({
                         <div className="flex items-center mb-2">
                           <img 
                             src={penguinAvatar} 
-                            alt="AI Assistant" 
+                            alt="Dr. Pengy" 
                             className="h-5 w-5 rounded-full mr-1.5"
                           />
-                          <div className="font-medium text-xs">AI Assistant</div>
+                          <div className="font-medium text-xs">Dr. Pengy</div>
                         </div>
                         <div className="flex items-center text-xs">
                           <Loader2 className="h-3 w-3 mr-2 animate-spin" />
