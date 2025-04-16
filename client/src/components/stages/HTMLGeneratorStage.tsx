@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Code, Loader2, Send, Wand2 } from 'lucide-react';
+import { AlertCircle, Code, Loader2, Send, Wand2, X } from 'lucide-react';
 import { Confetti } from '@/components/ui/confetti';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -28,6 +28,7 @@ interface HTMLGeneratorState {
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
   viewMode: 'preview' | 'code';
+  isChatOpen: boolean;
 }
 
 export function HTMLGeneratorStage({ 
@@ -50,7 +51,8 @@ export function HTMLGeneratorStage({
     error: '',
     hasEarnedXp: false,
     hasUnlockedBadge: false,
-    viewMode: 'preview'
+    viewMode: 'preview',
+    isChatOpen: false
   });
   
   // Scroll to bottom of chat when messages update
@@ -138,184 +140,202 @@ export function HTMLGeneratorStage({
     onComplete();
   };
   
+  // Handle toggling the chat widget
+  const toggleChat = () => {
+    setState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
+  };
+
   return (
-    <div className="html-generator-stage">
+    <div className="html-generator-stage min-h-screen flex flex-col">
       {showConfetti && <Confetti />}
-      <div className="max-w-6xl mx-auto">
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center flex items-center justify-center">
-              <Wand2 className="h-6 w-6 mr-2 text-purple-500" />
-              AI Web Builder
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center mb-6">
-              Describe what you want to build and the AI will generate complete HTML code for you.
-              You can follow up with more instructions to refine your creation.
-            </p>
+      
+      {/* Simple Header */}
+      <div className="py-6 border-b bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
+            <Wand2 className="h-6 w-6 text-purple-500" />
+            AI Web Builder
+          </h1>
+          <p className="text-center text-muted-foreground mt-2">
+            Type what you want to build, and watch it come to life instantly.
+          </p>
+        </div>
+      </div>
+      
+      {/* Main Content Area */}
+      <div className="flex-grow flex flex-col relative">
+        {/* Preview Panel - Full Width */}
+        <div className="flex-grow flex flex-col">
+          <div className="bg-gray-100 border-b px-4 py-2 flex items-center justify-between">
+            <span className="font-medium text-sm">
+              {state.viewMode === 'preview' ? 'Live Preview' : 'HTML Code'}
+            </span>
             
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Chat Panel */}
-              <div className="flex flex-col h-[500px] border rounded-md overflow-hidden">
-                <div className="bg-gray-100 border-b px-4 py-2 flex items-center">
+            {state.currentHTML && (
+              <div className="flex items-center gap-2">
+                <div className="flex border rounded overflow-hidden">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={state.viewMode === 'preview' ? 'default' : 'outline'}
+                    className="rounded-none px-3 py-1 h-8 text-xs"
+                    onClick={() => setState(prev => ({ ...prev, viewMode: 'preview' }))}
+                  >
+                    Preview
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={state.viewMode === 'code' ? 'default' : 'outline'}
+                    className="rounded-none px-3 py-1 h-8 text-xs"
+                    onClick={() => setState(prev => ({ ...prev, viewMode: 'code' }))}
+                  >
+                    Code
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-grow bg-white h-[75vh]">
+            {!state.currentHTML ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>Your creation will appear here</p>
+              </div>
+            ) : state.viewMode === 'preview' ? (
+              <iframe
+                title="HTML Preview"
+                className="w-full h-full border-0"
+                srcDoc={state.currentHTML}
+                sandbox="allow-scripts allow-same-origin"
+              />
+            ) : (
+              <ScrollArea className="h-full w-full">
+                <pre className="p-4 text-xs text-gray-800 whitespace-pre-wrap">
+                  {state.currentHTML}
+                </pre>
+              </ScrollArea>
+            )}
+          </div>
+        </div>
+        
+        {/* Floating Chat Widget */}
+        <div className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-300 ease-in-out 
+                         ${state.isChatOpen ? 'w-80 sm:w-96 h-[500px]' : 'w-16 h-16'}`}>
+          {/* Chat Widget Button (When Closed) */}
+          {!state.isChatOpen && (
+            <Button 
+              onClick={toggleChat}
+              size="icon" 
+              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center"
+            >
+              <Wand2 className="h-6 w-6" />
+            </Button>
+          )}
+          
+          {/* Chat Widget Panel (When Open) */}
+          {state.isChatOpen && (
+            <div className="flex flex-col h-full overflow-hidden bg-white border rounded-md shadow-xl">
+              {/* Chat Header */}
+              <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center">
                   <Wand2 className="h-4 w-4 mr-2" />
                   <span className="font-medium text-sm">Chat with AI</span>
                 </div>
-                
-                <ScrollArea className="flex-grow p-4 bg-white">
-                  {state.messages.length === 0 ? (
-                    <div className="text-center text-muted-foreground p-4">
-                      <p>Start by describing what you want to build.</p>
-                      <p className="text-sm mt-2">For example:</p>
-                      <ul className="text-sm mt-1 space-y-1">
-                        <li>"Build a calculator with dark theme"</li>
-                        <li>"Create a todo list app"</li>
-                        <li>"Make a color picker tool"</li>
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {state.messages.map((msg, i) => (
-                        <div
-                          key={i}
-                          className={`p-3 rounded-lg ${
-                            msg.role === 'user'
-                              ? 'bg-primary text-primary-foreground ml-6'
-                              : 'bg-muted mr-6'
-                          }`}
-                        >
-                          <div className="font-medium mb-1">
-                            {msg.role === 'user' ? 'You' : 'AI Assistant'}
-                          </div>
-                          <div className="whitespace-pre-wrap text-sm">
-                            {msg.role === 'assistant' 
-                              ? 'I created the HTML code based on your request. You can see it in the preview panel.'
-                              : msg.content}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {state.isLoading && (
-                        <div className="p-3 rounded-lg bg-muted mr-6">
-                          <div className="font-medium mb-1">AI Assistant</div>
-                          <div className="flex items-center text-sm">
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generating HTML...
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div ref={chatEndRef} />
-                    </div>
-                  )}
-                </ScrollArea>
-                
-                <div className="border-t p-3">
-                  {state.error && (
-                    <Alert variant="destructive" className="mb-3 py-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle className="text-sm">Error</AlertTitle>
-                      <AlertDescription className="text-xs">{state.error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <form onSubmit={handleSubmit} className="flex gap-2">
-                    <Input
-                      value={state.prompt}
-                      onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
-                      placeholder="Describe what you want to build..."
-                      disabled={state.isLoading}
-                      className="flex-grow"
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={!state.prompt.trim() || state.isLoading}
-                    >
-                      {state.isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </form>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={toggleChat}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
               
-              {/* Preview/Code Panel */}
-              <div className="flex flex-col h-[500px] border rounded-md overflow-hidden">
-                <div className="bg-gray-100 border-b px-4 py-2 flex items-center justify-between">
-                  <span className="font-medium text-sm">
-                    {state.viewMode === 'preview' ? 'Live Preview' : 'HTML Code'}
-                  </span>
-                  
-                  {state.currentHTML && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex border rounded overflow-hidden">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={state.viewMode === 'preview' ? 'default' : 'outline'}
-                          className="rounded-none px-3 py-1 h-8 text-xs"
-                          onClick={() => setState(prev => ({ ...prev, viewMode: 'preview' }))}
-                        >
-                          Preview
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={state.viewMode === 'code' ? 'default' : 'outline'}
-                          className="rounded-none px-3 py-1 h-8 text-xs"
-                          onClick={() => setState(prev => ({ ...prev, viewMode: 'code' }))}
-                        >
-                          Code
-                        </Button>
+              {/* Chat Messages */}
+              <ScrollArea className="flex-grow p-4">
+                {state.messages.length === 0 ? (
+                  <div className="text-center text-muted-foreground p-4">
+                    <p>What would you like to build?</p>
+                    <p className="text-xs mt-2">Examples:</p>
+                    <ul className="text-xs mt-1 space-y-1">
+                      <li>"A calculator with dark theme"</li>
+                      <li>"A todo list with local storage"</li>
+                      <li>"A color picker tool"</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {state.messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded-lg ${
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground ml-6'
+                            : 'bg-muted mr-6'
+                        }`}
+                      >
+                        <div className="font-medium text-xs mb-1">
+                          {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                        </div>
+                        <div className="whitespace-pre-wrap text-xs">
+                          {msg.role === 'assistant' 
+                            ? 'I created the HTML code based on your request. You can see it in the preview.'
+                            : msg.content}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                    
+                    {state.isLoading && (
+                      <div className="p-3 rounded-lg bg-muted mr-6">
+                        <div className="font-medium text-xs mb-1">AI Assistant</div>
+                        <div className="flex items-center text-xs">
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Generating...
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
+              </ScrollArea>
+              
+              {/* Input Area */}
+              <div className="border-t p-3">
+                {state.error && (
+                  <Alert variant="destructive" className="mb-3 py-2">
+                    <AlertCircle className="h-3 w-3" />
+                    <AlertTitle className="text-xs">Error</AlertTitle>
+                    <AlertDescription className="text-xs">{state.error}</AlertDescription>
+                  </Alert>
+                )}
                 
-                <div className="flex-grow bg-white">
-                  {!state.currentHTML ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <p>Your code preview will appear here</p>
-                    </div>
-                  ) : state.viewMode === 'preview' ? (
-                    <iframe
-                      title="HTML Preview"
-                      className="w-full h-full border-0"
-                      srcDoc={state.currentHTML}
-                      sandbox="allow-scripts allow-same-origin"
-                    />
-                  ) : (
-                    <ScrollArea className="h-full w-full">
-                      <pre className="p-4 text-xs text-gray-800 whitespace-pre-wrap">
-                        {state.currentHTML}
-                      </pre>
-                    </ScrollArea>
-                  )}
-                </div>
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <Input
+                    value={state.prompt}
+                    onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
+                    placeholder="Describe what to build..."
+                    disabled={state.isLoading}
+                    className="flex-grow text-sm h-9"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-9 w-9"
+                    disabled={!state.prompt.trim() || state.isLoading}
+                  >
+                    {state.isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </form>
               </div>
             </div>
-            
-            <div className="mt-6 bg-purple-50 p-4 rounded-md border border-purple-100">
-              <h3 className="font-bold text-purple-800 mb-2">How to use this tool:</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm text-purple-700">
-                <li>Start by describing what you want to build</li>
-                <li>View the generated HTML code in the preview panel</li>
-                <li>Continue the conversation to refine your creation</li>
-                <li>Ask for specific changes like "make the background blue" or "add a header"</li>
-                <li>Each new message builds on the previous conversation</li>
-              </ul>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
-              Keep the conversation going to explore more capabilities of the AI code generator
-            </p>
-          </CardFooter>
-        </Card>
+          )}
+        </div>
       </div>
     </div>
   );

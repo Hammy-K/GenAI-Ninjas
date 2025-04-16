@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      let generatedHTML = response.choices[0].message.content;
+      let generatedHTML = response.choices[0].message.content || '';
       
       // Ensure the response starts with <!DOCTYPE html>
       if (!generatedHTML.trim().startsWith('<!DOCTYPE')) {
