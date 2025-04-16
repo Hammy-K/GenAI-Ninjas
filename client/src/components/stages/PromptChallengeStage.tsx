@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckIcon, Loader2 } from 'lucide-react';
-import { WaveAnimation } from '../ui/wave-animation';
-import { Confetti } from '../ui/confetti';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
-import { Progress } from '@/components/ui/progress';
+import { ArrowRight } from 'lucide-react';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -16,26 +13,13 @@ interface PromptChallengeStageProps {
 }
 
 export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeStageProps) {
-  const { t } = useTranslation();
-  const [showConfetti, setShowConfetti] = useState(false);
-  
-  const weakPromptExamples = t('weak_prompt_examples', { returnObjects: true }) as string[];
-  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
-  const [currentWeakPrompt, setCurrentWeakPrompt] = useState(weakPromptExamples[0]);
-  
   const [improvedPrompt, setImprovedPrompt] = useState('');
   const [analysis, setAnalysis] = useState<{ score: number; feedback: string; improvement: string } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState('');
+  const [hasCompleted, setHasCompleted] = useState(false);
   
-  const [completedChallenges, setCompletedChallenges] = useState(0);
-  const totalChallenges = weakPromptExamples.length;
-  
-  useEffect(() => {
-    setCurrentWeakPrompt(weakPromptExamples[currentPromptIndex]);
-    setImprovedPrompt('');
-    setAnalysis(null);
-  }, [currentPromptIndex, weakPromptExamples]);
+  const weakPrompt = "Create an image of a cat";
   
   const handleSubmitImprovement = async () => {
     if (!improvedPrompt.trim()) return;
@@ -48,19 +32,8 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
       setAnalysis(result);
       
       if (result.score >= 7) {
-        // Good improvement
         onEarnXp(15);
-        setShowConfetti(true);
-        
-        // Mark this challenge as completed
-        setCompletedChallenges(prev => prev + 1);
-        
-        // Wait a moment before automatically advancing to next challenge
-        if (currentPromptIndex < weakPromptExamples.length - 1) {
-          setTimeout(() => {
-            setCurrentPromptIndex(prev => prev + 1);
-          }, 3000);
-        }
+        setHasCompleted(true);
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -69,91 +42,40 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
     }
   };
   
-  const handleNextStage = () => {
-    onComplete();
-  };
-  
-  const progressPercentage = (completedChallenges / totalChallenges) * 100;
-  
   return (
     <div className="prompt-challenge-stage">
-      <Confetti trigger={showConfetti} />
-      
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
-          <WaveAnimation />
-          
-          <h2 className="text-2xl font-bold text-primary mb-4">{t('prompt_challenge_title')}</h2>
-          <p className="text-lg mb-6">{t('prompt_challenge_description')}</p>
-          
-          <div className="mb-6">
-            <div className="flex justify-between text-sm mb-2">
-              <span>التقدم</span>
-              <span>{completedChallenges} / {totalChallenges}</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader className="bg-red-50">
-                <CardTitle className="text-red-700">{t('weak_prompt')}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <p className="text-lg font-medium">{currentWeakPrompt}</p>
-                
-                <div className="mt-4 p-3 bg-neutral-50 rounded-lg border border-neutral-200">
-                  <h4 className="font-bold text-neutral-700 mb-2">{t('why_weak')}</h4>
-                  <p className="text-neutral-600">{t('weak_explanation')}</p>
-                </div>
-              </CardContent>
-            </Card>
+      <div className="max-w-3xl mx-auto">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-2xl md:text-3xl text-center">Prompt Engineering Challenge</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-6">
+              Learn to write better prompts by improving weak examples. Good prompts are specific, clear, and detailed.
+            </p>
             
-            <Card>
-              <CardHeader className="bg-green-50">
-                <CardTitle className="text-green-700">{t('improved_prompt')}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h3 className="font-bold mb-3">Weak Prompt:</h3>
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100 mb-4">
+                  <p className="font-medium">{weakPrompt}</p>
+                </div>
+                
+                <div className="bg-neutral-50 p-3 rounded-lg border">
+                  <h4 className="font-bold mb-2">Why is this weak?</h4>
+                  <p className="text-sm">This prompt is too vague. It doesn't specify what kind of cat, the setting, style, or any other details that would help the AI create a specific image.</p>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-bold mb-3">Your Improved Prompt:</h3>
                 <Textarea 
-                  placeholder={t('improve_prompt')}
+                  placeholder="Rewrite the prompt to make it more specific and detailed..."
                   value={improvedPrompt}
                   onChange={(e) => setImprovedPrompt(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[100px] mb-4"
                 />
                 
-                {error && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                
-                {analysis && (
-                  <div className="mt-4 p-3 bg-neutral-50 rounded-lg border border-neutral-200">
-                    <div className="flex items-center mb-2">
-                      <h4 className="font-bold text-neutral-700">التقييم: </h4>
-                      <div className="ml-2 flex items-center">
-                        {Array.from({ length: 10 }).map((_, i) => (
-                          <div 
-                            key={i}
-                            className={`w-2 h-4 ml-[2px] rounded-sm ${i < analysis.score ? 'bg-green-500' : 'bg-neutral-200'}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-neutral-600 mb-2">{analysis.feedback}</p>
-                    
-                    {analysis.score >= 7 && (
-                      <div className="flex items-start mt-2 text-green-600">
-                        <CheckIcon className="h-5 w-5 ml-1 flex-shrink-0 mt-0.5" />
-                        <p className="font-semibold">{t('challenge_complete')}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
                 <Button 
                   onClick={handleSubmitImprovement} 
                   disabled={isAnalyzing || !improvedPrompt.trim()}
@@ -161,29 +83,52 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      {t('generating')}
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
                     </>
                   ) : (
-                    t('submit_improvement')
+                    'Analyze My Prompt'
                   )}
                 </Button>
-              </CardFooter>
-            </Card>
-          </div>
-          
-          {completedChallenges === totalChallenges && (
-            <div className="flex justify-center">
-              <Button
-                onClick={handleNextStage}
-                size="lg"
-                className="mt-4"
-              >
-                {t('next_stage')}
-              </Button>
+              </div>
             </div>
-          )}
-        </div>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            {analysis && (
+              <div className="bg-neutral-50 p-4 rounded-lg border mb-6">
+                <h3 className="font-bold mb-2">Analysis:</h3>
+                <div className="mb-2">
+                  <span className="font-medium">Score: {analysis.score}/10</span>
+                  <div className="w-full bg-neutral-200 h-2 rounded-full mt-1">
+                    <div 
+                      className={`h-2 rounded-full ${analysis.score >= 7 ? 'bg-green-500' : 'bg-orange-500'}`}
+                      style={{ width: `${analysis.score * 10}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="mb-3">{analysis.feedback}</p>
+                <p className="text-sm text-neutral-600">{analysis.improvement}</p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              onClick={onComplete} 
+              size="lg"
+              disabled={!hasCompleted}
+            >
+              <span>Continue to Next Stage</span>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

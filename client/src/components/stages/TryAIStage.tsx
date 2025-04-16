@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckIcon, Image, Loader2, MessageSquare } from 'lucide-react';
+import { AlertCircle, Image, Loader2, MessageSquare } from 'lucide-react';
 import { generateText, generateImage } from '@/lib/openai';
-import { WaveAnimation } from '../ui/wave-animation';
-import { Confetti } from '../ui/confetti';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ArrowRight } from 'lucide-react';
 
 interface TryAIStageProps {
   onComplete: () => void;
@@ -17,51 +15,36 @@ interface TryAIStageProps {
 }
 
 export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStageProps) {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('text');
-  
   const [textPrompt, setTextPrompt] = useState('');
   const [imagePrompt, setImagePrompt] = useState('');
-  
   const [generatedText, setGeneratedText] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
-  
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [error, setError] = useState('');
   
-  const [textError, setTextError] = useState('');
-  const [imageError, setImageError] = useState('');
-  
-  const [showTextSuccessConfetti, setShowTextSuccessConfetti] = useState(false);
-  const [showImageSuccessConfetti, setShowImageSuccessConfetti] = useState(false);
-
-  const [hasCompletedText, setHasCompletedText] = useState(false);
-  const [hasCompletedImage, setHasCompletedImage] = useState(false);
-  
-  const tipsList = t('tips_list', { returnObjects: true }) as string[];
+  // Track completed tasks for progression
+  const [hasCompleted, setHasCompleted] = useState(false);
   
   const handleGenerateText = async () => {
     if (!textPrompt.trim()) return;
     
-    setTextError('');
+    setError('');
     setIsGeneratingText(true);
-    setGeneratedText('');
     
     try {
       const response = await generateText({ prompt: textPrompt });
       if (response.error) {
-        setTextError(response.error);
+        setError(response.error);
       } else {
         setGeneratedText(response.text);
-        setShowTextSuccessConfetti(true);
         onEarnXp(20);
-        setHasCompletedText(true);
-        
-        // Unlock the prompt master badge if not already unlocked
+        setHasCompleted(true);
         onUnlockBadge('prompt_master_badge');
       }
     } catch (error) {
-      setTextError(error instanceof Error ? error.message : 'An unknown error occurred');
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setIsGeneratingText(false);
     }
@@ -70,212 +53,156 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStagePr
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
     
-    setImageError('');
+    setError('');
     setIsGeneratingImage(true);
-    setGeneratedImageUrl('');
     
     try {
       const response = await generateImage({ prompt: imagePrompt });
       if (response.error) {
-        setImageError(response.error);
+        setError(response.error);
       } else {
         setGeneratedImageUrl(response.url);
-        setShowImageSuccessConfetti(true);
         onEarnXp(30);
-        setHasCompletedImage(true);
-        
-        // Unlock the image artist badge if not already unlocked
+        setHasCompleted(true);
         onUnlockBadge('image_artist_badge');
       }
     } catch (error) {
-      setImageError(error instanceof Error ? error.message : 'An unknown error occurred');
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setIsGeneratingImage(false);
     }
   };
   
-  const handleNextStage = () => {
-    onComplete();
-  };
-  
-  const bothActivitiesCompleted = hasCompletedText && hasCompletedImage;
-  
   return (
     <div className="try-ai-stage">
-      <Confetti trigger={showTextSuccessConfetti} />
-      <Confetti trigger={showImageSuccessConfetti} />
-      
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
-          <WaveAnimation />
-          
-          <h2 className="text-2xl font-bold text-primary mb-4">{t('try_ai_title')}</h2>
-          <p className="text-lg mb-6">{t('try_ai_description')}</p>
-          
-          <Tabs defaultValue="text" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="text" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                {t('text_generation')}
-              </TabsTrigger>
-              <TabsTrigger value="image" className="flex items-center gap-2">
-                <Image className="h-4 w-4" />
-                {t('image_generation')}
-              </TabsTrigger>
-            </TabsList>
+      <div className="max-w-3xl mx-auto">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-2xl md:text-3xl text-center">Try AI Tools</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-6">
+              Experience the power of generative AI by trying it yourself. Create text or images using simple prompts.
+            </p>
             
-            <TabsContent value="text" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('text_generation')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Textarea 
-                        placeholder={t('text_prompt_placeholder')}
-                        value={textPrompt}
-                        onChange={(e) => setTextPrompt(e.target.value)}
-                        className="min-h-[100px]"
-                      />
-                    </div>
-                    
-                    {textError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{textError}</AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {generatedText && (
-                      <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
-                        <h3 className="font-bold mb-2 flex items-center">
-                          <CheckIcon className="h-4 w-4 text-green-500 ml-2" />
-                          النص المولد
-                        </h3>
-                        <p className="whitespace-pre-wrap">{generatedText}</p>
-                      </div>
-                    )}
+            <Tabs defaultValue="text" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Text Generation
+                </TabsTrigger>
+                <TabsTrigger value="image" className="flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Image Generation
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="text" className="mt-4">
+                <div className="space-y-4">
+                  <div>
+                    <Textarea 
+                      placeholder="Enter a prompt (e.g., 'Write a short story about a space adventure')"
+                      value={textPrompt}
+                      onChange={(e) => setTextPrompt(e.target.value)}
+                      className="min-h-[100px]"
+                    />
                   </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    onClick={handleGenerateText} 
-                    disabled={isGeneratingText || !textPrompt.trim()}
-                  >
-                    {isGeneratingText ? (
-                      <>
-                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        {t('generating')}
-                      </>
-                    ) : (
-                      t('generate')
-                    )}
-                  </Button>
+                  
+                  {error && activeTab === 'text' && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
                   
                   {generatedText && (
-                    <Button variant="outline" onClick={() => {
-                      setTextPrompt('');
-                      setGeneratedText('');
-                    }}>
-                      {t('try_again')}
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="image" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('image_generation')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Textarea 
-                        placeholder={t('image_prompt_placeholder')}
-                        value={imagePrompt}
-                        onChange={(e) => setImagePrompt(e.target.value)}
-                        className="min-h-[100px]"
-                      />
+                    <div className="bg-neutral-50 p-4 rounded-lg border">
+                      <h3 className="font-bold mb-2">Generated Text:</h3>
+                      <p className="whitespace-pre-wrap">{generatedText}</p>
                     </div>
-                    
-                    {imageError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{imageError}</AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {generatedImageUrl && (
-                      <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
-                        <h3 className="font-bold mb-2 flex items-center">
-                          <CheckIcon className="h-4 w-4 text-green-500 ml-2" />
-                          الصورة المولدة
-                        </h3>
-                        <div className="mt-2">
-                          <img 
-                            src={generatedImageUrl} 
-                            alt="صورة مولدة بالذكاء الاصطناعي" 
-                            className="w-full h-auto rounded-lg shadow-md"
-                          />
-                        </div>
-                      </div>
-                    )}
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      onClick={handleGenerateText} 
+                      disabled={isGeneratingText || !textPrompt.trim()}
+                    >
+                      {isGeneratingText ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        'Generate Text'
+                      )}
+                    </Button>
                   </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    onClick={handleGenerateImage} 
-                    disabled={isGeneratingImage || !imagePrompt.trim()}
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        {t('generating')}
-                      </>
-                    ) : (
-                      t('generate')
-                    )}
-                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="image" className="mt-4">
+                <div className="space-y-4">
+                  <div>
+                    <Textarea 
+                      placeholder="Describe an image (e.g., 'A futuristic city with flying cars')"
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  
+                  {error && activeTab === 'image' && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
                   
                   {generatedImageUrl && (
-                    <Button variant="outline" onClick={() => {
-                      setImagePrompt('');
-                      setGeneratedImageUrl('');
-                    }}>
-                      {t('try_again')}
-                    </Button>
+                    <div className="bg-neutral-50 p-4 rounded-lg border">
+                      <h3 className="font-bold mb-2">Generated Image:</h3>
+                      <div className="mt-2">
+                        <img 
+                          src={generatedImageUrl} 
+                          alt="AI-generated image" 
+                          className="w-full h-auto rounded-lg"
+                        />
+                      </div>
+                    </div>
                   )}
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="bg-yellow-50 rounded-lg p-5 border border-yellow-200 mb-6">
-            <h3 className="font-bold text-lg text-yellow-800 mb-2">{t('prompt_tips')}</h3>
-            <ul className="list-disc list-inside space-y-1 text-yellow-700">
-              {tipsList.map((tip, index) => (
-                <li key={index}>{tip}</li>
-              ))}
-            </ul>
-          </div>
-          
-          {bothActivitiesCompleted && (
-            <div className="flex justify-center">
-              <Button
-                onClick={handleNextStage}
-                size="lg"
-                className="mt-4"
-              >
-                {t('next_stage')}
-              </Button>
-            </div>
-          )}
-        </div>
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      onClick={handleGenerateImage} 
+                      disabled={isGeneratingImage || !imagePrompt.trim()}
+                    >
+                      {isGeneratingImage ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        'Generate Image'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              onClick={onComplete} 
+              size="lg"
+              disabled={!hasCompleted}
+            >
+              <span>Continue to Next Stage</span>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

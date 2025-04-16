@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckIcon, Download, Loader2, Sparkles } from 'lucide-react';
-import { WaveAnimation } from '../ui/wave-animation';
-import { Confetti } from '../ui/confetti';
+import { AlertCircle, ArrowRight, Download, Loader2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { generateProjectIdea } from '@/lib/openai';
@@ -17,13 +14,9 @@ interface ProjectIdeaStageProps {
 }
 
 export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: ProjectIdeaStageProps) {
-  const { t } = useTranslation();
-  const [showConfetti, setShowConfetti] = useState(false);
-  
   const [interests, setInterests] = useState('');
   const [goal, setGoal] = useState('');
   const [tools, setTools] = useState('');
-  
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   
@@ -44,10 +37,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
     try {
       const idea = await generateProjectIdea(interests, goal, tools);
       setProjectIdea(idea);
-      setShowConfetti(true);
       onEarnXp(40);
-      
-      // Unlock the project creator badge
       onUnlockBadge('project_creator_badge');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -56,69 +46,51 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
     }
   };
   
-  const handleSaveIdea = () => {
-    // In a real app, you might save to a database or export as PDF
-    // Here we'll just trigger the next stage
-    onComplete();
-  };
-  
   return (
     <div className="project-idea-stage">
-      <Confetti trigger={showConfetti} />
-      
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
-          <WaveAnimation />
-          
-          <h2 className="text-2xl font-bold text-primary mb-4">{t('project_title')}</h2>
-          <p className="text-lg mb-6">{t('project_description')}</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('your_project_idea')}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+      <div className="max-w-3xl mx-auto">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-2xl md:text-3xl text-center">Generate Project Idea</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-6">
+              Create a personalized AI project idea based on your interests and goals.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="interests">{t('project_interests')}</Label>
+                    <Label htmlFor="interests">Your Interests</Label>
                     <Input
                       id="interests"
                       value={interests}
                       onChange={(e) => setInterests(e.target.value)}
-                      placeholder={t('interests_placeholder')}
+                      placeholder="e.g., Education, games, art"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="goal">{t('project_goal')}</Label>
+                    <Label htmlFor="goal">Your Goal</Label>
                     <Input
                       id="goal"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
-                      placeholder={t('goal_placeholder')}
+                      placeholder="e.g., Learn coding, create website"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="tools">{t('project_tools')}</Label>
+                    <Label htmlFor="tools">Preferred Tools</Label>
                     <Input
                       id="tools"
                       value={tools}
                       onChange={(e) => setTools(e.target.value)}
-                      placeholder={t('tools_placeholder')}
+                      placeholder="e.g., Web design, Python, ChatGPT"
                     />
                   </div>
                   
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-                <CardFooter>
                   <Button 
                     onClick={handleGenerateIdea} 
                     disabled={isGenerating || !interests.trim() || !goal.trim() || !tools.trim()}
@@ -126,35 +98,32 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
                   >
                     {isGenerating ? (
                       <>
-                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        {t('generating')}
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
                       </>
                     ) : (
                       <>
-                        <Sparkles className="ml-2 h-4 w-4" />
-                        {t('generate_ideas')}
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generate Project Idea
                       </>
                     )}
                   </Button>
-                </CardFooter>
-              </Card>
-            </div>
-            
-            <div>
-              {projectIdea ? (
-                <Card>
-                  <CardHeader className="bg-primary bg-opacity-10 border-b border-primary border-opacity-20">
-                    <CardTitle className="text-primary">{projectIdea.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="mb-4">
-                      <h3 className="font-bold mb-2">الوصف:</h3>
-                      <p>{projectIdea.description}</p>
+                </div>
+              </div>
+              
+              <div>
+                {projectIdea ? (
+                  <div className="bg-neutral-50 p-4 rounded-lg border">
+                    <h3 className="font-bold text-lg text-primary mb-2">{projectIdea.title}</h3>
+                    
+                    <div className="mb-3">
+                      <h4 className="font-bold mb-1">Description:</h4>
+                      <p className="text-sm">{projectIdea.description}</p>
                     </div>
                     
-                    <div className="mb-4">
-                      <h3 className="font-bold mb-2">الخطوات:</h3>
-                      <ol className="list-decimal list-inside space-y-1">
+                    <div className="mb-3">
+                      <h4 className="font-bold mb-1">Steps:</h4>
+                      <ol className="list-decimal list-inside text-sm">
                         {projectIdea.steps.map((step, index) => (
                           <li key={index}>{step}</li>
                         ))}
@@ -162,12 +131,12 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
                     </div>
                     
                     <div className="mb-2">
-                      <h3 className="font-bold mb-2">الأدوات:</h3>
-                      <div className="flex flex-wrap gap-2">
+                      <h4 className="font-bold mb-1">Tools:</h4>
+                      <div className="flex flex-wrap gap-1">
                         {projectIdea.tools.map((tool, index) => (
                           <span 
                             key={index}
-                            className="bg-neutral-100 px-2 py-1 rounded-md text-sm"
+                            className="bg-neutral-200 px-2 py-0.5 rounded-md text-xs"
                           >
                             {tool}
                           </span>
@@ -175,10 +144,10 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
                       </div>
                     </div>
                     
-                    <div className="mt-4 flex items-center">
-                      <span className="font-bold ml-2">المستوى:</span>
+                    <div className="flex items-center mt-3">
+                      <span className="text-sm font-medium mr-2">Difficulty:</span>
                       <span 
-                        className={`px-2 py-1 rounded text-xs font-medium ${
+                        className={`px-2 py-0.5 rounded text-xs font-medium ${
                           projectIdea.difficulty === 'beginner'
                             ? 'bg-green-100 text-green-800'
                             : projectIdea.difficulty === 'intermediate'
@@ -186,36 +155,40 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {projectIdea.difficulty === 'beginner'
-                          ? 'مبتدئ'
-                          : projectIdea.difficulty === 'intermediate'
-                          ? 'متوسط'
-                          : 'متقدم'}
+                        {projectIdea.difficulty}
                       </span>
                     </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      onClick={handleSaveIdea} 
-                      className="w-full"
-                      variant="default"
-                    >
-                      <Download className="ml-2 h-4 w-4" />
-                      {t('save_idea')}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ) : (
-                <div className="h-full flex items-center justify-center p-6 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
-                  <div className="text-center">
-                    <Sparkles className="h-12 w-12 text-neutral-300 mb-4 mx-auto" />
-                    <p className="text-neutral-500">أدخل اهتماماتك وأهدافك والأدوات التي ترغب في استخدامها لتوليد فكرة مشروع مناسبة لك.</p>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="h-full flex items-center justify-center p-6 bg-neutral-50 rounded-lg border border-dashed">
+                    <div className="text-center">
+                      <Sparkles className="h-12 w-12 text-neutral-300 mb-2 mx-auto" />
+                      <p className="text-neutral-500 text-sm">Enter your interests, goals, and preferred tools to generate a project idea.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              onClick={onComplete} 
+              size="lg"
+              disabled={!projectIdea}
+            >
+              <span>Continue to Final Stage</span>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
