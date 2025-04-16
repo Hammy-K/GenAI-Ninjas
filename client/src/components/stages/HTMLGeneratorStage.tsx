@@ -57,9 +57,14 @@ export function HTMLGeneratorStage({
   // Get the current location for routing
   const [location, setLocation] = useLocation();
   
-  // Define initial state
+  // Define initial state with welcome message
+  const welcomeMessage: HTMLMessage = {
+    role: 'assistant',
+    content: 'Welcome to the AI Web Builder! I can help you build a web application by generating the code based on your description. Try describing what you want to build, for example: "Create a calculator with a dark theme" or "Make a to-do list with local storage".'
+  };
+  
   const initialState: HTMLGeneratorState = {
-    messages: [],
+    messages: [welcomeMessage],
     prompt: '',
     currentHTML: '',
     isLoading: false,
@@ -67,7 +72,7 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: 'preview',
-    isChatOpen: false,
+    isChatOpen: true, // Start with chat open by default
     projectId: null,
     isSaving: false,
     shareUrl: null,
@@ -410,7 +415,7 @@ export function HTMLGeneratorStage({
     setState(prev => ({
       ...prev,
       currentHTML: '',
-      messages: [],
+      messages: [welcomeMessage], // Retain the welcome message
       projectId: null,
       shareUrl: null,
       showShareDialog: false,
@@ -611,8 +616,8 @@ export function HTMLGeneratorStage({
         </div>
         
         {/* Floating Chat Widget */}
-        <div className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-300 ease-in-out 
-                         ${state.isChatOpen ? 'w-80 sm:w-96 h-[500px]' : 'w-16 h-16'}`}>
+        <div className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out 
+                         ${state.isChatOpen ? 'w-80 sm:w-96 h-[500px] scale-100 opacity-100' : 'w-16 h-16 scale-95 opacity-95'}`}>
           {/* Chat Widget Button (When Closed) */}
           {!state.isChatOpen && (
             <Button 
@@ -670,9 +675,7 @@ export function HTMLGeneratorStage({
                           {msg.role === 'user' ? 'You' : 'AI Assistant'}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === 'assistant' 
-                            ? 'I created the HTML code based on your request. You can see it in the preview.'
-                            : msg.content}
+                          {msg.content}
                         </div>
                       </div>
                     ))}
