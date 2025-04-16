@@ -5,6 +5,7 @@ import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
 import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
+import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
 import { useQuest } from '@/hooks/useQuest';
 
@@ -22,12 +23,13 @@ export default function Home() {
   } = useQuest();
   
   // Render current stage based on stage number
-  // New flow:
+  // Updated flow (6 stages):
   // 1. Welcome to your first GenAI mission
-  // 2. Prompt Engineering 101 (was Step 5)
-  // 3. Try AI Tools (Text and Image) (was Step 3)
-  // 4. Build a Web App (was Step 4)
-  // 5. Wrap-up with Submission Form (was Step 7)
+  // 2. Prompt Engineering 101
+  // 3. Try AI Tools (Text and Image)
+  // 4. Build a Web App
+  // 5. Submission Form
+  // 6. Final Celebratory Page
   const renderStage = () => {
     switch (currentStage) {
       case 1:
@@ -59,6 +61,13 @@ export default function Home() {
           />
         );
       case 5:
+        return (
+          <SubmissionFormStage
+            onComplete={goToNextStage}
+            onBack={goToPrevStage}
+          />
+        );
+      case 6:
         return (
           <WrapUpStage 
             onRestart={restart}
