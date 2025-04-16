@@ -633,9 +633,13 @@ export function HTMLGeneratorStage({
             <Button 
               onClick={toggleChat}
               size="icon" 
-              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center"
+              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
             >
-              <Wand2 className="h-6 w-6" />
+              <img 
+                src="/attached_assets/Group 26087843.png" 
+                alt="AI Assistant" 
+                className="w-16 h-16 object-cover"
+              />
             </Button>
           )}
           
@@ -645,7 +649,11 @@ export function HTMLGeneratorStage({
               {/* Chat Header */}
               <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center">
-                  <Wand2 className="h-4 w-4 mr-2" />
+                  <img 
+                    src="/attached_assets/Group 26087843.png" 
+                    alt="AI Assistant" 
+                    className="h-6 w-6 rounded-full mr-2"
+                  />
                   <span className="font-medium text-sm">Chat with AI</span>
                 </div>
                 <Button 
@@ -681,8 +689,19 @@ export function HTMLGeneratorStage({
                             : 'bg-muted mr-6'
                         }`}
                       >
-                        <div className="font-medium text-xs mb-1">
-                          {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                        <div className="flex items-center mb-2">
+                          {msg.role === 'user' ? (
+                            <div className="font-medium text-xs">You</div>
+                          ) : (
+                            <div className="flex items-center">
+                              <img 
+                                src="/attached_assets/Group 26087843.png" 
+                                alt="AI Assistant" 
+                                className="h-5 w-5 rounded-full mr-1.5"
+                              />
+                              <div className="font-medium text-xs">AI Assistant</div>
+                            </div>
+                          )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
                           {msg.content}
@@ -692,7 +711,14 @@ export function HTMLGeneratorStage({
                     
                     {state.isLoading && (
                       <div className="p-3 rounded-lg bg-muted mr-6">
-                        <div className="font-medium text-xs mb-1">AI Assistant</div>
+                        <div className="flex items-center mb-2">
+                          <img 
+                            src="/attached_assets/Group 26087843.png" 
+                            alt="AI Assistant" 
+                            className="h-5 w-5 rounded-full mr-1.5"
+                          />
+                          <div className="font-medium text-xs">AI Assistant</div>
+                        </div>
                         <div className="flex items-center text-xs">
                           <Loader2 className="h-3 w-3 mr-2 animate-spin" />
                           Generating...
