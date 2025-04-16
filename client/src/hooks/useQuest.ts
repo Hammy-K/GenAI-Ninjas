@@ -35,8 +35,8 @@ export function useQuest() {
         currentStage: prev.currentStage + 1
       }));
       
-      // Automatically unlock explorer badge after completing stage 2
-      if (state.currentStage === 2) {
+      // Automatically unlock explorer badge once after completing stage 2
+      if (state.currentStage === 2 && !state.unlockedBadges.includes('explorer_badge')) {
         unlockBadge('explorer_badge');
       }
     }
