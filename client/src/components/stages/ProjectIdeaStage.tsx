@@ -52,16 +52,25 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
   const [error, setError] = useState('');
   
   const handleGenerateIdea = async () => {
-    if (!interests.trim() || !goal.trim() || !tools.trim()) return;
+    if (!state.interests.trim() || !state.goal.trim() || !state.tools.trim()) return;
     
     setError('');
     setIsGenerating(true);
     
     try {
-      const idea = await generateProjectIdea(interests, goal, tools);
+      const idea = await generateProjectIdea(state.interests, state.goal, state.tools);
       setProjectIdea(idea);
-      onEarnXp(40);
-      onUnlockBadge('project_creator_badge');
+      
+      // Only award XP and badge once
+      if (!state.hasEarnedXp) {
+        onEarnXp(40);
+        setState(prev => ({ ...prev, hasEarnedXp: true }));
+      }
+      
+      if (!state.hasUnlockedBadge) {
+        onUnlockBadge('project_creator_badge');
+        setState(prev => ({ ...prev, hasUnlockedBadge: true }));
+      }
     } catch (err: any) {
       const error = err as Error;
       if (error.message && (error.message.includes("quota") || error.message.toLowerCase().includes("429"))) {
@@ -95,7 +104,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                     <Label htmlFor="interests">Your Interests</Label>
                     <Input
                       id="interests"
-                      value={interests}
+                      value={state.interests}
                       onChange={(e) => setInterests(e.target.value)}
                       placeholder="e.g., Education, games, art"
                     />
@@ -105,7 +114,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                     <Label htmlFor="goal">Your Goal</Label>
                     <Input
                       id="goal"
-                      value={goal}
+                      value={state.goal}
                       onChange={(e) => setGoal(e.target.value)}
                       placeholder="e.g., Learn coding, create website"
                     />
@@ -115,7 +124,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                     <Label htmlFor="tools">Preferred Tools</Label>
                     <Input
                       id="tools"
-                      value={tools}
+                      value={state.tools}
                       onChange={(e) => setTools(e.target.value)}
                       placeholder="e.g., Web design, Python, ChatGPT"
                     />
@@ -123,7 +132,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                   
                   <Button 
                     onClick={handleGenerateIdea} 
-                    disabled={isGenerating || !interests.trim() || !goal.trim() || !tools.trim()}
+                    disabled={isGenerating || !state.interests.trim() || !state.goal.trim() || !state.tools.trim()}
                     className="w-full"
                   >
                     {isGenerating ? (

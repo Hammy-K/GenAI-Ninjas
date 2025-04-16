@@ -57,20 +57,28 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
     setIsGeneratingText(true);
     
     try {
+      // Use an empty array as fallback if messageHistory is undefined
+      const messageHistory = state.messageHistory || [];
+      
       const response = await generateText({ 
         prompt: state.textPrompt,
-        messageHistory: state.messageHistory
+        messageHistory: messageHistory
       });
       
       if (!response.error) {
-        setState(prev => ({
-          ...prev,
-          messageHistory: [
-            ...prev.messageHistory,
-            { role: 'user', content: state.textPrompt },
-            { role: 'assistant', content: response.text }
-          ]
-        }));
+        setState(prev => {
+          // Create a safe copy of the message history with fallback
+          const prevMessageHistory = prev.messageHistory || [];
+          
+          return {
+            ...prev,
+            messageHistory: [
+              ...prevMessageHistory,
+              { role: 'user', content: state.textPrompt },
+              { role: 'assistant', content: response.text }
+            ]
+          };
+        });
       }
       if (response.error) {
         if (response.error === 'Content flagged as inappropriate') {
