@@ -16,6 +16,13 @@ export default function Dashboard() {
   // Check if Mission 1 is complete - using completedMissions array
   const isMission1Complete = isMissionCompleted(1);
   
+  // Debug logging
+  console.log("Dashboard rendered with:", { 
+    completedMissions,
+    isMission1Complete,
+    currentStage
+  });
+  
   const handleStartMission1 = () => {
     navigate('/mission1');
   };

@@ -130,20 +130,31 @@ export function useQuest() {
   
   // Complete a mission
   const completeMission = (missionId: number) => {
+    console.log(`Attempting to complete mission: ${missionId}`);
+    console.log(`Current state:`, state);
+    
     setState(prev => {
+      // Initialize completedMissions array if undefined
+      const prevCompletedMissions = prev.completedMissions || [];
+      
       // Skip if this mission is already completed
-      if (prev.completedMissions.includes(missionId)) {
+      if (prevCompletedMissions.includes(missionId)) {
         console.log(`Mission ${missionId} already completed`);
         return prev;
       }
       
       console.log(`Completing mission: ${missionId}`);
-      
-      return {
+      const newState = {
         ...prev,
-        completedMissions: [...prev.completedMissions, missionId]
+        completedMissions: [...prevCompletedMissions, missionId]
       };
+      
+      console.log("New state will be:", newState);
+      return newState;
     });
+    
+    // Log the state after update (note: this will log the previous state due to React's async state updates)
+    console.log("State after completeMission:", state);
   };
   
   // Check if a mission is completed

@@ -18,6 +18,9 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
     if (onCompleteMission) {
       // Complete Mission 1
       onCompleteMission(1);
+      console.log("Mission 1 completion triggered");
+    } else {
+      console.log("Mission completion function not available");
     }
     
     // Navigate back to dashboard
