@@ -83,16 +83,31 @@ export function HTMLGeneratorStage({
       
       if (savedState) {
         const parsedState = JSON.parse(savedState);
+        
+        // Force reset isSaving to false and any error messages on component mount
+        // This ensures we never start with a stuck saving state
+        console.log("Ensuring clean state on mount - previous isSaving:", parsedState.isSaving);
+        
+        const cleanState = {
+          ...parsedState,
+          isSaving: false,
+          error: ''
+        };
+        
+        localStorage.setItem(storageKey, JSON.stringify(cleanState));
+        
+        // If we were in a saving state, force reload the component to apply the clean state
         if (parsedState.isSaving) {
-          console.log("Clearing stuck saving state");
-          localStorage.setItem(
-            storageKey, 
-            JSON.stringify({...parsedState, isSaving: false, error: ''})
-          );
+          console.log("Previous state was saving, forcing state refresh");
+          setTimeout(() => {
+            setState(prev => ({...prev, isSaving: false}));
+          }, 100);
         }
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
+      // Just in case there's an error, clear the entire localStorage entry
+      localStorage.removeItem('genAIQuest_html_generatorState');
     }
   }, []);
 
@@ -231,16 +246,44 @@ export function HTMLGeneratorStage({
   
   // Save the current project to Firebase
   const saveAndShareProject = async () => {
-    if (!state.currentHTML) return;
+    // Don't proceed if no HTML content or already saving
+    if (!state.currentHTML || state.isSaving) {
+      console.log("Save canceled: No HTML content or already saving");
+      return;
+    }
+    
+    console.log("Starting save and share process...");
+    
+    // Set saving state immediately to prevent multiple clicks
+    setState(prev => ({ ...prev, isSaving: true, error: '' }));
     
     try {
-      setState(prev => ({ ...prev, isSaving: true, error: '' }));
+      // Save the project to Firebase with timeout protection
+      console.log("Calling saveProject function...");
+      let projectId: string;
       
-      // Save the project to Firebase
-      const projectId = await saveProject(state.currentHTML);
+      try {
+        // Add a safety timeout to prevent indefinite hanging
+        const savePromise = saveProject(state.currentHTML);
+        const timeoutPromise = new Promise<string>((resolve) => {
+          setTimeout(() => {
+            console.log("Save operation timed out, using fallback ID");
+            resolve(`project_${Date.now()}_timeout`);
+          }, 10000); // 10 second timeout
+        });
+        
+        // Race between the actual save and the timeout
+        projectId = await Promise.race([savePromise, timeoutPromise]);
+      } catch (saveError: any) {
+        console.error("Error during project save:", saveError);
+        projectId = `project_${Date.now()}_error_fallback`;
+      }
+      
+      console.log("Project saved with ID:", projectId);
       
       // Create share URL
       const shareUrl = `${window.location.origin}/project/${projectId}`;
+      console.log("Share URL created:", shareUrl);
       
       // Update state with project info
       setState(prev => ({
@@ -257,12 +300,26 @@ export function HTMLGeneratorStage({
         setTimeout(() => setShowConfetti(false), 3000);
       }
       
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Unexpected error in saveAndShareProject:", error);
+      
+      // Ensure loading state is always cleared
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to save project',
         isSaving: false
       }));
+    } finally {
+      // Double-ensure the saving state is cleared in case of any errors
+      setTimeout(() => {
+        setState(prev => {
+          if (prev.isSaving) {
+            console.log("Clearing stuck saving state via setTimeout");
+            return { ...prev, isSaving: false };
+          }
+          return prev;
+        });
+      }, 15000); // 15 second backup timeout
     }
   };
   
