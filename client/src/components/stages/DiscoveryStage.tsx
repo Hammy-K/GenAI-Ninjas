@@ -72,18 +72,7 @@ export function DiscoveryStage({ onComplete, onEarnXp }: DiscoveryStageProps) {
             <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200 hover:shadow-md transition-shadow">
               <h3 className="font-bold text-lg mb-2">{t('example3_title')}</h3>
               <div className="bg-white rounded p-3 border border-neutral-100 font-mono text-sm">
-                <pre className="text-neutral-700 overflow-x-auto">function calculateArea(radius) {
-  return Math.PI * radius * radius;
-}
-
-function calculateCircumference(radius) {
-  return 2 * Math.PI * radius;
-}
-
-// حساب مساحة ومحيط دائرة
-const radius = 5;
-console.log(`المساحة: ${calculateArea(radius)}`);
-console.log(`المحيط: ${calculateCircumference(radius)}`);</pre>
+                <pre className="text-neutral-700 overflow-x-auto">{"function calculateArea(radius) {\n  return Math.PI * radius * radius;\n}\n\nfunction calculateCircumference(radius) {\n  return 2 * Math.PI * radius;\n}\n\n// حساب مساحة ومحيط دائرة\nconst radius = 5;\nconsole.log(`المساحة: ${calculateArea(radius)}`);\nconsole.log(`المحيط: ${calculateCircumference(radius)}`);"}</pre>
               </div>
             </div>
             
