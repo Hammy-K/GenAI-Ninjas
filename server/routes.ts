@@ -49,13 +49,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Image generation endpoint
+  // Image generation endpoint with content moderation
   app.post('/api/ai/image', async (req, res) => {
     try {
       const { prompt, size = "1024x1024", quality = "standard" } = req.body;
       
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
+      }
+      
+      // Check content moderation before generating image
+      const moderationResult = await moderateContent(prompt, openai);
+      if (moderationResult.flagged) {
+        return res.status(400).json({ 
+          error: 'Content flagged as inappropriate',
+          moderationResult,
+          message: 'Oops! Your prompt contains content that isn\'t suitable for our friendly learning environment. Please try a different, more appropriate description.'
+        });
       }
       
       const response = await openai.images.generate({
@@ -69,7 +79,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json({ url: response.data[0].url });
     } catch (error) {
       console.error('Error generating image:', error);
-      return res.status(500).json({ error: 'Failed to generate image' });
+      
+      // Handle specific OpenAI API errors with user-friendly messages
+      if (error instanceof OpenAI.APIError) {
+        if (error.status === 429) {
+          return res.status(429).json({ 
+            error: 'API quota exceeded. Please try again later.',
+            message: 'Looks like our creative robot needs a short break! Please try again in a few moments.'
+          });
+        } else if (error.status === 400) {
+          return res.status(400).json({ 
+            error: 'Invalid request',
+            message: 'Hmm, that prompt might contain something our image generator can\'t work with. Try simplifying or rewording your description.'
+          });
+        }
+      }
+      
+      return res.status(500).json({ 
+        error: 'Failed to generate image',
+        message: 'Something went wrong with our magical image creator. Please try again!'
+      });
     }
   });
   

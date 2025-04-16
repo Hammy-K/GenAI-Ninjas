@@ -29,6 +29,17 @@ type CompletionResponse = {
 type ImageResponse = {
   url: string;
   error?: string;
+  message?: string;
+  moderationResult?: {
+    flagged: boolean;
+    categories: {
+      hate: boolean;
+      threatening: boolean;
+      selfHarm: boolean;
+      sexual: boolean;
+      violence: boolean;
+    };
+  };
 };
 
 type PromptAnalysisResponse = {
@@ -60,10 +71,40 @@ export async function generateImage(options: ImageGenerationOptions): Promise<Im
   try {
     const response = await apiRequest('POST', '/api/ai/image', options);
     const data = await response.json();
+    
+    if (data.error) {
+      return {
+        url: "",
+        error: data.error,
+        message: data.message || "Failed to generate image",
+        moderationResult: data.moderationResult
+      };
+    }
+    
     return { url: data.url };
   } catch (error) {
     console.error("Error generating image:", error);
-    return { url: "", error: error instanceof Error ? error.message : "Unknown error occurred" };
+    
+    // Try to extract the response data if it's a fetch error
+    if (error instanceof Error && 'response' in error) {
+      try {
+        // @ts-ignore - trying to access response property on a fetch error
+        const errorData = await error.response.json();
+        return {
+          url: "",
+          error: errorData.error || "Failed to generate image",
+          message: errorData.message || "Something went wrong with the image generation."
+        };
+      } catch (e) {
+        // If we can't parse the response, fall back to generic error
+      }
+    }
+    
+    return { 
+      url: "", 
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      message: "We had trouble creating your image. Please try again with a different description!"
+    };
   }
 }
 
