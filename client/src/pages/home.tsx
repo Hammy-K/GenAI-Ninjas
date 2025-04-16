@@ -4,6 +4,7 @@ import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { DiscoveryStage } from '@/components/stages/DiscoveryStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
+import { CodeEditorStage } from '@/components/stages/CodeEditorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { ProjectIdeaStage } from '@/components/stages/ProjectIdeaStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
@@ -54,6 +55,15 @@ export default function Home() {
         )}
         
         {currentStage === 4 && (
+          <CodeEditorStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPreviousStage}
+          />
+        )}
+        
+        {currentStage === 5 && (
           <PromptChallengeStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
@@ -61,7 +71,7 @@ export default function Home() {
           />
         )}
         
-        {currentStage === 5 && (
+        {currentStage === 6 && (
           <ProjectIdeaStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
@@ -70,7 +80,7 @@ export default function Home() {
           />
         )}
         
-        {currentStage === 6 && (
+        {currentStage === 7 && (
           <WrapUpStage 
             onRestart={resetQuest} 
             totalXp={xp} 

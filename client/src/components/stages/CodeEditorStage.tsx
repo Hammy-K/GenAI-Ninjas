@@ -102,13 +102,20 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
   }, [state.htmlCode, state.cssCode, state.jsCode]);
   
   // Combined code for the preview
+  const processedHtml = state.htmlCode
+    .replace(/<html>/g, '')
+    .replace(/<\/html>/g, '')
+    .replace(/<head>[\s\S]*?<\/head>/g, '')
+    .replace(/<body>/g, '')
+    .replace(/<\/body>/g, '');
+
   const combinedCode = `
     <html>
       <head>
         <style>${state.cssCode}</style>
       </head>
       <body>
-        ${state.htmlCode.replace(/<html>|<\/html>|<head>.*<\/head>|<body>|<\/body>/g, '')}
+        ${processedHtml}
         <script>${state.jsCode}</script>
       </body>
     </html>
