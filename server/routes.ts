@@ -181,6 +181,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let generatedHTML = response.choices[0].message.content || '';
       
+      // Clean up markdown code blocks (remove ```html and ```)
+      generatedHTML = generatedHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+      
       // Ensure the response starts with <!DOCTYPE html>
       if (!generatedHTML.trim().startsWith('<!DOCTYPE')) {
         // Try to extract just the HTML if there's explanation text
