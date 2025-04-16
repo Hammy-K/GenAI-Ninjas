@@ -81,13 +81,9 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         });
       }
       if (response.error) {
+        // Handle moderation-related errors with a friendly message
         if (response.error === 'Content flagged as inappropriate') {
-          const categories = response.moderationResult.categories;
-          const flaggedCategories = Object.entries(categories)
-            .filter(([_, flagged]) => flagged)
-            .map(([category]) => category)
-            .join(', ');
-          setError(`Content was flagged for: ${flaggedCategories}. Please revise your prompt.`);
+          setError(`Your content may contain inappropriate material. Please revise your prompt.`);
         }
         // Check for quota exceeded error
         else if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
