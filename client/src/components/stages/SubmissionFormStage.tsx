@@ -32,7 +32,15 @@ export function SubmissionFormStage({ onComplete, onBack }: SubmissionFormStageP
               />
             </div>
             
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-between mt-4">
+              <Button 
+                onClick={onBack} 
+                variant="outline" 
+                className="flex items-center"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Previous Stage
+              </Button>
               <Button 
                 onClick={onComplete} 
                 className="flex items-center"
