@@ -362,6 +362,18 @@ export function HTMLGeneratorStage({
     }
   };
   
+  // Utility function to ensure RTL in HTML content
+  const ensureRtlHtml = (htmlContent: string): string => {
+    let rtlHtml = htmlContent;
+    if (!rtlHtml.includes('dir="rtl"')) {
+      rtlHtml = rtlHtml.replace('<html', '<html dir="rtl"');
+      if (!rtlHtml.includes('lang="ar"')) {
+        rtlHtml = rtlHtml.replace('<html dir="rtl"', '<html dir="rtl" lang="ar"');
+      }
+    }
+    return rtlHtml;
+  };
+  
   // Copy share URL to clipboard
   const copyShareUrl = () => {
     if (!state.shareUrl) return;
@@ -597,7 +609,7 @@ export function HTMLGeneratorStage({
               <iframe
                 title="HTML Preview"
                 className="w-full h-full border-0"
-                srcDoc={state.currentHTML}
+                srcDoc={ensureRtlHtml(state.currentHTML)}
                 sandbox="allow-scripts allow-same-origin"
               />
             ) : (

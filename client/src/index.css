@@ -10,4 +10,35 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* RTL Support */
+  html[dir="rtl"] {
+    text-align: right;
+  }
+  
+  /* RTL specific adjustments for UI components */
+  html[dir="rtl"] .ml-auto {
+    margin-left: 0;
+    margin-right: auto;
+  }
+  
+  html[dir="rtl"] .mr-auto {
+    margin-right: 0;
+    margin-left: auto;
+  }
+  
+  /* Mirror icons and directional elements in RTL mode */
+  html[dir="rtl"] .flip-in-rtl {
+    transform: scaleX(-1);
+  }
+  
+  /* Ensure flexbox layouts work properly in RTL */
+  html[dir="rtl"] .flex-row {
+    flex-direction: row-reverse;
+  }
+  
+  /* Don't reverse nested flex rows to maintain correct order */
+  html[dir="rtl"] .flex-row .flex-row {
+    flex-direction: row;
+  }
 }

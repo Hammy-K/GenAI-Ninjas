@@ -10,8 +10,8 @@ import Project from "@/pages/project";
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
   useEffect(() => {
-    document.documentElement.dir = "ltr"; // Changed to LTR for wider compatibility
-    document.documentElement.lang = "en"; // Changed to English for wider compatibility
+    document.documentElement.dir = "rtl"; // Set to RTL for right-to-left layout
+    document.documentElement.lang = "ar"; // Use Arabic as the default language for RTL
   }, []);
 
   return (

@@ -9,6 +9,12 @@ export default function Project() {
   const [html, setHtml] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Set RTL attributes for shared project view
+  useEffect(() => {
+    document.documentElement.dir = "rtl";
+    document.documentElement.lang = "ar";
+  }, []);
 
   useEffect(() => {
     async function fetchProject() {
@@ -46,11 +52,20 @@ export default function Project() {
 
   // If we have HTML content, display it fullscreen without any UI
   if (html) {
+    // Ensure the HTML has RTL attributes if not already present
+    let rtlHtml = html;
+    if (!rtlHtml.includes('dir="rtl"')) {
+      rtlHtml = rtlHtml.replace('<html', '<html dir="rtl"');
+      if (!rtlHtml.includes('lang="ar"')) {
+        rtlHtml = rtlHtml.replace('<html dir="rtl"', '<html dir="rtl" lang="ar"');
+      }
+    }
+    
     return (
       <iframe
         title="Project Preview"
         className="w-full h-screen border-0"
-        srcDoc={html}
+        srcDoc={rtlHtml}
         sandbox="allow-scripts allow-same-origin"
       />
     );
