@@ -8,7 +8,7 @@ export interface QuestState {
   awardedBadges: Record<string, boolean>; // Track which badges have been awarded
 }
 
-const TOTAL_STAGES = 6;
+const TOTAL_STAGES = 7;
 const STORAGE_KEY = 'genAIQuestState';
 
 export function useQuest() {

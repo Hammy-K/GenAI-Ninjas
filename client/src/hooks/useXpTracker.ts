@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 
 /**
- * A custom hook that tracks which XP awards have been given to prevent duplicate awards
+ * A custom hook that tracks which XP awards and badges have been given to prevent duplicate awards
  * across component re-renders and navigation.
  */
 export function useXpTracker() {
   // Use a ref to keep the same Set instance across re-renders
   const awardedXpRef = useRef<Set<string>>(new Set());
+  const awardedBadgesRef = useRef<Set<string>>(new Set());
   
   /**
    * Track if a specific XP award has already been given
@@ -48,10 +49,54 @@ export function useXpTracker() {
     }
     return false;
   };
+
+  /**
+   * Check if a badge has already been awarded from a specific source
+   * @param source The source of the badge award
+   * @param badgeName The name of the badge
+   * @returns True if already awarded, false otherwise
+   */
+  const isAlreadyAwarded = (source: string, badgeName: string): boolean => {
+    const badgeKey = `${badgeName}_${source}`;
+    return awardedBadgesRef.current.has(badgeKey);
+  };
+
+  /**
+   * Mark a badge as awarded from a specific source
+   * @param source The source of the badge award
+   * @param badgeName The name of the badge
+   */
+  const markAsAwarded = (source: string, badgeName: string): void => {
+    const badgeKey = `${badgeName}_${source}`;
+    awardedBadgesRef.current.add(badgeKey);
+  };
+
+  /**
+   * Award XP if not already awarded
+   * @param earnXpFunction The function to call to award XP
+   * @param amount The amount of XP to award
+   * @param source The source/reason for the award
+   * @returns True if XP was newly awarded, false otherwise
+   */
+  const awardIfNotAlreadyAwarded = (
+    earnXpFunction: (amount: number, source?: string) => void,
+    amount: number,
+    source: string
+  ): boolean => {
+    if (!hasAwardedXp(source, amount)) {
+      earnXpFunction(amount, source);
+      markXpAwarded(source, amount);
+      return true;
+    }
+    return false;
+  };
   
   return {
     hasAwardedXp,
     markXpAwarded,
-    awardXpOnce
+    awardXpOnce,
+    isAlreadyAwarded,
+    markAsAwarded,
+    awardIfNotAlreadyAwarded
   };
 }
