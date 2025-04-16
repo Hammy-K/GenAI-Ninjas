@@ -1,14 +1,29 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Image, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
+import { CheckCircle, Image, MessageSquare, Sparkles, RefreshCw, Award, ArrowLeft } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface WrapUpStageProps {
   onRestart: () => void;
   totalXp: number;
   unlockedBadges: string[];
+  onCompleteMission?: (missionId: number) => void;
 }
 
-export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageProps) {
+export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMission }: WrapUpStageProps) {
+  const [location, navigate] = useLocation();
+  
+  // Handle mission completion and return to dashboard
+  const handleCompleteMission = () => {
+    if (onCompleteMission) {
+      // Complete Mission 1
+      onCompleteMission(1);
+    }
+    
+    // Navigate back to dashboard
+    navigate('/');
+  };
+  
   const badges = [
     {
       id: 'prompt_engineer_badge',
@@ -93,11 +108,22 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
               </ul>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button 
+              onClick={handleCompleteMission} 
+              size="lg"
+              variant="default"
+              className="flex items-center w-full sm:w-auto"
+            >
+              <Award className="mr-2 h-5 w-5" />
+              <span>Mission Completed</span>
+            </Button>
+            
             <Button 
               onClick={onRestart} 
               size="lg"
-              className="flex items-center"
+              variant="outline"
+              className="flex items-center w-full sm:w-auto"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               <span>Start Again</span>

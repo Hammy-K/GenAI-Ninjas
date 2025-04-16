@@ -6,6 +6,7 @@ export interface QuestState {
   unlockedBadges: string[];
   awardedXp: Record<string, boolean>; // Track which XP awards have been given
   awardedBadges: Record<string, boolean>; // Track which badges have been awarded
+  completedMissions: number[]; // Track which missions have been completed
 }
 
 const TOTAL_STAGES = 6;
@@ -22,7 +23,8 @@ export function useQuest() {
           xp: 0, 
           unlockedBadges: [],
           awardedXp: {},
-          awardedBadges: {}
+          awardedBadges: {},
+          completedMissions: []
         };
   });
   
@@ -126,6 +128,29 @@ export function useQuest() {
     });
   };
   
+  // Complete a mission
+  const completeMission = (missionId: number) => {
+    setState(prev => {
+      // Skip if this mission is already completed
+      if (prev.completedMissions.includes(missionId)) {
+        console.log(`Mission ${missionId} already completed`);
+        return prev;
+      }
+      
+      console.log(`Completing mission: ${missionId}`);
+      
+      return {
+        ...prev,
+        completedMissions: [...prev.completedMissions, missionId]
+      };
+    });
+  };
+  
+  // Check if a mission is completed
+  const isMissionCompleted = (missionId: number) => {
+    return state.completedMissions.includes(missionId);
+  };
+  
   // Reset the quest
   const resetQuest = () => {
     setState({
@@ -133,7 +158,8 @@ export function useQuest() {
       xp: 0,
       unlockedBadges: [],
       awardedXp: {},
-      awardedBadges: {}
+      awardedBadges: {},
+      completedMissions: []
     });
   };
   
@@ -145,6 +171,8 @@ export function useQuest() {
     setStage,
     earnXp,
     unlockBadge,
+    completeMission,
+    isMissionCompleted,
     restart: resetQuest  // Alias for resetQuest to match the expected name in home.tsx
   };
 }
