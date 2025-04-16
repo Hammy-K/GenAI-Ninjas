@@ -93,9 +93,13 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         }
       } else {
         setGeneratedText(response.text);
-        onEarnXp(20);
-        setHasCompleted(true);
-        onUnlockBadge('prompt_master_badge');
+        
+        // Only award XP and badge once
+        if (!state.hasCompleted) {
+          onEarnXp(20);
+          onUnlockBadge('prompt_master_badge');
+          setHasCompleted(true);
+        }
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -123,9 +127,13 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         }
       } else {
         setGeneratedImageUrl(response.url);
-        onEarnXp(30);
-        setHasCompleted(true);
-        onUnlockBadge('image_artist_badge');
+        
+        // Only award XP and badge once
+        if (!state.hasCompleted) {
+          onEarnXp(30);
+          onUnlockBadge('image_artist_badge');
+          setHasCompleted(true);
+        }
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
