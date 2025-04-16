@@ -36,7 +36,12 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStagePr
     try {
       const response = await generateText({ prompt: textPrompt });
       if (response.error) {
-        setError(response.error);
+        // Check for quota exceeded error
+        if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
+          setError("API quota exceeded. Please try again later or use a different API key.");
+        } else {
+          setError(response.error);
+        }
       } else {
         setGeneratedText(response.text);
         onEarnXp(20);
@@ -59,7 +64,14 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStagePr
     try {
       const response = await generateImage({ prompt: imagePrompt });
       if (response.error) {
-        setError(response.error);
+        // Check for quota exceeded or bad request errors
+        if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
+          setError("API quota exceeded. Please try again later or use a different API key.");
+        } else if (response.error.includes("check your input") || response.error.toLowerCase().includes("400")) {
+          setError("Invalid prompt. Please try a different description without potentially problematic content.");
+        } else {
+          setError(response.error);
+        }
       } else {
         setGeneratedImageUrl(response.url);
         onEarnXp(30);
@@ -196,7 +208,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStagePr
             <Button 
               onClick={onComplete} 
               size="lg"
-              disabled={!hasCompleted}
+              disabled={false} // Allow users to proceed even if API calls fail
             >
               <span>Continue to Next Stage</span>
               <ArrowRight className="ml-2 h-4 w-4" />

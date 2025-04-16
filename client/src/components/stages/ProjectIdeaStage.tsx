@@ -39,8 +39,15 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
       setProjectIdea(idea);
       onEarnXp(40);
       onUnlockBadge('project_creator_badge');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } catch (err: any) {
+      const error = err as Error;
+      if (error.message && (error.message.includes("quota") || error.message.toLowerCase().includes("429"))) {
+        setError("API quota exceeded. Please try again later or use a different API key.");
+      } else if (error.message && (error.message.includes("check your input") || error.message.toLowerCase().includes("400"))) {
+        setError("Invalid input. Please try different project parameters.");
+      } else {
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -182,7 +189,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
             <Button 
               onClick={onComplete} 
               size="lg"
-              disabled={!projectIdea}
+              disabled={false} // Allow users to proceed even if API calls fail
             >
               <span>Continue to Final Stage</span>
               <ArrowRight className="ml-2 h-4 w-4" />

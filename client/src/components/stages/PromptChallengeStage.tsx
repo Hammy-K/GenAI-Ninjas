@@ -35,8 +35,14 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
         onEarnXp(15);
         setHasCompleted(true);
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } catch (err: any) {
+      const error = err as Error;
+      if (error instanceof Error && error.message && 
+          (error.message.includes("quota") || error.message.toLowerCase().includes("429"))) {
+        setError("API quota exceeded. Please try again later or use a different API key.");
+      } else {
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -122,7 +128,7 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
             <Button 
               onClick={onComplete} 
               size="lg"
-              disabled={!hasCompleted}
+              disabled={false} // Allow users to proceed even if API calls fail
             >
               <span>Continue to Next Stage</span>
               <ArrowRight className="ml-2 h-4 w-4" />
