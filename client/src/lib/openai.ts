@@ -4,7 +4,7 @@ import { apiRequest } from './queryClient';
 const GPT_MODEL = "gpt-4o";
 const IMAGE_MODEL = "dall-e-3";
 
-type Message = {
+export type Message = {
   role: 'system' | 'user' | 'assistant';
   content: string;
 };

@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Image, Loader2, MessageSquare, ArrowRight, ArrowLeft } from 'lucide-react';
-import { generateText, generateImage } from '@/lib/openai';
+import { generateText, generateImage, type Message } from '@/lib/openai';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useStageState } from '@/hooks/useStageState';
 
@@ -22,7 +22,7 @@ interface TryAIState {
   generatedText: string;
   generatedImageUrl: string;
   hasCompleted: boolean;
-  messageHistory: Array<{ role: string; content: string }>;
+  messageHistory: Message[];
 }
 
 export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryAIStageProps) {
@@ -164,44 +164,89 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
               
               <TabsContent value="text" className="mt-4">
                 <div className="space-y-4">
-                  <div>
-                    <Textarea 
-                      placeholder="Enter a prompt (e.g., 'Write a short story about a space adventure')"
-                      value={state.textPrompt}
-                      onChange={(e) => setTextPrompt(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                  
-                  {error && state.activeTab === 'text' && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {state.generatedText && (
-                    <div className="bg-neutral-50 p-4 rounded-lg border">
-                      <h3 className="font-bold mb-2">Generated Text:</h3>
-                      <p className="whitespace-pre-wrap">{state.generatedText}</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between">
-                    <Button 
-                      onClick={handleGenerateText} 
-                      disabled={isGeneratingText || !state.textPrompt.trim()}
-                    >
-                      {isGeneratingText ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating...
-                        </>
+                  {/* Display conversation thread if there's message history */}
+                  <div className="bg-neutral-50 p-4 rounded-lg border mb-4">
+                    <h3 className="font-bold mb-3">AI Conversation</h3>
+                    <div className="space-y-4 overflow-y-auto max-h-[350px] p-1 mb-4">
+                      {state.messageHistory && state.messageHistory.length > 0 ? (
+                        state.messageHistory.map((message, index) => (
+                          <div 
+                            key={index} 
+                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`p-3 rounded-lg max-w-[85%] ${
+                                message.role === 'user' 
+                                  ? 'bg-blue-50 border border-blue-100 text-blue-800' 
+                                  : 'bg-gray-100 border border-gray-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
+                                  ${message.role === 'user' 
+                                    ? 'bg-blue-200 text-blue-700' 
+                                    : 'bg-gray-200 text-gray-700'
+                                  }`}
+                                >
+                                  {message.role === 'user' ? 'U' : 'AI'}
+                                </div>
+                                <p className="text-xs font-medium text-gray-500">
+                                  {message.role === 'user' ? 'You' : 'AI Assistant'}
+                                </p>
+                              </div>
+                              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                            </div>
+                          </div>
+                        ))
                       ) : (
-                        'Generate Text'
+                        <div className="flex items-center justify-center h-[150px] text-gray-400">
+                          <div className="text-center">
+                            <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p>No messages yet. Start a conversation!</p>
+                          </div>
+                        </div>
                       )}
-                    </Button>
+                    </div>
+                    
+                    {error && state.activeTab === 'text' && (
+                      <Alert variant="destructive" className="mb-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Textarea 
+                        placeholder="Type your message here... (e.g., 'Write a short story about a space adventure')"
+                        value={state.textPrompt}
+                        onChange={(e) => setTextPrompt(e.target.value)}
+                        className="min-h-[80px] flex-grow"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            e.preventDefault();
+                            if (!isGeneratingText && state.textPrompt.trim()) {
+                              handleGenerateText();
+                            }
+                          }
+                        }}
+                      />
+                      <Button 
+                        onClick={handleGenerateText} 
+                        disabled={isGeneratingText || !state.textPrompt.trim()}
+                        className="self-end h-10 px-4"
+                      >
+                        {isGeneratingText ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send">
+                            <path d="m22 2-7 20-4-9-9-4Z"/>
+                            <path d="M22 2 11 13"/>
+                          </svg>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Press Ctrl+Enter to send your message</p>
                   </div>
                 </div>
               </TabsContent>
