@@ -166,17 +166,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content: `You are a web development expert. Generate a complete HTML page based on the user's request.
             Include all necessary HTML, CSS, and JavaScript in a single, self-contained HTML file.
             
-            Return a complete, valid HTML document with <!DOCTYPE html>, <html>, <head>, <style>, <body>, and <script> tags.
-            Make sure the code is fully functional, well-structured, and suitable for beginners to understand.
-            Include comments in the code to explain key concepts.
-            Keep the code relatively simple but functional.
-            Design should be mobile-friendly and responsive.`
+            VERY IMPORTANT:
+            - Return ONLY the raw HTML code, nothing else
+            - Do not include any explanations, descriptions, or text outside the HTML
+            - The response must start with <!DOCTYPE html> and contain a complete web page
+            - Make sure the code is fully functional, well-structured, and suitable for beginners
+            - Include comments in the code to explain key concepts
+            - Keep the code relatively simple but functional
+            - Design should be mobile-friendly and responsive`
           },
           ...messages
         ],
       });
       
-      const generatedHTML = response.choices[0].message.content;
+      let generatedHTML = response.choices[0].message.content;
+      
+      // Ensure the response starts with <!DOCTYPE html>
+      if (!generatedHTML.trim().startsWith('<!DOCTYPE')) {
+        // Try to extract just the HTML if there's explanation text
+        const doctypeIndex = generatedHTML.indexOf('<!DOCTYPE');
+        if (doctypeIndex >= 0) {
+          generatedHTML = generatedHTML.substring(doctypeIndex);
+        } else {
+          // Fallback to a basic HTML template
+          generatedHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generated Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+  </style>
+</head>
+<body>
+  <p>The AI had trouble generating HTML. Please try again with a different prompt.</p>
+</body>
+</html>`;
+        }
+      }
       
       // Return the complete response with the assistant's message
       return res.json({
