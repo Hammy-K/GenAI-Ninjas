@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
-  AlertCircle, ChevronLeft, ChevronRight, Code, Loader2, 
+  AlertCircle, ArrowLeft, ArrowRight, Code, Loader2, 
   Send, Wand2, X, Share2, Save, Plus, AlertTriangle
 } from 'lucide-react';
 import { Confetti } from '@/components/ui/confetti';
@@ -507,31 +507,9 @@ export function HTMLGeneratorStage({
         </DialogContent>
       </Dialog>
       
-      {/* Header with Navigation */}
+      {/* Header */}
       <div className="py-6 border-b bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onBack}
-              className="flex items-center gap-1"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleContinue}
-              className="flex items-center gap-1"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
+        <div className="max-w-6xl mx-auto px-4">          
           <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
             <Wand2 className="h-6 w-6 text-purple-500" />
             AI Web Builder
@@ -748,6 +726,29 @@ export function HTMLGeneratorStage({
               </div>
             </div>
           )}
+        </div>
+      </div>
+      
+      {/* Footer with Navigation */}
+      <div className="bg-white border-t py-4 mt-6">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between">
+            <Button 
+              onClick={onBack} 
+              variant="outline" 
+              size="lg"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Previous Stage</span>
+            </Button>
+            <Button 
+              onClick={handleContinue} 
+              size="lg"
+            >
+              <span>Continue to Next Stage</span>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
