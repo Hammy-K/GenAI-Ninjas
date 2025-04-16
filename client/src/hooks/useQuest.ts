@@ -42,6 +42,16 @@ export function useQuest() {
     }
   };
   
+  // Go back to the previous stage
+  const goToPreviousStage = () => {
+    if (state.currentStage > 1) {
+      setState(prev => ({
+        ...prev,
+        currentStage: prev.currentStage - 1
+      }));
+    }
+  };
+  
   // Set a specific stage
   const setStage = (stage: number) => {
     if (stage >= 1 && stage <= TOTAL_STAGES) {
@@ -83,6 +93,7 @@ export function useQuest() {
     ...state,
     totalStages: TOTAL_STAGES,
     goToNextStage,
+    goToPreviousStage,
     setStage,
     earnXp,
     unlockBadge,
