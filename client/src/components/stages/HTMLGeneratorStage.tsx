@@ -636,7 +636,7 @@ export function HTMLGeneratorStage({
               className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
             >
               <img 
-                src="/attached_assets/Group 26087843.png" 
+                src="/assets/Group 26087843.png" 
                 alt="AI Assistant" 
                 className="w-16 h-16 object-cover"
               />
@@ -650,7 +650,7 @@ export function HTMLGeneratorStage({
               <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center">
                   <img 
-                    src="/attached_assets/Group 26087843.png" 
+                    src="/assets/Group 26087843.png" 
                     alt="AI Assistant" 
                     className="h-6 w-6 rounded-full mr-2"
                   />
@@ -695,7 +695,7 @@ export function HTMLGeneratorStage({
                           ) : (
                             <div className="flex items-center">
                               <img 
-                                src="/attached_assets/Group 26087843.png" 
+                                src="/assets/Group 26087843.png" 
                                 alt="AI Assistant" 
                                 className="h-5 w-5 rounded-full mr-1.5"
                               />
@@ -713,7 +713,7 @@ export function HTMLGeneratorStage({
                       <div className="p-3 rounded-lg bg-muted mr-6">
                         <div className="flex items-center mb-2">
                           <img 
-                            src="/attached_assets/Group 26087843.png" 
+                            src="/assets/Group 26087843.png" 
                             alt="AI Assistant" 
                             className="h-5 w-5 rounded-full mr-1.5"
                           />
