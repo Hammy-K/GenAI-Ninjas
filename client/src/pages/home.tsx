@@ -2,11 +2,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
-import { DiscoveryStage } from '@/components/stages/DiscoveryStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
 import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
-import { ProjectIdeaStage } from '@/components/stages/ProjectIdeaStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
 import { useQuest } from '@/hooks/useQuest';
 
@@ -24,13 +22,19 @@ export default function Home() {
   } = useQuest();
   
   // Render current stage based on stage number
+  // New flow:
+  // 1. Welcome to your first GenAI mission
+  // 2. Prompt Engineering 101 (was Step 5)
+  // 3. Try AI Tools (Text and Image) (was Step 3)
+  // 4. Build a Web App (was Step 4)
+  // 5. Wrap-up with Submission Form (was Step 7)
   const renderStage = () => {
     switch (currentStage) {
       case 1:
         return <WelcomeStage onComplete={goToNextStage} />;
       case 2:
         return (
-          <DiscoveryStage 
+          <PromptChallengeStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onBack={goToPrevStage}
@@ -55,23 +59,6 @@ export default function Home() {
           />
         );
       case 5:
-        return (
-          <PromptChallengeStage 
-            onComplete={goToNextStage} 
-            onEarnXp={earnXp}
-            onBack={goToPrevStage}
-          />
-        );
-      case 6:
-        return (
-          <ProjectIdeaStage 
-            onComplete={goToNextStage} 
-            onEarnXp={earnXp}
-            onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
-          />
-        );
-      case 7:
         return (
           <WrapUpStage 
             onRestart={restart}
