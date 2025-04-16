@@ -265,15 +265,50 @@ export function HTMLGeneratorStage({
       try {
         // Add a safety timeout to prevent indefinite hanging
         const savePromise = saveProject(state.currentHTML);
+        
+        // Extend timeout to 30 seconds for Firebase operations in Replit
         const timeoutPromise = new Promise<string>((resolve) => {
           setTimeout(() => {
             console.log("Save operation timed out, using fallback ID");
+            // Try to save to localStorage as backup
+            try {
+              const backupKey = `html_backup_${Date.now()}`;
+              localStorage.setItem(backupKey, state.currentHTML);
+              console.log("HTML content backed up to localStorage with key:", backupKey);
+            } catch (backupError) {
+              console.error("Failed to backup HTML to localStorage:", backupError);
+            }
+            
             resolve(`project_${Date.now()}_timeout`);
-          }, 10000); // 10 second timeout
+          }, 30000); // 30 second timeout - Firebase operations can be slow in Replit
         });
         
-        // Race between the actual save and the timeout
-        projectId = await Promise.race([savePromise, timeoutPromise]);
+        // Double attempt: Try native save first, if it fails within 15 seconds, use a different approach
+        const attemptTimeoutPromise = new Promise<string>(async (resolve) => {
+          setTimeout(async () => {
+            console.log("First save attempt taking too long, trying alternative save method...");
+            try {
+              // Create simplified project ID without Firebase
+              const localProjectId = `project_${Date.now()}_local`;
+              
+              // Store in localStorage as a last resort
+              const projectData = {
+                html: state.currentHTML,
+                createdAt: new Date().toISOString()
+              };
+              localStorage.setItem(`project_${localProjectId}`, JSON.stringify(projectData));
+              console.log("Project saved to localStorage as backup");
+              
+              resolve(localProjectId);
+            } catch (err) {
+              console.error("Alternative save method failed:", err);
+              resolve(`project_${Date.now()}_fallback`);
+            }
+          }, 15000); // Try alternative approach after 15 seconds
+        });
+        
+        // Race between the actual save, the alternative approach, and the final timeout
+        projectId = await Promise.race([savePromise, attemptTimeoutPromise, timeoutPromise]);
       } catch (saveError: any) {
         console.error("Error during project save:", saveError);
         projectId = `project_${Date.now()}_error_fallback`;

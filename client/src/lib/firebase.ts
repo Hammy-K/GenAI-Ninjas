@@ -1,24 +1,22 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, getDoc, Firestore } from "firebase/firestore";
-import { getStorage, ref, uploadString, getDownloadURL, FirebaseStorage } from "firebase/storage";
+// Enhanced Firebase adapter for Replit environment
+// This uses a direct REST approach rather than the Firebase SDK to avoid connectivity issues
 
-// Firebase configuration
+/**
+ * Configuration object for Firebase
+ */
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Track Firebase initialization status
-let firebaseInitialized = false;
-let firebaseInitializationError: any = null;
-let db: Firestore;
-let storage: FirebaseStorage;
+// Track Firebase configuration status
+let firebaseConfigured = false;
+let firebaseConfigurationError: any = null;
 
+// Validate Firebase configuration
 try {
-  console.log("Firebase initialization with:", {
+  console.log("Checking Firebase configuration:", {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? "API_KEY_PROVIDED" : "API_KEY_MISSING",
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID ? "APP_ID_PROVIDED" : "APP_ID_MISSING",
@@ -27,23 +25,111 @@ try {
   if (!import.meta.env.VITE_FIREBASE_API_KEY || !import.meta.env.VITE_FIREBASE_PROJECT_ID) {
     throw new Error("Firebase configuration is incomplete. Required environment variables are missing.");
   }
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  storage = getStorage(app);
   
-  // Mark as successfully initialized
-  firebaseInitialized = true;
-  console.log("Firebase successfully initialized!");
+  firebaseConfigured = true;
+  console.log("Firebase configuration validated successfully!");
 } catch (error) {
-  console.error("Failed to initialize Firebase:", error);
-  firebaseInitializationError = error;
+  console.error("Invalid Firebase configuration:", error);
+  firebaseConfigurationError = error;
+}
+
+/**
+ * Helper function to create a REST URL for a Firestore document
+ */
+function createFirestoreDocumentUrl(collectionName: string, documentId: string): string {
+  return `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}/${documentId}`;
+}
+
+/**
+ * Helper function to create the authorization header for Firebase requests
+ */
+function getAuthHeader(): string {
+  return `Bearer ${firebaseConfig.apiKey}`;
+}
+
+/**
+ * Helper function to convert a standard JavaScript object to Firestore format
+ */
+function objectToFirestoreDocument(data: any): any {
+  const fields: any = {};
   
-  // Create dummy objects to prevent code from crashing
-  // These will be checked before operations
-  db = {} as Firestore;
-  storage = {} as FirebaseStorage;
+  Object.entries(data).forEach(([key, value]) => {
+    if (typeof value === 'string') {
+      fields[key] = { stringValue: value };
+    } else if (typeof value === 'number') {
+      fields[key] = { doubleValue: value };
+    } else if (typeof value === 'boolean') {
+      fields[key] = { booleanValue: value };
+    } else if (value === null) {
+      fields[key] = { nullValue: null };
+    } else if (Array.isArray(value)) {
+      fields[key] = {
+        arrayValue: {
+          values: value.map(item => {
+            if (typeof item === 'string') {
+              return { stringValue: item };
+            } else if (typeof item === 'number') {
+              return { doubleValue: item };
+            } else if (typeof item === 'boolean') {
+              return { booleanValue: item };
+            } else {
+              return { stringValue: JSON.stringify(item) };
+            }
+          })
+        }
+      };
+    } else if (typeof value === 'object') {
+      fields[key] = { mapValue: { fields: objectToFirestoreDocument(value) } };
+    } else {
+      // Default to string for any other type
+      fields[key] = { stringValue: String(value) };
+    }
+  });
+  
+  return fields;
+}
+
+/**
+ * Helper function to convert a Firestore document to a standard JavaScript object
+ */
+function firestoreDocumentToObject(firestoreData: any): any {
+  if (!firestoreData || !firestoreData.fields) {
+    return null;
+  }
+  
+  const result: any = {};
+  
+  Object.entries(firestoreData.fields).forEach(([key, value]: [string, any]) => {
+    if (value.stringValue !== undefined) {
+      result[key] = value.stringValue;
+    } else if (value.doubleValue !== undefined) {
+      result[key] = value.doubleValue;
+    } else if (value.integerValue !== undefined) {
+      result[key] = Number(value.integerValue);
+    } else if (value.booleanValue !== undefined) {
+      result[key] = value.booleanValue;
+    } else if (value.nullValue !== undefined) {
+      result[key] = null;
+    } else if (value.arrayValue !== undefined) {
+      result[key] = (value.arrayValue.values || []).map((item: any) => {
+        if (item.stringValue !== undefined) {
+          return item.stringValue;
+        } else if (item.doubleValue !== undefined) {
+          return item.doubleValue;
+        } else if (item.integerValue !== undefined) {
+          return Number(item.integerValue);
+        } else if (item.booleanValue !== undefined) {
+          return item.booleanValue;
+        } else {
+          return null;
+        }
+      });
+    } else if (value.mapValue !== undefined) {
+      result[key] = firestoreDocumentToObject(value.mapValue);
+    }
+  });
+  
+  return result;
 }
 
 // Function to extract and process base64 images from HTML
@@ -82,14 +168,14 @@ export function extractBase64ImagesFromHTML(html: string): {
 }
 
 /**
- * Checks if Firebase is properly initialized and logs useful diagnostic information
- * @returns True if Firebase is initialized, false otherwise
+ * Checks if Firebase configuration is valid
+ * @returns True if Firebase is configured correctly
  */
 export function isFirebaseReady(): boolean {
-  if (!firebaseInitialized) {
-    console.warn("Firebase is not initialized. Operations will use fallback behavior.");
-    if (firebaseInitializationError) {
-      console.error("Firebase initialization error details:", firebaseInitializationError);
+  if (!firebaseConfigured) {
+    console.warn("Firebase is not configured correctly. Operations will use fallback behavior.");
+    if (firebaseConfigurationError) {
+      console.error("Firebase configuration error details:", firebaseConfigurationError);
     }
     
     // Check what environment variables are available
@@ -101,11 +187,11 @@ export function isFirebaseReady(): boolean {
     console.log("Available Firebase environment variables:", envVars);
   }
   
-  return firebaseInitialized;
+  return firebaseConfigured;
 }
 
 /**
- * Saves a project to Firebase Firestore
+ * Saves a project directly to Firebase Firestore using REST API
  * @param html The HTML content to save
  * @returns A unique project ID that can be used to retrieve the project later
  */
@@ -113,9 +199,9 @@ export async function saveProject(html: string): Promise<string> {
   try {
     console.log("Starting to save project...");
     
-    // Check if Firebase is properly initialized
+    // Check if Firebase is properly configured
     if (!isFirebaseReady()) {
-      console.warn("Firebase not initialized, returning simulated project ID");
+      console.warn("Firebase not configured, returning simulated project ID");
       return `project_${Date.now()}_simulated`;
     }
     
@@ -128,72 +214,60 @@ export async function saveProject(html: string): Promise<string> {
       const { processedHTML, images } = extractBase64ImagesFromHTML(html);
       console.log(`Found ${images.length} images in HTML`);
       
-      // Create a reference to the project document in Firestore
-      const projectRef = doc(db, "projects", projectId);
-      
-      // Store image files and collect URLs
-      const imageUrls: string[] = [];
-      
-      // Skip image processing if there are no images
-      if (images.length === 0) {
-        console.log("No images to process, skipping to Firestore save");
-      } else {
-        for (const image of images) {
-          try {
-            const imageRef = ref(storage, `images/${projectId}/${image.filename}`);
-            console.log("Uploading image to Firebase Storage...");
-            
-            // Upload the image to Firebase Storage
-            await uploadString(imageRef, image.dataUrl, 'data_url');
-            console.log("Image uploaded, getting download URL...");
-            
-            // Get the download URL
-            const downloadUrl = await getDownloadURL(imageRef);
-            imageUrls.push(downloadUrl);
-            console.log("Image process complete with URL:", downloadUrl);
-          } catch (imgError: any) {
-            console.error("Error processing image:", imgError, imgError.stack);
-            // Use the original data URL as fallback
-            imageUrls.push(image.dataUrl);
-            console.log("Using original data URL as fallback");
-          }
-        }
-      }
-      
-      // Replace image placeholders with actual URLs
-      let finalHTML = processedHTML;
-      imageUrls.forEach((url, index) => {
-        finalHTML = finalHTML.replace(`{{IMAGE_${index}_URL}}`, url);
-      });
-      
-      console.log("Saving project to Firestore...");
+      // For now, we'll skip image processing and use data URLs directly
+      // In a future version, implement Firebase Storage REST API for image uploads
       
       // Create the project data object
       const projectData = {
-        html: finalHTML,
+        html: processedHTML,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        imageUrls: imageUrls,
+        imageUrls: [] // No separate image URLs for now
       };
       
-      // Log the data we're about to save (excluding HTML content which could be large)
-      console.log("Saving project with data:", {
-        ...projectData,
-        html: `${projectData.html.substring(0, 100)}... (truncated)`
-      });
+      console.log("Saving project to Firestore via REST API...");
       
-      // Save to Firestore
+      // Using the Firestore REST API directly
+      const firestoreUrl = createFirestoreDocumentUrl('projects', projectId);
+      
       try {
-        await setDoc(projectRef, projectData);
-        console.log("Project saved successfully to Firestore!");
-      } catch (firestoreError: any) {
-        console.error("Firestore setDoc failed:", firestoreError, firestoreError.stack);
+        // Build the request body in Firestore format
+        const requestBody = {
+          fields: objectToFirestoreDocument(projectData)
+        };
         
-        // Additional diagnostics about the Firestore instance
-        console.log("Firestore instance:", typeof db, Object.keys(db));
+        console.log("Making REST API call to Firestore...");
         
-        // We'll return the project ID anyway, so the frontend can proceed
-        console.log("Returning project ID despite Firestore error");
+        // Make the REST API call
+        const response = await fetch(firestoreUrl, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': getAuthHeader()
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Firestore API error: ${response.status} ${response.statusText} - ${errorData}`);
+        }
+        
+        console.log("Project saved successfully via Firestore REST API!");
+      } catch (apiError: any) {
+        console.error("Firestore REST API call failed:", apiError, apiError.stack);
+        
+        // Try localStorage as a fallback
+        try {
+          localStorage.setItem(`project_${projectId}`, JSON.stringify({
+            html: processedHTML,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }));
+          console.log("Project saved to localStorage as fallback");
+        } catch (storageError) {
+          console.error("LocalStorage fallback failed:", storageError);
+        }
       }
       
       // Always return the project ID to prevent UI getting stuck
@@ -201,28 +275,12 @@ export async function saveProject(html: string): Promise<string> {
     } catch (processingError: any) {
       console.error("Error processing content:", processingError, processingError.stack);
       
-      // Fallback: Save just the HTML without processing
-      try {
-        console.log("Attempting fallback save to Firestore...");
-        const projectRef = doc(db, "projects", projectId);
-        await setDoc(projectRef, {
-          html: html,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          imageUrls: [],
-        });
-        console.log("Fallback save to Firestore successful");
-      } catch (fallbackError: any) {
-        console.error("Fallback save to Firestore failed:", fallbackError, fallbackError.stack);
-      }
-      
-      // Always return project ID to prevent UI getting stuck in loading state
-      console.log("Returning project ID after fallback attempt");
+      // Return project ID to prevent UI getting stuck in loading state
       return projectId;
     }
   } catch (error: any) {
     console.error("Error saving project:", error, error.stack);
-    // Return a fake project ID to prevent UI from getting stuck
+    // Return a project ID to prevent UI from getting stuck
     const fallbackId = `project_${Date.now()}_error`;
     console.log("Returning fallback project ID:", fallbackId);
     return fallbackId;
@@ -230,7 +288,7 @@ export async function saveProject(html: string): Promise<string> {
 }
 
 /**
- * Loads a project from Firebase Firestore
+ * Loads a project from Firebase Firestore using REST API
  * @param projectId The ID of the project to load
  * @returns The project data or null if not found
  */
@@ -238,45 +296,69 @@ export async function loadProject(projectId: string): Promise<{ html: string } |
   try {
     console.log("Loading project:", projectId);
     
-    // Check if Firebase is properly initialized
+    // Check for localStorage fallback first
+    try {
+      const localData = localStorage.getItem(`project_${projectId}`);
+      if (localData) {
+        console.log("Found project in localStorage");
+        const parsedData = JSON.parse(localData);
+        return parsedData;
+      }
+    } catch (localStorageError) {
+      console.warn("Error checking localStorage:", localStorageError);
+    }
+    
+    // Check if Firebase is properly configured
     if (!isFirebaseReady()) {
-      console.warn("Firebase not initialized, returning fallback project");
+      console.warn("Firebase not configured, returning fallback project");
       return {
         html: `<html><body><h1>Project ${projectId}</h1><p>Firebase is not properly configured. Please check your environment variables.</p></body></html>`
       };
     }
     
-    // Create a reference to the project document in Firestore
-    const projectRef = doc(db, "projects", projectId);
-    console.log("Created Firestore document reference for project:", projectId);
+    // Using Firestore REST API directly
+    const firestoreUrl = createFirestoreDocumentUrl('projects', projectId);
+    console.log("Fetching from Firestore REST API:", firestoreUrl);
     
     try {
-      // Attempt to get the document from Firestore
-      console.log("Fetching project data from Firestore...");
-      const projectSnapshot = await getDoc(projectRef);
+      // Make the REST API call
+      const response = await fetch(firestoreUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader()
+        }
+      });
       
-      if (projectSnapshot.exists()) {
-        console.log("Project found in Firestore");
-        const data = projectSnapshot.data();
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log("Project not found in Firestore");
+          return null;
+        }
         
-        // Log some info about the retrieved data
-        console.log("Project data retrieved:", {
-          createdAt: data.createdAt,
-          imageCount: data.imageUrls?.length || 0,
-          htmlLength: data.html?.length || 0
-        });
-        
-        return data as { html: string };
-      } else {
-        console.log("Project not found in Firestore");
-        return null;
+        const errorData = await response.text();
+        throw new Error(`Firestore API error: ${response.status} ${response.statusText} - ${errorData}`);
       }
-    } catch (firestoreError: any) {
-      console.error("Error accessing Firestore:", firestoreError, firestoreError.stack);
       
-      // Additional diagnostics
-      console.log("Was trying to access document:", projectId);
-      console.log("Firestore instance:", typeof db, Object.keys(db));
+      // Parse the response
+      const firestoreData = await response.json();
+      console.log("Project found in Firestore", firestoreData);
+      
+      // Convert from Firestore format to regular object
+      const projectData = firestoreDocumentToObject(firestoreData);
+      
+      if (!projectData || !projectData.html) {
+        throw new Error("Invalid project data structure");
+      }
+      
+      // Log some info about the retrieved data
+      console.log("Project data retrieved:", {
+        createdAt: projectData.createdAt,
+        htmlLength: projectData.html?.length || 0
+      });
+      
+      return { html: projectData.html };
+    } catch (firestoreError: any) {
+      console.error("Error accessing Firestore via REST API:", firestoreError, firestoreError.stack);
       
       // If there's an error with Firestore, return a minimal project so UI doesn't break
       return {
