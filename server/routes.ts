@@ -145,239 +145,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Generate Code endpoint
-  app.post('/api/ai/generate-code', async (req, res) => {
+  // Generate HTML code endpoint with chat history
+  app.post('/api/ai/generate-html', async (req, res) => {
     try {
-      const { prompt } = req.body;
+      const { messages } = req.body;
       
-      if (!prompt) {
-        return res.status(400).json({ error: 'Prompt is required' });
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Messages array is required' });
       }
       
-      // For testing purposes, return a mock response
-      if (process.env.NODE_ENV === 'development') {
-        // Create a simple mock response based on the prompt
-        const mockResponse = {
-          html: `<!-- ${prompt} -->
-<div class="calculator">
-  <div class="display" id="display">0</div>
-  <div class="buttons">
-    <button class="btn" onclick="clearDisplay()">C</button>
-    <button class="btn" onclick="appendToDisplay('7')">7</button>
-    <button class="btn" onclick="appendToDisplay('8')">8</button>
-    <button class="btn" onclick="appendToDisplay('9')">9</button>
-    <button class="btn operator" onclick="setOperator('+')">+</button>
-    <button class="btn" onclick="appendToDisplay('4')">4</button>
-    <button class="btn" onclick="appendToDisplay('5')">5</button>
-    <button class="btn" onclick="appendToDisplay('6')">6</button>
-    <button class="btn operator" onclick="setOperator('-')">-</button>
-    <button class="btn" onclick="appendToDisplay('1')">1</button>
-    <button class="btn" onclick="appendToDisplay('2')">2</button>
-    <button class="btn" onclick="appendToDisplay('3')">3</button>
-    <button class="btn operator" onclick="setOperator('*')">×</button>
-    <button class="btn" onclick="appendToDisplay('0')">0</button>
-    <button class="btn" onclick="appendToDisplay('.')">.</button>
-    <button class="btn equals" onclick="calculate()">=</button>
-    <button class="btn operator" onclick="setOperator('/')">÷</button>
-  </div>
-</div>`,
-          css: `.calculator {
-  max-width: 300px;
-  margin: 0 auto;
-  background-color: #f0f0f0;
-  border-radius: 10px;
-  padding: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.display {
-  background-color: #fff;
-  padding: 15px;
-  font-size: 24px;
-  text-align: right;
-  margin-bottom: 15px;
-  border-radius: 5px;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
-  overflow: hidden;
-  height: 50px;
-}
-
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.btn {
-  padding: 15px;
-  font-size: 18px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: #e0e0e0;
-  transition: background-color 0.2s;
-}
-
-.btn:hover {
-  background-color: #d0d0d0;
-}
-
-.operator {
-  background-color: #ffa500;
-  color: white;
-}
-
-.operator:hover {
-  background-color: #ff8c00;
-}
-
-.equals {
-  background-color: #4caf50;
-  color: white;
-}
-
-.equals:hover {
-  background-color: #388e3c;
-}`,
-          js: `// Variables to store the calculator state
-let displayValue = '0';
-let firstOperand = null;
-let operator = null;
-let waitingForSecondOperand = false;
-
-// Function to update the display
-function updateDisplay() {
-  document.getElementById('display').textContent = displayValue;
-}
-
-// Function to append a number to the display
-function appendToDisplay(digit) {
-  if (waitingForSecondOperand) {
-    displayValue = digit;
-    waitingForSecondOperand = false;
-  } else {
-    // Replace 0 with the new digit, otherwise append
-    displayValue = displayValue === '0' ? digit : displayValue + digit;
-  }
-  updateDisplay();
-}
-
-// Function to set the operator
-function setOperator(nextOperator) {
-  // Store the first operand if not already stored
-  if (firstOperand === null) {
-    firstOperand = parseFloat(displayValue);
-  } else if (operator) {
-    // If we already have an operator, perform the calculation
-    const result = calculate();
-    displayValue = String(result);
-    firstOperand = result;
-  }
-  
-  // Set the new operator and waiting state
-  operator = nextOperator;
-  waitingForSecondOperand = true;
-  updateDisplay();
-}
-
-// Function to perform the calculation
-function calculate() {
-  if (operator === null || waitingForSecondOperand) {
-    return parseFloat(displayValue);
-  }
-  
-  const secondOperand = parseFloat(displayValue);
-  let result = 0;
-  
-  switch (operator) {
-    case '+':
-      result = firstOperand + secondOperand;
-      break;
-    case '-':
-      result = firstOperand - secondOperand;
-      break;
-    case '*':
-      result = firstOperand * secondOperand;
-      break;
-    case '/':
-      result = firstOperand / secondOperand;
-      break;
-  }
-  
-  // Reset the calculator state
-  operator = null;
-  firstOperand = null;
-  waitingForSecondOperand = true;
-  displayValue = String(result);
-  updateDisplay();
-  return result;
-}
-
-// Function to clear the display
-function clearDisplay() {
-  displayValue = '0';
-  firstOperand = null;
-  operator = null;
-  waitingForSecondOperand = false;
-  updateDisplay();
-}
-
-// Initialize the display
-updateDisplay();`,
-          description: `I've created a simple calculator for you based on your request. This calculator includes:
-
-1. A clean, modern design with a display at the top and buttons below
-2. Basic arithmetic operations: addition, subtraction, multiplication, and division
-3. Support for decimal numbers
-4. A clear button to reset the calculator
-
-The code is structured with:
-- HTML for the calculator layout and buttons
-- CSS for styling and visual effects
-- JavaScript for the calculator's functionality and logic
-
-You can perform calculations by clicking the number buttons, selecting an operation, entering another number, and pressing equals.`
-        };
-        
-        // Ensure the content type is set to application/json
-        res.setHeader('Content-Type', 'application/json');
-        return res.json(mockResponse);
-      }
+      // Make sure we have the right content type for JSON
+      res.setHeader('Content-Type', 'application/json');
       
-      // If not in development, use the real OpenAI API
+      // Call OpenAI API with the full message history for context
       const response = await openai.chat.completions.create({
         model: GPT_MODEL,
         messages: [
           { 
             role: "system", 
-            content: `You are a web development expert. Generate HTML, CSS, and JavaScript code based on the user's request.
-            Return the code in a JSON object with the following structure:
-            {
-              "html": "HTML code here",
-              "css": "CSS code here",
-              "js": "JavaScript code here",
-              "description": "Brief explanation of what you created"
-            }
+            content: `You are a web development expert. Generate a complete HTML page based on the user's request.
+            Include all necessary HTML, CSS, and JavaScript in a single, self-contained HTML file.
             
+            Return a complete, valid HTML document with <!DOCTYPE html>, <html>, <head>, <style>, <body>, and <script> tags.
             Make sure the code is fully functional, well-structured, and suitable for beginners to understand.
             Include comments in the code to explain key concepts.
-            Don't include <html>, <head>, or <body> tags as they will be added automatically.
-            Keep the code relatively simple but functional.` 
+            Keep the code relatively simple but functional.
+            Design should be mobile-friendly and responsive.`
           },
-          { role: "user", content: prompt || "" }
+          ...messages
         ],
-        response_format: { type: "json_object" }
       });
       
-      const messageContent = response.choices[0].message.content || "{}";
-      const result = JSON.parse(messageContent);
+      const generatedHTML = response.choices[0].message.content;
       
-      // Ensure the content type is set to application/json
-      res.setHeader('Content-Type', 'application/json');
-      return res.json(result);
+      // Return the complete response with the assistant's message
+      return res.json({
+        html: generatedHTML,
+        message: {
+          role: 'assistant',
+          content: generatedHTML
+        }
+      });
     } catch (error) {
-      console.error('Error generating code:', error);
-      return res.status(500).json({ error: 'Failed to generate code' });
+      console.error('Error generating HTML:', error);
+      return res.status(500).json({ error: 'Failed to generate HTML' });
     }
   });
   

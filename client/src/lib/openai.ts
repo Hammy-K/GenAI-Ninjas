@@ -161,3 +161,32 @@ export async function generateProjectIdea(interests: string, goal: string, tools
     };
   }
 }
+
+// New HTML generation with chat history
+export type HTMLMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export type GenerateHTMLResponse = {
+  html: string;
+  message: HTMLMessage;
+  error?: string;
+};
+
+export async function generateHTML(messages: HTMLMessage[]): Promise<GenerateHTMLResponse> {
+  try {
+    const response = await apiRequest('POST', '/api/ai/generate-html', { messages });
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating HTML:", error);
+    return {
+      html: '',
+      message: {
+        role: 'assistant',
+        content: ''
+      },
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    };
+  }
+}
