@@ -56,8 +56,8 @@ export function HTMLGeneratorStage({
   // Get the current location for routing
   const [location, setLocation] = useLocation();
   
-  // Initialize state with localStorage values or defaults
-  const [state, setState] = useStageState<HTMLGeneratorState>('html_generator', {
+  // Define initial state
+  const initialState: HTMLGeneratorState = {
     messages: [],
     prompt: '',
     currentHTML: '',
@@ -72,7 +72,32 @@ export function HTMLGeneratorStage({
     shareUrl: null,
     showShareDialog: false,
     showResetDialog: false
-  });
+  };
+
+  // Clear stale state if needed
+  useEffect(() => {
+    // This will clear any stale state on component mount to prevent stuck states
+    try {
+      const storageKey = 'genAIQuest_html_generatorState';
+      const savedState = localStorage.getItem(storageKey);
+      
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        if (parsedState.isSaving) {
+          console.log("Clearing stuck saving state");
+          localStorage.setItem(
+            storageKey, 
+            JSON.stringify({...parsedState, isSaving: false, error: ''})
+          );
+        }
+      }
+    } catch (e) {
+      console.error("Error checking saved state:", e);
+    }
+  }, []);
+
+  // Initialize state with localStorage values or defaults
+  const [state, setState] = useStageState<HTMLGeneratorState>('html_generator', initialState);
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
