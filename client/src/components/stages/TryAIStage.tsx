@@ -10,8 +10,8 @@ import { useStageState } from '@/hooks/useStageState';
 
 interface TryAIStageProps {
   onComplete: () => void;
-  onEarnXp: (amount: number) => void;
-  onUnlockBadge: (badgeName: string) => void;
+  onEarnXp: (amount: number, source?: string) => void;
+  onUnlockBadge: (badgeName: string, source?: string) => void;
   onBack: () => void;
 }
 
@@ -97,7 +97,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         // Only award XP and badge once
         if (!state.hasCompleted) {
           onEarnXp(20, 'text_generation_complete');
-          onUnlockBadge('prompt_master_badge');
+          onUnlockBadge('prompt_master_badge', 'text_generation_complete');
           setHasCompleted(true);
         }
       }
@@ -131,7 +131,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         // Only award XP and badge once
         if (!state.hasCompleted) {
           onEarnXp(30, 'image_generation_complete');
-          onUnlockBadge('image_artist_badge');
+          onUnlockBadge('image_artist_badge', 'image_generation_complete');
           setHasCompleted(true);
         }
       }

@@ -21,7 +21,8 @@ export function useQuest() {
           currentStage: 1, 
           xp: 0, 
           unlockedBadges: [],
-          awardedXp: {}
+          awardedXp: {},
+          awardedBadges: {}
         };
   });
   
@@ -90,14 +91,43 @@ export function useQuest() {
     });
   };
   
-  // Unlock a badge
-  const unlockBadge = (badgeName: string) => {
-    if (!state.unlockedBadges.includes(badgeName)) {
-      setState(prev => ({
+  // Unlock a badge with source tracking to prevent duplicates
+  const unlockBadge = (badgeName: string, source: string = 'generic') => {
+    const badgeKey = `${badgeName}_${source}`;
+    
+    setState(prev => {
+      // Skip if this exact badge award was already given from this source
+      if (prev.awardedBadges && prev.awardedBadges[badgeKey]) {
+        console.log(`Skipping duplicate badge unlock: ${badgeName} from ${source}`);
+        return prev; // Return unchanged state
+      }
+      
+      // Skip if badge is already unlocked (different source)
+      if (prev.unlockedBadges.includes(badgeName)) {
+        console.log(`Badge ${badgeName} already unlocked from a different source`);
+        
+        // Still mark this award source as given to prevent future duplicates
+        return {
+          ...prev,
+          awardedBadges: {
+            ...prev.awardedBadges,
+            [badgeKey]: true
+          }
+        };
+      }
+      
+      console.log(`Unlocking badge: ${badgeName} from ${source}`);
+      
+      // Otherwise award the badge and mark it as awarded
+      return {
         ...prev,
-        unlockedBadges: [...prev.unlockedBadges, badgeName]
-      }));
-    }
+        unlockedBadges: [...prev.unlockedBadges, badgeName],
+        awardedBadges: {
+          ...prev.awardedBadges,
+          [badgeKey]: true
+        }
+      };
+    });
   };
   
   // Reset the quest
@@ -106,7 +136,8 @@ export function useQuest() {
       currentStage: 1,
       xp: 0,
       unlockedBadges: [],
-      awardedXp: {}
+      awardedXp: {},
+      awardedBadges: {}
     });
   };
   

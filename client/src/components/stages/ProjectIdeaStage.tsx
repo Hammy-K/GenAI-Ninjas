@@ -10,8 +10,8 @@ import { useStageState } from '@/hooks/useStageState';
 
 interface ProjectIdeaStageProps {
   onComplete: () => void;
-  onEarnXp: (amount: number) => void;
-  onUnlockBadge: (badgeName: string) => void;
+  onEarnXp: (amount: number, source?: string) => void;
+  onUnlockBadge: (badgeName: string, source?: string) => void;
   onBack: () => void;
 }
 
@@ -68,7 +68,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
       }
       
       if (!state.hasUnlockedBadge) {
-        onUnlockBadge('project_creator_badge');
+        onUnlockBadge('project_creator_badge', 'project_idea_generated');
         setState(prev => ({ ...prev, hasUnlockedBadge: true }));
       }
     } catch (err: any) {

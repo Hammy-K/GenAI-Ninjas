@@ -5,7 +5,7 @@ import { useStageState } from '@/hooks/useStageState';
 
 interface DiscoveryStageProps {
   onComplete: () => void;
-  onEarnXp: (amount: number) => void;
+  onEarnXp: (amount: number, source?: string) => void;
   onBack: () => void;
 }
 
