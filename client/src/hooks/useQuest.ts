@@ -4,6 +4,8 @@ export interface QuestState {
   currentStage: number;
   xp: number;
   unlockedBadges: string[];
+  awardedXp: Record<string, boolean>; // Track which XP awards have been given
+  awardedBadges: Record<string, boolean>; // Track which badges have been awarded
 }
 
 const TOTAL_STAGES = 6;
@@ -18,7 +20,8 @@ export function useQuest() {
       : { 
           currentStage: 1, 
           xp: 0, 
-          unlockedBadges: [] 
+          unlockedBadges: [],
+          awardedXp: {}
         };
   });
   
@@ -36,8 +39,8 @@ export function useQuest() {
       }));
       
       // Automatically unlock explorer badge once after completing stage 2
-      if (state.currentStage === 2 && !state.unlockedBadges.includes('explorer_badge')) {
-        unlockBadge('explorer_badge');
+      if (state.currentStage === 2) {
+        unlockBadge('explorer_badge', 'stage_completion'); // Source tracks why badge was given
       }
     }
   };
@@ -62,12 +65,29 @@ export function useQuest() {
     }
   };
   
-  // Add XP points
-  const earnXp = (amount: number) => {
-    setState(prev => ({
-      ...prev,
-      xp: prev.xp + amount
-    }));
+  // Add XP points with source tracking to prevent duplicates
+  const earnXp = (amount: number, source: string = 'generic') => {
+    const awardKey = `${source}_${amount}`;
+    
+    setState(prev => {
+      // Skip if this exact award was already given
+      if (prev.awardedXp && prev.awardedXp[awardKey]) {
+        console.log(`Skipping duplicate XP award: ${amount} from ${source}`);
+        return prev; // Return unchanged state
+      }
+      
+      console.log(`Awarding ${amount} XP from ${source}`);
+      
+      // Otherwise award the XP and mark it as awarded
+      return {
+        ...prev,
+        xp: prev.xp + amount,
+        awardedXp: {
+          ...prev.awardedXp,
+          [awardKey]: true
+        }
+      };
+    });
   };
   
   // Unlock a badge
@@ -85,7 +105,8 @@ export function useQuest() {
     setState({
       currentStage: 1,
       xp: 0,
-      unlockedBadges: []
+      unlockedBadges: [],
+      awardedXp: {}
     });
   };
   

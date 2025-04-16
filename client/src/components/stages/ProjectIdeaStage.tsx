@@ -63,7 +63,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
       
       // Only award XP and badge once
       if (!state.hasEarnedXp) {
-        onEarnXp(40);
+        onEarnXp(40, 'project_idea_generated');
         setState(prev => ({ ...prev, hasEarnedXp: true }));
       }
       

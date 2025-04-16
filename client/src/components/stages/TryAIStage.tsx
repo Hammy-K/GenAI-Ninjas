@@ -96,7 +96,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         
         // Only award XP and badge once
         if (!state.hasCompleted) {
-          onEarnXp(20);
+          onEarnXp(20, 'text_generation_complete');
           onUnlockBadge('prompt_master_badge');
           setHasCompleted(true);
         }
@@ -130,7 +130,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         
         // Only award XP and badge once
         if (!state.hasCompleted) {
-          onEarnXp(30);
+          onEarnXp(30, 'image_generation_complete');
           onUnlockBadge('image_artist_badge');
           setHasCompleted(true);
         }

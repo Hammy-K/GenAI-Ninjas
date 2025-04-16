@@ -22,11 +22,9 @@ export function DiscoveryStage({ onComplete, onEarnXp, onBack }: DiscoveryStageP
   });
   
   const handleComplete = () => {
-    // Only award XP if not already awarded (prevents duplicates on navigation)
-    if (!state.hasEarnedXp) {
-      onEarnXp(30);
-      setState(prev => ({ ...prev, hasEarnedXp: true }));
-    }
+    // XP duplication is now handled in useQuest.ts
+    onEarnXp(30, 'discovery_complete');
+    setState(prev => ({ ...prev, hasEarnedXp: true }));
     onComplete();
   };
   
