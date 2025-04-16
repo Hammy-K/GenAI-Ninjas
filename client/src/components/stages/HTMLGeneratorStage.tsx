@@ -91,24 +91,22 @@ export function HTMLGeneratorStage({
         const parsedState = JSON.parse(savedState);
         
         // Force reset isSaving to false and any error messages on component mount
-        // This ensures we never start with a stuck saving state
+        // And ensure the chat is always open on first visit, even if previously closed
         console.log("Ensuring clean state on mount - previous isSaving:", parsedState.isSaving);
         
         const cleanState = {
           ...parsedState,
           isSaving: false,
-          error: ''
+          error: '',
+          isChatOpen: true // Always force the chat to be open on component mount
         };
         
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
         
-        // If we were in a saving state, force reload the component to apply the clean state
-        if (parsedState.isSaving) {
-          console.log("Previous state was saving, forcing state refresh");
-          setTimeout(() => {
-            setState(prev => ({...prev, isSaving: false}));
-          }, 100);
-        }
+        // Force chat open regardless of saved state
+        setTimeout(() => {
+          setState(prev => ({...prev, isChatOpen: true}));
+        }, 100);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
@@ -122,6 +120,12 @@ export function HTMLGeneratorStage({
   
   // Initialize toast hook for notifications
   const { toast } = useToast();
+  
+  // Effect to ensure chat is open on mount
+  useEffect(() => {
+    // Force the chat to be open on component mount
+    setState(prev => ({ ...prev, isChatOpen: true }));
+  }, []);
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -169,10 +173,16 @@ export function HTMLGeneratorStage({
         return;
       }
       
+      // Create a friendly assistant response instead of showing the raw HTML
+      const friendlyResponse: HTMLMessage = {
+        role: 'assistant',
+        content: "I've built your idea! Try it out and let me know if you want to make any changes."
+      };
+      
       // Update state with the new message and HTML
       setState(prev => ({
         ...prev,
-        messages: [...prev.messages, userMessage, response.message],
+        messages: [...prev.messages, userMessage, friendlyResponse],
         currentHTML: response.html,
         isLoading: false
       }));
