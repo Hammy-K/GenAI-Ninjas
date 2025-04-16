@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Menu } from 'lucide-react';
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Home } from 'lucide-react';
+import { useLocation } from 'wouter';
 import logoImage from '../../assets/logo.png';
 
 interface HeaderProps {
@@ -10,7 +9,11 @@ interface HeaderProps {
 
 export function Header({ xp }: HeaderProps) {
   const { t } = useTranslation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [location, navigate] = useLocation();
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
 
   return (
     <header className="bg-primary px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-md">
@@ -29,30 +32,14 @@ export function Header({ xp }: HeaderProps) {
           </svg>
         </div>
         
-        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-          <SheetTrigger asChild>
-            <button 
-              className="text-white focus:outline-none" 
-              title={t('menu')}
-              aria-label={t('menu')}
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[250px]">
-            <div className="py-4">
-              <div className="px-4 py-2 hover:bg-neutral-100 rounded-md cursor-pointer">
-                {t('help')}
-              </div>
-              <div className="px-4 py-2 hover:bg-neutral-100 rounded-md cursor-pointer">
-                {t('save_progress')}
-              </div>
-              <div className="px-4 py-2 hover:bg-neutral-100 rounded-md cursor-pointer">
-                {t('settings')}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <button 
+          className="text-white hover:text-white/80 focus:outline-none transition-colors" 
+          title={t('home')}
+          aria-label={t('home')}
+          onClick={handleHomeClick}
+        >
+          <Home className="h-6 w-6" />
+        </button>
       </div>
     </header>
   );
