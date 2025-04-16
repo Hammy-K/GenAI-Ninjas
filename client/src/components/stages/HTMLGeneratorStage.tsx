@@ -6,11 +6,17 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ChevronLeft, ChevronRight, Code, Loader2, Send, Wand2, X } from 'lucide-react';
+import { 
+  AlertCircle, ChevronLeft, ChevronRight, Code, Loader2, 
+  Send, Wand2, X, Share2, Save, Plus, AlertTriangle
+} from 'lucide-react';
 import { Confetti } from '@/components/ui/confetti';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generateHTML, HTMLMessage } from '@/lib/openai';
+import { saveProject, loadProject } from '@/lib/firebase';
+import { useLocation } from 'wouter';
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
@@ -29,6 +35,11 @@ interface HTMLGeneratorState {
   hasUnlockedBadge: boolean;
   viewMode: 'preview' | 'code';
   isChatOpen: boolean;
+  projectId: string | null;
+  isSaving: boolean;
+  shareUrl: string | null;
+  showShareDialog: boolean;
+  showResetDialog: boolean;
 }
 
 export function HTMLGeneratorStage({ 
@@ -42,6 +53,9 @@ export function HTMLGeneratorStage({
   const [showConfetti, setShowConfetti] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
+  // Get the current location for routing
+  const [location, setLocation] = useLocation();
+  
   // Initialize state with localStorage values or defaults
   const [state, setState] = useStageState<HTMLGeneratorState>('html_generator', {
     messages: [],
@@ -52,7 +66,12 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: 'preview',
-    isChatOpen: false
+    isChatOpen: false,
+    projectId: null,
+    isSaving: false,
+    shareUrl: null,
+    showShareDialog: false,
+    showResetDialog: false
   });
   
   // Scroll to bottom of chat when messages update
@@ -144,10 +163,201 @@ export function HTMLGeneratorStage({
   const toggleChat = () => {
     setState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
   };
+  
+  // Check if project ID is in URL (for shared projects)
+  useEffect(() => {
+    const pathParts = location.split('/');
+    if (pathParts.length >= 3 && pathParts[1] === 'project') {
+      const projectId = pathParts[2];
+      loadSharedProject(projectId);
+    }
+  }, [location]);
+  
+  // Load a shared project
+  const loadSharedProject = async (projectId: string) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: '' }));
+      
+      const project = await loadProject(projectId);
+      
+      if (project && project.html) {
+        setState(prev => ({
+          ...prev,
+          currentHTML: project.html,
+          projectId,
+          isLoading: false,
+          shareUrl: window.location.href
+        }));
+      } else {
+        setState(prev => ({ 
+          ...prev, 
+          error: 'Project not found', 
+          isLoading: false 
+        }));
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to load project',
+        isLoading: false
+      }));
+    }
+  };
+  
+  // Save the current project to Firebase
+  const saveAndShareProject = async () => {
+    if (!state.currentHTML) return;
+    
+    try {
+      setState(prev => ({ ...prev, isSaving: true, error: '' }));
+      
+      // Save the project to Firebase
+      const projectId = await saveProject(state.currentHTML);
+      
+      // Create share URL
+      const shareUrl = `${window.location.origin}/project/${projectId}`;
+      
+      // Update state with project info
+      setState(prev => ({
+        ...prev,
+        projectId,
+        shareUrl,
+        isSaving: false,
+        showShareDialog: true
+      }));
+      
+      // Award XP for saving project if not already awarded
+      if (awardIfNotAlreadyAwarded(onEarnXp, 15, 'html_generator_save_project')) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+      
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to save project',
+        isSaving: false
+      }));
+    }
+  };
+  
+  // Copy share URL to clipboard
+  const copyShareUrl = () => {
+    if (!state.shareUrl) return;
+    
+    navigator.clipboard.writeText(state.shareUrl)
+      .then(() => {
+        // Success notification goes here
+      })
+      .catch(err => {
+        setState(prev => ({ 
+          ...prev, 
+          error: 'Failed to copy URL to clipboard'
+        }));
+      });
+  };
+  
+  // Start a new project
+  const startNewProject = () => {
+    setState(prev => ({
+      ...prev,
+      currentHTML: '',
+      messages: [],
+      projectId: null,
+      shareUrl: null,
+      showShareDialog: false,
+      showResetDialog: false
+    }));
+  };
+  
+  // Confirm before starting new project
+  const confirmReset = () => {
+    setState(prev => ({ ...prev, showResetDialog: true }));
+  };
 
   return (
     <div className="html-generator-stage min-h-screen flex flex-col">
       {showConfetti && <Confetti />}
+      
+      {/* Share Project Dialog */}
+      <Dialog open={state.showShareDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showShareDialog: open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Project Saved!</DialogTitle>
+            <DialogDescription>
+              Your project has been saved successfully. Share the link below to show others your creation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center space-x-2 mt-4">
+            <div className="grid flex-1 gap-2">
+              <Input
+                readOnly
+                value={state.shareUrl || ''}
+                className="text-xs"
+              />
+            </div>
+            <Button 
+              type="button" 
+              size="sm" 
+              className="px-3"
+              onClick={copyShareUrl}
+            >
+              <span className="sr-only">Copy</span>
+              Copy
+            </Button>
+          </div>
+          
+          <DialogFooter className="sm:justify-start mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setState(prev => ({ ...prev, showShareDialog: false }))}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Confirm Reset Dialog */}
+      <Dialog open={state.showResetDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showResetDialog: open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start New Project?</DialogTitle>
+            <DialogDescription>
+              This will clear your current project and chat history. Make sure you've saved your work if you want to keep it.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center gap-2 mt-4">
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone.
+            </p>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setState(prev => ({ ...prev, showResetDialog: false }))}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                startNewProject();
+                setState(prev => ({ ...prev, showResetDialog: false }));
+              }}
+            >
+              Start New Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Header with Navigation */}
       <div className="py-6 border-b bg-white">
@@ -213,6 +423,39 @@ export function HTMLGeneratorStage({
                     onClick={() => setState(prev => ({ ...prev, viewMode: 'code' }))}
                   >
                     Code
+                  </Button>
+                </div>
+                
+                {/* Project Actions */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 flex items-center gap-1 text-xs"
+                    onClick={saveAndShareProject}
+                    disabled={state.isSaving}
+                  >
+                    {state.isSaving ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3 w-3" />
+                        Save & Share
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 flex items-center gap-1 text-xs"
+                    onClick={confirmReset}
+                  >
+                    <Plus className="h-3 w-3" />
+                    New Project
                   </Button>
                 </div>
               </div>
