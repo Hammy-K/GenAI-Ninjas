@@ -72,8 +72,16 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
         }));
       }
       if (response.error) {
+        if (response.error === 'Content flagged as inappropriate') {
+          const categories = response.moderationResult.categories;
+          const flaggedCategories = Object.entries(categories)
+            .filter(([_, flagged]) => flagged)
+            .map(([category]) => category)
+            .join(', ');
+          setError(`Content was flagged for: ${flaggedCategories}. Please revise your prompt.`);
+        }
         // Check for quota exceeded error
-        if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
+        else if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
           setError("API quota exceeded. Please try again later or use a different API key.");
         } else {
           setError(response.error);

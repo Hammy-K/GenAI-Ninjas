@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
+import { moderateContent } from "./moderation";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const GPT_MODEL = "gpt-4o";
@@ -21,6 +22,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { prompt, maxTokens = 500, messageHistory = [] } = req.body;
+      
+      // Check content moderation
+      const moderationResult = await moderateContent(prompt, openai);
+      if (moderationResult.flagged) {
+        return res.status(400).json({ 
+          error: 'Content flagged as inappropriate',
+          moderationResult 
+        });
+      }
       
       const messages = [
         { role: "system", content: "أنت مساعد ذكي للطلاب السعوديين الذين يتعلمون عن الذكاء الاصطناعي التوليدي. قدم إجابات واضحة ومفيدة باللغة العربية." },
