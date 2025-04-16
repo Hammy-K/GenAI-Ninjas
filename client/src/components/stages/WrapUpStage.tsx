@@ -108,6 +108,30 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
             </Button>
           </CardFooter>
         </Card>
+        
+        {/* Airtable Form Submission Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-xl md:text-2xl text-center">Submit Your Project</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-6 text-muted-foreground">
+              Please submit your AI-generated project link using the form below to complete your assignment.
+            </p>
+            
+            <div className="rounded-md overflow-hidden border">
+              <iframe
+                className="airtable-embed"
+                src="https://airtable.com/embed/appJeonZeuFDNlKUV/pagw0b4VcV4TCxJUi/form"
+                frameBorder="0"
+                width="100%"
+                height="533"
+                style={{ background: 'transparent', border: 'none' }}
+                title="Project Submission Form"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
