@@ -333,10 +333,19 @@ export function HTMLGeneratorStage({
         showShareDialog: true
       }));
       
-      // Award XP for saving project if not already awarded
+      // Award XP and badge for saving project if not already awarded
       if (awardIfNotAlreadyAwarded(onEarnXp, 15, 'html_generator_save_project')) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
+      }
+      
+      // Award the AI-Coder badge when project is saved
+      if (!state.hasUnlockedBadge) {
+        onUnlockBadge('ai_coder_badge', 'project_saving');
+        setState(prev => ({
+          ...prev,
+          hasUnlockedBadge: true
+        }));
       }
       
     } catch (error: any) {
@@ -376,6 +385,15 @@ export function HTMLGeneratorStage({
           duration: 2000,
           className: "bg-green-50 text-green-800 border-green-200",
         });
+        
+        // Award the AI-Coder badge when the user copies the share URL
+        if (!state.hasUnlockedBadge) {
+          onUnlockBadge('ai_coder_badge', 'project_sharing');
+          setState(prev => ({
+            ...prev,
+            hasUnlockedBadge: true
+          }));
+        }
       })
       .catch(err => {
         setState(prev => ({ 

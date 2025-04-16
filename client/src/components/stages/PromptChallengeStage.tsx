@@ -9,7 +9,8 @@ import { useStageState } from '@/hooks/useStageState';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
-  onEarnXp: (amount: number) => void;
+  onEarnXp: (amount: number, source?: string) => void;
+  onUnlockBadge?: (badgeName: string, source?: string) => void;
   onBack: () => void;
 }
 
@@ -18,9 +19,10 @@ interface PromptChallengeState {
   analysis: { score: number; feedback: string; improvement: string } | null;
   hasCompleted: boolean;
   hasEarnedXp: boolean;
+  hasUnlockedBadge: boolean;
 }
 
-export function PromptChallengeStage({ onComplete, onEarnXp, onBack }: PromptChallengeStageProps) {
+export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: PromptChallengeStageProps) {
   // Use custom hook for persisted state
   const [state, setState] = useStageState<PromptChallengeState>('promptChallenge', {
     improvedPrompt: '',

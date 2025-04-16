@@ -11,14 +11,8 @@ interface WrapUpStageProps {
 export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageProps) {
   const badges = [
     {
-      id: 'explorer_badge',
-      name: 'Explorer',
-      icon: <Lightbulb className="h-6 w-6" />,
-      description: 'Discovered the world of GenAI'
-    },
-    {
-      id: 'prompt_master_badge',
-      name: 'Prompt Master',
+      id: 'prompt_engineer_badge',
+      name: 'Prompt Engineer',
       icon: <MessageSquare className="h-6 w-6" />,
       description: 'Created effective AI prompts'
     },
@@ -29,10 +23,10 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges }: WrapUpStageP
       description: 'Generated AI images'
     },
     {
-      id: 'project_creator_badge',
-      name: 'Project Creator',
+      id: 'ai_coder_badge',
+      name: 'AI-Coder',
       icon: <Sparkles className="h-6 w-6" />,
-      description: 'Designed a GenAI project'
+      description: 'Built a web app with AI'
     }
   ];
   
