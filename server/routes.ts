@@ -131,12 +131,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               "improvement": string // اقتراح لتحسين التوجيه
             }`
           },
-          { role: "user", content: prompt }
+          { role: "user", content: prompt || "" }
         ],
         response_format: { type: "json_object" }
       });
       
-      const result = JSON.parse(response.choices[0].message.content);
+      const messageContent = response.choices[0].message.content || "{}";
+      const result = JSON.parse(messageContent);
       return res.json(result);
     } catch (error) {
       console.error('Error analyzing prompt:', error);
@@ -179,7 +180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         response_format: { type: "json_object" }
       });
       
-      const result = JSON.parse(response.choices[0].message.content);
+      const messageContent = response.choices[0].message.content || "{}";
+      const result = JSON.parse(messageContent);
       return res.json(result);
     } catch (error) {
       console.error('Error generating project idea:', error);
