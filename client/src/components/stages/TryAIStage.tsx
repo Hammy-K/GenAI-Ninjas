@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Image, Loader2, MessageSquare, ArrowRight, ArrowLeft } from 'lucide-react';
 import { generateText, generateImage } from '@/lib/openai';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useStageState } from '@/hooks/useStageState';
 
 interface TryAIStageProps {
   onComplete: () => void;
@@ -14,27 +15,47 @@ interface TryAIStageProps {
   onBack: () => void;
 }
 
+interface TryAIState {
+  activeTab: string;
+  textPrompt: string;
+  imagePrompt: string;
+  generatedText: string;
+  generatedImageUrl: string;
+  hasCompleted: boolean;
+}
+
 export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryAIStageProps) {
-  const [activeTab, setActiveTab] = useState('text');
-  const [textPrompt, setTextPrompt] = useState('');
-  const [imagePrompt, setImagePrompt] = useState('');
-  const [generatedText, setGeneratedText] = useState('');
-  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  // Use the custom hook to persist state
+  const [state, setState] = useStageState<TryAIState>('tryAI', {
+    activeTab: 'text',
+    textPrompt: '',
+    imagePrompt: '',
+    generatedText: '',
+    generatedImageUrl: '',
+    hasCompleted: false
+  });
+  
+  // Create individual updater functions
+  const setActiveTab = (tab: string) => setState(prev => ({ ...prev, activeTab: tab }));
+  const setTextPrompt = (prompt: string) => setState(prev => ({ ...prev, textPrompt: prompt }));
+  const setImagePrompt = (prompt: string) => setState(prev => ({ ...prev, imagePrompt: prompt }));
+  const setGeneratedText = (text: string) => setState(prev => ({ ...prev, generatedText: text }));
+  const setGeneratedImageUrl = (url: string) => setState(prev => ({ ...prev, generatedImageUrl: url }));
+  const setHasCompleted = (completed: boolean) => setState(prev => ({ ...prev, hasCompleted: completed }));
+  
+  // Local state for UI processing indicators (no need to persist these)
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [error, setError] = useState('');
   
-  // Track completed tasks for progression
-  const [hasCompleted, setHasCompleted] = useState(false);
-  
   const handleGenerateText = async () => {
-    if (!textPrompt.trim()) return;
+    if (!state.textPrompt.trim()) return;
     
     setError('');
     setIsGeneratingText(true);
     
     try {
-      const response = await generateText({ prompt: textPrompt });
+      const response = await generateText({ prompt: state.textPrompt });
       if (response.error) {
         // Check for quota exceeded error
         if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
@@ -56,13 +77,13 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
   };
   
   const handleGenerateImage = async () => {
-    if (!imagePrompt.trim()) return;
+    if (!state.imagePrompt.trim()) return;
     
     setError('');
     setIsGeneratingImage(true);
     
     try {
-      const response = await generateImage({ prompt: imagePrompt });
+      const response = await generateImage({ prompt: state.imagePrompt });
       if (response.error) {
         // Check for quota exceeded or bad request errors
         if (response.error.includes("quota") || response.error.toLowerCase().includes("429")) {
@@ -97,7 +118,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
               Experience the power of generative AI by trying it yourself. Create text or images using simple prompts.
             </p>
             
-            <Tabs defaultValue="text" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <Tabs defaultValue="text" value={state.activeTab} onValueChange={setActiveTab} className="mb-6">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="text" className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
@@ -114,13 +135,13 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                   <div>
                     <Textarea 
                       placeholder="Enter a prompt (e.g., 'Write a short story about a space adventure')"
-                      value={textPrompt}
+                      value={state.textPrompt}
                       onChange={(e) => setTextPrompt(e.target.value)}
                       className="min-h-[100px]"
                     />
                   </div>
                   
-                  {error && activeTab === 'text' && (
+                  {error && state.activeTab === 'text' && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
@@ -128,17 +149,17 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                     </Alert>
                   )}
                   
-                  {generatedText && (
+                  {state.generatedText && (
                     <div className="bg-neutral-50 p-4 rounded-lg border">
                       <h3 className="font-bold mb-2">Generated Text:</h3>
-                      <p className="whitespace-pre-wrap">{generatedText}</p>
+                      <p className="whitespace-pre-wrap">{state.generatedText}</p>
                     </div>
                   )}
                   
                   <div className="flex justify-between">
                     <Button 
                       onClick={handleGenerateText} 
-                      disabled={isGeneratingText || !textPrompt.trim()}
+                      disabled={isGeneratingText || !state.textPrompt.trim()}
                     >
                       {isGeneratingText ? (
                         <>
@@ -158,13 +179,13 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                   <div>
                     <Textarea 
                       placeholder="Describe an image (e.g., 'A futuristic city with flying cars')"
-                      value={imagePrompt}
+                      value={state.imagePrompt}
                       onChange={(e) => setImagePrompt(e.target.value)}
                       className="min-h-[100px]"
                     />
                   </div>
                   
-                  {error && activeTab === 'image' && (
+                  {error && state.activeTab === 'image' && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
@@ -172,12 +193,12 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                     </Alert>
                   )}
                   
-                  {generatedImageUrl && (
+                  {state.generatedImageUrl && (
                     <div className="bg-neutral-50 p-4 rounded-lg border">
                       <h3 className="font-bold mb-2">Generated Image:</h3>
                       <div className="mt-2">
                         <img 
-                          src={generatedImageUrl} 
+                          src={state.generatedImageUrl} 
                           alt="AI-generated image" 
                           className="w-full h-auto rounded-lg"
                         />
@@ -188,7 +209,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                   <div className="flex justify-between">
                     <Button 
                       onClick={handleGenerateImage} 
-                      disabled={isGeneratingImage || !imagePrompt.trim()}
+                      disabled={isGeneratingImage || !state.imagePrompt.trim()}
                     >
                       {isGeneratingImage ? (
                         <>
