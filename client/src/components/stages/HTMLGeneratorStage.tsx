@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, ArrowRight, Loader2, Send, Wand2 } from 'lucide-react';
+import { AlertCircle, Code, Loader2, Send, Wand2 } from 'lucide-react';
 import { Confetti } from '@/components/ui/confetti';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +27,7 @@ interface HTMLGeneratorState {
   error: string;
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
+  viewMode: 'preview' | 'code';
 }
 
 export function HTMLGeneratorStage({ 
@@ -48,7 +49,8 @@ export function HTMLGeneratorStage({
     isLoading: false,
     error: '',
     hasEarnedXp: false,
-    hasUnlockedBadge: false
+    hasUnlockedBadge: false,
+    viewMode: 'preview'
   });
   
   // Scroll to bottom of chat when messages update
@@ -241,14 +243,45 @@ export function HTMLGeneratorStage({
                 </div>
               </div>
               
-              {/* Preview Panel */}
+              {/* Preview/Code Panel */}
               <div className="flex flex-col h-[500px] border rounded-md overflow-hidden">
-                <div className="bg-gray-100 border-b px-4 py-2 flex items-center">
-                  <span className="font-medium text-sm">Live Preview</span>
+                <div className="bg-gray-100 border-b px-4 py-2 flex items-center justify-between">
+                  <span className="font-medium text-sm">
+                    {state.viewMode === 'preview' ? 'Live Preview' : 'HTML Code'}
+                  </span>
+                  
+                  {state.currentHTML && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex border rounded overflow-hidden">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={state.viewMode === 'preview' ? 'default' : 'outline'}
+                          className="rounded-none px-3 py-1 h-8 text-xs"
+                          onClick={() => setState(prev => ({ ...prev, viewMode: 'preview' }))}
+                        >
+                          Preview
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={state.viewMode === 'code' ? 'default' : 'outline'}
+                          className="rounded-none px-3 py-1 h-8 text-xs"
+                          onClick={() => setState(prev => ({ ...prev, viewMode: 'code' }))}
+                        >
+                          Code
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex-grow bg-white">
-                  {state.currentHTML ? (
+                  {!state.currentHTML ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <p>Your code preview will appear here</p>
+                    </div>
+                  ) : state.viewMode === 'preview' ? (
                     <iframe
                       title="HTML Preview"
                       className="w-full h-full border-0"
@@ -256,9 +289,11 @@ export function HTMLGeneratorStage({
                       sandbox="allow-scripts allow-same-origin"
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <p>Your code preview will appear here</p>
-                    </div>
+                    <ScrollArea className="h-full w-full">
+                      <pre className="p-4 text-xs text-gray-800 whitespace-pre-wrap">
+                        {state.currentHTML}
+                      </pre>
+                    </ScrollArea>
                   )}
                 </div>
               </div>
