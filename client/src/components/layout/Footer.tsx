@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { HelpCircle, Save, Settings } from 'lucide-react';
+
+import noonLogo from '@/assets/Group 603416.png';
+import mcitLogo from '@/assets/MCITlogo.png';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -10,31 +12,25 @@ export function Footer() {
         <div className="mb-3 md:mb-0 text-center md:text-right">
           <p className="text-sm text-neutral-500">{t('copyright')}</p>
         </div>
-        <div className="flex space-x-reverse space-x-4">
-          <button 
-            className="text-neutral-500 hover:text-primary transition-colors focus:outline-none"
-            title={t('help')}
-            aria-label={t('help')}
+        <div className="flex items-center space-x-reverse space-x-6">
+          <a 
+            href="https://noon.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="focus:outline-none"
+            aria-label="Noon"
           >
-            <span className="sr-only">{t('help')}</span>
-            <HelpCircle className="h-6 w-6" />
-          </button>
-          <button 
-            className="text-neutral-500 hover:text-primary transition-colors focus:outline-none"
-            title={t('save_progress')}
-            aria-label={t('save_progress')}
+            <img src={noonLogo} alt="Noon Logo" className="h-8" />
+          </a>
+          <a 
+            href="https://mcit.gov.sa" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="focus:outline-none"
+            aria-label="Ministry of Communications and Information Technology"
           >
-            <span className="sr-only">{t('save_progress')}</span>
-            <Save className="h-6 w-6" />
-          </button>
-          <button 
-            className="text-neutral-500 hover:text-primary transition-colors focus:outline-none"
-            title={t('settings')}
-            aria-label={t('settings')}
-          >
-            <span className="sr-only">{t('settings')}</span>
-            <Settings className="h-6 w-6" />
-          </button>
+            <img src={mcitLogo} alt="MCIT Logo" className="h-8" />
+          </a>
         </div>
       </div>
     </footer>
