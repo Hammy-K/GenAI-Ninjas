@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
-import { ArrowRight } from 'lucide-react';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
   onEarnXp: (amount: number) => void;
+  onBack: () => void;
 }
 
-export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeStageProps) {
+export function PromptChallengeStage({ onComplete, onEarnXp, onBack }: PromptChallengeStageProps) {
   const [improvedPrompt, setImprovedPrompt] = useState('');
   const [analysis, setAnalysis] = useState<{ score: number; feedback: string; improvement: string } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -124,7 +124,15 @@ export function PromptChallengeStage({ onComplete, onEarnXp }: PromptChallengeSt
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={onBack} 
+              variant="outline" 
+              size="lg"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Previous Stage</span>
+            </Button>
             <Button 
               onClick={onComplete} 
               size="lg"

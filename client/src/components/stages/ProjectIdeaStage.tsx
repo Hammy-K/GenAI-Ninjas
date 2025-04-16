@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, ArrowRight, Download, Loader2, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, ArrowLeft, Download, Loader2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { generateProjectIdea } from '@/lib/openai';
@@ -11,9 +11,10 @@ interface ProjectIdeaStageProps {
   onComplete: () => void;
   onEarnXp: (amount: number) => void;
   onUnlockBadge: (badgeName: string) => void;
+  onBack: () => void;
 }
 
-export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: ProjectIdeaStageProps) {
+export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: ProjectIdeaStageProps) {
   const [interests, setInterests] = useState('');
   const [goal, setGoal] = useState('');
   const [tools, setTools] = useState('');
@@ -185,7 +186,15 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge }: Projec
               </Alert>
             )}
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={onBack} 
+              variant="outline" 
+              size="lg"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Previous Stage</span>
+            </Button>
             <Button 
               onClick={onComplete} 
               size="lg"
