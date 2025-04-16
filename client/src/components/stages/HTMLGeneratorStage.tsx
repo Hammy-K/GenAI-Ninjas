@@ -687,7 +687,7 @@ export function HTMLGeneratorStage({
                         className={`p-3 rounded-lg ${
                           msg.role === 'user'
                             ? 'bg-primary text-primary-foreground ml-6'
-                            : 'bg-muted mr-6'
+                            : 'bg-amber-50 border border-amber-100 mr-6'
                         }`}
                       >
                         <div className="flex items-center mb-2">
@@ -711,7 +711,7 @@ export function HTMLGeneratorStage({
                     ))}
                     
                     {state.isLoading && (
-                      <div className="p-3 rounded-lg bg-muted mr-6">
+                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
                         <div className="flex items-center mb-2">
                           <img 
                             src={penguinAvatar} 
