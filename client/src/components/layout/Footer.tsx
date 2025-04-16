@@ -12,24 +12,24 @@ export function Footer() {
         <div className="mb-3 md:mb-0 text-center md:text-right">
           <p className="text-sm text-neutral-500">{t('copyright')}</p>
         </div>
-        <div className="flex items-center space-x-reverse space-x-6">
-          <a 
-            href="https://noon.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="focus:outline-none"
-            aria-label="Noon"
-          >
-            <img src={noonLogo} alt="Noon Logo" className="h-8" />
-          </a>
+        <div className="flex items-center space-x-reverse space-x-8">
           <a 
             href="https://mcit.gov.sa" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="focus:outline-none"
+            className="focus:outline-none flex items-center"
             aria-label="Ministry of Communications and Information Technology"
           >
-            <img src={mcitLogo} alt="MCIT Logo" className="h-8" />
+            <img src={mcitLogo} alt="MCIT Logo" className="h-6" />
+          </a>
+          <a 
+            href="https://noon.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="focus:outline-none flex items-center"
+            aria-label="Noon"
+          >
+            <img src={noonLogo} alt="Noon Logo" className="h-8" />
           </a>
         </div>
       </div>
