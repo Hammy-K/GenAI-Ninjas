@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Code, Loader2, Send, Wand2, X } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Code, Loader2, Send, Wand2, X } from 'lucide-react';
 import { Confetti } from '@/components/ui/confetti';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -149,9 +149,31 @@ export function HTMLGeneratorStage({
     <div className="html-generator-stage min-h-screen flex flex-col">
       {showConfetti && <Confetti />}
       
-      {/* Simple Header */}
+      {/* Header with Navigation */}
       <div className="py-6 border-b bg-white">
         <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onBack}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleContinue}
+              className="flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
           <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
             <Wand2 className="h-6 w-6 text-purple-500" />
             AI Web Builder
