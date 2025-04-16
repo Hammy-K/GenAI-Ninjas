@@ -122,6 +122,30 @@ export async function analyzePrompt(prompt: string): Promise<PromptAnalysisRespo
   }
 }
 
+export type CodeGenerationResponse = {
+  html: string;
+  css: string;
+  js: string;
+  description: string;
+  error?: string;
+};
+
+export async function generateCode(prompt: string): Promise<CodeGenerationResponse> {
+  try {
+    const response = await apiRequest('POST', '/api/ai/generate-code', { prompt });
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating code:", error);
+    return {
+      html: '',
+      css: '',
+      js: '',
+      description: 'An error occurred while generating the code. Please try again.',
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    };
+  }
+}
+
 export async function generateProjectIdea(interests: string, goal: string, tools: string): Promise<ProjectIdeaResponse> {
   try {
     const response = await apiRequest('POST', '/api/ai/project-idea', { interests, goal, tools });

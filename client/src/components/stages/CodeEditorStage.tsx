@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ArrowRight, Code, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Code, RefreshCw, Wand2 } from 'lucide-react';
 import { useStageState } from '@/hooks/useStageState';
 import { useXpTracker } from '@/hooks/useXpTracker';
 import { Confetti } from '@/components/ui/confetti';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@/components/ui/input';
+import { generateCode } from '@/lib/openai';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 // Import CodeMirror components and language packages
 import CodeMirror from '@uiw/react-codemirror';
@@ -83,6 +87,10 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
   const { t } = useTranslation();
   const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } = useXpTracker();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [buildPrompt, setBuildPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const [generatedDescription, setGeneratedDescription] = useState('');
   
   // Initialize state with localStorage values or defaults
   const [state, setState] = useStageState<CodeEditorState>('code_editor', {
@@ -158,6 +166,44 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
       cssCode: DEFAULT_CSS,
       jsCode: DEFAULT_JS
     }));
+  };
+  
+  // Handle generating code from prompt
+  const handleGenerateCode = async () => {
+    if (!buildPrompt.trim()) return;
+    
+    setIsGenerating(true);
+    setError('');
+    setGeneratedDescription('');
+    
+    try {
+      // Award XP for using the AI code generation feature if not already awarded
+      if (awardIfNotAlreadyAwarded(onEarnXp, 30, 'ai_code_generation')) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+      
+      const result = await generateCode(buildPrompt);
+      
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // Update the code editors with the generated code
+        setState(prev => ({
+          ...prev,
+          htmlCode: result.html,
+          cssCode: result.css,
+          jsCode: result.js
+        }));
+        
+        // Show description
+        setGeneratedDescription(result.description);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while generating the code');
+    } finally {
+      setIsGenerating(false);
+    }
   };
   
   // Award badge when user continues to next stage
@@ -266,7 +312,59 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
               </div>
             </div>
             
-            <div className="mt-6 bg-blue-50 p-4 rounded-md border border-blue-100">
+            {/* AI Code Generation Feature */}
+            <div className="my-6 border rounded-md p-4 bg-gradient-to-r from-purple-50 to-indigo-50">
+              <h3 className="font-bold text-indigo-900 text-lg mb-3 flex items-center">
+                <Wand2 className="h-5 w-5 mr-2 text-indigo-600" />
+                What do you want to build?
+              </h3>
+              
+              <div className="flex gap-2 mb-3">
+                <Input
+                  value={buildPrompt}
+                  onChange={(e) => setBuildPrompt(e.target.value)}
+                  placeholder="E.g. a simple calculator, a to-do list, a color picker..."
+                  className="flex-grow"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && buildPrompt.trim() && !isGenerating) {
+                      handleGenerateCode();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleGenerateCode} 
+                  disabled={isGenerating || !buildPrompt.trim()}
+                  className="whitespace-nowrap"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : 'Generate Code'}
+                </Button>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive" className="mb-3">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              {generatedDescription && (
+                <div className="bg-white bg-opacity-70 p-3 rounded-md border border-indigo-100 mb-3">
+                  <p className="text-sm text-indigo-800">{generatedDescription}</p>
+                </div>
+              )}
+              
+              <p className="text-sm text-indigo-700">
+                Ask the AI to generate HTML, CSS, and JavaScript code for you. Type a description of what you want to build and click "Generate Code" to see it in action!
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
               <h3 className="font-bold text-blue-800 mb-2">Tips for Web Development:</h3>
               <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
                 <li>HTML is for structure, CSS for styling, and JavaScript for interactivity</li>

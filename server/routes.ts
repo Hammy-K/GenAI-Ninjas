@@ -145,6 +145,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Generate Code endpoint
+  app.post('/api/ai/generate-code', async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+      
+      const response = await openai.chat.completions.create({
+        model: GPT_MODEL,
+        messages: [
+          { 
+            role: "system", 
+            content: `You are a web development expert. Generate HTML, CSS, and JavaScript code based on the user's request.
+            Return the code in a JSON object with the following structure:
+            {
+              "html": "HTML code here",
+              "css": "CSS code here",
+              "js": "JavaScript code here",
+              "description": "Brief explanation of what you created"
+            }
+            
+            Make sure the code is fully functional, well-structured, and suitable for beginners to understand.
+            Include comments in the code to explain key concepts.
+            Don't include <html>, <head>, or <body> tags as they will be added automatically.
+            Keep the code relatively simple but functional.` 
+          },
+          { role: "user", content: prompt || "" }
+        ],
+        response_format: { type: "json_object" }
+      });
+      
+      const messageContent = response.choices[0].message.content || "{}";
+      const result = JSON.parse(messageContent);
+      return res.json(result);
+    } catch (error) {
+      console.error('Error generating code:', error);
+      return res.status(500).json({ error: 'Failed to generate code' });
+    }
+  });
+  
   // Project idea generation endpoint
   app.post('/api/ai/project-idea', async (req, res) => {
     try {
