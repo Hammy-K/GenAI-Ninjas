@@ -3,18 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Image, Loader2, MessageSquare } from 'lucide-react';
+import { AlertCircle, Image, Loader2, MessageSquare, ArrowRight, ArrowLeft } from 'lucide-react';
 import { generateText, generateImage } from '@/lib/openai';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowRight } from 'lucide-react';
 
 interface TryAIStageProps {
   onComplete: () => void;
   onEarnXp: (amount: number) => void;
   onUnlockBadge: (badgeName: string) => void;
+  onBack: () => void;
 }
 
-export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStageProps) {
+export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryAIStageProps) {
   const [activeTab, setActiveTab] = useState('text');
   const [textPrompt, setTextPrompt] = useState('');
   const [imagePrompt, setImagePrompt] = useState('');
@@ -204,7 +204,15 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge }: TryAIStagePr
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={onBack} 
+              variant="outline" 
+              size="lg"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Previous Stage</span>
+            </Button>
             <Button 
               onClick={onComplete} 
               size="lg"

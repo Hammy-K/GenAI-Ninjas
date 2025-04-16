@@ -16,6 +16,7 @@ export default function Home() {
     xp, 
     unlockedBadges,
     goToNextStage, 
+    goToPreviousStage,
     earnXp, 
     unlockBadge,
     resetQuest
@@ -39,6 +40,7 @@ export default function Home() {
           <DiscoveryStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
+            onBack={goToPreviousStage}
           />
         )}
         
@@ -47,6 +49,7 @@ export default function Home() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
+            onBack={goToPreviousStage}
           />
         )}
         
@@ -54,6 +57,7 @@ export default function Home() {
           <PromptChallengeStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
+            onBack={goToPreviousStage}
           />
         )}
         
@@ -62,6 +66,7 @@ export default function Home() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
+            onBack={goToPreviousStage}
           />
         )}
         

@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface DiscoveryStageProps {
   onComplete: () => void;
   onEarnXp: (amount: number) => void;
+  onBack: () => void;
 }
 
-export function DiscoveryStage({ onComplete, onEarnXp }: DiscoveryStageProps) {
+export function DiscoveryStage({ onComplete, onEarnXp, onBack }: DiscoveryStageProps) {
   const handleComplete = () => {
     onEarnXp(30);
     onComplete();
@@ -48,7 +49,11 @@ export function DiscoveryStage({ onComplete, onEarnXp }: DiscoveryStageProps) {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex justify-between">
+            <Button onClick={onBack} variant="outline" size="lg">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Previous Stage</span>
+            </Button>
             <Button onClick={handleComplete} size="lg">
               <span>Continue to Next Stage</span>
               <ArrowRight className="ml-2 h-4 w-4" />
