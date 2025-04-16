@@ -4,7 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lock, CheckCircle2 } from 'lucide-react';
 import { useQuest } from '@/hooks/useQuest';
-import penguinAvatar from '@/assets/Group 26087843.png';
+import journeyAvatar from '@/assets/JourneyAvatar.png';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -78,9 +78,9 @@ export default function Dashboard() {
                   {/* Penguin avatar if current stage is within Mission 1 */}
                   {currentStage < 6 && (
                     <div className="absolute -bottom-6 left-3 ml-1.5">
-                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-md">
+                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-md bg-white">
                         <img 
-                          src={penguinAvatar} 
+                          src={journeyAvatar} 
                           alt="Dr. Pengy" 
                           className="w-full h-full object-cover"
                         />
