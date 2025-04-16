@@ -73,7 +73,7 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: 'preview',
-    isChatOpen: true, // Start with chat open by default
+    isChatOpen: false, // Start with chat closed, will open after delay
     projectId: null,
     isSaving: false,
     shareUrl: null,
@@ -99,15 +99,15 @@ export function HTMLGeneratorStage({
           ...parsedState,
           isSaving: false,
           error: '',
-          isChatOpen: true // Always force the chat to be open on component mount
+          isChatOpen: false // Start with chat closed, will open after delay
         };
         
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
         
-        // Force chat open regardless of saved state
+        // Force chat open regardless of saved state with a 1-second delay
         setTimeout(() => {
           setState(prev => ({...prev, isChatOpen: true}));
-        }, 100);
+        }, 1000);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
@@ -122,10 +122,15 @@ export function HTMLGeneratorStage({
   // Initialize toast hook for notifications
   const { toast } = useToast();
   
-  // Effect to ensure chat is open on mount
+  // Effect to ensure chat is open on mount with a 1-second delay
   useEffect(() => {
-    // Force the chat to be open on component mount
-    setState(prev => ({ ...prev, isChatOpen: true }));
+    // Force the chat to be open on component mount after a 1-second delay
+    const timer = setTimeout(() => {
+      setState(prev => ({ ...prev, isChatOpen: true }));
+    }, 1000);
+    
+    // Clean up the timer if component unmounts before the delay completes
+    return () => clearTimeout(timer);
   }, []);
   
   // Scroll to bottom of chat when messages update
