@@ -151,19 +151,19 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
               </div>
               
               <div>
-                {projectIdea ? (
+                {state.projectIdea ? (
                   <div className="bg-neutral-50 p-4 rounded-lg border">
-                    <h3 className="font-bold text-lg text-primary mb-2">{projectIdea.title}</h3>
+                    <h3 className="font-bold text-lg text-primary mb-2">{state.projectIdea.title}</h3>
                     
                     <div className="mb-3">
                       <h4 className="font-bold mb-1">Description:</h4>
-                      <p className="text-sm">{projectIdea.description}</p>
+                      <p className="text-sm">{state.projectIdea.description}</p>
                     </div>
                     
                     <div className="mb-3">
                       <h4 className="font-bold mb-1">Steps:</h4>
                       <ol className="list-decimal list-inside text-sm">
-                        {projectIdea.steps.map((step, index) => (
+                        {state.projectIdea.steps.map((step: string, index: number) => (
                           <li key={index}>{step}</li>
                         ))}
                       </ol>
@@ -172,7 +172,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                     <div className="mb-2">
                       <h4 className="font-bold mb-1">Tools:</h4>
                       <div className="flex flex-wrap gap-1">
-                        {projectIdea.tools.map((tool, index) => (
+                        {state.projectIdea.tools.map((tool: string, index: number) => (
                           <span 
                             key={index}
                             className="bg-neutral-200 px-2 py-0.5 rounded-md text-xs"
@@ -187,14 +187,14 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
                       <span className="text-sm font-medium mr-2">Difficulty:</span>
                       <span 
                         className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          projectIdea.difficulty === 'beginner'
+                          state.projectIdea.difficulty === 'beginner'
                             ? 'bg-green-100 text-green-800'
-                            : projectIdea.difficulty === 'intermediate'
+                            : state.projectIdea.difficulty === 'intermediate'
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {projectIdea.difficulty}
+                        {state.projectIdea.difficulty}
                       </span>
                     </div>
                   </div>
