@@ -28,7 +28,8 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
     improvedPrompt: '',
     analysis: null,
     hasCompleted: false,
-    hasEarnedXp: false
+    hasEarnedXp: false,
+    hasUnlockedBadge: false
   });
   
   // Utility functions to update individual state properties
@@ -55,11 +56,21 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
       setAnalysis(result);
       
       if (result.score >= 7) {
-        // Only award XP once
+        // Only award XP and badge once
         if (!state.hasEarnedXp) {
-          onEarnXp(15);
+          onEarnXp(15, 'prompt_engineering_success');
           setHasEarnedXp(true);
         }
+        
+        // Award the Prompt Engineer badge
+        if (!state.hasUnlockedBadge && onUnlockBadge) {
+          onUnlockBadge('prompt_engineer_badge', 'prompt_engineering_success');
+          setState(prev => ({
+            ...prev,
+            hasUnlockedBadge: true
+          }));
+        }
+        
         setHasCompleted(true);
       }
     } catch (err: any) {

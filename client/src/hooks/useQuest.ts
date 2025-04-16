@@ -38,11 +38,7 @@ export function useQuest() {
         ...prev,
         currentStage: prev.currentStage + 1
       }));
-      
-      // Automatically unlock explorer badge once after completing prompt engineering (stage 2)
-      if (state.currentStage === 2) {
-        unlockBadge('explorer_badge', 'stage_completion'); // Source tracks why badge was given
-      }
+      // No automatic badge awarding here anymore
     }
   };
   

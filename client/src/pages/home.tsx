@@ -39,6 +39,7 @@ export default function Home() {
           <PromptChallengeStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
             onBack={goToPrevStage}
           />
         );
