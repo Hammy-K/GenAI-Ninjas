@@ -8,7 +8,7 @@ export interface QuestState {
   awardedBadges: Record<string, boolean>; // Track which badges have been awarded
 }
 
-const TOTAL_STAGES = 7;
+const TOTAL_STAGES = 8;
 const STORAGE_KEY = 'genAIQuestState';
 
 export function useQuest() {
@@ -47,7 +47,7 @@ export function useQuest() {
   };
   
   // Go back to the previous stage
-  const goToPreviousStage = () => {
+  const goToPrevStage = () => {
     if (state.currentStage > 1) {
       setState(prev => ({
         ...prev,
@@ -145,10 +145,10 @@ export function useQuest() {
     ...state,
     totalStages: TOTAL_STAGES,
     goToNextStage,
-    goToPreviousStage,
+    goToPrevStage,
     setStage,
     earnXp,
     unlockBadge,
-    resetQuest
+    restart: resetQuest  // Alias for resetQuest to match the expected name in home.tsx
   };
 }

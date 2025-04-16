@@ -13,25 +13,94 @@ import { useQuest } from '@/hooks/useQuest';
 
 export default function Home() {
   const { 
+    currentStage,
+    totalStages,
+    goToNextStage,
+    goToPrevStage,
+    restart,
     xp, 
     earnXp, 
-    unlockBadge
+    unlockBadge,
+    unlockedBadges
   } = useQuest();
   
-  // Simple no-op function since we don't need navigation
-  const noOp = () => {};
+  // Render current stage based on stage number
+  const renderStage = () => {
+    switch (currentStage) {
+      case 1:
+        return <WelcomeStage onComplete={goToNextStage} />;
+      case 2:
+        return (
+          <DiscoveryStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onBack={goToPrevStage}
+          />
+        );
+      case 3:
+        return (
+          <TryAIStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 4:
+        return (
+          <HTMLGeneratorStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 5:
+        return (
+          <CodeEditorStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 6:
+        return (
+          <PromptChallengeStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onBack={goToPrevStage}
+          />
+        );
+      case 7:
+        return (
+          <ProjectIdeaStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 8:
+        return (
+          <WrapUpStage 
+            onRestart={restart}
+            totalXp={xp}
+            unlockedBadges={unlockedBadges}
+          />
+        );
+      default:
+        return <WelcomeStage onComplete={goToNextStage} />;
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50 text-neutral-700 font-tajawal">
       <Header xp={xp} />
+      <ProgressBar currentStage={currentStage} totalStages={totalStages} />
       
       <main className="flex-grow p-4 md:p-6">
-        <HTMLGeneratorStage 
-          onComplete={noOp} 
-          onEarnXp={earnXp}
-          onUnlockBadge={unlockBadge}
-          onBack={noOp}
-        />
+        {renderStage()}
       </main>
       
       <Footer />
