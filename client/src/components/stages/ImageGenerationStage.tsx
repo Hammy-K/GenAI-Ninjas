@@ -149,20 +149,18 @@ export function ImageGenerationStage({
     }
   };
   
-  // Helper function to download the generated image
-  const handleDownloadImage = async () => {
+  // Helper function to download the generated image using our proxy
+  const handleDownloadImage = () => {
     if (!state.generatedImageUrl) return;
     
     try {
-      // Fetch the image from the URL
-      const response = await fetch(state.generatedImageUrl);
-      const blob = await response.blob();
+      // Use our server-side proxy to handle the download
+      // This avoids CORS issues with direct downloads
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`;
       
       // Create a temporary link element to trigger the download
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      
-      // Set the filename for the download
+      link.href = proxyUrl;
       link.download = `ai-generated-image-${Date.now()}.png`;
       
       // Append the link to the document body, click it, then remove it

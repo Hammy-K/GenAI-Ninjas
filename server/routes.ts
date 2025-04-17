@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
 import { moderateContent } from "./moderation";
+import axios from "axios";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const GPT_MODEL = "gpt-4o";
@@ -270,6 +271,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating project idea:", error);
       return res.status(500).json({ error: "Failed to generate project idea" });
+    }
+  });
+  
+  // Image proxy endpoint for downloading images
+  app.get("/api/image-proxy", async (req, res) => {
+    try {
+      const imageUrl = req.query.url as string;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'Missing image URL' });
+      }
+      
+      // Fetch the image using axios
+      const response = await axios.get(imageUrl, {
+        responseType: 'arraybuffer'
+      });
+      
+      // Set appropriate content headers
+      const contentType = response.headers['content-type'] || 'image/png';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', 'attachment; filename="ai-generated-image.png"');
+      
+      // Send the image data
+      res.send(response.data);
+    } catch (error) {
+      console.error('Error proxying image:', error);
+      res.status(500).json({ error: 'Failed to download image' });
     }
   });
 
