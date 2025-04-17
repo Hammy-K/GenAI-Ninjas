@@ -182,7 +182,7 @@ export function HTMLGeneratorStage({
       // Create a friendly assistant response instead of showing the raw HTML
       const friendlyResponse: HTMLMessage = {
         role: 'assistant',
-        content: "I've built your idea! Try it out and let me know if you want to make any changes."
+        content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات."
       };
       
       // Update state with the new message and HTML
@@ -533,10 +533,10 @@ export function HTMLGeneratorStage({
         <div className="max-w-6xl mx-auto px-4">          
           <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
             <Wand2 className="h-6 w-6 text-purple-500" />
-            AI Web Builder
+            منشئ الويب بالذكاء الاصطناعي
           </h1>
           <p className="text-center text-muted-foreground mt-2">
-            Type what you want to build, and watch it come to life instantly.
+            اكتب ما ترغب ببنائه، وشاهده يتحول إلى واقع فوراً.
           </p>
         </div>
       </div>
