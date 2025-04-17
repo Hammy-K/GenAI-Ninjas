@@ -39,7 +39,7 @@ export function WelcomeStage({ onComplete }: WelcomeStageProps) {
           <CardFooter className="flex justify-center">
             <Button onClick={onComplete} size="lg">
               <span>Start Journey</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>
