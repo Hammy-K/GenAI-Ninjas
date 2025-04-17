@@ -4,7 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Lock, CheckCircle2, User, Zap, Trophy, Star } from 'lucide-react';
 import { useQuest } from '@/hooks/useQuest';
-import journeyAvatar from '@/assets/JourneyAvatar.png';
+import penguinAvatar from '@assets/Penguin.png';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -205,16 +205,17 @@ export default function Dashboard() {
                       عبّر عن نفسك بإبداع
                     </h3>
                     
-                    {/* Dr. Pengy avatar - only show for next active mission */}
+                    {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 1 && (
-                      <div className="absolute -left-2">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
+                      <div className="absolute right-16 -top-6 transform translate-y-0">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
                           <img 
-                            src={journeyAvatar} 
-                            alt="Dr. Pengy" 
-                            className="w-full h-full object-cover"
+                            src={penguinAvatar} 
+                            alt="د. بنجي" 
+                            className="w-full h-full object-contain"
                           />
                         </div>
+                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                     )}
                   </div>
@@ -254,14 +255,14 @@ export default function Dashboard() {
                       كيف تصنع قصص تعلق في البال
                     </h3>
                     
-                    {/* Dr. Pengy avatar - only show for next active mission */}
+                    {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 2 && (
                       <div className="absolute -right-2">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
                           <img 
-                            src={journeyAvatar} 
-                            alt="Dr. Pengy" 
-                            className="w-full h-full object-cover"
+                            src={penguinAvatar} 
+                            alt="د. بنجي" 
+                            className="w-full h-full object-contain"
                           />
                         </div>
                       </div>
@@ -299,14 +300,14 @@ export default function Dashboard() {
                       مهارات التصميم اللي تشد الانتباه
                     </h3>
                     
-                    {/* Dr. Pengy avatar - only show for next active mission */}
+                    {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 3 && (
                       <div className="absolute -left-2">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
                           <img 
-                            src={journeyAvatar} 
-                            alt="Dr. Pengy" 
-                            className="w-full h-full object-cover"
+                            src={penguinAvatar} 
+                            alt="د. بنجي" 
+                            className="w-full h-full object-contain"
                           />
                         </div>
                       </div>
@@ -332,14 +333,14 @@ export default function Dashboard() {
                       انشر ووسع جمهورك
                     </h3>
                     
-                    {/* Dr. Pengy avatar - only show for next active mission */}
+                    {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 4 && (
                       <div className="absolute -right-2">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
                           <img 
-                            src={journeyAvatar} 
-                            alt="Dr. Pengy" 
-                            className="w-full h-full object-cover"
+                            src={penguinAvatar} 
+                            alt="د. بنجي" 
+                            className="w-full h-full object-contain"
                           />
                         </div>
                       </div>
