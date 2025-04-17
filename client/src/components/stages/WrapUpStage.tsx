@@ -123,7 +123,12 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
             </Button>
             
             <Button 
-              onClick={onRestart} 
+              onClick={() => {
+                // Call the restart function which will reset to stage 1 but preserve progress
+                onRestart(); 
+                // Then navigate back to the mission start
+                navigate('/mission1');
+              }}
               size="lg"
               variant="outline"
               className="flex items-center w-full sm:w-auto"
