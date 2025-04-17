@@ -1,23 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, AlertCircle, Send, Loader2 } from 'lucide-react';
+import { generateHTML, HTMLMessage } from '@/lib/openai';
 import { useQuest } from '@/hooks/useQuest';
-import { useLocation } from 'wouter';
-import { chatWithDrPengy } from '@/lib/pengyApi';
 import penguinAvatar from '@/assets/Group 26087843.png';
 
-// Chat history message type
-export interface DrPengyMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-  status?: 'loading' | 'error' | 'success';
-}
+// Global conversation history
+const stageConversations: Record<string, HTMLMessage[]> = {};
 
-// Dr. Pengy modes config based on different stages
+// Dr. Pengy modes configuration
 interface DrPengyMode {
   model: string;
   systemPrompt: string;
@@ -53,20 +48,17 @@ const DR_PENGY_MODES: Record<string, DrPengyMode> = {
   }
 };
 
-// Conversation history stored per stage
-const stageConversations: Record<string, DrPengyMessage[]> = {};
-
-export function DrPengyAssistant() {
+export function GlobalChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<DrPengyMessage[]>([]);
-  const [userInput, setUserInput] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState<HTMLMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { currentStage } = useQuest();
   const [location] = useLocation();
   
-  // Get the current stage or page context
+  // Get the current context based on location and stage
   const getCurrentContext = (): string => {
     // Detect the current location and stage
     if (location.includes('mission1')) {
@@ -86,135 +78,141 @@ export function DrPengyAssistant() {
   const currentContext = getCurrentContext();
   const currentMode = DR_PENGY_MODES[currentContext];
   
+  // Define welcome message
+  const welcomeMessage: HTMLMessage = {
+    role: 'assistant',
+    content: `مرحبًا! أنا ${currentMode.assistantName}. ${currentMode.description}`
+  };
+  
   // Load conversation from our storage based on current context
   useEffect(() => {
     const contextConversation = stageConversations[currentContext] || [];
-    setMessages(contextConversation);
     
-    // If no conversation and it's the first load, add a welcome message
-    if (contextConversation.length === 0) {
-      const welcomeMessage: DrPengyMessage = {
-        role: 'assistant',
-        content: `مرحبًا! أنا ${currentMode.assistantName}. ${currentMode.description}`,
-        timestamp: Date.now(),
-        status: 'success'
-      };
-      
+    // If we have a saved conversation for this context, use it
+    if (contextConversation.length > 0) {
+      setMessages(contextConversation);
+    } else {
+      // Otherwise start a new conversation with the welcome message
       setMessages([welcomeMessage]);
       stageConversations[currentContext] = [welcomeMessage];
     }
   }, [currentContext]);
   
-  // Scroll to bottom of chat when messages change
+  // Scroll to bottom of chat when messages update
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
-  const toggleWidget = () => {
+  // Toggle the chat widget
+  const toggleChat = () => {
     setIsOpen(!isOpen);
   };
   
-  const handleSendMessage = async () => {
-    if (!userInput.trim() || isProcessing) return;
+  // Handle prompt submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!prompt.trim() || isLoading) return;
     
     // Add user message
-    const userMessage: DrPengyMessage = {
+    const userMessage: HTMLMessage = {
       role: 'user',
-      content: userInput,
-      timestamp: Date.now()
+      content: prompt
     };
     
-    // Add loading message from assistant
-    const loadingMessage: DrPengyMessage = {
-      role: 'assistant',
-      content: 'جاري التفكير...',
-      timestamp: Date.now(),
-      status: 'loading'
-    };
-    
-    // Update UI and clear input
-    const updatedMessages = [...messages, userMessage, loadingMessage];
-    setMessages(updatedMessages);
-    setUserInput('');
-    setIsProcessing(true);
+    // Update state with the new user message
+    setMessages(prev => [...prev, userMessage]);
+    setPrompt('');
+    setIsLoading(true);
     setError('');
     
-    // Scroll to the latest message
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-    
     try {
-      // Call the API with the current conversation and the appropriate mode
-      const response = await chatWithDrPengy(
-        messages.concat(userMessage),
-        currentMode.model,
-        currentMode.systemPrompt
-      );
       
-      // Replace loading message with response
-      const assistantResponse: DrPengyMessage = {
-        role: 'assistant',
-        content: response.content,
-        timestamp: Date.now(),
-        status: response.error ? 'error' : 'success'
-      };
+      // Use appropriate API based on the current context
+      if (currentContext === 'webBuilder') {
+        // Use the HTML generator API for web builder context
+        const htmlResponse = await generateHTML([...messages, userMessage]);
+        
+        if (htmlResponse.error) {
+          throw new Error(htmlResponse.error);
+        }
+        
+        // Add the assistant's response to messages
+        setMessages(prev => [...prev, htmlResponse.message]);
+      } else {
+        // For other contexts, use the standard text generation API
+        const apiResponse = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: currentMode.systemPrompt },
+              ...messages, 
+              userMessage
+            ].map(m => ({
+              role: m.role,
+              content: m.content
+            })),
+            model: currentMode.model
+          })
+        });
+        
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json();
+          throw new Error(errorData.error || 'Failed to get response');
+        }
+        
+        const data = await apiResponse.json();
+        
+        // Create assistant message
+        const assistantMessage: HTMLMessage = {
+          role: 'assistant',
+          content: data.content
+        };
+        
+        // Add the assistant's response to messages
+        setMessages(prev => [...prev, assistantMessage]);
+      }
       
-      // Update messages, removing the loading message
-      const finalMessages = [...messages, userMessage, assistantResponse];
-      setMessages(finalMessages);
+      // Save the updated conversation
+      stageConversations[currentContext] = [...messages, userMessage, messages[messages.length - 1]];
       
-      // Save to context storage
-      stageConversations[currentContext] = finalMessages;
-      
-      // Set processing to false
-      setIsProcessing(false);
-      
-    } catch (err) {
-      setError((err as Error).message || 'Something went wrong');
-      
-      // Update messages, replacing loading message with error
-      const errorMessage: DrPengyMessage = {
-        role: 'assistant',
-        content: 'عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.',
-        timestamp: Date.now(),
-        status: 'error'
-      };
-      
-      const updatedMessages = [...messages, userMessage, errorMessage];
-      setMessages(updatedMessages);
-      stageConversations[currentContext] = updatedMessages;
-      
-      setIsProcessing(false);
+    } catch (error) {
+      console.error('Chat error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Handle key press in input field
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
   
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out">
       {/* Chat Widget Button (When Closed) */}
       {!isOpen && (
         <Button 
-          onClick={toggleWidget}
-          className="rounded-full h-14 w-14 shadow-lg"
+          onClick={toggleChat}
+          size="icon" 
+          className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
         >
           <img 
             src={penguinAvatar} 
             alt="Dr. Pengy" 
-            className="w-8 h-8 object-cover"
+            className="w-16 h-16 object-cover"
           />
         </Button>
       )}
       
       {/* Chat Widget Panel (When Open) */}
       {isOpen && (
-        <div className="flex flex-col w-80 h-96 bg-white border rounded-md shadow-xl overflow-hidden">
+        <div className="flex flex-col w-80 sm:w-96 h-[500px] bg-white border rounded-md shadow-xl overflow-hidden">
           {/* Chat Header */}
           <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
             <div className="flex items-center">
@@ -229,7 +227,7 @@ export function DrPengyAssistant() {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8" 
-              onClick={toggleWidget}
+              onClick={toggleChat}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -239,7 +237,13 @@ export function DrPengyAssistant() {
           <ScrollArea className="flex-grow p-4">
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground p-4">
-                <p>مرحبًا! كيف يمكنني مساعدتك اليوم؟</p>
+                <p>What would you like to build?</p>
+                <p className="text-xs mt-2">Examples:</p>
+                <ul className="text-xs mt-1 space-y-1">
+                  <li>"A calculator with dark theme"</li>
+                  <li>"A todo list with local storage"</li>
+                  <li>"A color picker tool"</li>
+                </ul>
               </div>
             ) : (
               <div className="space-y-4">
@@ -254,7 +258,7 @@ export function DrPengyAssistant() {
                   >
                     <div className="flex items-center mb-2">
                       {msg.role === 'user' ? (
-                        <div className="font-medium text-xs">أنت</div>
+                        <div className="font-medium text-xs">You</div>
                       ) : (
                         <div className="flex items-center">
                           <img 
@@ -267,17 +271,28 @@ export function DrPengyAssistant() {
                       )}
                     </div>
                     <div className="whitespace-pre-wrap text-xs">
-                      {msg.status === 'loading' ? (
-                        <div className="flex items-center">
-                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                          {msg.content}
-                        </div>
-                      ) : (
-                        msg.content
-                      )}
+                      {msg.content}
                     </div>
                   </div>
                 ))}
+                
+                {isLoading && (
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
+                    <div className="flex items-center mb-2">
+                      <img 
+                        src={penguinAvatar} 
+                        alt="Dr. Pengy" 
+                        className="h-5 w-5 rounded-full mr-1.5"
+                      />
+                      <div className="font-medium text-xs">{currentMode.assistantName}</div>
+                    </div>
+                    <div className="flex items-center text-xs">
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      Generating...
+                    </div>
+                  </div>
+                )}
+                
                 <div ref={chatEndRef} />
               </div>
             )}
@@ -293,24 +308,24 @@ export function DrPengyAssistant() {
               </Alert>
             )}
             
-            <div className="flex gap-2">
+            <form onSubmit={handleSubmit} className="flex gap-2">
               <Textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="اكتب رسالتك هنا..."
+                placeholder="Ask Dr. Pengy..."
                 className="min-h-10 resize-none"
-                disabled={isProcessing}
+                disabled={isLoading}
               />
               <Button 
-                onClick={handleSendMessage} 
-                disabled={!userInput.trim() || isProcessing}
+                type="submit" 
+                disabled={!prompt.trim() || isLoading}
                 size="icon"
                 className="h-10 w-10 flex-shrink-0"
               >
                 <Send className="h-4 w-4" />
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       )}
