@@ -9,7 +9,7 @@ export interface QuestState {
   completedMissions: number[]; // Track which missions have been completed
 }
 
-const TOTAL_STAGES = 6;
+const TOTAL_STAGES = 7; // Updated with the new image generation stage
 const STORAGE_KEY = 'genAIQuestState';
 
 export function useQuest() {

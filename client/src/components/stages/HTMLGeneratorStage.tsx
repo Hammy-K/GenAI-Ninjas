@@ -61,7 +61,7 @@ export function HTMLGeneratorStage({
   // Define initial state with welcome message
   const welcomeMessage: HTMLMessage = {
     role: 'assistant',
-    content: 'Welcome to the AI Web Builder! I can help you build a web application by generating the code based on your description. Try describing what you want to build, for example: "Create a calculator with a dark theme" or "Make a to-do list with local storage".'
+    content: 'أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه، مثلاً: "سوي آلة حاسبة بتصميم داكن" أو "لعبة snake محدثة". حاول توصف ايش تبغى تبني! 😊'
   };
   
   const initialState: HTMLGeneratorState = {

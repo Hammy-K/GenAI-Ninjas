@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
+import { ImageGenerationStage } from '@/components/stages/ImageGenerationStage';
 import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
@@ -54,14 +55,17 @@ export default function Mission1() {
         case 'tryai':
           targetStage = 3;
           break;
-        case 'webbuilder':
+        case 'images':
           targetStage = 4;
           break;
-        case 'submission':
+        case 'webbuilder':
           targetStage = 5;
           break;
-        case 'wrapup':
+        case 'submission':
           targetStage = 6;
+          break;
+        case 'wrapup':
+          targetStage = 7;
           break;
       }
       
@@ -78,13 +82,14 @@ export default function Mission1() {
   };
   
   // Render current stage based on stage number
-  // Same stage flow as before:
+  // Updated stage flow:
   // 1. Welcome to your first GenAI mission
   // 2. Prompt Engineering 101
-  // 3. Try AI Tools (Text and Image)
-  // 4. Build a Web App
-  // 5. Submission Form
-  // 6. Final Celebratory Page
+  // 3. Try AI Text Generation (Chat with Dr. Pengy)
+  // 4. Create Images with AI (new stage)
+  // 5. Build a Web App with AI (HTML Generator)
+  // 6. Submission Form
+  // 7. Final Celebratory Page
   const renderStage = () => {
     switch (currentStage) {
       case 1:
@@ -109,7 +114,7 @@ export default function Mission1() {
         );
       case 4:
         return (
-          <HTMLGeneratorStage 
+          <ImageGenerationStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
@@ -118,12 +123,21 @@ export default function Mission1() {
         );
       case 5:
         return (
+          <HTMLGeneratorStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 6:
+        return (
           <SubmissionFormStage
             onComplete={goToNextStage}
             onBack={goToPrevStage}
           />
         );
-      case 6:
+      case 7:
         return (
           <WrapUpStage 
             onRestart={restart}
