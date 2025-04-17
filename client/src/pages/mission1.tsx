@@ -167,8 +167,8 @@ export default function Mission1() {
             onClick={handleBackToDashboard}
             className="flex items-center text-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Mission Dashboard
+            <ArrowLeft className="h-4 w-4 ml-2" />
+            العودة إلى لوحة المهام
           </Button>
         </div>
       </div>
