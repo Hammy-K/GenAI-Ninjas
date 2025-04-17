@@ -12,7 +12,7 @@ import { useQuest } from '@/hooks/useQuest';
 import { useEffect } from 'react';
 import { useLocation, useRoute, useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function Mission1() {
   const { 
@@ -167,7 +167,7 @@ export default function Mission1() {
             onClick={handleBackToDashboard}
             className="flex items-center text-sm"
           >
-            <ArrowLeft className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 ml-2" />
             العودة إلى لوحة المهام
           </Button>
         </div>

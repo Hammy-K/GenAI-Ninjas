@@ -106,10 +106,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image generation endpoint
+  // Image generation endpoint with chat history support
   app.post("/api/ai/image", async (req, res) => {
     try {
-      const { prompt } = req.body;
+      const { prompt, messageHistory = [] } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
@@ -124,10 +124,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Create enhanced prompt based on message history if available
+      let enhancedPrompt = prompt;
+      
+      // If there are previous user messages, add context to the prompt
+      if (messageHistory.length > 0) {
+        // Extract previous user messages to provide context
+        const previousUserMessages = messageHistory
+          .filter(msg => msg.role === 'user' && msg.content !== prompt) // Filter out current prompt
+          .map(msg => msg.content);
+        
+        if (previousUserMessages.length > 0) {
+          // Create a context-aware prompt
+          enhancedPrompt = `This is a follow-up request. Previous requests were: "${previousUserMessages.join('" then "')}". Now the new request is: "${prompt}"`;
+          console.log("Using context-enhanced prompt:", enhancedPrompt);
+        }
+      }
+
       // Generate image
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: prompt,
+        prompt: enhancedPrompt,
         n: 1,
         size: "1024x1024",
         quality: "standard",
