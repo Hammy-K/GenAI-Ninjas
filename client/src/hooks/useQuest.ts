@@ -163,15 +163,24 @@ export function useQuest() {
   };
   
   // Reset the quest
-  const resetQuest = () => {
-    setState({
-      currentStage: 1,
-      xp: 0,
-      unlockedBadges: [],
-      awardedXp: {},
-      awardedBadges: {},
-      completedMissions: []
-    });
+  const resetQuest = (preserveProgress = true) => {
+    if (preserveProgress) {
+      // Only reset the stage to 1, preserving badges, XP, and completed missions
+      setState(prev => ({
+        ...prev,
+        currentStage: 1
+      }));
+    } else {
+      // Complete reset (for testing or admin purposes)
+      setState({
+        currentStage: 1,
+        xp: 0,
+        unlockedBadges: [],
+        awardedXp: {},
+        awardedBadges: {},
+        completedMissions: []
+      });
+    }
   };
   
   return {

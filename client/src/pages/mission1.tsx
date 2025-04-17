@@ -40,9 +40,13 @@ export default function Mission1() {
     }
   }, [currentStage, totalStages, navigate]);
   
-  // Handle direct navigation to a specific stage only once on mount
+  // Reset stage to 1 when starting the mission, while preserving other progress
   useEffect(() => {
-    if (stageName) {
+    // Always start from stage 1 when mission component loads
+    setStage(1);
+
+    // Handle direct navigation to specific stages (for development/admin purposes only)
+    if (stageName && process.env.NODE_ENV === 'development') {
       let targetStage = 0;
       
       switch (stageName) {
@@ -69,7 +73,7 @@ export default function Mission1() {
           break;
       }
       
-      if (targetStage > 0 && targetStage !== currentStage) {
+      if (targetStage > 0 && targetStage !== 1) {
         setStage(targetStage);
       }
     }
