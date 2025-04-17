@@ -384,7 +384,7 @@ export function ImageGenerationStage({
                 <Button
                   onClick={toggleChat}
                   size="icon"
-                  className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
+                  className="w-16 h-16 flex items-center justify-center p-0 overflow-hidden bg-transparent"
                 >
                   <img
                     src={penguinAvatar}
