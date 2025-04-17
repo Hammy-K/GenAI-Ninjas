@@ -8,11 +8,13 @@ import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
+import { CountdownTimer } from '@/components/ui/countdown-timer';
 import { useQuest } from '@/hooks/useQuest';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useRoute, useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Mission1() {
   const { 
@@ -32,6 +34,30 @@ export default function Mission1() {
   const [location, navigate] = useLocation();
   const [, params] = useRoute('/mission1/stage/:stageName');
   const stageName = params?.stageName;
+  
+  // Timer states
+  const [showTimeAlert, setShowTimeAlert] = useState(false);
+  
+  // Get time limit for the current stage
+  const getStageTimeLimit = (stage: number): number => {
+    switch (stage) {
+      case 2: return 5;  // TryAI - 5 minutes
+      case 3: return 5;  // Prompt Challenge - 5 minutes
+      case 4: return 5;  // Image Generation - 5 minutes
+      case 5: return 25; // HTML Generator - 25 minutes
+      default: return 0; // No timer for other stages
+    }
+  };
+  
+  // Handle time up event
+  const handleTimeUp = () => {
+    setShowTimeAlert(true);
+  };
+  
+  // Reset time alert when stage changes
+  useEffect(() => {
+    setShowTimeAlert(false);
+  }, [currentStage]);
   
   // Return to dashboard when mission is complete and user attempts to proceed
   useEffect(() => {
@@ -174,6 +200,30 @@ export default function Mission1() {
       </div>
       
       <ProgressBar currentStage={currentStage} totalStages={totalStages} />
+      
+      {/* Time Management UI */}
+      {getStageTimeLimit(currentStage) > 0 && (
+        <div className="bg-white border-b py-2">
+          <div className="max-w-6xl mx-auto px-4 flex justify-end">
+            <CountdownTimer 
+              minutes={getStageTimeLimit(currentStage)} 
+              onTimeUp={handleTimeUp}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Time Up Alert */}
+      {showTimeAlert && (
+        <div className="max-w-6xl mx-auto px-4 mt-2">
+          <Alert className="bg-amber-50 border-amber-200">
+            <AlertDescription className="text-sm">
+              انتهى الوقت المقترح لهذه المرحلة، لكن يمكنك أن تأخذ وقتك إذا احتجت لوقت إضافي.
+              يمكنك الانتقال إلى المرحلة التالية عندما تكون جاهزاً.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       
       <main className="flex-grow p-4 md:p-6">
         {renderStage()}
