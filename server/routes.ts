@@ -131,8 +131,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (messageHistory.length > 0) {
         // Extract previous user messages to provide context
         const previousUserMessages = messageHistory
-          .filter(msg => msg.role === 'user' && msg.content !== prompt) // Filter out current prompt
-          .map(msg => msg.content);
+          .filter((msg: { role: string; content: string }) => 
+            msg.role === 'user' && msg.content !== prompt) // Filter out current prompt
+          .map((msg: { content: string }) => msg.content);
         
         if (previousUserMessages.length > 0) {
           // Create a context-aware prompt

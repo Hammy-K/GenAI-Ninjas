@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertCircle,
   ArrowLeft,
-
+  ArrowRight,
   Loader2,
   Send,
   Wand2,
@@ -128,15 +128,25 @@ export function ImageGenerationStage({
     }
   };
 
-  // Generate an image using DALL-E
-  const generateImage = async (prompt: string): Promise<string> => {
+  // Generate an image using DALL-E with message history for context
+  const generateImage = async (prompt: string, messageHistory: ChatMessage[]): Promise<string> => {
     try {
+      // Filter message history to exclude the welcome message and only include relevant context
+      const relevantHistory = messageHistory.filter(msg => 
+        msg.role === 'user' || (msg.role === 'assistant' && !msg.content.includes('أنا هنا عشان أساعدك'))
+      );
+      
+      console.log(`Sending image generation request with ${relevantHistory.length} context messages`);
+      
       const response = await fetch("/api/ai/image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt, 
+          messageHistory: relevantHistory 
+        }),
       });
 
       if (!response.ok) throw new Error("Image generation failed");
@@ -230,8 +240,8 @@ export function ImageGenerationStage({
         messages: [...prev.messages, processingMessage],
       }));
 
-      // Generate the image
-      const imageUrl = await generateImage(userMessage.content);
+      // Generate the image with message history for context
+      const imageUrl = await generateImage(userMessage.content, state.messages);
 
       // Add the success message with the image
       const successMessage: ChatMessage = {
@@ -288,14 +298,13 @@ export function ImageGenerationStage({
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl text-center">
-              Create Images with AI
+              صمم صور باستخدام الذكاء الاصطناعي
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center mb-6">
               <p>
-                Describe what you want to see and let AI bring your imagination
-                to life!
+                وصف ما تريد أن تراه ودع الذكاء الاصطناعي يحول خيالك إلى حقيقة!
               </p>
             </div>
 
@@ -304,7 +313,7 @@ export function ImageGenerationStage({
               {state.generatedImageUrl ? (
                 <div className="border rounded p-4 max-w-2xl">
                   <div className="mb-4 text-center font-medium flex items-center justify-between">
-                    <span>Generated Image</span>
+                    <span>الصورة التي تم إنشاؤها</span>
                     <Button 
                       onClick={handleDownloadImage} 
                       variant="outline" 
@@ -312,7 +321,7 @@ export function ImageGenerationStage({
                       className="flex items-center gap-1 text-xs"
                     >
                       <Download className="h-3 w-3" />
-                      Save Image
+                      حفظ الصورة
                     </Button>
                   </div>
                   <img
@@ -483,15 +492,15 @@ export function ImageGenerationStage({
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Previous Stage</span>
+              <ArrowRight className="mr-2 h-4 w-4" />
+              <span>المرحلة السابقة</span>
             </Button>
             <Button
               onClick={onComplete}
               size="lg"
               disabled={!state.generatedImageUrl && !state.hasEarnedXp}
             >
-              <span>Continue to Next Stage</span>
+              <span>متابعة للمرحلة التالية</span>
               <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
