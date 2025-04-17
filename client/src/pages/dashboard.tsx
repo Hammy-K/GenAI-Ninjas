@@ -392,7 +392,7 @@ export default function Dashboard() {
                     <p className="font-medium text-gray-500">المهمات المكتملة</p>
                   </div>
                   <div>
-                    <p className="font-medium">{completedMissions.length} / 4</p>
+                    <p className="font-medium">{completedMissions?.length || 0} / 4</p>
                   </div>
                 </div>
                 
