@@ -36,7 +36,6 @@ interface HTMLGeneratorState {
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
   viewMode: 'preview' | 'code';
-  isChatOpen: boolean;
   projectId: string | null;
   isSaving: boolean;
   shareUrl: string | null;
@@ -73,7 +72,6 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: 'preview',
-    isChatOpen: false, // Start with chat closed, will open after delay
     projectId: null,
     isSaving: false,
     shareUrl: null,

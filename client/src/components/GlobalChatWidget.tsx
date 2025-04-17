@@ -267,8 +267,8 @@ export function GlobalChatWidget() {
                     key={i}
                     className={`p-3 rounded-lg ${
                       msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground ml-6'
-                        : 'bg-amber-50 border border-amber-100 mr-6'
+                        ? 'bg-primary text-primary-foreground mr-6' // In RTL, user messages are on right side
+                        : 'bg-amber-50 border border-amber-100 ml-6' // In RTL, assistant messages are on left side
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -292,18 +292,18 @@ export function GlobalChatWidget() {
                 ))}
                 
                 {isLoading && (
-                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 ml-6">
                     <div className="flex items-center mb-2">
                       <img 
                         src={penguinAvatar} 
                         alt="Dr. Pengy" 
-                        className="h-5 w-5 rounded-full mr-1.5"
+                        className="h-5 w-5 rounded-full ml-1.5"
                       />
                       <div className="font-medium text-xs">Dr. Pengy</div>
                     </div>
                     <div className="flex items-center text-xs">
-                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                      Generating...
+                      <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                      جاري التفكير...
                     </div>
                   </div>
                 )}
