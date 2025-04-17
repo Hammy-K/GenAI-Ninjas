@@ -547,7 +547,7 @@ export function HTMLGeneratorStage({
         <div className="flex-grow flex flex-col">
           <div className="bg-gray-100 border-b px-4 py-2 flex items-center justify-between">
             <span className="font-medium text-sm">
-              {state.viewMode === 'preview' ? 'Live Preview' : 'HTML Code'}
+              {state.viewMode === 'preview' ? 'معاينة مباشرة' : 'كود HTML'}
             </span>
             
             {state.currentHTML && (
@@ -560,7 +560,7 @@ export function HTMLGeneratorStage({
                     className="rounded-none px-3 py-1 h-8 text-xs"
                     onClick={() => setState(prev => ({ ...prev, viewMode: 'preview' }))}
                   >
-                    Preview
+                    معاينة
                   </Button>
                   <Button
                     type="button"
@@ -569,7 +569,7 @@ export function HTMLGeneratorStage({
                     className="rounded-none px-3 py-1 h-8 text-xs"
                     onClick={() => setState(prev => ({ ...prev, viewMode: 'code' }))}
                   >
-                    Code
+                    الكود
                   </Button>
                 </div>
                 
@@ -585,12 +585,12 @@ export function HTMLGeneratorStage({
                     {state.isSaving ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        Saving...
+                        جاري الحفظ...
                       </>
                     ) : (
                       <>
                         <Share2 className="h-3 w-3" />
-                        Save & Share
+                        حفظ ومشاركة
                       </>
                     )}
                   </Button>
@@ -602,7 +602,7 @@ export function HTMLGeneratorStage({
                     onClick={confirmReset}
                   >
                     <Plus className="h-3 w-3" />
-                    New Project
+                    مشروع جديد
                   </Button>
                 </div>
               </div>
@@ -612,7 +612,7 @@ export function HTMLGeneratorStage({
           <div className="flex-grow bg-white h-[75vh]">
             {!state.currentHTML ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p>Your creation will appear here</p>
+                <p>سيظهر إبداعك هنا</p>
               </div>
             ) : state.viewMode === 'preview' ? (
               <iframe
@@ -657,10 +657,10 @@ export function HTMLGeneratorStage({
                 <div className="flex items-center">
                   <img 
                     src={penguinAvatar} 
-                    alt="Dr. Pengy" 
-                    className="h-6 w-6 rounded-full mr-2"
+                    alt="د. بنجي" 
+                    className="h-6 w-6 rounded-full ml-2"
                   />
-                  <span className="font-medium text-sm">Chat with Dr. Pengy</span>
+                  <span className="font-medium text-sm">دردشة مع د. بنجي</span>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -676,12 +676,12 @@ export function HTMLGeneratorStage({
               <ScrollArea className="flex-grow p-4">
                 {state.messages.length === 0 ? (
                   <div className="text-center text-muted-foreground p-4">
-                    <p>What would you like to build?</p>
-                    <p className="text-xs mt-2">Examples:</p>
-                    <ul className="text-xs mt-1 space-y-1">
-                      <li>"A calculator with dark theme"</li>
-                      <li>"A todo list with local storage"</li>
-                      <li>"A color picker tool"</li>
+                    <p>ماذا ترغب في بناءه؟</p>
+                    <p className="text-xs mt-2">أمثلة:</p>
+                    <ul className="text-xs mt-1 space-y-1 text-right">
+                      <li>"آلة حاسبة بمظهر داكن"</li>
+                      <li>"قائمة مهام مع تخزين محلي"</li>
+                      <li>"أداة اختيار الألوان"</li>
                     </ul>
                   </div>
                 ) : (
@@ -697,15 +697,15 @@ export function HTMLGeneratorStage({
                       >
                         <div className="flex items-center mb-2">
                           {msg.role === 'user' ? (
-                            <div className="font-medium text-xs">You</div>
+                            <div className="font-medium text-xs">أنت</div>
                           ) : (
                             <div className="flex items-center">
                               <img 
                                 src={penguinAvatar} 
-                                alt="Dr. Pengy" 
-                                className="h-5 w-5 rounded-full mr-1.5"
+                                alt="د. بنجي" 
+                                className="h-5 w-5 rounded-full ml-1.5"
                               />
-                              <div className="font-medium text-xs">Dr. Pengy</div>
+                              <div className="font-medium text-xs">د. بنجي</div>
                             </div>
                           )}
                         </div>
@@ -720,14 +720,14 @@ export function HTMLGeneratorStage({
                         <div className="flex items-center mb-2">
                           <img 
                             src={penguinAvatar} 
-                            alt="Dr. Pengy" 
-                            className="h-5 w-5 rounded-full mr-1.5"
+                            alt="د. بنجي" 
+                            className="h-5 w-5 rounded-full ml-1.5"
                           />
-                          <div className="font-medium text-xs">Dr. Pengy</div>
+                          <div className="font-medium text-xs">د. بنجي</div>
                         </div>
                         <div className="flex items-center text-xs">
-                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                          Generating...
+                          <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                          جاري الإنشاء...
                         </div>
                       </div>
                     )}
@@ -742,7 +742,7 @@ export function HTMLGeneratorStage({
                 {state.error && (
                   <Alert variant="destructive" className="mb-3 py-2">
                     <AlertCircle className="h-3 w-3" />
-                    <AlertTitle className="text-xs">Error</AlertTitle>
+                    <AlertTitle className="text-xs">خطأ</AlertTitle>
                     <AlertDescription className="text-xs">{state.error}</AlertDescription>
                   </Alert>
                 )}
@@ -783,15 +783,15 @@ export function HTMLGeneratorStage({
               variant="outline" 
               size="lg"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Previous Stage</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
+              <span>المرحلة السابقة</span>
             </Button>
             <Button 
               onClick={handleContinue} 
               size="lg"
             >
-              <span>Continue to Next Stage</span>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>الانتقال للمرحلة التالية</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
