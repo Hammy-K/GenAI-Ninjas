@@ -452,9 +452,9 @@ export function HTMLGeneratorStage({
       <Dialog open={state.showShareDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showShareDialog: open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Project Saved!</DialogTitle>
+            <DialogTitle>تم حفظ المشروع!</DialogTitle>
             <DialogDescription>
-              Your project has been saved successfully. Share the link below to show others your creation.
+              تم حفظ مشروعك بنجاح. شارك الرابط أدناه لعرض إبداعك للآخرين.
             </DialogDescription>
           </DialogHeader>
           
@@ -472,8 +472,8 @@ export function HTMLGeneratorStage({
               className="px-3"
               onClick={copyShareUrl}
             >
-              <span className="sr-only">Copy</span>
-              Copy
+              <span className="sr-only">نسخ</span>
+              نسخ
             </Button>
           </div>
           
@@ -483,7 +483,7 @@ export function HTMLGeneratorStage({
               variant="secondary"
               onClick={() => setState(prev => ({ ...prev, showShareDialog: false }))}
             >
-              Close
+              إغلاق
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -493,16 +493,16 @@ export function HTMLGeneratorStage({
       <Dialog open={state.showResetDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showResetDialog: open }))}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Start New Project?</DialogTitle>
+            <DialogTitle>بدء مشروع جديد؟</DialogTitle>
             <DialogDescription>
-              This will clear your current project and chat history. Make sure you've saved your work if you want to keep it.
+              سيؤدي هذا إلى حذف مشروعك الحالي وسجل المحادثة. تأكد من حفظ عملك إذا كنت ترغب في الاحتفاظ به.
             </DialogDescription>
           </DialogHeader>
           
           <div className="flex items-center gap-2 mt-4">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
             <p className="text-sm text-muted-foreground">
-              This action cannot be undone.
+              لا يمكن التراجع عن هذا الإجراء.
             </p>
           </div>
           
@@ -512,7 +512,7 @@ export function HTMLGeneratorStage({
               variant="outline"
               onClick={() => setState(prev => ({ ...prev, showResetDialog: false }))}
             >
-              Cancel
+              إلغاء
             </Button>
             <Button
               type="button"
@@ -522,7 +522,7 @@ export function HTMLGeneratorStage({
                 setState(prev => ({ ...prev, showResetDialog: false }));
               }}
             >
-              Start New Project
+              بدء مشروع جديد
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -643,7 +643,7 @@ export function HTMLGeneratorStage({
             >
               <img 
                 src={penguinAvatar} 
-                alt="Dr. Pengy" 
+                alt="د. بنجي" 
                 className="w-16 h-16 object-cover"
               />
             </Button>
@@ -751,9 +751,10 @@ export function HTMLGeneratorStage({
                   <Input
                     value={state.prompt}
                     onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
-                    placeholder="Describe what to build..."
+                    placeholder="صف ما تريد بناءه..."
                     disabled={state.isLoading}
                     className="flex-grow text-sm h-9"
+                    dir="auto"
                   />
                   <Button
                     type="submit"
