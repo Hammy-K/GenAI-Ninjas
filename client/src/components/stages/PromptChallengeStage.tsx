@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight, ArrowLeft, Check, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
 import { useStageState } from '@/hooks/useStageState';
 import { validateInput } from '@/lib/inputFilter';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
 import { useQuest } from '@/hooks/useQuest';
+import penguinPngPath from '@assets/Penguin.png';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -63,7 +64,9 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState('');
   
-  const weakPrompt = "Create an image of a cat";
+  const weakPrompt = "صمم لي صورة";
+  const goodPromptExample = "أبغى لعبة بسيطة فيها شخصية تقفز وتتخطى عقبات زي Flappy Bird، بألوان زاهية ومناسبة للأطفال";
+  const badPromptExample = "سوي لي تطبيق";
   
   const handleSubmitImprovement = async () => {
     // Validate the input using the shared utility function
@@ -124,13 +127,23 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
                 isExpired={isStageTimerExpired(STAGE_ID)}
               />
             </div>
-            <CardTitle className="text-2xl md:text-3xl text-center">تحدي هندسة البرومبت</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center mb-3">
-              تعلم كيفية كتابة برومبتات أفضل من خلال تحسين الأمثلة الضعيفة. البرومبتات الجيدة محددة وواضحة ومفصلة.
-            </p>
             
+            <div className="flex justify-center mb-3">
+              <img 
+                src={penguinPngPath} 
+                alt="د. بنجي" 
+                className="h-20 w-auto" 
+              />
+            </div>
+            
+            <CardTitle className="text-2xl md:text-3xl text-center">تحدي هندسة البرومبت</CardTitle>
+            
+            <p className="text-center mt-3 font-medium text-lg">
+              تعلم كيف تكتب برومبت يخلّي الذكاء الاصطناعي يفهمك تمام 👀
+            </p>
+          </CardHeader>
+          
+          <CardContent>
             {isStageTimerExpired(STAGE_ID) && (
               <Alert className="bg-amber-50 border-amber-200 mb-4">
                 <AlertDescription className="text-sm">
@@ -140,44 +153,61 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
               </Alert>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <h3 className="font-bold mb-3">بروبت ضعيف:</h3>
-                <div className="bg-red-50 p-4 rounded-lg border border-red-100 mb-4">
-                  <p className="font-medium">{weakPrompt}</p>
+            {/* Examples Section with Check/X Icons */}
+            <div className="bg-neutral-50 rounded-lg border p-4 mb-6">
+              <h3 className="font-bold text-lg mb-3 text-center">أمثلة على البرومبتات</h3>
+              
+              <div className="flex items-center mb-3 bg-red-50 p-3 rounded-lg border border-red-200">
+                <div className="ml-3 bg-red-100 p-2 rounded-full">
+                  <X className="h-5 w-5 text-red-500" />
                 </div>
-                
-                <div className="bg-neutral-50 p-3 rounded-lg border">
-                  <h4 className="font-bold mb-2">لماذا هذا ضعيف؟</h4>
-                  <p className="text-sm">هذا البرومبت غامض جداً. لا يحدد نوع القطة أو المكان أو الأسلوب أو أي تفاصيل أخرى قد تساعد الذكاء الاصطناعي على إنشاء صورة محددة.</p>
+                <div>
+                  <p className="font-bold text-red-600">{badPromptExample}</p>
+                  <p className="text-sm text-red-600 mt-1">غير واضح وغير محدد</p>
                 </div>
               </div>
               
-              <div>
-                <h3 className="font-bold mb-3">البروبت المحسّن:</h3>
-                <Textarea 
-                  placeholder="أعد كتابة البروبت لجعله أكثر تحديداً وتفصيلاً..."
-                  value={state.improvedPrompt}
-                  onChange={(e) => setImprovedPrompt(e.target.value)}
-                  className="min-h-[100px] mb-4"
-                  dir="auto"
-                />
-                
-                <Button 
-                  onClick={handleSubmitImprovement} 
-                  disabled={isAnalyzing || !state.improvedPrompt.trim()}
-                  className="w-full"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      جاري التحليل...
-                    </>
-                  ) : (
-                    'تحليل البروبت'
-                  )}
-                </Button>
+              <div className="flex items-center bg-green-50 p-3 rounded-lg border border-green-200">
+                <div className="ml-3 bg-green-100 p-2 rounded-full">
+                  <Check className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-green-600">{goodPromptExample}</p>
+                  <p className="text-sm text-green-600 mt-1">واضح، محدد، ويحتوي على تفاصيل مفيدة</p>
+                </div>
               </div>
+            </div>
+            
+            {/* Challenge Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold mb-3">حسّن البرومبت هذا:</h3>
+              
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
+                <p className="font-medium">{weakPrompt}</p>
+              </div>
+              
+              <Textarea 
+                placeholder="أعد كتابة البرومبت ليكون أكثر تحديداً وتفصيلاً..."
+                value={state.improvedPrompt}
+                onChange={(e) => setImprovedPrompt(e.target.value)}
+                className="min-h-[100px] mb-4"
+                dir="auto"
+              />
+              
+              <Button 
+                onClick={handleSubmitImprovement} 
+                disabled={isAnalyzing || !state.improvedPrompt.trim()}
+                className="w-full"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    جاري التحليل...
+                  </>
+                ) : (
+                  'تحليل البرومبت'
+                )}
+              </Button>
             </div>
             
             {error && (
@@ -188,23 +218,75 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
               </Alert>
             )}
             
+            {/* Results Section */}
             {state.analysis && (
-              <div className="bg-neutral-50 p-4 rounded-lg border mb-6">
-                <h3 className="font-bold mb-2">تحليل:</h3>
-                <div className="mb-2">
-                  <span className="font-medium">النتيجة: {state.analysis.score}/10</span>
-                  <div className="w-full bg-neutral-200 h-2 rounded-full mt-1">
-                    <div 
-                      className={`h-2 rounded-full ${state.analysis.score >= 7 ? 'bg-green-500' : 'bg-orange-500'}`}
-                      style={{ width: `${state.analysis.score * 10}%` }}
-                    />
-                  </div>
+              <div className={`p-4 rounded-lg border mb-6 ${
+                state.analysis.score >= 7 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-amber-50 border-amber-200'
+              }`}>
+                <div className="flex items-center mb-3">
+                  {state.analysis.score >= 7 ? (
+                    <>
+                      <div className="bg-green-100 p-2 rounded-full ml-3">
+                        <Check className="h-5 w-5 text-green-500" />
+                      </div>
+                      <h3 className="font-bold text-green-700">
+                        أحسنت! تقييمك: {state.analysis.score}/10 🎉
+                      </h3>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-amber-100 p-2 rounded-full ml-3">
+                        <AlertCircle className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <h3 className="font-bold text-amber-700">
+                        قربت! هذا التقييم: {state.analysis.score}/10 😅
+                      </h3>
+                    </>
+                  )}
                 </div>
-                <p className="mb-3">{state.analysis.feedback}</p>
-                <p className="text-sm text-neutral-600">{state.analysis.improvement}</p>
+                
+                <div className="w-full bg-white h-2 rounded-full my-2">
+                  <div 
+                    className={`h-2 rounded-full ${state.analysis.score >= 7 ? 'bg-green-500' : 'bg-amber-500'}`}
+                    style={{ width: `${state.analysis.score * 10}%` }}
+                  />
+                </div>
+                
+                <div className="mt-3">
+                  <p className="mb-3">{state.analysis.feedback}</p>
+                  {state.analysis.score < 7 && (
+                    <p className="text-sm text-amber-700">
+                      جرب تضيف تفاصيل أو تحدد المطلوب أكثر.
+                    </p>
+                  )}
+                  <p className="text-sm mt-2 border-t pt-2 border-dashed border-gray-300">
+                    <strong>اقتراح للتحسين:</strong> {state.analysis.improvement}
+                  </p>
+                </div>
+                
+                {state.analysis.score >= 7 && (
+                  <div className="mt-4 bg-green-100 p-3 rounded-md text-center">
+                    <p className="font-medium text-green-700">
+                      تقدر تروح للمرحلة التالية! 🚀
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Goal Description */}
+            {!state.analysis && (
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-6 text-center">
+                <p className="text-sm text-blue-700">
+                  هدفك هو الحصول على تقييم 7/10 أو أعلى للانتقال للمرحلة التالية.
+                  كلما كان البرومبت أكثر تفصيلاً وتحديداً، كلما كانت النتيجة أفضل!
+                </p>
               </div>
             )}
           </CardContent>
+          
           <CardFooter className="flex justify-between">
             <Button 
               onClick={onBack} 
@@ -214,6 +296,7 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
               <ArrowRight className="ml-2 h-4 w-4" />
               <span>المرحلة السابقة</span>
             </Button>
+            
             <Button 
               onClick={onComplete} 
               size="lg"
