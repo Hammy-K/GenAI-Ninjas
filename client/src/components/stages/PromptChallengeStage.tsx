@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
 import { useStageState } from '@/hooks/useStageState';
 import { validateInput } from '@/lib/inputFilter';
+import { CountdownTimer } from '@/components/ui/countdown-timer';
+import { useQuest } from '@/hooks/useQuest';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -24,6 +26,9 @@ interface PromptChallengeState {
 }
 
 export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: PromptChallengeStageProps) {
+  // Use quest hook for global state
+  const { isStageTimerExpired, markStageTimerExpired, markStageVisited } = useQuest();
+  
   // Use custom hook for persisted state
   const [state, setState] = useStageState<PromptChallengeState>('promptChallenge', {
     improvedPrompt: '',
@@ -32,6 +37,20 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
     hasEarnedXp: false,
     hasUnlockedBadge: false
   });
+  
+  // Stage ID for this component
+  const STAGE_ID = 3; // Prompt Challenge is stage 3
+  const STAGE_TIME_LIMIT = 5; // 5 minutes
+  
+  // Mark stage as visited
+  useEffect(() => {
+    markStageVisited(STAGE_ID);
+  }, [markStageVisited]);
+  
+  // Handle timer expiration
+  const handleTimeUp = (stageId: number) => {
+    markStageTimerExpired(stageId);
+  };
   
   // Utility functions to update individual state properties
   const setImprovedPrompt = (prompt: string) => setState(prev => ({ ...prev, improvedPrompt: prompt }));
@@ -97,12 +116,29 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
       <div className="max-w-3xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
+            <div className="flex justify-between items-center mb-2">
+              <CountdownTimer 
+                stageId={STAGE_ID}
+                minutes={STAGE_TIME_LIMIT}
+                onTimeUp={handleTimeUp}
+                isExpired={isStageTimerExpired(STAGE_ID)}
+              />
+            </div>
             <CardTitle className="text-2xl md:text-3xl text-center">تحدي هندسة البرومبت</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center mb-6">
+            <p className="text-center mb-3">
               تعلم كيفية كتابة برومبتات أفضل من خلال تحسين الأمثلة الضعيفة. البرومبتات الجيدة محددة وواضحة ومفصلة.
             </p>
+            
+            {isStageTimerExpired(STAGE_ID) && (
+              <Alert className="bg-amber-50 border-amber-200 mb-4">
+                <AlertDescription className="text-sm">
+                  انتهى الوقت المقترح لهذه المرحلة، لكن يمكنك أن تأخذ وقتك إذا احتجت لوقت إضافي.
+                  يمكنك الانتقال إلى المرحلة التالية عندما تكون جاهزاً.
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>

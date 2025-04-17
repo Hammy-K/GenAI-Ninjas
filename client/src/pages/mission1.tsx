@@ -202,30 +202,7 @@ export default function Mission1() {
       
       <ProgressBar currentStage={currentStage} totalStages={totalStages} />
       
-      {/* Time Management UI */}
-      {getStageTimeLimit(currentStage) > 0 && (
-        <div className="bg-white border-b py-2">
-          <div className="max-w-6xl mx-auto px-4 flex justify-end">
-            <CountdownTimer 
-              minutes={getStageTimeLimit(currentStage)} 
-              onTimeUp={handleTimeUp}
-              isExpired={isStageTimerExpired(currentStage)}
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* Time Up Alert */}
-      {isStageTimerExpired(currentStage) && (
-        <div className="max-w-6xl mx-auto px-4 mt-2">
-          <Alert className="bg-amber-50 border-amber-200">
-            <AlertDescription className="text-sm">
-              انتهى الوقت المقترح لهذه المرحلة، لكن يمكنك أن تأخذ وقتك إذا احتجت لوقت إضافي.
-              يمكنك الانتقال إلى المرحلة التالية عندما تكون جاهزاً.
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
+      {/* We no longer need the timer here - it's being moved into each stage component */}
       
       <main className="flex-grow p-4 md:p-6">
         {renderStage()}

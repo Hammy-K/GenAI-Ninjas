@@ -3,13 +3,20 @@ import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CountdownTimerProps {
-  minutes: number;
-  onTimeUp?: () => void;
+  stageId: number; // The ID of the stage this timer belongs to
+  minutes: number; // Time limit in minutes
+  onTimeUp?: (stageId: number) => void; // Callback when time is up
   className?: string;
-  isExpired?: boolean; // Optional prop to indicate the timer is already expired
+  isExpired?: boolean; // Whether the timer has already expired
 }
 
-export function CountdownTimer({ minutes, onTimeUp, className, isExpired = false }: CountdownTimerProps) {
+export function CountdownTimer({ 
+  stageId, 
+  minutes, 
+  onTimeUp, 
+  className, 
+  isExpired = false 
+}: CountdownTimerProps) {
   // Calculate total seconds from minutes
   const totalSeconds = minutes * 60;
   
@@ -17,59 +24,49 @@ export function CountdownTimer({ minutes, onTimeUp, className, isExpired = false
   const [timeRemaining, setTimeRemaining] = useState(isExpired ? 0 : totalSeconds);
   const [isTimeUp, setIsTimeUp] = useState(isExpired);
   
-  // Use ref to track if timer has been initialized
-  const initializedRef = useRef(false);
+  // Use ref to track if timer has started running
+  const hasStartedRef = useRef(false);
   
   // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(Math.abs(seconds) / 60);
     const secs = Math.abs(seconds) % 60;
-    const sign = seconds < 0 ? '-' : '';
-    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
   useEffect(() => {
-    // Initialize timer only once
+    // If already marked as expired, set the timer to zero
     if (isExpired) {
       setTimeRemaining(0);
       setIsTimeUp(true);
       return;
     }
     
-    // If timer was already initialized, don't reset it
-    if (initializedRef.current) {
+    // Only start the timer once
+    if (hasStartedRef.current) {
       return;
     }
     
-    // Initialize timer with full time
-    setTimeRemaining(totalSeconds);
-    setIsTimeUp(false);
-    initializedRef.current = true;
-  }, [totalSeconds, isExpired]);
-  
-  useEffect(() => {
-    // If already expired, don't start the timer
-    if (isExpired || isTimeUp) {
-      return;
-    }
+    // Mark timer as started
+    hasStartedRef.current = true;
     
-    // Create interval to decrement time
+    // Set up the interval to count down
     const timerInterval = setInterval(() => {
       setTimeRemaining(prev => {
-        // Don't decrement below 0
+        // Don't decrement below zero
         if (prev <= 0) {
           clearInterval(timerInterval);
           setIsTimeUp(true);
-          if (onTimeUp) onTimeUp();
+          if (onTimeUp) onTimeUp(stageId);
           return 0;
         }
         
         const newTime = prev - 1;
         
-        // If time is up
+        // If time is exactly zero
         if (newTime === 0) {
           setIsTimeUp(true);
-          if (onTimeUp) onTimeUp();
+          if (onTimeUp) onTimeUp(stageId);
         }
         
         return newTime;
@@ -78,10 +75,9 @@ export function CountdownTimer({ minutes, onTimeUp, className, isExpired = false
     
     // Clean up interval
     return () => clearInterval(timerInterval);
-  }, [onTimeUp, isExpired, isTimeUp]);
+  }, [isExpired, onTimeUp, stageId, totalSeconds]);
   
   // Determine color based on time remaining
-  // Red when time is up, yellow when less than 20% remains
   const getTimerColor = () => {
     if (timeRemaining <= 0) return 'text-red-500 border-red-200 bg-red-50';
     if (timeRemaining <= totalSeconds * 0.2) return 'text-amber-500 border-amber-200 bg-amber-50';
@@ -100,7 +96,7 @@ export function CountdownTimer({ minutes, onTimeUp, className, isExpired = false
       <span>{formatTime(timeRemaining)}</span>
       
       {isTimeUp && (
-        <span className="text-xs font-normal">
+        <span className="text-xs font-normal mr-1">
           وقت مقترح انتهى
         </span>
       )}
