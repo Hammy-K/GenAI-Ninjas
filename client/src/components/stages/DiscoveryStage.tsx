@@ -70,7 +70,7 @@ export function DiscoveryStage({ onComplete, onEarnXp, onBack }: DiscoveryStageP
             </Button>
             <Button onClick={handleComplete} size="lg">
               <span>Continue to Next Stage</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>

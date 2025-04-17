@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertCircle,
   ArrowLeft,
-  ArrowRight,
+
   Loader2,
   Send,
   Wand2,
@@ -492,7 +492,7 @@ export function ImageGenerationStage({
               disabled={!state.generatedImageUrl && !state.hasEarnedXp}
             >
               <span>Continue to Next Stage</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>

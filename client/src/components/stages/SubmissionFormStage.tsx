@@ -46,7 +46,7 @@ export function SubmissionFormStage({ onComplete, onBack }: SubmissionFormStageP
                 className="flex items-center"
               >
                 Continue to Celebration
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
               </Button>
             </div>
           </CardContent>

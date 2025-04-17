@@ -232,7 +232,7 @@ export function ProjectIdeaStage({ onComplete, onEarnXp, onUnlockBadge, onBack }
               disabled={false} // Allow users to proceed even if API calls fail
             >
               <span>Continue to Final Stage</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>
