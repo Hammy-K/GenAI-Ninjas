@@ -155,7 +155,7 @@ export function TryAIStage({
             <div className="space-y-4">
               {/* Display conversation thread if there's message history */}
               <div className="bg-neutral-50 p-4 rounded-lg border mb-4">
-                <h3 className="font-bold mb-3">Chat with Dr. Pengy</h3>
+                <h3 className="font-bold mb-3">دردش مع د. بنجي</h3>
                 <div className="space-y-4 overflow-y-auto max-h-[450px] p-1 mb-4">
                   {state.messageHistory && state.messageHistory.length > 0 ? (
                     state.messageHistory.map((message, index) => (
@@ -172,16 +172,16 @@ export function TryAIStage({
                         >
                           <div className="flex items-center mb-2">
                             {message.role === "user" ? (
-                              <div className="font-medium text-xs">You</div>
+                              <div className="font-medium text-xs">أنت</div>
                             ) : (
                               <div className="flex items-center">
                                 <img
                                   src={penguinAvatar}
                                   alt="Dr. Pengy"
-                                  className="h-5 w-5 rounded-full mr-1.5"
+                                  className="h-5 w-5 rounded-full ml-1.5"
                                 />
                                 <div className="font-medium text-xs">
-                                  Dr. Pengy
+                                  د. بنجي
                                 </div>
                               </div>
                             )}
@@ -200,10 +200,9 @@ export function TryAIStage({
                           alt="Dr. Pengy"
                           className="h-16 w-16 mx-auto mb-2 rounded-full border-2 border-amber-100"
                         />
-                        <p>No messages yet. Chat with Dr. Pengy!</p>
+                        <p>لا توجد رسائل بعد. دردش مع د. بنجي!</p>
                         <p className="text-xs mt-2">
-                          Try asking: "Tell me about generative AI" or "Write a
-                          poem about learning"
+                          جرب أن تسأل: "حدثني عن الذكاء الاصطناعي التوليدي" أو "اكتب قصيدة عن التعلم"
                         </p>
                       </div>
                     </div>
@@ -213,14 +212,14 @@ export function TryAIStage({
                 {error && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>خطأ</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
 
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="Type your message here... (e.g., 'Write a short story about a space adventure')"
+                    placeholder="اكتب رسالتك هنا... (مثال: 'اكتب قصة قصيرة عن مغامرة في الفضاء')"
                     value={state.textPrompt}
                     onChange={(e) => setTextPrompt(e.target.value)}
                     className="min-h-[80px] flex-grow"
@@ -261,23 +260,23 @@ export function TryAIStage({
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Press Ctrl+Enter to send your message
+                  اضغط Ctrl+Enter لإرسال رسالتك
                 </p>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Previous Stage</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
+              <span>المرحلة السابقة</span>
             </Button>
             <Button
               onClick={onComplete}
               size="lg"
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>Continue to Next Stage</span>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>الانتقال للمرحلة التالية</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>

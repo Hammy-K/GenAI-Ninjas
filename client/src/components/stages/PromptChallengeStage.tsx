@@ -91,33 +91,34 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
       <div className="max-w-3xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center">Prompt Engineering Challenge</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl text-center">تحدي هندسة البرومبت</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center mb-6">
-              Learn to write better prompts by improving weak examples. Good prompts are specific, clear, and detailed.
+              تعلم كيفية كتابة برومبتات أفضل من خلال تحسين الأمثلة الضعيفة. البرومبتات الجيدة محددة وواضحة ومفصلة.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <h3 className="font-bold mb-3">Weak Prompt:</h3>
+                <h3 className="font-bold mb-3">بروبت ضعيف:</h3>
                 <div className="bg-red-50 p-4 rounded-lg border border-red-100 mb-4">
                   <p className="font-medium">{weakPrompt}</p>
                 </div>
                 
                 <div className="bg-neutral-50 p-3 rounded-lg border">
-                  <h4 className="font-bold mb-2">Why is this weak?</h4>
-                  <p className="text-sm">This prompt is too vague. It doesn't specify what kind of cat, the setting, style, or any other details that would help the AI create a specific image.</p>
+                  <h4 className="font-bold mb-2">لماذا هذا ضعيف؟</h4>
+                  <p className="text-sm">هذا البرومبت غامض جداً. لا يحدد نوع القطة أو المكان أو الأسلوب أو أي تفاصيل أخرى قد تساعد الذكاء الاصطناعي على إنشاء صورة محددة.</p>
                 </div>
               </div>
               
               <div>
-                <h3 className="font-bold mb-3">Your Improved Prompt:</h3>
+                <h3 className="font-bold mb-3">البروبت المحسّن:</h3>
                 <Textarea 
-                  placeholder="Rewrite the prompt to make it more specific and detailed..."
+                  placeholder="أعد كتابة البروبت لجعله أكثر تحديداً وتفصيلاً..."
                   value={state.improvedPrompt}
                   onChange={(e) => setImprovedPrompt(e.target.value)}
                   className="min-h-[100px] mb-4"
+                  dir="auto"
                 />
                 
                 <Button 
@@ -127,11 +128,11 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      جاري التحليل...
                     </>
                   ) : (
-                    'Analyze My Prompt'
+                    'تحليل البروبت'
                   )}
                 </Button>
               </div>
@@ -140,16 +141,16 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>خطأ</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             
             {state.analysis && (
               <div className="bg-neutral-50 p-4 rounded-lg border mb-6">
-                <h3 className="font-bold mb-2">Analysis:</h3>
+                <h3 className="font-bold mb-2">تحليل:</h3>
                 <div className="mb-2">
-                  <span className="font-medium">Score: {state.analysis.score}/10</span>
+                  <span className="font-medium">النتيجة: {state.analysis.score}/10</span>
                   <div className="w-full bg-neutral-200 h-2 rounded-full mt-1">
                     <div 
                       className={`h-2 rounded-full ${state.analysis.score >= 7 ? 'bg-green-500' : 'bg-orange-500'}`}
@@ -168,16 +169,16 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
               variant="outline" 
               size="lg"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Previous Stage</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
+              <span>المرحلة السابقة</span>
             </Button>
             <Button 
               onClick={onComplete} 
               size="lg"
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>Continue to Next Stage</span>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>الانتقال للمرحلة التالية</span>
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>
