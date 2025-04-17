@@ -39,31 +39,38 @@ export default function Mission1() {
     }
   }, [currentStage, totalStages, navigate]);
   
-  // Handle direct navigation to a specific stage
+  // Handle direct navigation to a specific stage only once on mount
   useEffect(() => {
     if (stageName) {
+      let targetStage = 0;
+      
       switch (stageName) {
         case 'welcome':
-          setStage(1);
+          targetStage = 1;
           break;
         case 'prompt':
-          setStage(2);
+          targetStage = 2;
           break;
         case 'tryai':
-          setStage(3);
+          targetStage = 3;
           break;
         case 'webbuilder':
-          setStage(4);
+          targetStage = 4;
           break;
         case 'submission':
-          setStage(5);
+          targetStage = 5;
           break;
         case 'wrapup':
-          setStage(6);
+          targetStage = 6;
           break;
       }
+      
+      if (targetStage > 0 && targetStage !== currentStage) {
+        setStage(targetStage);
+      }
     }
-  }, [stageName, setStage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run on component mount
   
   // Handle go back to dashboard
   const handleBackToDashboard = () => {
