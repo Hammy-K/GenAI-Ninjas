@@ -143,7 +143,25 @@ export function HTMLGeneratorStage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!state.prompt.trim() || state.isLoading) return;
+    if (state.isLoading) return;
+    
+    // Validate input using the shared utility function
+    const validation = validateInput(state.prompt);
+    if (!validation.isValid) {
+      // Add a warning message from د. بنجي about the invalid input
+      const validationWarning: HTMLMessage = {
+        role: 'assistant',
+        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد إنشاءه."
+      };
+      
+      setState(prev => ({
+        ...prev,
+        messages: [...prev.messages, validationWarning],
+        error: validation.errorMessage
+      }));
+      
+      return;
+    }
     
     // Add user message
     const userMessage: HTMLMessage = {

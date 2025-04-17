@@ -6,6 +6,7 @@ import { AlertCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzePrompt } from '@/lib/openai';
 import { useStageState } from '@/hooks/useStageState';
+import { validateInput } from '@/lib/inputFilter';
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -46,7 +47,12 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
   const weakPrompt = "Create an image of a cat";
   
   const handleSubmitImprovement = async () => {
-    if (!state.improvedPrompt.trim()) return;
+    // Validate the input using the shared utility function
+    const validation = validateInput(state.improvedPrompt);
+    if (!validation.isValid) {
+      setError(validation.errorMessage);
+      return;
+    }
     
     setError('');
     setIsAnalyzing(true);
