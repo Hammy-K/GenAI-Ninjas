@@ -266,46 +266,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: 'Failed to generate project idea' });
     }
   });
-  
-  // Dr. Pengy chat endpoint
-  app.post('/api/ai/chat', async (req, res) => {
-    try {
-      const { messages, model = GPT_MODEL } = req.body;
-      
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Missing or invalid messages array' });
-      }
-      
-      // Check the latest user message for inappropriate content
-      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-      
-      if (lastUserMessage) {
-        const moderationResult = await moderateContent(lastUserMessage.content, openai);
-        
-        if (moderationResult.flagged) {
-          return res.status(400).json({ 
-            content: "عذراً، لا يمكنني الرد على هذا السؤال. يرجى طرح سؤال آخر مناسب.",
-            moderationResult 
-          });
-        }
-      }
-      
-      // Generate a response using the OpenAI API
-      const response = await openai.chat.completions.create({
-        model,
-        messages,
-        temperature: 0.8,
-        max_tokens: 500
-      });
-      
-      return res.json({ 
-        content: response.choices[0].message.content 
-      });
-    } catch (error) {
-      console.error('Error in Dr. Pengy chat:', error);
-      return res.status(500).json({ error: 'Failed to generate response' });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

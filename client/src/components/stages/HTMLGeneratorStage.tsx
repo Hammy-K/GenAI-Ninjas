@@ -36,6 +36,7 @@ interface HTMLGeneratorState {
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
   viewMode: 'preview' | 'code';
+  isChatOpen: boolean;
   projectId: string | null;
   isSaving: boolean;
   shareUrl: string | null;
@@ -72,6 +73,7 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: 'preview',
+    isChatOpen: false, // Start with chat closed, will open after delay
     projectId: null,
     isSaving: false,
     shareUrl: null,
@@ -90,15 +92,22 @@ export function HTMLGeneratorStage({
         const parsedState = JSON.parse(savedState);
         
         // Force reset isSaving to false and any error messages on component mount
+        // And ensure the chat is always open on first visit, even if previously closed
         console.log("Ensuring clean state on mount - previous isSaving:", parsedState.isSaving);
         
         const cleanState = {
           ...parsedState,
           isSaving: false,
-          error: ''
+          error: '',
+          isChatOpen: false // Start with chat closed, will open after delay
         };
         
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
+        
+        // Force chat open regardless of saved state with a 1-second delay
+        setTimeout(() => {
+          setState(prev => ({...prev, isChatOpen: true}));
+        }, 1000);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
@@ -113,7 +122,16 @@ export function HTMLGeneratorStage({
   // Initialize toast hook for notifications
   const { toast } = useToast();
   
-  // No chat timer needed anymore as we're using the global Dr. Pengy chat widget
+  // Effect to ensure chat is open on mount with a 1-second delay
+  useEffect(() => {
+    // Force the chat to be open on component mount after a 1-second delay
+    const timer = setTimeout(() => {
+      setState(prev => ({ ...prev, isChatOpen: true }));
+    }, 1000);
+    
+    // Clean up the timer if component unmounts before the delay completes
+    return () => clearTimeout(timer);
+  }, []);
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -206,7 +224,10 @@ export function HTMLGeneratorStage({
     onComplete();
   };
   
-  // Chat widget toggle function removed - now using global Dr. Pengy widget
+  // Handle toggling the chat widget
+  const toggleChat = () => {
+    setState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
+  };
   
   // Check if project ID is in URL (for shared projects)
   useEffect(() => {
@@ -609,7 +630,148 @@ export function HTMLGeneratorStage({
             )}
           </div>
         </div>
-        {/* Chat widget removed - now using global Dr. Pengy widget */}
+        
+        {/* Floating Chat Widget */}
+        <div className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out 
+                         ${state.isChatOpen ? 'w-80 sm:w-96 h-[500px] scale-100 opacity-100' : 'w-16 h-16 scale-95 opacity-95'}`}>
+          {/* Chat Widget Button (When Closed) */}
+          {!state.isChatOpen && (
+            <Button 
+              onClick={toggleChat}
+              size="icon" 
+              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
+            >
+              <img 
+                src={penguinAvatar} 
+                alt="Dr. Pengy" 
+                className="w-16 h-16 object-cover"
+              />
+            </Button>
+          )}
+          
+          {/* Chat Widget Panel (When Open) */}
+          {state.isChatOpen && (
+            <div className="flex flex-col h-full overflow-hidden bg-white border rounded-md shadow-xl">
+              {/* Chat Header */}
+              <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center">
+                  <img 
+                    src={penguinAvatar} 
+                    alt="Dr. Pengy" 
+                    className="h-6 w-6 rounded-full mr-2"
+                  />
+                  <span className="font-medium text-sm">Chat with Dr. Pengy</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={toggleChat}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Chat Messages */}
+              <ScrollArea className="flex-grow p-4">
+                {state.messages.length === 0 ? (
+                  <div className="text-center text-muted-foreground p-4">
+                    <p>What would you like to build?</p>
+                    <p className="text-xs mt-2">Examples:</p>
+                    <ul className="text-xs mt-1 space-y-1">
+                      <li>"A calculator with dark theme"</li>
+                      <li>"A todo list with local storage"</li>
+                      <li>"A color picker tool"</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {state.messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded-lg ${
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground ml-6'
+                            : 'bg-amber-50 border border-amber-100 mr-6'
+                        }`}
+                      >
+                        <div className="flex items-center mb-2">
+                          {msg.role === 'user' ? (
+                            <div className="font-medium text-xs">You</div>
+                          ) : (
+                            <div className="flex items-center">
+                              <img 
+                                src={penguinAvatar} 
+                                alt="Dr. Pengy" 
+                                className="h-5 w-5 rounded-full mr-1.5"
+                              />
+                              <div className="font-medium text-xs">Dr. Pengy</div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="whitespace-pre-wrap text-xs">
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {state.isLoading && (
+                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
+                        <div className="flex items-center mb-2">
+                          <img 
+                            src={penguinAvatar} 
+                            alt="Dr. Pengy" 
+                            className="h-5 w-5 rounded-full mr-1.5"
+                          />
+                          <div className="font-medium text-xs">Dr. Pengy</div>
+                        </div>
+                        <div className="flex items-center text-xs">
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Generating...
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
+              </ScrollArea>
+              
+              {/* Input Area */}
+              <div className="border-t p-3">
+                {state.error && (
+                  <Alert variant="destructive" className="mb-3 py-2">
+                    <AlertCircle className="h-3 w-3" />
+                    <AlertTitle className="text-xs">Error</AlertTitle>
+                    <AlertDescription className="text-xs">{state.error}</AlertDescription>
+                  </Alert>
+                )}
+                
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <Input
+                    value={state.prompt}
+                    onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
+                    placeholder="Describe what to build..."
+                    disabled={state.isLoading}
+                    className="flex-grow text-sm h-9"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-9 w-9"
+                    disabled={!state.prompt.trim() || state.isLoading}
+                  >
+                    {state.isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Footer with Navigation */}
