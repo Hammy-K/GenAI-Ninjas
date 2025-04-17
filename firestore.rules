@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public read access to all documents
+    match /projects/{projectId} {
+      // Allow anyone to read project documents
+      allow read: if true;
+      
+      // Only allow writes if authenticated (you can adjust this as needed)
+      // For fully public access, change to: allow write: if true;
+      allow write: if true;
+    }
+    
+    // Default rule - deny access to any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

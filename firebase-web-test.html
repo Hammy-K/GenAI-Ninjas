@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Project Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            color: #333;
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+        .container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .panel {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+        }
+        input {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            margin-right: 0.5rem;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f5f5f5;
+            border-radius: 0.25rem;
+        }
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 0.25rem;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firebase Project Tester</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>HTML Editor</h2>
+            <textarea id="html-editor"><!DOCTYPE html>
+<html>
+<head>
+    <title>Test Project</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1 {
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello from Test Project</h1>
+    <p>This is a test project created with the Firebase Project Tester.</p>
+    <p>Current time: <span id="current-time"></span></p>
+    
+    <script>
+        document.getElementById('current-time').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html></textarea>
+            <div style="margin-top: 1rem;">
+                <button id="save-btn">Save Project</button>
+                <div id="save-status" class="status"></div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Preview</h2>
+            <iframe id="preview-frame"></iframe>
+            <div style="margin-top: 1rem;">
+                <button id="update-preview-btn">Update Preview</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h2>Load Project</h2>
+        <div>
+            <input type="text" id="project-id" placeholder="Enter project ID" style="width: 300px;">
+            <button id="load-btn">Load Project</button>
+        </div>
+        <div id="load-status" class="status"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const htmlEditor = document.getElementById('html-editor');
+            const previewFrame = document.getElementById('preview-frame');
+            const saveBtn = document.getElementById('save-btn');
+            const loadBtn = document.getElementById('load-btn');
+            const updatePreviewBtn = document.getElementById('update-preview-btn');
+            const projectIdInput = document.getElementById('project-id');
+            const saveStatus = document.getElementById('save-status');
+            const loadStatus = document.getElementById('load-status');
+            
+            // Update preview initially
+            updatePreview();
+            
+            // Event listeners
+            saveBtn.addEventListener('click', saveProject);
+            loadBtn.addEventListener('click', loadProject);
+            updatePreviewBtn.addEventListener('click', updatePreview);
+            
+            function updatePreview() {
+                const htmlContent = htmlEditor.value;
+                const iframe = previewFrame;
+                iframe.srcdoc = htmlContent;
+            }
+            
+            async function saveProject() {
+                try {
+                    saveStatus.textContent = 'Saving project...';
+                    saveStatus.className = 'status';
+                    
+                    const htmlContent = htmlEditor.value;
+                    
+                    const response = await fetch('/api/save-project', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ html: htmlContent })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.projectId) {
+                        saveStatus.textContent = `Project saved! ID: ${data.projectId}`;
+                        saveStatus.className = 'status success';
+                        
+                        // Auto-populate the load input
+                        projectIdInput.value = data.projectId;
+                    } else {
+                        throw new Error('No project ID returned');
+                    }
+                } catch (error) {
+                    console.error('Error saving project:', error);
+                    saveStatus.textContent = `Error: ${error.message}`;
+                    saveStatus.className = 'status error';
+                }
+            }
+            
+            async function loadProject() {
+                try {
+                    const projectId = projectIdInput.value.trim();
+                    
+                    if (!projectId) {
+                        loadStatus.textContent = 'Please enter a project ID';
+                        loadStatus.className = 'status error';
+                        return;
+                    }
+                    
+                    loadStatus.textContent = 'Loading project...';
+                    loadStatus.className = 'status';
+                    
+                    const response = await fetch(`/api/load-project?id=${encodeURIComponent(projectId)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.html) {
+                        htmlEditor.value = data.html;
+                        updatePreview();
+                        loadStatus.textContent = 'Project loaded successfully!';
+                        loadStatus.className = 'status success';
+                    } else if (data.error) {
+                        throw new Error(data.error);
+                    } else {
+                        throw new Error('No HTML content returned');
+                    }
+                } catch (error) {
+                    console.error('Error loading project:', error);
+                    loadStatus.textContent = `Error: ${error.message}`;
+                    loadStatus.className = 'status error';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -12,6 +12,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+  // Firebase test routes endpoint
+  app.get("/api/firebase-test", (req, res) => {
+    res.sendFile("firebase-web-test.html", { root: "." });
+  });
+
+  // Firebase test API endpoints
+  app.post("/api/save-project", async (req, res) => {
+    try {
+      const { html } = req.body;
+      
+      if (!html) {
+        return res.status(400).json({ error: "HTML content is required" });
+      }
+      
+      // Dynamically import to avoid loading during server startup
+      const { saveProject } = await import("../client/src/lib/firebase");
+      
+      // Save the project
+      const projectId = await saveProject(html);
+      
+      return res.json({ projectId });
+    } catch (error) {
+      console.error("Error saving project:", error);
+      return res.status(500).json({ error: "Failed to save project" });
+    }
+  });
+  
+  app.get("/api/load-project", async (req, res) => {
+    try {
+      const { id } = req.query;
+      
+      if (!id || typeof id !== "string") {
+        return res.status(400).json({ error: "Project ID is required" });
+      }
+      
+      // Dynamically import to avoid loading during server startup
+      const { loadProject } = await import("../client/src/lib/firebase");
+      
+      // Load the project
+      const project = await loadProject(id);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      return res.json(project);
+    } catch (error) {
+      console.error("Error loading project:", error);
+      return res.status(500).json({ error: "Failed to load project" });
+    }
+  });
+
   // Text generation endpoint
   app.post("/api/ai/text", async (req, res) => {
     try {
