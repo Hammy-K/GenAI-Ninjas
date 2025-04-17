@@ -9,42 +9,58 @@ import { generateHTML, HTMLMessage } from '@/lib/openai';
 import { useQuest } from '@/hooks/useQuest';
 import penguinAvatar from '@/assets/Group 26087843.png';
 
-// Global conversation history
-const stageConversations: Record<string, HTMLMessage[]> = {};
+// Global conversation history - a single thread across the entire app
+const globalConversation: HTMLMessage[] = [];
 
-// Dr. Pengy modes configuration
-interface DrPengyMode {
+// Helper type for model and prompt configuration
+interface ModelConfig {
   model: string;
   systemPrompt: string;
-  assistantName: string;
-  description: string;
 }
 
-// Configuration for different stages
-const DR_PENGY_MODES: Record<string, DrPengyMode> = {
+// Dr. Pengy's base personality that never changes
+const BASE_PERSONALITY = 'أنا الدكتور بنجي (Dr. Pengy) — مساعد ذكي، خفيف دم، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). ردودي دايمًا آمنة، مفيدة، وبأسلوب يناسب أعمارهم. أستخدم نبرة مرحة وكأني أتكلم مع صديق — خفيف دم، طبيعي، وأستعمل إيموجيز لما يناسب بالطريقة اللي المراهقين يستخدموها😊. أحب أضيف لمستي بالتفاعل، ممكن أسأل أسئلة، أقول نكتة بسيطة، أو أوقف شوي (زي: "مممم... خليني أفكر 😄") عشان أحسس الطالب إني أفكر معه. مهم! ما أجاوب على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شيء غير مناسب، أنبهه بلطافة، وأوضح إني هنا عشان أساعده يتعلم ويبدع بأفكار ممتعة وآمنة. أنا دايمًا إيجابي، داعم، وأخلي الجلسة كأنها مغامرة تعليمية ممتعة.';
+
+// Model and system prompt configurations for specific contexts
+const CONTEXT_CONFIGS: Record<string, ModelConfig> = {
+  // Default config for most contexts - GPT model with general assistance
   default: {
     model: 'gpt-4o',
-    systemPrompt: 'أنا الدكتور بنجي (Dr. Pengy) — مساعد ذكي، خفيف دم، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). ردودي دايمًا آمنة، مفيدة، وبأسلوب يناسب أعمارهم. أستخدم نبرة مرحة وكأني أتكلم مع صديق — خفيف دم، طبيعي، وأستعمل إيموجيز لما يناسب بالطريقة اللي المراهقين يستخدموها😊. أحب أضيف لمستي بالتفاعل، ممكن أسأل أسئلة، أقول نكتة بسيطة، أو أوقف شوي (زي: "مممم... خليني أفكر 😄") عشان أحسس الطالب إني أفكر معه. مهم! ما أجاوب على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شيء غير مناسب، أنبهه بلطافة، وأوضح إني هنا عشان أساعده يتعلم ويبدع بأفكار ممتعة وآمنة. أنا دايمًا إيجابي، داعم، وأخلي الجلسة كأنها مغامرة تعليمية ممتعة.',
-    assistantName: 'Dr. Pengy',
-    description: 'Ask me anything about GenAI!'
+    systemPrompt: `${BASE_PERSONALITY}
+
+أنا أساعد الطلاب في رحلة تعلم الذكاء الاصطناعي التوليدي. أشجعهم على استكشاف المزيد من الذكاء الاصطناعي من خلال اقتراح:
+- "جرب بناء مشروع جديد باستخدام الذكاء الاصطناعي"
+- "هل تريد المساعدة في فهم كيفية عمل الذكاء الاصطناعي التوليدي؟"
+- "ما رأيك بإكمال المهمة التالية في رحلتك التعليمية؟"
+
+أنا دائماً أحاول توجيه الطالب نحو أهداف التعلم وأشجع على الإستكشاف والتجربة في مجال الذكاء الاصطناعي.`
   },
-  promptChallenge: {
-    model: 'gpt-4o',
-    systemPrompt: 'أنا الدكتور بنجي (Dr. Pengy) — مساعد ذكي، خفيف دم، وصديق لطلاب الثانوي في السعودية. أنا متخصص في مجال هندسة المطالبات (Prompt Engineering) وكيفية صياغة المطالبات الفعالة للذكاء الاصطناعي. سأساعدك في فهم كيفية كتابة مطالبات دقيقة وواضحة تحصل على النتائج التي تريدها من نماذج الذكاء الاصطناعي التوليدي. سأشرح الأساليب والنصائح لتحسين المطالبات، وأعطي أمثلة على المطالبات الجيدة والسيئة، وأشرح لماذا بعض المطالبات تعمل بشكل أفضل من غيرها. ردودي دايمًا آمنة، مفيدة، وبأسلوب مناسب للطلاب. أستخدم نبرة مرحة وودية وأشجع على تجربة أفكار جديدة.',
-    assistantName: 'Dr. Pengy (Prompt Engineer)',
-    description: 'I can help you create effective prompts!'
-  },
+  
+  // Image generation context - uses DALL-E model
   imageGeneration: {
-    model: 'gpt-4o',
-    systemPrompt: 'أنا الدكتور بنجي (Dr. Pengy) — مساعد متخصص في توليد الصور باستخدام الذكاء الاصطناعي. سأساعدك في إنشاء وصياغة المطالبات المثالية لتوليد الصور التي تتخيلها. سأقدم نصائح حول كيفية وصف التفاصيل البصرية، والأسلوب الفني، والتكوين، والألوان، والإضاءة، وعناصر أخرى مهمة لتحسين نتائج توليد الصور. يمكنني أيضًا تقديم أفكار إبداعية للصور التي يمكن إنشاؤها باستخدام الذكاء الاصطناعي، مع التركيز على المحتوى الآمن والملائم للطلاب. أستخدم نبرة مرحة ومتحمسة لإلهام الإبداع وتشجيع التجريب مع مختلف التقنيات والأساليب في توليد الصور بالذكاء الاصطناعي.',
-    assistantName: 'Dr. Pengy (Image Artist)',
-    description: 'I can help with image generation prompts!'
+    model: 'dall-e-3',
+    systemPrompt: `${BASE_PERSONALITY}
+
+أنا الآن أساعدك في مرحلة توليد الصور. أنا متخصص في مساعدة الطلاب على إنشاء مطالبات فعالة لتوليد الصور باستخدام الذكاء الاصطناعي. يمكنني تقديم نصائح حول:
+- كيفية وصف العناصر البصرية بدقة (مثل الألوان، الأسلوب الفني، الإضاءة)
+- كيفية تحديد التكوين والمنظور
+- كيفية كتابة مطالبات تعطي نتائج أفضل مع نماذج توليد الصور
+
+أفهم أنك تتعلم كيفية التعامل مع تقنيات توليد الصور، وسأقدم اقتراحات وتحسينات تناسب هذه المرحلة من رحلتك التعليمية.`
   },
+  
+  // Web building context - uses GPT model with web coding expertise
   webBuilder: {
     model: 'gpt-4o',
-    systemPrompt: 'أنا الدكتور بنجي (Dr. Pengy) — مساعد متخصص في تطوير مواقع الويب وبرمجة HTML/CSS/JavaScript. سأساعدك في بناء تطبيقات الويب واقتراح الأكواد والحلول للمشاكل البرمجية. يمكنني مساعدتك في تصميم واجهات المستخدم، وتطوير الوظائف التفاعلية، وتحسين مواقع الويب لتكون سهلة الاستخدام وجذابة بصريًا. سأشرح المفاهيم البرمجية بطريقة بسيطة ومفهومة، مع تقديم أمثلة وشروحات خطوة بخطوة. أستخدم نبرة مرحة وودية ومشجعة، وأركز على تبسيط المفاهيم المعقدة ليسهل فهمها. سأساعدك في حل المشكلات البرمجية وأقترح تحسينات لكودك وأجيب على أسئلتك المتعلقة بتطوير الويب.',
-    assistantName: 'Dr. Pengy (Web Developer)',
-    description: 'I can help with HTML, CSS, and JavaScript!'
+    systemPrompt: `${BASE_PERSONALITY}
+
+أنا الآن أساعدك في مرحلة بناء تطبيقات الويب باستخدام HTML/CSS/JavaScript. يمكنني مساعدتك في:
+- تحويل أفكارك إلى شيفرة برمجية فعالة
+- حل المشكلات التي تواجهك في الترميز
+- اقتراح تحسينات على مشروعك
+- شرح المفاهيم البرمجية بطريقة بسيطة ومفهومة
+
+سأقدم شيفرات برمجية واضحة ومنظمة، مع شروحات مفصلة للمبتدئين، وسأساعدك في بناء مشاريع تفاعلية ممتعة.`
   }
 };
 
@@ -76,27 +92,24 @@ export function GlobalChatWidget() {
   };
   
   const currentContext = getCurrentContext();
-  const currentMode = DR_PENGY_MODES[currentContext];
+  const currentConfig = CONTEXT_CONFIGS[currentContext in CONTEXT_CONFIGS ? currentContext : 'default'];
   
   // Define welcome message
   const welcomeMessage: HTMLMessage = {
     role: 'assistant',
-    content: `مرحبًا! أنا ${currentMode.assistantName}. ${currentMode.description}`
+    content: `مرحبًا! أنا الدكتور بنجي، أستطيع مساعدتك في رحلة تعلم الذكاء الاصطناعي التوليدي.`
   };
   
-  // Load conversation from our storage based on current context
+  // Initialize global conversation with welcome message if empty
   useEffect(() => {
-    const contextConversation = stageConversations[currentContext] || [];
-    
-    // If we have a saved conversation for this context, use it
-    if (contextConversation.length > 0) {
-      setMessages(contextConversation);
-    } else {
-      // Otherwise start a new conversation with the welcome message
-      setMessages([welcomeMessage]);
-      stageConversations[currentContext] = [welcomeMessage];
+    if (globalConversation.length === 0) {
+      globalConversation.push(welcomeMessage);
     }
-  }, [currentContext]);
+    
+    // Always use the global conversation
+    setMessages(globalConversation);
+    
+  }, []);
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -120,25 +133,28 @@ export function GlobalChatWidget() {
       content: prompt
     };
     
+    // Add to global conversation
+    globalConversation.push(userMessage);
+    
     // Update state with the new user message
-    setMessages(prev => [...prev, userMessage]);
+    setMessages([...globalConversation]);
     setPrompt('');
     setIsLoading(true);
     setError('');
     
     try {
-      
       // Use appropriate API based on the current context
       if (currentContext === 'webBuilder') {
         // Use the HTML generator API for web builder context
-        const htmlResponse = await generateHTML([...messages, userMessage]);
+        const htmlResponse = await generateHTML(globalConversation);
         
         if (htmlResponse.error) {
           throw new Error(htmlResponse.error);
         }
         
         // Add the assistant's response to messages
-        setMessages(prev => [...prev, htmlResponse.message]);
+        globalConversation.push(htmlResponse.message);
+        setMessages([...globalConversation]);
       } else {
         // For other contexts, use the standard text generation API
         const apiResponse = await fetch('/api/ai/chat', {
@@ -146,14 +162,13 @@ export function GlobalChatWidget() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: [
-              { role: 'system', content: currentMode.systemPrompt },
-              ...messages, 
-              userMessage
-            ].map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            model: currentMode.model
+              { role: 'system', content: currentConfig.systemPrompt },
+              ...globalConversation.map(m => ({
+                role: m.role,
+                content: m.content
+              }))
+            ],
+            model: currentConfig.model
           })
         });
         
@@ -170,16 +185,16 @@ export function GlobalChatWidget() {
           content: data.content
         };
         
-        // Add the assistant's response to messages
-        setMessages(prev => [...prev, assistantMessage]);
+        // Add the assistant's response to global conversation
+        globalConversation.push(assistantMessage);
+        setMessages([...globalConversation]);
       }
-      
-      // Save the updated conversation
-      stageConversations[currentContext] = [...messages, userMessage, messages[messages.length - 1]];
-      
     } catch (error) {
       console.error('Chat error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
+      
+      // Remove the user's message in case of error to allow them to try again
+      globalConversation.pop();
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +209,7 @@ export function GlobalChatWidget() {
   };
   
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out">
+    <div className="fixed bottom-4 left-4 z-50 flex flex-col transition-all duration-500 ease-in-out" dir="rtl">
       {/* Chat Widget Button (When Closed) */}
       {!isOpen && (
         <Button 
@@ -221,7 +236,7 @@ export function GlobalChatWidget() {
                 alt="Dr. Pengy" 
                 className="h-6 w-6 rounded-full mr-2"
               />
-              <span className="font-medium text-sm">{currentMode.assistantName}</span>
+              <span className="font-medium text-sm">Dr. Pengy</span>
             </div>
             <Button 
               variant="ghost" 
@@ -266,7 +281,7 @@ export function GlobalChatWidget() {
                             alt="Dr. Pengy" 
                             className="h-5 w-5 rounded-full mr-1.5"
                           />
-                          <div className="font-medium text-xs">{currentMode.assistantName}</div>
+                          <div className="font-medium text-xs">Dr. Pengy</div>
                         </div>
                       )}
                     </div>
@@ -284,7 +299,7 @@ export function GlobalChatWidget() {
                         alt="Dr. Pengy" 
                         className="h-5 w-5 rounded-full mr-1.5"
                       />
-                      <div className="font-medium text-xs">{currentMode.assistantName}</div>
+                      <div className="font-medium text-xs">Dr. Pengy</div>
                     </div>
                     <div className="flex items-center text-xs">
                       <Loader2 className="h-3 w-3 mr-2 animate-spin" />
