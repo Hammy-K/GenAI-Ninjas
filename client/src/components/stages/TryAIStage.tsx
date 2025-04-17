@@ -104,12 +104,19 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
       <div className="max-w-3xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center">Try AI Conversation</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl text-center">Chat with Dr. Pengy</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center mb-6">
-              Experience the power of generative AI by chatting with an AI assistant. Ask questions, request creative content, or have a conversation.
-            </p>
+            <div className="text-center mb-6 flex flex-col items-center">
+              <img 
+                src={penguinAvatar} 
+                alt="Dr. Pengy" 
+                className="h-20 w-20 mb-3 rounded-full border-2 border-amber-100"
+              />
+              <p>
+                Ask Dr. Pengy anything about AI! Get creative content, ask questions, or just have a friendly conversation.
+              </p>
+            </div>
             
             <div className="space-y-4">
               {/* Display conversation thread if there's message history */}

@@ -9,7 +9,7 @@ import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
 import { useQuest } from '@/hooks/useQuest';
 import { useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useRoute, useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -24,10 +24,13 @@ export default function Mission1() {
     earnXp, 
     unlockBadge,
     unlockedBadges,
-    completeMission
+    completeMission,
+    setStage
   } = useQuest();
   
   const [location, navigate] = useLocation();
+  const [, params] = useRoute('/mission1/stage/:stageName');
+  const stageName = params?.stageName;
   
   // Return to dashboard when mission is complete and user attempts to proceed
   useEffect(() => {
@@ -35,6 +38,32 @@ export default function Mission1() {
       navigate('/');
     }
   }, [currentStage, totalStages, navigate]);
+  
+  // Handle direct navigation to a specific stage
+  useEffect(() => {
+    if (stageName) {
+      switch (stageName) {
+        case 'welcome':
+          setStage(1);
+          break;
+        case 'prompt':
+          setStage(2);
+          break;
+        case 'tryai':
+          setStage(3);
+          break;
+        case 'webbuilder':
+          setStage(4);
+          break;
+        case 'submission':
+          setStage(5);
+          break;
+        case 'wrapup':
+          setStage(6);
+          break;
+      }
+    }
+  }, [stageName, setStage]);
   
   // Handle go back to dashboard
   const handleBackToDashboard = () => {
