@@ -639,12 +639,12 @@ export function HTMLGeneratorStage({
             <Button 
               onClick={toggleChat}
               size="icon" 
-              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0 overflow-hidden"
+              className="w-16 h-16 flex items-center justify-center p-0 overflow-hidden bg-transparent"
             >
               <img 
                 src={penguinAvatar} 
                 alt="د. بنجي" 
-                className="w-16 h-16 object-cover"
+                className="w-16 h-16 object-contain"
               />
             </Button>
           )}
@@ -658,7 +658,7 @@ export function HTMLGeneratorStage({
                   <img 
                     src={penguinAvatar} 
                     alt="د. بنجي" 
-                    className="h-6 w-6 rounded-full ml-2"
+                    className="h-6 w-6 ml-2"
                   />
                   <span className="font-medium text-sm">دردشة مع د. بنجي</span>
                 </div>
@@ -703,7 +703,7 @@ export function HTMLGeneratorStage({
                               <img 
                                 src={penguinAvatar} 
                                 alt="د. بنجي" 
-                                className="h-5 w-5 rounded-full ml-1.5"
+                                className="h-5 w-5 ml-1.5"
                               />
                               <div className="font-medium text-xs">د. بنجي</div>
                             </div>
@@ -721,7 +721,7 @@ export function HTMLGeneratorStage({
                           <img 
                             src={penguinAvatar} 
                             alt="د. بنجي" 
-                            className="h-5 w-5 rounded-full ml-1.5"
+                            className="h-5 w-5 ml-1.5"
                           />
                           <div className="font-medium text-xs">د. بنجي</div>
                         </div>

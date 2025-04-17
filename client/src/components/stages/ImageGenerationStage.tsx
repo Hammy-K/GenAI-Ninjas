@@ -403,7 +403,7 @@ export function ImageGenerationStage({
                       <img
                         src={penguinAvatar}
                         alt="د. بنجي"
-                        className="h-6 w-6 rounded-full mr-2"
+                        className="h-6 w-6 mr-2"
                       />
                       <span className="font-medium text-sm">
                         دردش مع د. بنجي
@@ -442,7 +442,7 @@ export function ImageGenerationStage({
                                   <img
                                     src={penguinAvatar}
                                     alt="د. بنجي"
-                                    className="h-5 w-5 rounded-full mr-1.5"
+                                    className="h-5 w-5 mr-1.5"
                                   />
                                   <div className="font-medium text-xs">
                                     د. بنجي
@@ -463,7 +463,7 @@ export function ImageGenerationStage({
                             <img
                               src={penguinAvatar}
                               alt="د. بنجي"
-                              className="h-5 w-5 rounded-full mr-1.5"
+                              className="h-5 w-5 mr-1.5"
                             />
                             <div className="font-medium text-xs">د. بنجي</div>
                           </div>
