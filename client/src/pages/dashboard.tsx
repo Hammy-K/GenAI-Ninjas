@@ -2,7 +2,7 @@ import { useLocation } from 'wouter';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useState, useEffect } from 'react';
-import { ArrowRight, Lock, CheckCircle2, User, Zap, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2, User, Zap, Trophy, Star } from 'lucide-react';
 import { useQuest } from '@/hooks/useQuest';
 import journeyAvatar from '@/assets/JourneyAvatar.png';
 import { Card } from '@/components/ui/card';
