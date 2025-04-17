@@ -6,6 +6,7 @@ import { AlertCircle, Loader2, MessageSquare, ArrowRight, ArrowLeft } from 'luci
 import { generateText, type Message } from '@/lib/openai';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useStageState } from '@/hooks/useStageState';
+import penguinAvatar from '@/assets/Group 26087843.png';
 
 interface TryAIStageProps {
   onComplete: () => void;
@@ -113,7 +114,7 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
             <div className="space-y-4">
               {/* Display conversation thread if there's message history */}
               <div className="bg-neutral-50 p-4 rounded-lg border mb-4">
-                <h3 className="font-bold mb-3">AI Conversation</h3>
+                <h3 className="font-bold mb-3">Chat with Dr. Pengy</h3>
                 <div className="space-y-4 overflow-y-auto max-h-[450px] p-1 mb-4">
                   {state.messageHistory && state.messageHistory.length > 0 ? (
                     state.messageHistory.map((message, index) => (
@@ -124,22 +125,23 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                         <div
                           className={`p-3 rounded-lg max-w-[85%] ${
                             message.role === 'user' 
-                              ? 'bg-blue-50 border border-blue-100 text-blue-800' 
-                              : 'bg-gray-100 border border-gray-200'
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-amber-50 border border-amber-100'
                           }`}
                         >
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
-                              ${message.role === 'user' 
-                                ? 'bg-blue-200 text-blue-700' 
-                                : 'bg-gray-200 text-gray-700'
-                              }`}
-                            >
-                              {message.role === 'user' ? 'U' : 'AI'}
-                            </div>
-                            <p className="text-xs font-medium text-gray-500">
-                              {message.role === 'user' ? 'You' : 'AI Assistant'}
-                            </p>
+                          <div className="flex items-center mb-2">
+                            {message.role === 'user' ? (
+                              <div className="font-medium text-xs">You</div>
+                            ) : (
+                              <div className="flex items-center">
+                                <img 
+                                  src={penguinAvatar} 
+                                  alt="Dr. Pengy" 
+                                  className="h-5 w-5 rounded-full mr-1.5"
+                                />
+                                <div className="font-medium text-xs">Dr. Pengy</div>
+                              </div>
+                            )}
                           </div>
                           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                         </div>
@@ -148,8 +150,12 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
                   ) : (
                     <div className="flex items-center justify-center h-[200px] text-gray-400">
                       <div className="text-center">
-                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No messages yet. Start a conversation!</p>
+                        <img 
+                          src={penguinAvatar} 
+                          alt="Dr. Pengy" 
+                          className="h-16 w-16 mx-auto mb-2 rounded-full border-2 border-amber-100"
+                        />
+                        <p>No messages yet. Chat with Dr. Pengy!</p>
                         <p className="text-xs mt-2">Try asking: "Tell me about generative AI" or "Write a poem about learning"</p>
                       </div>
                     </div>
