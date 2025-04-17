@@ -257,14 +257,15 @@ export default function Dashboard() {
                     
                     {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 2 && (
-                      <div className="absolute -right-2">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
+                      <div className="absolute left-16 -top-6 transform translate-y-0">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
                           <img 
                             src={penguinAvatar} 
                             alt="د. بنجي" 
                             className="w-full h-full object-contain"
                           />
                         </div>
+                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                     )}
                   </div>
@@ -302,14 +303,15 @@ export default function Dashboard() {
                     
                     {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 3 && (
-                      <div className="absolute -left-2">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
+                      <div className="absolute right-16 -top-6 transform translate-y-0">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
                           <img 
                             src={penguinAvatar} 
                             alt="د. بنجي" 
                             className="w-full h-full object-contain"
                           />
                         </div>
+                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                     )}
                   </div>
@@ -335,14 +337,15 @@ export default function Dashboard() {
                     
                     {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 4 && (
-                      <div className="absolute -right-2">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white">
+                      <div className="absolute left-16 -top-6 transform translate-y-0">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
                           <img 
                             src={penguinAvatar} 
                             alt="د. بنجي" 
                             className="w-full h-full object-contain"
                           />
                         </div>
+                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                     )}
                   </div>

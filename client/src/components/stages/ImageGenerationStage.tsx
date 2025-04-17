@@ -22,7 +22,7 @@ import {
   Download,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import penguinAvatar from "@/assets/Group 26087843.png";
+import penguinAvatar from "@assets/Penguin.png";
 
 // Import the OpenAI utilities
 import OpenAI from "openai";
@@ -61,7 +61,7 @@ export function ImageGenerationStage({
 }: ImageGenerationStageProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Define the welcome message from Dr. Pengy in Arabic
+  // Define the welcome message from د. بنجي in Arabic
   const welcomeMessage: ChatMessage = {
     role: "assistant",
     content:
@@ -233,7 +233,7 @@ export function ImageGenerationStage({
       const isAppropriate = await checkContentModeration(userMessage.content);
 
       if (!isAppropriate) {
-        // If content is inappropriate, add a warning message from Dr. Pengy
+        // If content is inappropriate, add a warning message from د. بنجي
         const moderationWarning: ChatMessage = {
           role: "assistant",
           content:
@@ -309,7 +309,7 @@ export function ImageGenerationStage({
         error: errorMessage,
       }));
 
-      // Add error message from Dr. Pengy
+      // Add error message from د. بنجي
       const aiErrorMessage: ChatMessage = {
         role: "assistant",
         content:
@@ -388,8 +388,8 @@ export function ImageGenerationStage({
                 >
                   <img
                     src={penguinAvatar}
-                    alt="Dr. Pengy"
-                    className="w-16 h-16 object-cover"
+                    alt="د. بنجي"
+                    className="w-16 h-16 object-contain"
                   />
                 </Button>
               )}
@@ -402,7 +402,7 @@ export function ImageGenerationStage({
                     <div className="flex items-center">
                       <img
                         src={penguinAvatar}
-                        alt="Dr. Pengy"
+                        alt="د. بنجي"
                         className="h-6 w-6 rounded-full mr-2"
                       />
                       <span className="font-medium text-sm">
