@@ -119,10 +119,20 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
     }
   };
   
-  // Function to add a user message to the image chat
-  const addImageUserMessage = (message: string) => {
+  // These helper functions are no longer needed as we're using direct setState calls
+  // in the handleGenerateImage function to avoid race conditions and ensure proper message handling
+  
+  const handleGenerateImage = async () => {
+    if (!state.imagePrompt.trim()) return;
+    
+    setError('');
+    setIsGeneratingImage(true);
+    
+    // Save the current prompt before we process it
+    const currentPrompt = state.imagePrompt;
+    
+    // First add the user's message to the chat
     setState(prev => {
-      // Create a safe copy of the message history
       const prevMessageHistory = prev.imageMessageHistory || [];
       
       return {
@@ -131,36 +141,19 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
           ...prevMessageHistory,
           {
             role: 'user',
-            content: message,
+            content: currentPrompt,
             timestamp: Date.now()
           }
-        ],
-        // Store the message in imagePrompt until it's processed
-        // We'll clear it after the assistant response is complete
-        // This preserves the user's input in case we need it again
-        // imagePrompt: '' // Don't clear input here
+        ]
       };
     });
-  };
-  
-  // Function to update an assistant message (for loading states)
-  const updateImageAssistantMessage = (messageIndex: number, updates: Partial<ImageMessage>) => {
+    
+    // Then add a placeholder for the assistant's response
+    // Save the index of the assistant message so we can update it later
+    const assistantMessageIndex = (state.imageMessageHistory?.length || 0);
+    
+    // Add the assistant's "loading" message
     setState(prev => {
-      const updatedHistory = [...(prev.imageMessageHistory || [])];
-      if (messageIndex >= 0 && messageIndex < updatedHistory.length) {
-        updatedHistory[messageIndex] = { ...updatedHistory[messageIndex], ...updates };
-      }
-      return {
-        ...prev,
-        imageMessageHistory: updatedHistory
-      };
-    });
-  };
-  
-  // Add an assistant message to the image chat
-  const addImageAssistantMessage = (props: Partial<ImageMessage>) => {
-    setState(prev => {
-      // Create a safe copy of the message history
       const prevMessageHistory = prev.imageMessageHistory || [];
       
       return {
@@ -169,54 +162,56 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
           ...prevMessageHistory,
           {
             role: 'assistant',
-            content: props.content || '',
-            imageUrl: props.imageUrl,
+            content: "Generating your image, please wait...",
             timestamp: Date.now(),
-            status: props.status || 'success'
+            status: 'loading'
           }
         ]
       };
     });
-  };
-  
-  const handleGenerateImage = async () => {
-    if (!state.imagePrompt.trim()) return;
-    
-    setError('');
-    setIsGeneratingImage(true);
-    
-    // First add the user's message to the chat
-    addImageUserMessage(state.imagePrompt);
-    
-    // Then add a placeholder for the assistant's response
-    const assistantMessageIndex = (state.imageMessageHistory?.length || 0);
-    addImageAssistantMessage({
-      content: "Generating your image, please wait...",
-      status: 'loading'
-    });
     
     try {
-      const response = await generateImage({ prompt: state.imagePrompt });
+      // Use the saved prompt to generate the image
+      const response = await generateImage({ prompt: currentPrompt });
       
       if (response.error) {
         // Update the assistant message with an error
-        updateImageAssistantMessage(assistantMessageIndex, {
-          content: response.message || "I couldn't create that image. Please try a different description!",
-          status: 'error',
-          errorMessage: response.error
+        setState(prev => {
+          const updatedHistory = [...(prev.imageMessageHistory || [])];
+          if (assistantMessageIndex >= 0 && assistantMessageIndex < updatedHistory.length) {
+            updatedHistory[assistantMessageIndex] = { 
+              ...updatedHistory[assistantMessageIndex], 
+              content: response.message || "I couldn't create that image. Please try a different description!",
+              status: 'error',
+              errorMessage: response.error
+            };
+          }
+          return {
+            ...prev,
+            imageMessageHistory: updatedHistory
+          };
         });
         
         // Also set the error for the alert
         setError(response.message || response.error);
       } else {
         // Update the assistant message with the successful image
-        updateImageAssistantMessage(assistantMessageIndex, {
-          content: "Here's the image I created based on your description!",
-          imageUrl: response.url,
-          status: 'success'
+        setState(prev => {
+          const updatedHistory = [...(prev.imageMessageHistory || [])];
+          if (assistantMessageIndex >= 0 && assistantMessageIndex < updatedHistory.length) {
+            updatedHistory[assistantMessageIndex] = { 
+              ...updatedHistory[assistantMessageIndex], 
+              content: "Here's the image I created based on your description!",
+              imageUrl: response.url,
+              status: 'success'
+            };
+          }
+          return {
+            ...prev,
+            imageMessageHistory: updatedHistory,
+            generatedImageUrl: response.url
+          };
         });
-        
-        setGeneratedImageUrl(response.url);
         
         // Only award XP and badge once
         if (!state.hasCompleted) {
@@ -227,10 +222,20 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
       }
     } catch (error) {
       // Update the assistant message with an error
-      updateImageAssistantMessage(assistantMessageIndex, {
-        content: "Something went wrong creating your image. Please try again!",
-        status: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      setState(prev => {
+        const updatedHistory = [...(prev.imageMessageHistory || [])];
+        if (assistantMessageIndex >= 0 && assistantMessageIndex < updatedHistory.length) {
+          updatedHistory[assistantMessageIndex] = { 
+            ...updatedHistory[assistantMessageIndex], 
+            content: "Something went wrong creating your image. Please try again!",
+            status: 'error',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error'
+          };
+        }
+        return {
+          ...prev,
+          imageMessageHistory: updatedHistory
+        };
       });
       
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
