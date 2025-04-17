@@ -169,7 +169,7 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
               variant="outline" 
               size="lg"
             >
-              <ArrowLeft className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
               <span>المرحلة السابقة</span>
             </Button>
             <Button 

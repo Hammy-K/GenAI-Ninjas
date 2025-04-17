@@ -267,7 +267,7 @@ export function TryAIStage({
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowLeft className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
               <span>المرحلة السابقة</span>
             </Button>
             <Button
