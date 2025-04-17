@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Loader2,
   MessageSquare,
-  ArrowRight,
+
   ArrowLeft,
 } from "lucide-react";
 import { generateText, type Message } from "@/lib/openai";
@@ -277,7 +277,7 @@ export function TryAIStage({
               disabled={false} // Allow users to proceed even if API calls fail
             >
               <span>Continue to Next Stage</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>
