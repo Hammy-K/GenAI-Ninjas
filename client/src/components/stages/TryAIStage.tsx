@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Loader2,
   MessageSquare,
-
+  ArrowRight,
   ArrowLeft,
 } from "lucide-react";
 import { generateText, type Message } from "@/lib/openai";
