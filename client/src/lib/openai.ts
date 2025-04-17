@@ -2,7 +2,6 @@ import { apiRequest } from './queryClient';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const GPT_MODEL = "gpt-4o";
-const IMAGE_MODEL = "dall-e-3";
 
 export type Message = {
   role: 'system' | 'user' | 'assistant';
@@ -15,31 +14,9 @@ type TextGenerationOptions = {
   messageHistory?: Message[];
 };
 
-type ImageGenerationOptions = {
-  prompt: string;
-  size?: "1024x1024" | "1792x1024" | "1024x1792";
-  quality?: "standard" | "hd";
-};
-
 type CompletionResponse = {
   text: string;
   error?: string;
-};
-
-type ImageResponse = {
-  url: string;
-  error?: string;
-  message?: string;
-  moderationResult?: {
-    flagged: boolean;
-    categories: {
-      hate: boolean;
-      threatening: boolean;
-      selfHarm: boolean;
-      sexual: boolean;
-      violence: boolean;
-    };
-  };
 };
 
 type PromptAnalysisResponse = {
@@ -67,46 +44,10 @@ export async function generateText(options: TextGenerationOptions): Promise<Comp
   }
 }
 
-export async function generateImage(options: ImageGenerationOptions): Promise<ImageResponse> {
-  try {
-    const response = await apiRequest('POST', '/api/ai/image', options);
-    const data = await response.json();
-    
-    if (data.error) {
-      return {
-        url: "",
-        error: data.error,
-        message: data.message || "Failed to generate image",
-        moderationResult: data.moderationResult
-      };
-    }
-    
-    return { url: data.url };
-  } catch (error) {
-    console.error("Error generating image:", error);
-    
-    // Try to extract the response data if it's a fetch error
-    if (error instanceof Error && 'response' in error) {
-      try {
-        // @ts-ignore - trying to access response property on a fetch error
-        const errorData = await error.response.json();
-        return {
-          url: "",
-          error: errorData.error || "Failed to generate image",
-          message: errorData.message || "Something went wrong with the image generation."
-        };
-      } catch (e) {
-        // If we can't parse the response, fall back to generic error
-      }
-    }
-    
-    return { 
-      url: "", 
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-      message: "We had trouble creating your image. Please try again with a different description!"
-    };
-  }
-}
+/**
+ * Image generation functionality has been removed
+ * This comment block replaces the generateImage function
+ */
 
 export async function analyzePrompt(prompt: string): Promise<PromptAnalysisResponse> {
   try {
