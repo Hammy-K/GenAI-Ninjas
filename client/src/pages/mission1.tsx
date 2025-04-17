@@ -53,10 +53,10 @@ export default function Mission1() {
         case 'welcome':
           targetStage = 1;
           break;
-        case 'prompt':
+        case 'tryai':
           targetStage = 2;
           break;
-        case 'tryai':
+        case 'prompt':
           targetStage = 3;
           break;
         case 'images':
@@ -86,11 +86,11 @@ export default function Mission1() {
   };
   
   // Render current stage based on stage number
-  // Updated stage flow:
+  // Updated stage flow (new order):
   // 1. Welcome to your first GenAI mission
-  // 2. Prompt Engineering 101
-  // 3. Try AI Text Generation (Chat with Dr. Pengy)
-  // 4. Create Images with AI (new stage)
+  // 2. Try AI Text Generation (Chat with Dr. Pengy)
+  // 3. Prompt Engineering 101
+  // 4. Create Images with AI
   // 5. Build a Web App with AI (HTML Generator)
   // 6. Submission Form
   // 7. Final Celebratory Page
@@ -100,7 +100,7 @@ export default function Mission1() {
         return <WelcomeStage onComplete={goToNextStage} />;
       case 2:
         return (
-          <PromptChallengeStage 
+          <TryAIStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
@@ -109,7 +109,7 @@ export default function Mission1() {
         );
       case 3:
         return (
-          <TryAIStage 
+          <PromptChallengeStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
