@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@assets/Penguin.png";
+import { validateInput } from "@/lib/inputFilter";
 
 // Import the OpenAI utilities
 import OpenAI from "openai";
@@ -212,7 +213,25 @@ export function ImageGenerationStage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!state.prompt.trim() || state.isLoading) return;
+    if (state.isLoading) return;
+    
+    // Validate input using the utility function
+    const validation = validateInput(state.prompt);
+    if (!validation.isValid) {
+      // Add a warning message from د. بنجي about the invalid input
+      const validationWarning: ChatMessage = {
+        role: "assistant",
+        content: validation.errorMessage || "أرجوك أدخل وصف واضح للصورة التي تريد إنشاءها.",
+      };
+      
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, validationWarning],
+        error: validation.errorMessage,
+      }));
+      
+      return;
+    }
 
     // Add user message
     const userMessage: ChatMessage = {

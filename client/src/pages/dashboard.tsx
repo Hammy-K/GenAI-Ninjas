@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { validateInput } from '@/lib/inputFilter';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -127,14 +128,17 @@ export default function Dashboard() {
     // Reset any previous errors
     setFormError('');
     
-    // Validate name and grade
-    if (!isValidInput(studentName)) {
-      setFormError('الرجاء إدخال اسم حقيقي');
+    // Validate name using the shared utility function
+    const nameValidation = validateInput(studentName);
+    if (!nameValidation.isValid) {
+      setFormError(nameValidation.errorMessage || 'الرجاء إدخال اسم حقيقي');
       return;
     }
     
-    if (!isValidInput(studentGrade)) {
-      setFormError('الرجاء إدخال صف دراسي صحيح');
+    // Validate grade using the shared utility function
+    const gradeValidation = validateInput(studentGrade);
+    if (!gradeValidation.isValid) {
+      setFormError(gradeValidation.errorMessage || 'الرجاء إدخال صف دراسي صحيح');
       return;
     }
     

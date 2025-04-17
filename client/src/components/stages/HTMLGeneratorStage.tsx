@@ -19,6 +19,7 @@ import { generateHTML, HTMLMessage } from '@/lib/openai';
 import { saveProject, loadProject } from '@/lib/firebase';
 import { useLocation } from 'wouter';
 import penguinAvatar from '@/assets/Group 26087843.png';
+import { validateInput } from '@/lib/inputFilter';
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
