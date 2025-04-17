@@ -329,50 +329,46 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mission 1 - "عبر عن نفسك بإبداع" */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 1 Node - Right side */}
+                {/* Mission 1 – "تعرف على الذكاء الاصطناعي التوليدي" */}
+                <div className="relative z-10 mb-24">
                   <div className="flex items-center justify-end w-1/2">
+                    {/* Square + Title wrapper */}
                     <div
-                      className={`relative cursor-pointer transition-transform hover:scale-105 mr-4
-                        ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
+                      className="cursor-pointer transition-transform hover:scale-105 mr-4"
                       onClick={() => handleStartMission(1)}
                     >
+                      {/* 16×16 square */}
                       <div
-                        className={`w-16 h-16 rounded-lg flex items-center justify-center 
-                        ${isMission1Complete ? "bg-green-100" : "bg-purple-100"}`}
+                        className={`w-16 h-16 rounded-lg flex items-center justify-center
+                          ${isMission1Complete ? "bg-green-100 text-green-600" : "bg-purple-100 text-purple-600"}`}
                       >
                         {isMission1Complete ? (
                           <CheckCircle2 className="w-8 h-8" />
                         ) : (
-                          <div className="text-lg font-bold">١</div>
+                          <span className="text-lg font-bold">1</span>
                         )}
                       </div>
+
+                      {/* Title, now directly below the square */}
+                      <h3
+                        className={`mt-1 text-sm font-medium
+                          ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
+                      >
+                        تعرف على الذكاء الاصطناعي التوليدي
+                      </h3>
                     </div>
 
-                    <h3
-                      className={`font-medium text-sm cursor-pointer hover:opacity-80
-                        ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
-                      onClick={() => handleStartMission(1)}
-                    >
-                      تعرف على الذكاء الاصطناعي التوليدي
-                    </h3>
-
-                    {/* د. بنجي avatar - only show for next active mission */}
+                    {/* Dr. Pengy avatar for the next active mission */}
                     {nextActiveMission === 1 && (
-                      <div className="absolute right-16 -top-6 transform translate-y-0">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
-                          <img
-                            src={penguinAvatar}
-                            alt="د. بنجي"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                      <div className="absolute left-1/2 -top-6 transform -translate-x-1/2">
+                        <img
+                          src={penguinAvatar}
+                          alt="د. بنجي"
+                          className="w-16 h-16 object-contain"
+                        />
                       </div>
                     )}
                   </div>
-
-                  <div className="flex-1"></div>
                 </div>
 
                 {/* Mission 2 - "كيف تصنع قصص تعلق في البال" */}
@@ -414,15 +410,14 @@ export default function Dashboard() {
 
                     {/* د. بنجي avatar - only show for next active mission */}
                     {nextActiveMission === 2 && (
-                      <div className="absolute left-16 -top-6 transform translate-y-0">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
+                      <div className="absolute left-1/2 -translate-x-1/2. transform translate-y-0">
+                        <div className="w-16 h-16 rounded-full overflow-hidden">
                           <img
                             src={penguinAvatar}
                             alt="د. بنجي"
                             className="w-full h-full object-contain"
                           />
                         </div>
-                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                     )}
                   </div>
