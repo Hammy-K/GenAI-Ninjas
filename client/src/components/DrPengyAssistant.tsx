@@ -139,20 +139,19 @@ export function DrPengyAssistant() {
     }, 100);
     
     try {
-      // Simulate API call with a delay - when we implement the real API, we'll remove this
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For the demo, just use a simulated response to avoid setting up the backend endpoint
-      const simulatedResponse = {
-        content: `مرحبًا! أنا سعيد بالمساعدة. 😊 ${userInput.includes('?') ? 'أحاول الإجابة على سؤالك بأفضل ما لدي.' : 'يمكنني مساعدتك في هذا الموضوع.'}`
-      };
+      // Call the API with the current conversation and the appropriate mode
+      const response = await chatWithDrPengy(
+        messages.concat(userMessage),
+        currentMode.model,
+        currentMode.systemPrompt
+      );
       
       // Replace loading message with response
       const assistantResponse: DrPengyMessage = {
         role: 'assistant',
-        content: simulatedResponse.content,
+        content: response.content,
         timestamp: Date.now(),
-        status: 'success'
+        status: response.error ? 'error' : 'success'
       };
       
       // Update messages, removing the loading message

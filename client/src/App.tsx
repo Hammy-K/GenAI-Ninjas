@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import Dashboard from "@/pages/dashboard";
 import Mission1 from "@/pages/mission1";
 import Project from "@/pages/project";
+import { DrPengyAssistant } from "@/components/DrPengyAssistant";
 
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
@@ -29,6 +30,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
+      <DrPengyAssistant />
       <Toaster />
     </QueryClientProvider>
   );
