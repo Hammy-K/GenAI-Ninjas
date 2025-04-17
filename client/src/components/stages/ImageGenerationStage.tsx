@@ -212,7 +212,7 @@ export function ImageGenerationStage({
 
         setState((prev) => ({
           ...prev,
-          messages: [...prev.messages, userMessage, moderationWarning],
+          messages: [...prev.messages, moderationWarning],
           isLoading: false,
           error: "",
         }));
@@ -229,7 +229,7 @@ export function ImageGenerationStage({
 
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, userMessage, processingMessage],
+        messages: [...prev.messages, processingMessage],
       }));
 
       // Generate the image
