@@ -135,7 +135,10 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
             timestamp: Date.now()
           }
         ],
-        imagePrompt: '' // Clear the input after sending
+        // Store the message in imagePrompt until it's processed
+        // We'll clear it after the assistant response is complete
+        // This preserves the user's input in case we need it again
+        // imagePrompt: '' // Don't clear input here
       };
     });
   };
@@ -233,6 +236,8 @@ export function TryAIStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: TryA
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setIsGeneratingImage(false);
+      // Clear the input after processing is complete
+      setState(prev => ({ ...prev, imagePrompt: '' }));
     }
   };
   
