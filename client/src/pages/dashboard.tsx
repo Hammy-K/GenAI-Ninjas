@@ -2,13 +2,14 @@ import { useLocation } from 'wouter';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Lock, CheckCircle2, User, Zap, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2, User, Zap, Trophy, Star, AlertCircle } from 'lucide-react';
 import { useQuest } from '@/hooks/useQuest';
 import penguinAvatar from '@assets/Penguin.png';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -25,7 +26,16 @@ export default function Dashboard() {
     return localStorage.getItem('studentGrade') || '';
   });
   
+  const [formError, setFormError] = useState<string>('');
   const [showProfileForm, setShowProfileForm] = useState<boolean>(!studentName || !studentGrade);
+  
+  // CAPTCHA state
+  const [showCaptcha, setShowCaptcha] = useState<boolean>(false);
+  const [captchaPassed, setCaptchaPassed] = useState<boolean>(false);
+  
+  // Emoji options for the simple CAPTCHA
+  const captchaEmojis = ['💜', '🌟', '🎮', '🎨', '📱'];
+  const targetEmoji = '💜'; // The heart emoji users need to click
   
   // Save student information when provided
   useEffect(() => {
@@ -73,10 +83,63 @@ export default function Dashboard() {
     }
   };
   
+  // Validate if input contains meaningful content (not just random characters)
+  const isValidInput = (input: string): boolean => {
+    // Check if input is too short
+    if (input.trim().length < 2) return false;
+    
+    // Check for repeated characters that might indicate random input
+    const repeatedCharsRegex = /(.)\1{3,}/; // 4 or more of the same character in a row
+    if (repeatedCharsRegex.test(input)) return false;
+    
+    // Check for keyboard smashing patterns
+    const keyboardSmashPatterns = [
+      /asdf/i, /qwer/i, /zxcv/i, // English keyboard rows
+      /1234/i, // Sequential numbers
+    ];
+    if (keyboardSmashPatterns.some(pattern => pattern.test(input))) return false;
+    
+    // Add other checks as needed
+    return true;
+  };
+  
+  // Handle emoji click for CAPTCHA
+  const handleEmojiClick = (emoji: string) => {
+    if (emoji === targetEmoji) {
+      setCaptchaPassed(true);
+      
+      // If CAPTCHA is passed, complete the form submission
+      localStorage.setItem('studentName', studentName);
+      localStorage.setItem('studentGrade', studentGrade);
+      setShowProfileForm(false);
+      setShowCaptcha(false);
+    } else {
+      // If wrong emoji clicked, give feedback but don't close the CAPTCHA
+      setFormError('اختر القلب 💜 لتأكيد أنك طالب حقيقي');
+      setTimeout(() => setFormError(''), 2000);
+    }
+  };
+  
   // Handle form submission
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowProfileForm(false);
+    
+    // Reset any previous errors
+    setFormError('');
+    
+    // Validate name and grade
+    if (!isValidInput(studentName)) {
+      setFormError('الرجاء إدخال اسم حقيقي');
+      return;
+    }
+    
+    if (!isValidInput(studentGrade)) {
+      setFormError('الرجاء إدخال صف دراسي صحيح');
+      return;
+    }
+    
+    // If all validations pass, show the CAPTCHA
+    setShowCaptcha(true);
   };
 
   return (
@@ -90,35 +153,75 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold text-center mb-4">مرحباً بك!</h2>
             <p className="text-sm text-gray-600 mb-6 text-center">فضلاً أدخل معلوماتك الأساسية لبدء الرحلة التعليمية</p>
             
-            <form onSubmit={handleProfileSubmit}>
-              <div className="space-y-4">
+            {/* Show form error if any */}
+            {formError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-sm">{formError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {showCaptcha ? (
+              /* CAPTCHA Screen */
+              <div className="text-center space-y-6">
                 <div>
-                  <Label htmlFor="studentName">اسمك</Label>
-                  <Input 
-                    id="studentName" 
-                    value={studentName} 
-                    onChange={(e) => setStudentName(e.target.value)} 
-                    placeholder="الاسم الكامل" 
-                    className="mt-1"
-                    required
-                  />
+                  <h3 className="text-lg font-bold mb-2">اضغط على القلب 💜 قبل ما تبدأ</h3>
+                  <p className="text-sm text-gray-600">هذا للتأكد من أنك طالب حقيقي وليس روبوت</p>
                 </div>
                 
-                <div>
-                  <Label htmlFor="studentGrade">الصف الدراسي</Label>
-                  <Input 
-                    id="studentGrade" 
-                    value={studentGrade} 
-                    onChange={(e) => setStudentGrade(e.target.value)} 
-                    placeholder="مثال: الصف التاسع" 
-                    className="mt-1"
-                    required
-                  />
+                <div className="flex justify-center gap-4 text-4xl">
+                  {captchaEmojis.map((emoji, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleEmojiClick(emoji)}
+                      className="transition-transform hover:scale-110 focus:outline-none p-3"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
                 </div>
                 
-                <Button type="submit" className="w-full">بدء الرحلة</Button>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setShowCaptcha(false)}
+                >
+                  العودة للنموذج
+                </Button>
               </div>
-            </form>
+            ) : (
+              /* Main Form */
+              <form onSubmit={handleProfileSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="studentName">اسمك</Label>
+                    <Input 
+                      id="studentName" 
+                      value={studentName} 
+                      onChange={(e) => setStudentName(e.target.value)} 
+                      placeholder="الاسم الكامل" 
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="studentGrade">الصف الدراسي</Label>
+                    <Input 
+                      id="studentGrade" 
+                      value={studentGrade} 
+                      onChange={(e) => setStudentGrade(e.target.value)} 
+                      placeholder="مثال: الصف التاسع" 
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  
+                  <Button type="submit" className="w-full">بدء الرحلة</Button>
+                </div>
+              </form>
+            )}
           </Card>
         </div>
       )}
