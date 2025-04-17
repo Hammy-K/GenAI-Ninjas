@@ -41,10 +41,13 @@ export default function Dashboard() {
     // Try to get from localStorage
     return localStorage.getItem("studentGrade") || "";
   });
+  const [schoolName, setSchoolName] = useState<string>(() => {
+    return localStorage.getItem("schoolName") || "";
+  });
 
   const [formError, setFormError] = useState<string>("");
   const [showProfileForm, setShowProfileForm] = useState<boolean>(
-    !studentName || !studentGrade,
+    !studentName || !studentGrade || !schoolName,
   );
 
   // CAPTCHA state
@@ -63,7 +66,10 @@ export default function Dashboard() {
     if (studentGrade) {
       localStorage.setItem("studentGrade", studentGrade);
     }
-  }, [studentName, studentGrade]);
+    if (schoolName) {
+      localStorage.setItem("schoolName", schoolName);
+    }
+  }, [studentName, studentGrade, schoolName]);
 
   // Track mission completion status
   const isMission1Complete = isMissionCompleted(1);
@@ -136,6 +142,7 @@ export default function Dashboard() {
       // If CAPTCHA is passed, complete the form submission
       localStorage.setItem("studentName", studentName);
       localStorage.setItem("studentGrade", studentGrade);
+      localStorage.setItem("schoolName", schoolName);
       setShowProfileForm(false);
       setShowCaptcha(false);
     } else {
@@ -168,7 +175,7 @@ export default function Dashboard() {
       return;
     }
 
-    // If all validations pass, show the CAPTCHA
+    //If all validations pass, show the CAPTCHA
     setShowCaptcha(true);
   };
 
@@ -258,7 +265,17 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-
+                  <div>
+                    <Label htmlFor="schoolName">اسم المدرسة</Label>
+                    <Input
+                      id="schoolName"
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
+                      placeholder="اسم المدرسة"
+                      className="mt-1"
+                      required
+                    />
+                  </div>
                   <Button type="submit" className="w-full">
                     بدء الرحلة
                   </Button>
