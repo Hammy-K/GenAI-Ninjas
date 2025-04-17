@@ -1,4 +1,5 @@
 import { DrPengyMessage } from '@/components/DrPengyAssistant';
+import { apiRequest } from './queryClient';
 
 type ApiResponse = {
   content: string;
@@ -25,15 +26,10 @@ export async function chatWithDrPengy(
         }))
     ];
     
-    const response = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: formattedMessages,
-        model: model
-      }),
+    // Use the standardized API request function
+    const response = await apiRequest('POST', '/api/ai/chat', {
+      messages: formattedMessages,
+      model: model
     });
     
     if (!response.ok) {

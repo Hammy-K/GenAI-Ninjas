@@ -68,12 +68,18 @@ export function DrPengyAssistant() {
   
   // Get the current stage or page context
   const getCurrentContext = (): string => {
-    // Extract from location or stage
+    // Detect the current location and stage
     if (location.includes('mission1')) {
-      if (currentStage === 2) return 'promptChallenge';
-      if (currentStage === 3) return 'imageGeneration';
-      if (currentStage === 4) return 'webBuilder';
+      // Mission 1 stages
+      if (currentStage === 2) return 'promptChallenge'; // Prompt engineering challenge stage
+      if (currentStage === 3) return 'imageGeneration'; // Image generation stage
+      if (currentStage === 4) return 'webBuilder';      // HTML/web builder stage
+    } else if (location.includes('project')) {
+      // On the shared project page
+      return 'webBuilder';
     }
+    
+    // Default fallback
     return 'default';
   };
   
