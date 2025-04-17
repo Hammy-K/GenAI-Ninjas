@@ -131,10 +131,32 @@ export function ImageGenerationStage({
   // Generate an image using DALL-E with message history for context
   const generateImage = async (prompt: string, messageHistory: ChatMessage[]): Promise<string> => {
     try {
-      // Filter message history to exclude the welcome message and only include relevant context
-      const relevantHistory = messageHistory.filter(msg => 
-        msg.role === 'user' || (msg.role === 'assistant' && !msg.content.includes('أنا هنا عشان أساعدك'))
-      );
+      // Filter message history to build a more effective context
+      // 1. Skip welcome/introduction messages from the assistant
+      // 2. Filter out assistant "processing" messages
+      // 3. Include user messages and final assistant responses
+      // 4. Keep success messages with generated images
+      const relevantHistory = messageHistory.filter(msg => {
+        // Always include all user messages
+        if (msg.role === 'user') return true;
+        
+        // For assistant messages, be more selective
+        if (msg.role === 'assistant') {
+          // Exclude welcome messages
+          if (msg.content.includes('أنا هنا عشان أساعدك')) return false;
+          
+          // Exclude processing messages
+          if (msg.content.includes('تمام! خلينا نشوف')) return false;
+          
+          // Include success messages with image references
+          if (msg.content.includes('هذه الصورة حسب وصفك')) return true;
+          
+          // Generally include most assistant responses
+          return true;
+        }
+        
+        return false;
+      });
       
       console.log(`Sending image generation request with ${relevantHistory.length} context messages`);
       
@@ -243,10 +265,19 @@ export function ImageGenerationStage({
       // Generate the image with message history for context
       const imageUrl = await generateImage(userMessage.content, state.messages);
 
-      // Add the success message with the image
+      // Prepare a context-aware success message based on whether this is a follow-up request
+      let successMessageContent = "🎉 هذه الصورة حسب وصفك!";
+      
+      // Check if this is a follow-up request by checking if we have previous user messages
+      const previousUserMessages = state.messages.filter(msg => msg.role === 'user');
+      if (previousUserMessages.length > 1) {
+        // This is a follow-up request, so make the success message reflect the modifications
+        successMessageContent = "🎉 تم تعديل الصورة بنجاح حسب طلبك!";
+      }
+      
       const successMessage: ChatMessage = {
         role: "assistant",
-        content: "🎉 هذه الصورة حسب وصفك!",
+        content: successMessageContent,
       };
 
       // Update state with the image and message

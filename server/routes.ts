@@ -124,21 +124,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create enhanced prompt based on message history if available
+      // Create enhanced prompt based on message history for better context awareness
       let enhancedPrompt = prompt;
+      let baseImageConcept = "";
+      let isFollowUpRequest = false;
       
-      // If there are previous user messages, add context to the prompt
+      // Parse message history to understand the conversation context
       if (messageHistory.length > 0) {
-        // Extract previous user messages to provide context
-        const previousUserMessages = messageHistory
+        // Extract all previous user messages and assistant responses to build full context
+        const userMessages = messageHistory
           .filter((msg: { role: string; content: string }) => 
-            msg.role === 'user' && msg.content !== prompt) // Filter out current prompt
-          .map((msg: { content: string }) => msg.content);
+            msg.role === 'user' && msg.content !== prompt);
         
-        if (previousUserMessages.length > 0) {
-          // Create a context-aware prompt
-          enhancedPrompt = `This is a follow-up request. Previous requests were: "${previousUserMessages.join('" then "')}". Now the new request is: "${prompt}"`;
-          console.log("Using context-enhanced prompt:", enhancedPrompt);
+        // Check if we have previous requests to build upon
+        if (userMessages.length > 0) {
+          isFollowUpRequest = true;
+          
+          // The first user message is likely the base image concept
+          baseImageConcept = userMessages[0].content;
+          
+          // Get follow-up requests (modifiers, changes, additions)
+          const followUpRequests = userMessages.slice(1).map((msg: { content: string }) => msg.content);
+          
+          // Advanced context building for DALL-E
+          if (followUpRequests.length > 0) {
+            // Create a prompt that clearly tells DALL-E this is a modification to the original concept
+            enhancedPrompt = `Starting with this base concept: "${baseImageConcept}", 
+            the user has requested these modifications: "${followUpRequests.join('", "')}"
+            
+            Now, they want this additional change: "${prompt}"
+            
+            Create a single cohesive image that incorporates ALL these elements:
+            1. The base concept: ${baseImageConcept}
+            2. Previous modifications: ${followUpRequests.join(', ')}
+            3. The latest request: ${prompt}`;
+          } else {
+            // If this is the first follow-up, make a simpler connection to the original
+            enhancedPrompt = `Create a modified version of this image concept: "${baseImageConcept}" 
+            with the following change: "${prompt}"
+            
+            The result should clearly show ${baseImageConcept} but with ${prompt} applied to it.`;
+          }
+          
+          console.log("Using comprehensive context-enhanced prompt for follow-up request");
         }
       }
 
