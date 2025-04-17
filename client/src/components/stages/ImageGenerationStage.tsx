@@ -22,7 +22,7 @@ import {
   Download,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import penguinAvatar from "@assets/Penguin.png";
+import penguinAvatar from "@/assets/Group 26087843.png";
 import { validateInput } from "@/lib/inputFilter";
 
 // Import the OpenAI utilities
@@ -130,45 +130,50 @@ export function ImageGenerationStage({
   };
 
   // Generate an image using DALL-E with message history for context
-  const generateImage = async (prompt: string, messageHistory: ChatMessage[]): Promise<string> => {
+  const generateImage = async (
+    prompt: string,
+    messageHistory: ChatMessage[],
+  ): Promise<string> => {
     try {
       // Filter message history to build a more effective context
       // 1. Skip welcome/introduction messages from the assistant
       // 2. Filter out assistant "processing" messages
       // 3. Include user messages and final assistant responses
       // 4. Keep success messages with generated images
-      const relevantHistory = messageHistory.filter(msg => {
+      const relevantHistory = messageHistory.filter((msg) => {
         // Always include all user messages
-        if (msg.role === 'user') return true;
-        
+        if (msg.role === "user") return true;
+
         // For assistant messages, be more selective
-        if (msg.role === 'assistant') {
+        if (msg.role === "assistant") {
           // Exclude welcome messages
-          if (msg.content.includes('أنا هنا عشان أساعدك')) return false;
-          
+          if (msg.content.includes("أنا هنا عشان أساعدك")) return false;
+
           // Exclude processing messages
-          if (msg.content.includes('تمام! خلينا نشوف')) return false;
-          
+          if (msg.content.includes("تمام! خلينا نشوف")) return false;
+
           // Include success messages with image references
-          if (msg.content.includes('هذه الصورة حسب وصفك')) return true;
-          
+          if (msg.content.includes("هذه الصورة حسب وصفك")) return true;
+
           // Generally include most assistant responses
           return true;
         }
-        
+
         return false;
       });
-      
-      console.log(`Sending image generation request with ${relevantHistory.length} context messages`);
-      
+
+      console.log(
+        `Sending image generation request with ${relevantHistory.length} context messages`,
+      );
+
       const response = await fetch("/api/ai/image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          prompt, 
-          messageHistory: relevantHistory 
+        body: JSON.stringify({
+          prompt,
+          messageHistory: relevantHistory,
         }),
       });
 
@@ -181,30 +186,30 @@ export function ImageGenerationStage({
       throw error;
     }
   };
-  
+
   // Helper function to download the generated image using our proxy
   const handleDownloadImage = () => {
     if (!state.generatedImageUrl) return;
-    
+
     try {
       // Use our server-side proxy to handle the download
       // This avoids CORS issues with direct downloads
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`;
-      
+
       // Create a temporary link element to trigger the download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = proxyUrl;
       link.download = `ai-generated-image-${Date.now()}.png`;
-      
+
       // Append the link to the document body, click it, then remove it
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error downloading image:", error);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: "Failed to download image. Please try again."
+        error: "Failed to download image. Please try again.",
       }));
     }
   };
@@ -214,22 +219,24 @@ export function ImageGenerationStage({
     e.preventDefault();
 
     if (state.isLoading) return;
-    
+
     // Validate input using the utility function
     const validation = validateInput(state.prompt);
     if (!validation.isValid) {
       // Add a warning message from د. بنجي about the invalid input
       const validationWarning: ChatMessage = {
         role: "assistant",
-        content: validation.errorMessage || "أرجوك أدخل وصف واضح للصورة التي تريد إنشاءها.",
+        content:
+          validation.errorMessage ||
+          "أرجوك أدخل وصف واضح للصورة التي تريد إنشاءها.",
       };
-      
+
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, validationWarning],
         error: validation.errorMessage,
       }));
-      
+
       return;
     }
 
@@ -286,14 +293,16 @@ export function ImageGenerationStage({
 
       // Prepare a context-aware success message based on whether this is a follow-up request
       let successMessageContent = "🎉 هذه الصورة حسب وصفك!";
-      
+
       // Check if this is a follow-up request by checking if we have previous user messages
-      const previousUserMessages = state.messages.filter(msg => msg.role === 'user');
+      const previousUserMessages = state.messages.filter(
+        (msg) => msg.role === "user",
+      );
       if (previousUserMessages.length > 1) {
         // This is a follow-up request, so make the success message reflect the modifications
         successMessageContent = "🎉 تم تعديل الصورة بنجاح حسب طلبك!";
       }
-      
+
       const successMessage: ChatMessage = {
         role: "assistant",
         content: successMessageContent,
@@ -364,9 +373,9 @@ export function ImageGenerationStage({
                 <div className="border rounded p-4 max-w-2xl">
                   <div className="mb-4 text-center font-medium flex items-center justify-between">
                     <span>الصورة التي تم إنشاؤها</span>
-                    <Button 
-                      onClick={handleDownloadImage} 
-                      variant="outline" 
+                    <Button
+                      onClick={handleDownloadImage}
+                      variant="outline"
                       size="sm"
                       className="flex items-center gap-1 text-xs"
                     >
@@ -385,9 +394,7 @@ export function ImageGenerationStage({
                   <div className="text-center text-gray-400">
                     <Image className="h-16 w-16 mx-auto opacity-20 mb-4" />
                     <p>ستظهر الصورة التي أنشأها الذكاء الاصطناعي هنا</p>
-                    <p className="text-xs mt-2">
-                      دردش مع د. بنجي لإنشاء صورة
-                    </p>
+                    <p className="text-xs mt-2">دردش مع د. بنجي لإنشاء صورة</p>
                   </div>
                 </div>
               )}

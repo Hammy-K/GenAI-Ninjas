@@ -28,15 +28,16 @@ export default function Mission1() {
     unlockBadge,
     unlockedBadges,
     completeMission,
-    setStage
+    setStage,
+    markStageVisited,
+    isStageVisited,
+    markStageTimerExpired,
+    isStageTimerExpired
   } = useQuest();
   
   const [location, navigate] = useLocation();
   const [, params] = useRoute('/mission1/stage/:stageName');
   const stageName = params?.stageName;
-  
-  // Timer states
-  const [showTimeAlert, setShowTimeAlert] = useState(false);
   
   // Get time limit for the current stage
   const getStageTimeLimit = (stage: number): number => {
@@ -49,15 +50,15 @@ export default function Mission1() {
     }
   };
   
+  // Mark the current stage as visited when it's first loaded
+  useEffect(() => {
+    markStageVisited(currentStage);
+  }, [currentStage, markStageVisited]);
+  
   // Handle time up event
   const handleTimeUp = () => {
-    setShowTimeAlert(true);
+    markStageTimerExpired(currentStage);
   };
-  
-  // Reset time alert when stage changes
-  useEffect(() => {
-    setShowTimeAlert(false);
-  }, [currentStage]);
   
   // Return to dashboard when mission is complete and user attempts to proceed
   useEffect(() => {
@@ -214,7 +215,7 @@ export default function Mission1() {
       )}
       
       {/* Time Up Alert */}
-      {showTimeAlert && (
+      {isStageTimerExpired(currentStage) && (
         <div className="max-w-6xl mx-auto px-4 mt-2">
           <Alert className="bg-amber-50 border-amber-200">
             <AlertDescription className="text-sm">

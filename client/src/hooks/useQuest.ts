@@ -7,6 +7,8 @@ export interface QuestState {
   awardedXp: Record<string, boolean>; // Track which XP awards have been given
   awardedBadges: Record<string, boolean>; // Track which badges have been awarded
   completedMissions: number[]; // Track which missions have been completed
+  visitedStages: number[]; // Track which stages have been visited
+  stageTimerExpired: Record<number, boolean>; // Track which stage timers have expired
 }
 
 const TOTAL_STAGES = 7; // Updated with the new image generation stage
@@ -16,16 +18,18 @@ export function useQuest() {
   // Initialize state from localStorage or defaults
   const [state, setState] = useState<QuestState>(() => {
     const savedState = localStorage.getItem(STORAGE_KEY);
-    return savedState 
-      ? JSON.parse(savedState) 
-      : { 
-          currentStage: 1, 
-          xp: 0, 
-          unlockedBadges: [],
-          awardedXp: {},
-          awardedBadges: {},
-          completedMissions: []
-        };
+    const parsedState = savedState ? JSON.parse(savedState) : null;
+    
+    return parsedState || { 
+      currentStage: 1, 
+      xp: 0, 
+      unlockedBadges: [],
+      awardedXp: {},
+      awardedBadges: {},
+      completedMissions: [],
+      visitedStages: [],
+      stageTimerExpired: {}
+    };
   });
   
   // Save state changes to localStorage
@@ -162,6 +166,44 @@ export function useQuest() {
     return state.completedMissions?.includes(missionId) || false;
   };
   
+  // Mark a stage as visited
+  const markStageVisited = (stageId: number) => {
+    setState(prev => {
+      // Skip if already visited
+      if (prev.visitedStages?.includes(stageId)) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        visitedStages: [...(prev.visitedStages || []), stageId]
+      };
+    });
+  };
+  
+  // Check if a stage has been visited
+  const isStageVisited = (stageId: number) => {
+    return state.visitedStages?.includes(stageId) || false;
+  };
+  
+  // Mark a stage timer as expired
+  const markStageTimerExpired = (stageId: number) => {
+    setState(prev => {
+      return {
+        ...prev,
+        stageTimerExpired: {
+          ...(prev.stageTimerExpired || {}),
+          [stageId]: true
+        }
+      };
+    });
+  };
+  
+  // Check if a stage timer is expired
+  const isStageTimerExpired = (stageId: number) => {
+    return !!state.stageTimerExpired?.[stageId];
+  };
+  
   // Reset the quest
   const resetQuest = (preserveProgress = true) => {
     if (preserveProgress) {
@@ -178,7 +220,9 @@ export function useQuest() {
         unlockedBadges: [],
         awardedXp: {},
         awardedBadges: {},
-        completedMissions: []
+        completedMissions: [],
+        visitedStages: [],
+        stageTimerExpired: {}
       });
     }
   };
@@ -193,6 +237,10 @@ export function useQuest() {
     unlockBadge,
     completeMission,
     isMissionCompleted,
+    markStageVisited,
+    isStageVisited,
+    markStageTimerExpired,
+    isStageTimerExpired,
     restart: resetQuest  // Alias for resetQuest to match the expected name in home.tsx
   };
 }
