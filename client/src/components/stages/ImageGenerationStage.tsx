@@ -334,9 +334,9 @@ export function ImageGenerationStage({
                 <div className="border rounded p-8 max-w-2xl w-full flex items-center justify-center min-h-[300px] bg-gray-50">
                   <div className="text-center text-gray-400">
                     <Image className="h-16 w-16 mx-auto opacity-20 mb-4" />
-                    <p>Your AI-generated image will appear here</p>
+                    <p>ستظهر الصورة التي أنشأها الذكاء الاصطناعي هنا</p>
                     <p className="text-xs mt-2">
-                      Chat with Dr. Pengy to create an image
+                      دردش مع د. بنجي لإنشاء صورة
                     </p>
                   </div>
                 </div>
@@ -375,7 +375,7 @@ export function ImageGenerationStage({
                         className="h-6 w-6 rounded-full mr-2"
                       />
                       <span className="font-medium text-sm">
-                        Chat with Dr. Pengy
+                        دردش مع د. بنجي
                       </span>
                     </div>
                     <Button
@@ -405,16 +405,16 @@ export function ImageGenerationStage({
                           >
                             <div className="flex items-center mb-2">
                               {msg.role === "user" ? (
-                                <div className="font-medium text-xs">You</div>
+                                <div className="font-medium text-xs">أنت</div>
                               ) : (
                                 <div className="flex items-center">
                                   <img
                                     src={penguinAvatar}
-                                    alt="Dr. Pengy"
+                                    alt="د. بنجي"
                                     className="h-5 w-5 rounded-full mr-1.5"
                                   />
                                   <div className="font-medium text-xs">
-                                    Dr. Pengy
+                                    د. بنجي
                                   </div>
                                 </div>
                               )}
@@ -431,14 +431,14 @@ export function ImageGenerationStage({
                           <div className="flex items-center mb-2">
                             <img
                               src={penguinAvatar}
-                              alt="Dr. Pengy"
+                              alt="د. بنجي"
                               className="h-5 w-5 rounded-full mr-1.5"
                             />
-                            <div className="font-medium text-xs">Dr. Pengy</div>
+                            <div className="font-medium text-xs">د. بنجي</div>
                           </div>
                           <div className="flex items-center text-xs">
                             <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                            Generating...
+                            جاري الإنشاء...
                           </div>
                         </div>
                       )}
@@ -452,7 +452,7 @@ export function ImageGenerationStage({
                     {state.error && (
                       <Alert variant="destructive" className="mb-3 py-2">
                         <AlertCircle className="h-3 w-3" />
-                        <AlertTitle className="text-xs">Error</AlertTitle>
+                        <AlertTitle className="text-xs">خطأ</AlertTitle>
                         <AlertDescription className="text-xs">
                           {state.error}
                         </AlertDescription>
@@ -461,7 +461,7 @@ export function ImageGenerationStage({
 
                     <form onSubmit={handleSubmit} className="flex gap-2">
                       <Textarea
-                        placeholder="Describe the image you want to create..."
+                        placeholder="صف الصورة التي تريد إنشاءها..."
                         value={state.prompt}
                         onChange={(e) =>
                           setState((prev) => ({
