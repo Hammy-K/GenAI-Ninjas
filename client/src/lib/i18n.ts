@@ -20,8 +20,8 @@ const resources = {
 
       // Progress stages
       stage1: "👋",
-      stage2: "اكتشاف",
-      stage3: "د. بنجي",
+      stage2: "د. بنجي",
+      stage3: "البرومت",
       stage4: "الصور",
       stage5: "الموقع",
       stage6: "التسليم",
