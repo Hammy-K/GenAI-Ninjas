@@ -90,22 +90,15 @@ export function HTMLGeneratorStage({
         const parsedState = JSON.parse(savedState);
         
         // Force reset isSaving to false and any error messages on component mount
-        // And ensure the chat is always open on first visit, even if previously closed
         console.log("Ensuring clean state on mount - previous isSaving:", parsedState.isSaving);
         
         const cleanState = {
           ...parsedState,
           isSaving: false,
-          error: '',
-          isChatOpen: false // Start with chat closed, will open after delay
+          error: ''
         };
         
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
-        
-        // Force chat open regardless of saved state with a 1-second delay
-        setTimeout(() => {
-          setState(prev => ({...prev, isChatOpen: true}));
-        }, 1000);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
@@ -120,16 +113,7 @@ export function HTMLGeneratorStage({
   // Initialize toast hook for notifications
   const { toast } = useToast();
   
-  // Effect to ensure chat is open on mount with a 1-second delay
-  useEffect(() => {
-    // Force the chat to be open on component mount after a 1-second delay
-    const timer = setTimeout(() => {
-      setState(prev => ({ ...prev, isChatOpen: true }));
-    }, 1000);
-    
-    // Clean up the timer if component unmounts before the delay completes
-    return () => clearTimeout(timer);
-  }, []);
+  // No chat timer needed anymore as we're using the global Dr. Pengy chat widget
   
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -222,10 +206,7 @@ export function HTMLGeneratorStage({
     onComplete();
   };
   
-  // Handle toggling the chat widget
-  const toggleChat = () => {
-    setState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
-  };
+  // Chat widget toggle function removed - now using global Dr. Pengy widget
   
   // Check if project ID is in URL (for shared projects)
   useEffect(() => {
