@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -6,15 +6,19 @@ interface CountdownTimerProps {
   minutes: number;
   onTimeUp?: () => void;
   className?: string;
+  isExpired?: boolean; // Optional prop to indicate the timer is already expired
 }
 
-export function CountdownTimer({ minutes, onTimeUp, className }: CountdownTimerProps) {
+export function CountdownTimer({ minutes, onTimeUp, className, isExpired = false }: CountdownTimerProps) {
   // Calculate total seconds from minutes
   const totalSeconds = minutes * 60;
   
   // State to track remaining time
-  const [timeRemaining, setTimeRemaining] = useState(totalSeconds);
-  const [isTimeUp, setIsTimeUp] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(isExpired ? 0 : totalSeconds);
+  const [isTimeUp, setIsTimeUp] = useState(isExpired);
+  
+  // Use ref to track if timer has been initialized
+  const initializedRef = useRef(false);
   
   // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
@@ -25,15 +29,41 @@ export function CountdownTimer({ minutes, onTimeUp, className }: CountdownTimerP
   };
   
   useEffect(() => {
-    // Initialize timer with the total seconds
+    // Initialize timer only once
+    if (isExpired) {
+      setTimeRemaining(0);
+      setIsTimeUp(true);
+      return;
+    }
+    
+    // If timer was already initialized, don't reset it
+    if (initializedRef.current) {
+      return;
+    }
+    
+    // Initialize timer with full time
     setTimeRemaining(totalSeconds);
     setIsTimeUp(false);
-  }, [totalSeconds]);
+    initializedRef.current = true;
+  }, [totalSeconds, isExpired]);
   
   useEffect(() => {
+    // If already expired, don't start the timer
+    if (isExpired || isTimeUp) {
+      return;
+    }
+    
     // Create interval to decrement time
     const timerInterval = setInterval(() => {
       setTimeRemaining(prev => {
+        // Don't decrement below 0
+        if (prev <= 0) {
+          clearInterval(timerInterval);
+          setIsTimeUp(true);
+          if (onTimeUp) onTimeUp();
+          return 0;
+        }
+        
         const newTime = prev - 1;
         
         // If time is up
@@ -48,7 +78,7 @@ export function CountdownTimer({ minutes, onTimeUp, className }: CountdownTimerP
     
     // Clean up interval
     return () => clearInterval(timerInterval);
-  }, [onTimeUp]);
+  }, [onTimeUp, isExpired, isTimeUp]);
   
   // Determine color based on time remaining
   // Red when time is up, yellow when less than 20% remains

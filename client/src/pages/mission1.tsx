@@ -209,6 +209,7 @@ export default function Mission1() {
             <CountdownTimer 
               minutes={getStageTimeLimit(currentStage)} 
               onTimeUp={handleTimeUp}
+              isExpired={isStageTimerExpired(currentStage)}
             />
           </div>
         </div>
