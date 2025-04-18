@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import Dashboard from "@/pages/dashboard";
 import Mission1 from "@/pages/mission1";
 import Project from "@/pages/project";
+import Gallery from "@/pages/gallery";
 
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/mission1" component={Mission1} />
       <Route path="/mission1/stage/:stageName" component={Mission1} />
       <Route path="/project/:projectId" component={Project} />
+      <Route path="/gallery" component={Gallery} />
       <Route component={NotFound} />
     </Switch>
   );
