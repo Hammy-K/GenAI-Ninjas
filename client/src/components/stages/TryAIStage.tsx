@@ -202,7 +202,8 @@ export function TryAIStage({
                         />
                         <p>لا توجد رسائل بعد. دردش مع د. بنجي!</p>
                         <p className="text-xs mt-2">
-                          جرب أن تسأل: "حدثني عن الذكاء الاصطناعي التوليدي" أو "اكتب قصيدة عن التعلم"
+                          جرب أن تسأل: "حدثني عن الذكاء الاصطناعي التوليدي" أو
+                          "اكتب قصيدة عن التعلم"
                         </p>
                       </div>
                     </div>
@@ -268,14 +269,14 @@ export function TryAIStage({
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
               <ArrowRight className="ml-2 h-4 w-4" />
-              <span>المرحلة السابقة</span>
+              <span>السابق</span>
             </Button>
             <Button
               onClick={onComplete}
               size="lg"
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>الانتقال للمرحلة التالية</span>
+              <span>التالي</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>

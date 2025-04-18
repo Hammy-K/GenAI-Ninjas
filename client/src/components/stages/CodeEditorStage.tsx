@@ -1,22 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ArrowRight, Code, RefreshCw, Wand2 } from 'lucide-react';
-import { useStageState } from '@/hooks/useStageState';
-import { useXpTracker } from '@/hooks/useXpTracker';
-import { Confetti } from '@/components/ui/confetti';
-import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/input';
-import { generateCode } from '@/lib/openai';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, ArrowRight, Code, RefreshCw, Wand2 } from "lucide-react";
+import { useStageState } from "@/hooks/useStageState";
+import { useXpTracker } from "@/hooks/useXpTracker";
+import { Confetti } from "@/components/ui/confetti";
+import { useTranslation } from "react-i18next";
+import { Input } from "@/components/ui/input";
+import { generateCode } from "@/lib/openai";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 // Import CodeMirror components and language packages
-import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { html } from '@codemirror/lang-html';
-import { css } from '@codemirror/lang-css';
+import CodeMirror from "@uiw/react-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
 
 interface CodeEditorStageProps {
   onComplete: () => void;
@@ -83,39 +89,45 @@ document.getElementById('changeColorBtn').addEventListener('click', function() {
 // You can use console.log to debug your code
 console.log('JavaScript loaded!');`;
 
-export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }: CodeEditorStageProps) {
+export function CodeEditorStage({
+  onComplete,
+  onEarnXp,
+  onUnlockBadge,
+  onBack,
+}: CodeEditorStageProps) {
   const { t } = useTranslation();
-  const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } = useXpTracker();
+  const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } =
+    useXpTracker();
   const [showConfetti, setShowConfetti] = useState(false);
-  const [buildPrompt, setBuildPrompt] = useState('');
+  const [buildPrompt, setBuildPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
-  const [generatedDescription, setGeneratedDescription] = useState('');
-  
+  const [error, setError] = useState("");
+  const [generatedDescription, setGeneratedDescription] = useState("");
+
   // Initialize state with localStorage values or defaults
-  const [state, setState] = useStageState<CodeEditorState>('code_editor', {
-    htmlCode: localStorage.getItem('code_editor_html') || DEFAULT_HTML,
-    cssCode: localStorage.getItem('code_editor_css') || DEFAULT_CSS,
-    jsCode: localStorage.getItem('code_editor_js') || DEFAULT_JS,
-    activeTab: 'html',
+  const [state, setState] = useStageState<CodeEditorState>("code_editor", {
+    htmlCode: localStorage.getItem("code_editor_html") || DEFAULT_HTML,
+    cssCode: localStorage.getItem("code_editor_css") || DEFAULT_CSS,
+    jsCode: localStorage.getItem("code_editor_js") || DEFAULT_JS,
+    activeTab: "html",
     hasEarnedXp: false,
-    hasUnlockedBadge: false
+    hasUnlockedBadge: false,
   });
-  
+
   // Save code to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('code_editor_html', state.htmlCode);
-    localStorage.setItem('code_editor_css', state.cssCode);
-    localStorage.setItem('code_editor_js', state.jsCode);
+    localStorage.setItem("code_editor_html", state.htmlCode);
+    localStorage.setItem("code_editor_css", state.cssCode);
+    localStorage.setItem("code_editor_js", state.jsCode);
   }, [state.htmlCode, state.cssCode, state.jsCode]);
-  
+
   // Combined code for the preview
   const processedHtml = state.htmlCode
-    .replace(/<html>/g, '')
-    .replace(/<\/html>/g, '')
-    .replace(/<head>[\s\S]*?<\/head>/g, '')
-    .replace(/<body>/g, '')
-    .replace(/<\/body>/g, '');
+    .replace(/<html>/g, "")
+    .replace(/<\/html>/g, "")
+    .replace(/<head>[\s\S]*?<\/head>/g, "")
+    .replace(/<body>/g, "")
+    .replace(/<\/body>/g, "");
 
   const combinedCode = `
     <html>
@@ -131,89 +143,93 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
 
   // Handle tab change
   const handleTabChange = (value: string) => {
-    setState(prev => ({ ...prev, activeTab: value }));
+    setState((prev) => ({ ...prev, activeTab: value }));
   };
-  
+
   // Update code based on active tab
   const handleCodeChange = (value: string) => {
     switch (state.activeTab) {
-      case 'html':
-        setState(prev => ({ ...prev, htmlCode: value }));
+      case "html":
+        setState((prev) => ({ ...prev, htmlCode: value }));
         break;
-      case 'css':
-        setState(prev => ({ ...prev, cssCode: value }));
+      case "css":
+        setState((prev) => ({ ...prev, cssCode: value }));
         break;
-      case 'js':
-        setState(prev => ({ ...prev, jsCode: value }));
+      case "js":
+        setState((prev) => ({ ...prev, jsCode: value }));
         break;
     }
-    
+
     // Award XP for making changes if not already awarded
     if (!state.hasEarnedXp) {
-      if (awardIfNotAlreadyAwarded(onEarnXp, 20, 'code_editor_changes')) {
-        setState(prev => ({ ...prev, hasEarnedXp: true }));
+      if (awardIfNotAlreadyAwarded(onEarnXp, 20, "code_editor_changes")) {
+        setState((prev) => ({ ...prev, hasEarnedXp: true }));
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
       }
     }
   };
-  
+
   // Reset to defaults
   const handleReset = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       htmlCode: DEFAULT_HTML,
       cssCode: DEFAULT_CSS,
-      jsCode: DEFAULT_JS
+      jsCode: DEFAULT_JS,
     }));
   };
-  
+
   // Handle generating code from prompt
   const handleGenerateCode = async () => {
     if (!buildPrompt.trim()) return;
-    
+
     setIsGenerating(true);
-    setError('');
-    setGeneratedDescription('');
-    
+    setError("");
+    setGeneratedDescription("");
+
     try {
       // Award XP for using the AI code generation feature if not already awarded
-      if (awardIfNotAlreadyAwarded(onEarnXp, 30, 'ai_code_generation')) {
+      if (awardIfNotAlreadyAwarded(onEarnXp, 30, "ai_code_generation")) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
       }
-      
+
       const result = await generateCode(buildPrompt);
-      
+
       if (result.error) {
         setError(result.error);
       } else {
         // Update the code editors with the generated code
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           htmlCode: result.html,
           cssCode: result.css,
-          jsCode: result.js
+          jsCode: result.js,
         }));
-        
+
         // Show description
         setGeneratedDescription(result.description);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the code');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while generating the code",
+      );
     } finally {
       setIsGenerating(false);
     }
   };
-  
+
   // Award badge when user continues to next stage
   const handleContinue = () => {
     // Award developer badge if not already awarded
     if (!state.hasUnlockedBadge) {
-      if (!isAlreadyAwarded('code_editor_badge', 'web_developer_badge')) {
-        onUnlockBadge('web_developer_badge', 'code_editor_badge');
-        markAsAwarded('code_editor_badge', 'web_developer_badge');
-        setState(prev => ({ ...prev, hasUnlockedBadge: true }));
+      if (!isAlreadyAwarded("code_editor_badge", "web_developer_badge")) {
+        onUnlockBadge("web_developer_badge", "code_editor_badge");
+        markAsAwarded("code_editor_badge", "web_developer_badge");
+        setState((prev) => ({ ...prev, hasUnlockedBadge: true }));
       }
     }
     onComplete();
@@ -225,18 +241,26 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
       <div className="max-w-5xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center">Web Code Editor</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl text-center">
+              Web Code Editor
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center mb-6">
-              Use this editor to create your own web page with HTML, CSS, and JavaScript.
-              See your changes in real-time and save your work automatically.
+              Use this editor to create your own web page with HTML, CSS, and
+              JavaScript. See your changes in real-time and save your work
+              automatically.
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-4">
               {/* Code Editor Panel */}
               <div className="flex flex-col h-[500px] border rounded-md overflow-hidden">
-                <Tabs defaultValue="html" value={state.activeTab} onValueChange={handleTabChange} className="w-full">
+                <Tabs
+                  defaultValue="html"
+                  value={state.activeTab}
+                  onValueChange={handleTabChange}
+                  className="w-full"
+                >
                   <div className="bg-gray-100 border-b px-2 py-1">
                     <TabsList className="grid grid-cols-3">
                       <TabsTrigger value="html" className="text-sm">
@@ -250,7 +274,7 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                       </TabsTrigger>
                     </TabsList>
                   </div>
-                  
+
                   <div className="flex-grow overflow-auto">
                     <TabsContent value="html" className="h-full m-0 p-0">
                       <CodeMirror
@@ -281,11 +305,11 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                     </TabsContent>
                   </div>
                 </Tabs>
-                
+
                 <div className="bg-gray-100 border-t p-2 flex justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleReset}
                     className="flex items-center gap-1"
                   >
@@ -294,7 +318,7 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                   </Button>
                 </div>
               </div>
-              
+
               {/* Preview Panel */}
               <div className="flex flex-col h-[500px] border rounded-md overflow-hidden">
                 <div className="bg-gray-100 border-b px-4 py-2 flex items-center gap-2">
@@ -311,14 +335,14 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                 </div>
               </div>
             </div>
-            
+
             {/* AI Code Generation Feature */}
             <div className="my-6 border rounded-md p-4 bg-gradient-to-r from-purple-50 to-indigo-50">
               <h3 className="font-bold text-indigo-900 text-lg mb-3 flex items-center">
                 <Wand2 className="h-5 w-5 mr-2 text-indigo-600" />
                 What do you want to build?
               </h3>
-              
+
               <div className="flex gap-2 mb-3">
                 <Input
                   value={buildPrompt}
@@ -326,13 +350,17 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                   placeholder="E.g. a simple calculator, a to-do list, a color picker..."
                   className="flex-grow"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && buildPrompt.trim() && !isGenerating) {
+                    if (
+                      e.key === "Enter" &&
+                      buildPrompt.trim() &&
+                      !isGenerating
+                    ) {
                       handleGenerateCode();
                     }
                   }}
                 />
-                <Button 
-                  onClick={handleGenerateCode} 
+                <Button
+                  onClick={handleGenerateCode}
                   disabled={isGenerating || !buildPrompt.trim()}
                   className="whitespace-nowrap"
                 >
@@ -341,10 +369,12 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Generating...
                     </>
-                  ) : 'Generate Code'}
+                  ) : (
+                    "Generate Code"
+                  )}
                 </Button>
               </div>
-              
+
               {error && (
                 <Alert variant="destructive" className="mb-3">
                   <AlertCircle className="h-4 w-4" />
@@ -352,43 +382,49 @@ export function CodeEditorStage({ onComplete, onEarnXp, onUnlockBadge, onBack }:
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               {generatedDescription && (
                 <div className="bg-white bg-opacity-70 p-3 rounded-md border border-indigo-100 mb-3">
-                  <p className="text-sm text-indigo-800">{generatedDescription}</p>
+                  <p className="text-sm text-indigo-800">
+                    {generatedDescription}
+                  </p>
                 </div>
               )}
-              
+
               <p className="text-sm text-indigo-700">
-                Ask the AI to generate HTML, CSS, and JavaScript code for you. Type a description of what you want to build and click "Generate Code" to see it in action!
+                Ask the AI to generate HTML, CSS, and JavaScript code for you.
+                Type a description of what you want to build and click "Generate
+                Code" to see it in action!
               </p>
             </div>
-            
+
             <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
-              <h3 className="font-bold text-blue-800 mb-2">Tips for Web Development:</h3>
+              <h3 className="font-bold text-blue-800 mb-2">
+                Tips for Web Development:
+              </h3>
               <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
-                <li>HTML is for structure, CSS for styling, and JavaScript for interactivity</li>
-                <li>Try changing colors, text content, or adding new elements</li>
+                <li>
+                  HTML is for structure, CSS for styling, and JavaScript for
+                  interactivity
+                </li>
+                <li>
+                  Try changing colors, text content, or adding new elements
+                </li>
                 <li>Use the "Reset" button if you want to start over</li>
                 <li>All your code is automatically saved in your browser</li>
-                <li>Experiment and have fun! This is a safe environment to learn</li>
+                <li>
+                  Experiment and have fun! This is a safe environment to learn
+                </li>
               </ul>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button 
-              onClick={onBack} 
-              variant="outline" 
-              size="lg"
-            >
+            <Button onClick={onBack} variant="outline" size="lg">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Previous Stage</span>
+              <span>السابق</span>
             </Button>
-            <Button 
-              onClick={handleContinue} 
-              size="lg"
-            >
-              <span>Continue to Next Stage</span>
+            <Button onClick={handleContinue} size="lg">
+              <span>التالي</span>
               <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>
