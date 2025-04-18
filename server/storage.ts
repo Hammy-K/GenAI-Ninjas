@@ -136,11 +136,11 @@ export class DatabaseStorage implements IStorage {
       sessionId
     });
 
-    // Increment the likes count
+    // Increment the likes count using SQL
     const [updatedImage] = await db
       .update(galleryImages)
       .set({
-        likes: (image) => image.likes + 1
+        likes: db.sql`${galleryImages.likes} + 1`
       })
       .where(eq(galleryImages.id, imageId))
       .returning();

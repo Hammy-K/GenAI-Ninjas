@@ -691,6 +691,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GALLERY API ENDPOINTS
+
+  // Upload an image to the gallery
+  app.post("/api/gallery/upload", async (req, res) => {
+    try {
+      const { imageUrl, studentName, missionNumber } = req.body;
+      
+      // Validate required fields
+      if (!imageUrl || !studentName || missionNumber === undefined) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Generate a session ID if not already in the session
+      if (!req.session.gallerySessionId) {
+        req.session.gallerySessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
+
+      // Create a new gallery image
+      const galleryImage = await storage.createGalleryImage({
+        imageUrl,
+        studentName,
+        missionNumber,
+        sessionId: req.session.gallerySessionId
+      });
+
+      // Log successful upload
+      logServerPrompt('gallery_image_upload', 'Image uploaded to gallery', {
+        student_name: studentName,
+        mission_number: missionNumber,
+        session_id: req.session.gallerySessionId
+      });
+      
+      return res.status(201).json(galleryImage);
+    } catch (error) {
+      console.error('Error uploading to gallery:', error);
+      
+      // Log the error
+      logServerPrompt('gallery_upload_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
+      return res.status(500).json({ error: 'Failed to upload image to gallery' });
+    }
+  });
+
+  // Like an image in the gallery
+  app.post("/api/gallery/like", async (req, res) => {
+    try {
+      const { imageId } = req.body;
+      
+      if (!imageId) {
+        return res.status(400).json({ error: 'Image ID is required' });
+      }
+
+      // Generate a session ID if not already in the session
+      if (!req.session.gallerySessionId) {
+        req.session.gallerySessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
+
+      // Check if user already liked this image
+      const hasLiked = await storage.hasLiked(imageId, req.session.gallerySessionId);
+      
+      // If already liked, return the current image without incrementing
+      if (hasLiked) {
+        const image = await storage.getGalleryImage(imageId);
+        return res.json(image);
+      }
+
+      // Increment the like count
+      const updatedImage = await storage.incrementLike(imageId, req.session.gallerySessionId);
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: 'Image not found' });
+      }
+
+      // Log the like
+      logServerPrompt('gallery_image_liked', `Image ${imageId} liked`, {
+        image_id: imageId,
+        session_id: req.session.gallerySessionId
+      });
+      
+      return res.json(updatedImage);
+    } catch (error) {
+      console.error('Error liking gallery image:', error);
+      
+      // Log the error
+      logServerPrompt('gallery_like_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
+      return res.status(500).json({ error: 'Failed to like image' });
+    }
+  });
+
+  // Get all images from the gallery
+  app.get("/api/gallery/all", async (req, res) => {
+    try {
+      const images = await storage.getAllGalleryImages();
+      
+      // Log the request
+      logServerPrompt('gallery_images_fetch', 'Fetched gallery images', {
+        image_count: images.length
+      });
+      
+      return res.json(images);
+    } catch (error) {
+      console.error('Error fetching gallery images:', error);
+      
+      // Log the error
+      logServerPrompt('gallery_fetch_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
+      return res.status(500).json({ error: 'Failed to fetch gallery images' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
