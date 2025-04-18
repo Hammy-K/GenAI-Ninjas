@@ -20,12 +20,14 @@ import {
   X,
   Image,
   Download,
+  Share2,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@/assets/Group 26087843.png";
 import { validateInput } from "@/lib/inputFilter";
 import { analyzePrompt } from "@/lib/openai";
 import { trackStageProgress } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 // Import the OpenAI utilities
 import OpenAI from "openai";
@@ -63,6 +65,7 @@ export function ImageGenerationStage({
   onBack,
 }: ImageGenerationStageProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Define the welcome message from د. بنجي in Arabic
   const welcomeMessage: ChatMessage = {
@@ -213,6 +216,60 @@ export function ImageGenerationStage({
         ...prev,
         error: "Failed to download image. Please try again.",
       }));
+    }
+  };
+  
+  // Helper function to share image to gallery
+  const handleShareToGallery = async () => {
+    if (!state.generatedImageUrl) return;
+    
+    try {
+      // Get the latest prompt that generated the image (last user message)
+      const userMessages = state.messages.filter(msg => msg.role === "user");
+      const latestPrompt = userMessages.length > 0 ? userMessages[userMessages.length - 1].content : "";
+      
+      // Get the current mission number (assuming it's 1 for now - could be passed as a prop in the future)
+      const missionNumber = 1;
+      
+      // Call the API to share the image to the gallery
+      const response = await fetch('/api/gallery/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageUrl: state.generatedImageUrl,
+          prompt: latestPrompt,
+          missionNumber
+        }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to share image to gallery");
+      }
+      
+      const result = await response.json();
+      
+      // Show success toast and track the event
+      toast({
+        title: "تم مشاركة الصورة!",
+        description: "يمكنك الآن رؤية صورتك في معرض الصور.",
+        duration: 5000
+      });
+      
+      trackStageProgress("image_generation", "image_shared_to_gallery", {
+        gallery_image_id: result.id
+      });
+      
+    } catch (error) {
+      console.error("Error sharing image to gallery:", error);
+      toast({
+        title: "خطأ في المشاركة",
+        description: "حدث خطأ أثناء مشاركة الصورة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+        duration: 5000
+      });
     }
   };
 
@@ -446,15 +503,26 @@ export function ImageGenerationStage({
                 <div className="border rounded p-4 max-w-2xl">
                   <div className="mb-4 text-center font-medium flex items-center justify-between">
                     <span>الصورة التي تم إنشاؤها</span>
-                    <Button
-                      onClick={handleDownloadImage}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <Download className="h-3 w-3" />
-                      حفظ الصورة
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleShareToGallery}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <Share2 className="h-3 w-3" />
+                        مشاركة في المعرض
+                      </Button>
+                      <Button
+                        onClick={handleDownloadImage}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <Download className="h-3 w-3" />
+                        حفظ الصورة
+                      </Button>
+                    </div>
                   </div>
                   <img
                     src={state.generatedImageUrl}
