@@ -294,7 +294,7 @@ export default function Dashboard() {
             {/* Left column: Mission Journey with zigzag path */}
             <div className="w-full md:w-2/3">
               {/* Learning path with zigzag flow */}
-              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "3000px" }}>
+              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "4000px" }}>
 
                 {/* Connected zigzag path - SVG for proper path alignment */}
                 <div className="absolute z-0 inset-0 right-12 left-12 h-full">
@@ -460,7 +460,7 @@ export default function Dashboard() {
 
                 {/* Mission 1 - "عبر عن نفسك بإبداع" */}
                 {/* Mission 1 – "تعرف على الذكاء الاصطناعي التوليدي" */}
-                <div className="relative z-10 mb-24">
+                <div className="relative z-10 mb-36">
                   <div className="flex items-center justify-end w-1/2">
                     {/* Square + Title wrapper */}
                     <div
@@ -502,7 +502,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mission 2 - "كيف تصنع قصص تعلق في البال" */}
-                <div className="relative z-10 flex items-center mb-24">
+                <div className="relative z-10 flex items-center mb-36">
                   <div className="flex-1"></div>
 
                   {/* Mission 2 Node - Left side */}
@@ -554,7 +554,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mission 3 - "مهارات التصميم اللي تشد الانتباه" */}
-                <div className="relative z-10 flex items-center mb-24">
+                <div className="relative z-10 flex items-center mb-36">
                   {/* Mission 3 Node - Right side */}
                   <div className="flex items-center justify-end w-1/2">
                     <div
@@ -611,7 +611,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mission 4 - "انشر ووسع جمهورك" */}
-                <div className="relative z-10 flex items-center mb-24">
+                <div className="relative z-10 flex items-center mb-36">
                   <div className="flex-1"></div>
 
                   {/* Mission 4 Node - Left side */}
@@ -643,7 +643,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mission 5 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
+                <div className="relative z-10 flex items-center mb-36">
                   {/* Mission 5 Node - Right side */}
                   <div className="flex items-center justify-end w-1/2">
                     <div className="relative mr-4 text-gray-400">
