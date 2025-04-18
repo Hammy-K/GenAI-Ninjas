@@ -300,13 +300,13 @@ export default function Dashboard() {
                   <svg
                     className="w-full h-full"
                     preserveAspectRatio="none"
-                    viewBox="0 0 100 450"
+                    viewBox="0 0 100 2250"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    {/* Main zigzag path - Full path */}
+                    {/* Main zigzag path - Full path for 20 missions */}
                     <path
-                      d="M80 10 L20 120 L80 230 L20 340 L80 450"
+                      d="M80 10 L20 120 L80 230 L20 340 L80 450 L20 560 L80 670 L20 780 L80 890 L20 1000 L80 1110 L20 1220 L80 1330 L20 1440 L80 1550 L20 1660 L80 1770 L20 1880 L80 1990 L20 2100 L80 2210"
                       stroke="#e2e8f0"
                       strokeWidth="2"
                       strokeLinecap="round"
@@ -337,6 +337,118 @@ export default function Dashboard() {
                     />
                     <path
                       d={nextActiveMission >= 4 ? "M20 340 L80 450" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 5 ? "M80 450 L20 560" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 6 ? "M20 560 L80 670" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 7 ? "M80 670 L20 780" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 8 ? "M20 780 L80 890" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 9 ? "M80 890 L20 1000" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 10 ? "M20 1000 L80 1110" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 11 ? "M80 1110 L20 1220" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 12 ? "M20 1220 L80 1330" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 13 ? "M80 1330 L20 1440" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 14 ? "M20 1440 L80 1550" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 15 ? "M80 1550 L20 1660" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 16 ? "M20 1660 L80 1770" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 17 ? "M80 1770 L20 1880" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 18 ? "M20 1880 L80 1990" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 19 ? "M80 1990 L20 2100" : ""}
+                      stroke="#a78bfa"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d={nextActiveMission >= 20 ? "M20 2100 L80 2210" : ""}
                       stroke="#a78bfa"
                       strokeWidth="2"
                       strokeLinecap="round"
@@ -534,14 +646,12 @@ export default function Dashboard() {
             {/* Right column: Student Profile Card */}
             <div className="w-full md:w-1/3">
               <Card className="border border-gray-100 rounded-xl p-5">
-                {/* Card Header */}
-                <div className="text-center mb-4">
+                {/* Card Header
+                <div className="text-center mb-4"> 
                   <h2 className="text-xl font-bold mb-0.5">ملف الطالب</h2>
-                  <p className="text-xs text-gray-500">
-                    معلومات الطالب الأساسية
-                  </p>
                 </div>
-
+                
+                */}
                 {/* Profile picture */}
                 <div className="flex justify-center mb-5">
                   <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
@@ -593,7 +703,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Badges - simple layout */}
+                {/* Badges - simple layout:
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   <div className="bg-amber-50 rounded-lg p-3 flex flex-col items-center justify-center">
                     <Star className="h-5 w-5 text-amber-400 mb-1" />
@@ -616,6 +726,8 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
+                
+                */}
 
                 {/* Edit profile button */}
                 {!showProfileForm && (
