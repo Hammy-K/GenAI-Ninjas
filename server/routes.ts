@@ -5,6 +5,20 @@ import OpenAI from "openai";
 import { moderateContent } from "./moderation";
 import axios from "axios";
 
+// Server-side prompt logging
+function logServerPrompt(promptType: string, promptContent: string, metadata: any = {}) {
+  try {
+    console.log(`[Server Analytics] Logging ${promptType} prompt`);
+    console.log(`[Server Analytics] Length: ${promptContent.length} chars`);
+    console.log(`[Server Analytics] Metadata:`, JSON.stringify(metadata));
+    
+    // This would ideally connect to a database or analytics service
+    // For now, we just log to the server console
+  } catch (error) {
+    console.error('[Server Analytics] Failed to log prompt:', error);
+  }
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const GPT_MODEL = "gpt-4o";
 
@@ -334,6 +348,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Get the latest user message for logging and analysis
+      const latestUserMessage = [...userMessages].pop();
+      
+      // Log the HTML generation request
+      logServerPrompt('html_generation', latestUserMessage.content, {
+        message_history_length: messageHistory.length,
+        conversation_turns: messageHistory.length
+      });
+
       // Make sure we have the right content type for JSON
       res.setHeader("Content-Type", "application/json");
 
@@ -390,8 +413,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   <p>The AI had trouble generating HTML. Please try again with a different prompt.</p>
 </body>
 </html>`;
+
+          // Log the HTML generation failure
+          logServerPrompt('html_generation_parsing_failed', latestUserMessage.content, {
+            model: GPT_MODEL,
+            response_length: response.choices[0].message.content?.length || 0
+          });
         }
       }
+
+      // Log successful HTML generation with metrics
+      logServerPrompt('html_generation_success', latestUserMessage.content, {
+        model: GPT_MODEL,
+        html_size: generatedHTML.length,
+        html_type: generatedHTML.includes('<script') ? 'interactive' : 'static'
+      });
 
       // Return the complete response with the assistant's message
       return res.json({
@@ -403,6 +439,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error generating HTML:", error);
+      
+      // Log the error
+      logServerPrompt('html_generation_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to generate HTML" });
     }
   });
@@ -435,6 +478,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      
+      // Log the project idea generation request
+      logServerPrompt('project_idea_generation', `interests: ${interests}, goal: ${goal}, tools: ${tools}`, {
+        interests_length: interests.length,
+        goal_length: goal.length,
+        tools_length: tools.length,
+        message_history_length: messageHistory.length
+      });
 
       const systemPrompt = {
         role: "system",
@@ -472,9 +523,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messageContent = response.choices[0].message.content || "{}";
       const result = JSON.parse(messageContent);
+      
+      // Log the successful project idea generation with the difficulty level
+      logServerPrompt('project_idea_success', result.title || 'Unknown project', {
+        difficulty: result.difficulty || 'unknown',
+        tools_count: (result.tools || []).length,
+        steps_count: (result.steps || []).length
+      });
+      
       return res.json(result);
     } catch (error) {
       console.error("Error generating project idea:", error);
+      
+      // Log the error
+      logServerPrompt('project_idea_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to generate project idea" });
     }
   });
