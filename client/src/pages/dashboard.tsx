@@ -297,7 +297,7 @@ export default function Dashboard() {
               <div className="relative py-0 px-4 md:px-8 overflow-y-visible">
 
                 {/* Connected zigzag path - SVG for proper path alignment */}
-                <div className="absolute z-0 right-12 left-12 h-[4000px] overflow-hidden">
+                <div className="absolute z-0 right-12 left-12 h-[2200px] overflow-hidden">
                   <svg
                     className="w-full h-full"
                     preserveAspectRatio="none"
