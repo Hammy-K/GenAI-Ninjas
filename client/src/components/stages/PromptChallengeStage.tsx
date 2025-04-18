@@ -9,6 +9,7 @@ import { useStageState } from '@/hooks/useStageState';
 import { validateInput } from '@/lib/inputFilter';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
 import { useQuest } from '@/hooks/useQuest';
+import { trackStageProgress, logPromptToFirestore } from '@/lib/firebase';
 import penguinPngPath from '@assets/Penguin.png';
 
 interface PromptChallengeStageProps {
@@ -79,9 +80,30 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
     setError('');
     setIsAnalyzing(true);
     
+    // Track prompt submission in analytics
+    trackStageProgress('prompt_challenge', 'prompt_submitted', {
+      prompt_length: state.improvedPrompt.length
+    });
+    
     try {
+      // Log the prompt to Firestore
+      await logPromptToFirestore(
+        'prompt_analysis',
+        state.improvedPrompt,
+        { 
+          original_prompt: weakPrompt,
+          stage: 'prompt_challenge' 
+        }
+      );
+      
       const result = await analyzePrompt(state.improvedPrompt);
       setAnalysis(result);
+      
+      // Track analysis result
+      trackStageProgress('prompt_challenge', 'analysis_received', {
+        score: result.score,
+        succeeded: result.score >= 7
+      });
       
       if (result.score >= 7) {
         // Only award XP and badge once
@@ -97,6 +119,11 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
             ...prev,
             hasUnlockedBadge: true
           }));
+          
+          // Track badge unlocking
+          trackStageProgress('prompt_challenge', 'badge_unlocked', {
+            badge_name: 'prompt_engineer_badge'
+          });
         }
         
         setHasCompleted(true);
@@ -109,6 +136,12 @@ export function PromptChallengeStage({ onComplete, onEarnXp, onUnlockBadge, onBa
       } else {
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
+      
+      // Track error
+      trackStageProgress('prompt_challenge', 'error', {
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        prompt_length: state.improvedPrompt.length
+      });
     } finally {
       setIsAnalyzing(false);
     }

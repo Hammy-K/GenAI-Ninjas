@@ -15,25 +15,60 @@ import { useLocation, useRoute, useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { trackStageProgress } from '@/lib/firebase';
 
 export default function Mission1() {
   const { 
     currentStage,
     totalStages,
-    goToNextStage,
+    goToNextStage: goToNextStageOriginal,
     goToPrevStage,
     restart,
     xp, 
     earnXp, 
     unlockBadge,
     unlockedBadges,
-    completeMission,
+    completeMission: completeMissionOriginal,
     setStage,
     markStageVisited,
     isStageVisited,
     markStageTimerExpired,
     isStageTimerExpired
   } = useQuest();
+  
+  // Wrapped goToNextStage to track analytics
+  const goToNextStage = () => {
+    // Get the stage we're completing
+    const completedStage = currentStage;
+    const nextStage = currentStage + 1;
+    
+    // Track the completion in Firebase Analytics
+    trackStageProgress('mission1', `stage_${completedStage}_completed`, {
+      xp_earned: xp,
+      badges_count: unlockedBadges.length
+    });
+    
+    // If next stage exists, track starting it
+    if (nextStage <= totalStages) {
+      trackStageProgress('mission1', `stage_${nextStage}_started`);
+    }
+    
+    // Call the original function
+    goToNextStageOriginal();
+  };
+  
+  // Wrapped completeMission to track analytics
+  const completeMission = (missionId: number) => {
+    // Track mission completion
+    trackStageProgress('mission1', 'completed', {
+      mission_id: missionId,
+      total_xp_earned: xp,
+      total_badges_earned: unlockedBadges.length
+    });
+    
+    // Call the original function
+    completeMissionOriginal(missionId);
+  };
   
   const [location, navigate] = useLocation();
   const [, params] = useRoute('/mission1/stage/:stageName');
@@ -52,8 +87,22 @@ export default function Mission1() {
   
   // Mark the current stage as visited when it's first loaded
   useEffect(() => {
+    // First mark as visited in the quest state
     markStageVisited(currentStage);
-  }, [currentStage, markStageVisited]);
+    
+    // Track stage visit in Firebase Analytics
+    const isFirstVisit = !isStageVisited(currentStage);
+    if (isFirstVisit) {
+      trackStageProgress('mission1', `stage_${currentStage}_visited`, {
+        current_xp: xp
+      });
+      
+      // Track first time start explicitly
+      if (currentStage === 1) {
+        trackStageProgress('mission1', 'started');
+      }
+    }
+  }, [currentStage, markStageVisited, isStageVisited, xp]);
   
   // Handle time up event
   const handleTimeUp = () => {
