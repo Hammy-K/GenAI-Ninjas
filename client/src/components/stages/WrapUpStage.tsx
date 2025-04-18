@@ -141,9 +141,10 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
               size="lg"
               variant="default"
               className="flex items-center w-full sm:w-auto"
+              dir="rtl"
             >
-              <Award className="mr-2 h-5 w-5" />
-              <span>Mission Completed</span>
+              <Award className="ml-2 h-5 w-5" />
+              <span>اكتملت المهمة</span>
             </Button>
             
             <Button 
@@ -156,9 +157,10 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
               size="lg"
               variant="outline"
               className="flex items-center w-full sm:w-auto"
+              dir="rtl"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              <span>Start Again</span>
+              <RefreshCw className="ml-2 h-4 w-4" />
+              <span>ابدأ من جديد</span>
             </Button>
           </CardFooter>
         </Card>
