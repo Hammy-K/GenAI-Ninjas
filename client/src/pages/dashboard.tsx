@@ -294,7 +294,7 @@ export default function Dashboard() {
             {/* Left column: Mission Journey with zigzag path */}
             <div className="w-full md:w-2/3">
               {/* Learning path with zigzag flow */}
-              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "4000px" }}>
+              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "3500px" }}>
 
                 {/* Connected zigzag path - SVG for proper path alignment */}
                 <div className="absolute z-0 inset-0 right-12 left-12 h-full">

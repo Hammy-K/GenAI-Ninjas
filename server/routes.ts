@@ -73,6 +73,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
+      // Validate messageHistory format
+      if (messageHistory && !Array.isArray(messageHistory)) {
+        return res.status(400).json({ error: "messageHistory must be an array" });
+      }
+
       // Check content moderation
       const moderationResult = await moderateContent(prompt, openai);
       if (moderationResult.flagged) {
@@ -82,13 +87,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const messages = [
-        {
-          role: "system",
-          content:
-            'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊. تقدر تسألهم، تمزح مزح خفيف، أو تقول توقفات (زي: "مممم... خلني أفكر 😄") عشان تحسسهم إنك تتفاعل معهم. ركز على مساعدتهم يفهمون GenAI، يجربون أدوات جديدة، ويطلعون أفكار ومشاريع يفتخرون فيها. لو سأل الطالب عن شي تعليمي عام، عادي ترد عليه، بس حاول ترجع تركّز معه على المهمة أو الخطوة اللي هو فيها داخل المنصة. والمهم! لا ترد على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شي مايناسب، نبهه بلطافة، ووضح له إنك موجود عشان تساعده يتعلم ويبدع بأفكار ممتعة وآمنة. خلك دايمًا إيجابي، محفّز، وخلي التجربة كأنها مغامرة تعليمية ممتعة.',
-        },
+      const systemPrompt = {
+        role: "system",
+        content:
+          'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊. تقدر تسألهم، تمزح مزح خفيف، أو تقول توقفات (زي: "مممم... خلني أفكر 😄") عشان تحسسهم إنك تتفاعل معهم. ركز على مساعدتهم يفهمون GenAI، يجربون أدوات جديدة، ويطلعون أفكار ومشاريع يفتخرون فيها. لو سأل الطالب عن شي تعليمي عام، عادي ترد عليه، بس حاول ترجع تركّز معه على المهمة أو الخطوة اللي هو فيها داخل المنصة. والمهم! لا ترد على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شي مايناسب، نبهه بلطافة، ووضح له إنك موجود عشان تساعده يتعلم ويبدع بأفكار ممتعة وآمنة. خلك دايمًا إيجابي، محفّز، وخلي التجربة كأنها مغامرة تعليمية ممتعة.',
+      };
 
+      // Always start with the system prompt, then include full message history, then the new user message
+      const messages = [
+        systemPrompt,
         ...messageHistory,
         { role: "user", content: prompt },
       ];
@@ -115,6 +122,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
+      // Validate messageHistory format
+      if (messageHistory && !Array.isArray(messageHistory)) {
+        return res.status(400).json({ error: "messageHistory must be an array" });
+      }
+
+      // Validate that messageHistory has proper structure with roles
+      if (messageHistory.length > 0) {
+        const hasInvalidMessage = messageHistory.some(
+          (msg: any) => !msg.role || !msg.content || (msg.role !== 'user' && msg.role !== 'assistant')
+        );
+        
+        if (hasInvalidMessage) {
+          return res.status(400).json({ 
+            error: "messageHistory contains invalid messages. Each message must have 'role' ('user' or 'assistant') and 'content'." 
+          });
+        }
+      }
+
       // Check content moderation
       const moderationResult = await moderateContent(prompt, openai);
       if (moderationResult.flagged) {
@@ -123,6 +148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           moderationResult,
         });
       }
+
+      // System prompt for image generation
+      const systemPrompt = {
+        role: "system",
+        content: "You are an AI assistant specializing in image generation. Help the user create images based on their descriptions and previous requests.",
+      };
 
       // Create enhanced prompt based on message history for better context awareness
       let enhancedPrompt = prompt;
@@ -249,34 +280,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate HTML code endpoint with chat history
   app.post("/api/ai/generate-html", async (req, res) => {
     try {
-      const { messages } = req.body;
+      const { messageHistory = [] } = req.body;
 
-      if (!messages || !Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: "Messages array is required" });
+      // Validate messageHistory format
+      if (!Array.isArray(messageHistory)) {
+        return res.status(400).json({ error: "messageHistory must be an array" });
+      }
+
+      // Make sure we have at least one user message
+      const userMessages = messageHistory.filter((msg: any) => msg.role === 'user');
+      if (userMessages.length === 0) {
+        return res.status(400).json({ error: "At least one user message is required in messageHistory" });
+      }
+
+      // Validate that messageHistory has proper structure with roles
+      if (messageHistory.length > 0) {
+        const hasInvalidMessage = messageHistory.some(
+          (msg: any) => !msg.role || !msg.content || (msg.role !== 'user' && msg.role !== 'assistant')
+        );
+        
+        if (hasInvalidMessage) {
+          return res.status(400).json({ 
+            error: "messageHistory contains invalid messages. Each message must have 'role' ('user' or 'assistant') and 'content'." 
+          });
+        }
       }
 
       // Make sure we have the right content type for JSON
       res.setHeader("Content-Type", "application/json");
 
+      const systemPrompt = {
+        role: "system",
+        content: `You are a web development expert. Generate a complete HTML page based on the user's request.
+        Include all necessary HTML, CSS, and JavaScript in a single, self-contained HTML file.
+        
+        VERY IMPORTANT:
+        - Return ONLY the raw HTML code, nothing else
+        - Do not include any explanations, descriptions, or text outside the HTML
+        - The response must start with <!DOCTYPE html> and contain a complete web page
+        - Make sure the code is fully functional, well-structured, and suitable for beginners
+        - Include comments in the code to explain key concepts
+        - Keep the code relatively simple but functional
+        - Design should be mobile-friendly and responsive`,
+      };
+
       // Call OpenAI API with the full message history for context
       const response = await openai.chat.completions.create({
         model: GPT_MODEL,
         messages: [
-          {
-            role: "system",
-            content: `You are a web development expert. Generate a complete HTML page based on the user's request.
-            Include all necessary HTML, CSS, and JavaScript in a single, self-contained HTML file.
-            
-            VERY IMPORTANT:
-            - Return ONLY the raw HTML code, nothing else
-            - Do not include any explanations, descriptions, or text outside the HTML
-            - The response must start with <!DOCTYPE html> and contain a complete web page
-            - Make sure the code is fully functional, well-structured, and suitable for beginners
-            - Include comments in the code to explain key concepts
-            - Keep the code relatively simple but functional
-            - Design should be mobile-friendly and responsive`,
-          },
-          ...messages,
+          systemPrompt,
+          ...messageHistory,
         ],
       });
 

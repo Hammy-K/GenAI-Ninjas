@@ -1,0 +1,36 @@
+You are an expert TypeScript/Node.js developer and code reviewer. I have an Express.js server with multiple OpenAI endpoints (`/api/ai/text`, `/api/ai/image`, `/api/ai/generate-html`, etc.) that currently handle chat history in different—and sometimes broken—ways. Your job is to refactor and unify them so that:
+
+1. **Unified parameter naming & validation**  
+   - All endpoints accept `messageHistory` (an array of `{ role: 'user' | 'assistant' | 'system', content: string }`) instead of inconsistent names.  
+   - Validate on entry that `messageHistory` is a non‑empty array with at least one user turn. Return 400 if invalid.
+
+2. **Consistent system‑prompt injection**  
+   - For every chat endpoint (`text`, `generate-html`, any prompt analyzer, etc.), always build `messages` as:
+     1. A single `system` message with your roles/instructions.  
+     2. The entire `messageHistory` array (in order).  
+     3. A final new `{ role: 'user', content: prompt }` turn.  
+   - Never rely on the client to include the system message or to splice the history manually.
+
+3. **Image endpoint: true two‑way context**  
+   - Don’t extract only prior user messages. Instead, serialize the full `messageHistory` (both roles) into a single preamble string, then append the new user request.  
+   - Example serialization:
+     ```ts
+     const historyText = messageHistory
+       .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+       .join('\n');
+     const finalPrompt = `${systemInstructions}\n${historyText}\nNow generate an image for: ${prompt}`;
+     ```
+   - Use DALL·E’s Chat‑style API or encapsulate the above in `openai.images.generate`.
+
+4. **Safety & moderation**  
+   - Before calling OpenAI on every endpoint, always run `await moderateContent(userInput, openai)` and reject if flagged.  
+   - Do not log or leak sensitive content. On moderation failures, return `400 { error: 'Content flagged…' }`.
+
+5. **Error handling & fallbacks**  
+   - Wrap every `await openai…` call in `try/catch`. On failure, return `500 { error: 'Failed to …' }`.  
+   - Ensure JSON responses are consistent: `{ data: … }` on success, `{ error: … }` on failure.
+
+6. **Remove duplication**  
+   - Extract common logic (validation, system prompt injection, moderation) into small reusable helper functions so each route stays lean.
+
+Please refactor the existing `registerRoutes` function accordingly. Only change code inside it; preserve imports and the overall Express setup. Return the revised `registerRoutes` implementation in full.  
