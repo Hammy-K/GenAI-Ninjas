@@ -11,11 +11,9 @@ import { SessionData } from 'express-session';
 
 // Extended request type with gallery session
 interface RequestWithGallery extends Request {
-  session: SessionData & {
+  session: {
     gallerySessionId?: string;
-    id?: string;
-    cookie?: any;
-  };
+  } & Record<string, any>;
 }
 
 // Validation schema for gallery image sharing
@@ -54,18 +52,19 @@ export function registerGalleryRoutes(router: Router) {
       }
 
       // Create a new gallery image
+      const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
       const galleryImage = await storage.createGalleryImage({
         imageUrl,
         studentName,
         missionNumber,
-        sessionId: req.session.gallerySessionId
+        sessionId
       });
 
       // Log successful upload
       logEvent('gallery_image_upload', 'Image uploaded to gallery', {
         student_name: studentName,
         mission_number: missionNumber,
-        session_id: req.session.gallerySessionId
+        session_id: sessionId
       });
       
       return res.status(201).json(galleryImage);
@@ -90,7 +89,8 @@ export function registerGalleryRoutes(router: Router) {
       const { imageId } = validation.data;
 
       // Check if user already liked this image
-      const hasLiked = await storage.hasLiked(imageId, req.session.gallerySessionId);
+      const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
+      const hasLiked = await storage.hasLiked(imageId, sessionId);
       
       // If already liked, return the current image without incrementing
       if (hasLiked) {
@@ -98,8 +98,8 @@ export function registerGalleryRoutes(router: Router) {
         return res.json(image);
       }
 
-      // Increment the like count
-      const updatedImage = await storage.incrementLike(imageId, req.session.gallerySessionId);
+      // Increment the like count using the same session ID
+      const updatedImage = await storage.incrementLike(imageId, sessionId);
       
       if (!updatedImage) {
         return res.status(404).json({ error: 'Image not found' });
@@ -108,7 +108,7 @@ export function registerGalleryRoutes(router: Router) {
       // Log the like
       logEvent('gallery_image_liked', `Image ${imageId} liked`, {
         image_id: imageId,
-        session_id: req.session.gallerySessionId
+        session_id: sessionId
       });
       
       return res.json(updatedImage);
@@ -138,18 +138,19 @@ export function registerGalleryRoutes(router: Router) {
         : "طالب مبدع"; // Default name "Creative Student" in Arabic
       
       // Create a new gallery image
+      const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
       const galleryImage = await storage.createGalleryImage({
         imageUrl,
         studentName: finalStudentName,
         missionNumber: missionNumber || 1,
-        sessionId: req.session.gallerySessionId
+        sessionId
       });
 
       // Log successful sharing
       logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
         student_name: finalStudentName,
         mission_number: missionNumber || 1,
-        session_id: req.session.gallerySessionId,
+        session_id: sessionId,
         prompt_length: prompt ? prompt.length : 0
       });
       
