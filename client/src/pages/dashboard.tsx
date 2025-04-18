@@ -58,9 +58,6 @@ export default function Dashboard() {
   const captchaEmojis = ["💜", "🌟", "🎮", "🎨", "📱"];
   const targetEmoji = "💜"; // The heart emoji users need to click
 
-  // Penguin avatar position calculation based on progress
-  const [penguinYPosition, setPenguinYPosition] = useState<number>(0);
-
   // Calculate badges earned
   const badgeIcons: Record<string, JSX.Element> = {
     'prompt_engineer_badge': <Star className="h-5 w-5" />,
@@ -81,12 +78,7 @@ export default function Dashboard() {
     }
   }, [studentName, studentGrade, schoolName]);
 
-  // Update penguin position based on completed missions
-  useEffect(() => {
-    // For each completed mission, move penguin down by a fixed amount
-    const newPosition = completedMissions.length * 150; // 150px per mission
-    setPenguinYPosition(newPosition);
-  }, [completedMissions]);
+
 
   // Track mission completion status
   const isMission1Complete = isMissionCompleted(1);
@@ -473,23 +465,6 @@ export default function Dashboard() {
                       fill="none"
                     />
                   </svg>
-                  
-                  {/* Penguin character that moves down the path based on mission completion */}
-                  <div 
-                    className="absolute" 
-                    style={{
-                      left: completedMissions.length % 2 === 0 ? '80%' : '20%', 
-                      top: `${10 + penguinYPosition}px`,
-                      transition: 'top 1s ease-in-out, left 1s ease-in-out',
-                      zIndex: 50
-                    }}
-                  >
-                    <img 
-                      src={penguinAvatar} 
-                      alt="Dr. Penguin" 
-                      className="w-14 h-14"
-                    />
-                  </div>
                 </div>
 
                 {/* Mission 1 - "عبر عن نفسك بإبداع" */}
