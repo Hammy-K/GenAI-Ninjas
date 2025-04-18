@@ -876,8 +876,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Right column: Student Profile Card */}
-            <div className="w-full md:w-1/3">
+            {/* Right column: Student Profile Card - with sticky positioning */}
+            <div className="w-full md:w-1/3 md:sticky md:top-4 self-start">
               <Card className="border border-gray-100 rounded-xl p-5">
                 {/* Card Header
                 <div className="text-center mb-4"> 
