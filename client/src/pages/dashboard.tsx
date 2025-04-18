@@ -566,6 +566,13 @@ export default function Dashboard() {
                   </div>
 
                   <div className="text-right">
+                    <p className="font-medium text-gray-500">اسم المدرسة</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">{schoolName || "-"}</p>
+                  </div>
+
+                  <div className="text-right">
                     <p className="font-medium text-gray-500">
                       (XP) نقاط الخبرة
                     </p>
