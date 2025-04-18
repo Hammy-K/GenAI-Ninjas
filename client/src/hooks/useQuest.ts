@@ -137,6 +137,7 @@ export function useQuest() {
     console.log(`Attempting to complete mission: ${missionId}`);
     console.log(`Current state:`, state);
     
+    // Use a promise to ensure state updates are completed and reflected
     setState(prev => {
       // Initialize completedMissions array if undefined
       const prevCompletedMissions = prev.completedMissions || [];
@@ -148,13 +149,17 @@ export function useQuest() {
       }
       
       console.log(`Completing mission: ${missionId}`);
-      const newState = {
+      
+      // Force a complete state update to make sure the update propagates
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...prev,
+        completedMissions: [...prevCompletedMissions, missionId]
+      }));
+      
+      return {
         ...prev,
         completedMissions: [...prevCompletedMissions, missionId]
       };
-      
-      console.log("New state will be:", newState);
-      return newState;
     });
     
     // Log the state after update (note: this will log the previous state due to React's async state updates)
