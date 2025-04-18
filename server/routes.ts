@@ -789,6 +789,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Share an image to the gallery from the image generator
+  app.post("/api/gallery/share", async (req: Request & { session: { gallerySessionId?: string } }, res) => {
+    try {
+      const { imageUrl, prompt, missionNumber } = req.body;
+      
+      // Validate required fields
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'Image URL is required' });
+      }
+
+      // Generate a session ID if not already in the session
+      if (!req.session.gallerySessionId) {
+        req.session.gallerySessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
+
+      // Use a default student name if not provided
+      const studentName = "طالب مبدع"; // Default name "Creative Student" in Arabic
+      
+      // Create a new gallery image
+      const galleryImage = await storage.createGalleryImage({
+        imageUrl,
+        studentName,
+        missionNumber: missionNumber || 1,
+        sessionId: req.session.gallerySessionId
+      });
+
+      // Log successful sharing
+      logServerPrompt('gallery_image_shared', 'Image shared to gallery from generator', {
+        mission_number: missionNumber || 1,
+        session_id: req.session.gallerySessionId,
+        prompt_length: prompt ? prompt.length : 0
+      });
+      
+      return res.status(201).json(galleryImage);
+    } catch (error) {
+      console.error('Error sharing to gallery:', error);
+      
+      // Log the error
+      logServerPrompt('gallery_share_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
+      return res.status(500).json({ error: 'Failed to share image to gallery' });
+    }
+  });
+
   // Get all images from the gallery
   app.get("/api/gallery/all", async (req, res) => {
     try {
