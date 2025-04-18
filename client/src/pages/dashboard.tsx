@@ -294,14 +294,14 @@ export default function Dashboard() {
             {/* Left column: Mission Journey with zigzag path */}
             <div className="w-full md:w-2/3">
               {/* Learning path with zigzag flow */}
-              <div className="relative py-0 px-4 md:px-8 overflow-y-visible">
+              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "3000px" }}>
 
                 {/* Connected zigzag path - SVG for proper path alignment */}
-                <div className="absolute z-0 right-12 left-12 h-[2200px] overflow-hidden">
+                <div className="absolute z-0 inset-0 right-12 left-12 h-full">
                   <svg
-                    className="w-full h-full"
+                    className="w-full h-full" 
                     preserveAspectRatio="none"
-                    viewBox="0 0 100 2700"
+                    viewBox="0 0 100 2250"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
