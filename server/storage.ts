@@ -16,7 +16,7 @@ import {
   type InsertGalleryLike
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -140,7 +140,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedImage] = await db
       .update(galleryImages)
       .set({
-        likes: db.sql`${galleryImages.likes} + 1`
+        likes: sql`${galleryImages.likes} + 1`
       })
       .where(eq(galleryImages.id, imageId))
       .returning();

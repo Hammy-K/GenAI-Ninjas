@@ -1,9 +1,11 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
 import { moderateContent } from "./moderation";
 import axios from "axios";
+import { insertGalleryImageSchema } from "@shared/schema";
+import { z } from "zod";
 
 // Server-side prompt logging
 function logServerPrompt(promptType: string, promptContent: string, metadata: any = {}) {
@@ -694,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GALLERY API ENDPOINTS
 
   // Upload an image to the gallery
-  app.post("/api/gallery/upload", async (req, res) => {
+  app.post("/api/gallery/upload", async (req: Request & { session: { gallerySessionId?: string } }, res) => {
     try {
       const { imageUrl, studentName, missionNumber } = req.body;
       
@@ -738,7 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Like an image in the gallery
-  app.post("/api/gallery/like", async (req, res) => {
+  app.post("/api/gallery/like", async (req: Request & { session: { gallerySessionId?: string } }, res) => {
     try {
       const { imageId } = req.body;
       
