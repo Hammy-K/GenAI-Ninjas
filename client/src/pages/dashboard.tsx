@@ -961,31 +961,45 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Badges - simple layout:
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <div className="bg-amber-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                    <Star className="h-5 w-5 text-amber-400 mb-1" />
-                    <span className="text-xs font-medium text-center">
-                      متفوق
-                    </span>
-                  </div>
+                {/* Badges section */}
+                <div className="mt-4">
+                  <h3 className="text-sm font-bold mb-3 text-gray-700">الشارات المكتسبة</h3>
+                  
+                  {unlockedBadges.length === 0 ? (
+                    <div className="text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg">
+                      لم تحصل على أي شارات بعد. أكمل المهام للحصول على شارات!
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {unlockedBadges.includes('prompt_engineer_badge') && (
+                        <div className="bg-amber-50 rounded-lg p-3 flex flex-col items-center justify-center">
+                          <Star className="h-5 w-5 text-amber-400 mb-1" />
+                          <span className="text-xs font-medium text-center">
+                            مهندس تحفيز
+                          </span>
+                        </div>
+                      )}
 
-                  <div className="bg-blue-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                    <Trophy className="h-5 w-5 text-blue-400 mb-1" />
-                    <span className="text-xs font-medium text-center">
-                      بطل القسم
-                    </span>
-                  </div>
+                      {unlockedBadges.includes('image_artist_badge') && (
+                        <div className="bg-blue-50 rounded-lg p-3 flex flex-col items-center justify-center">
+                          <Trophy className="h-5 w-5 text-blue-400 mb-1" />
+                          <span className="text-xs font-medium text-center">
+                            فنان الصور
+                          </span>
+                        </div>
+                      )}
 
-                  <div className="bg-purple-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                    <Zap className="h-5 w-5 text-purple-400 mb-1" />
-                    <span className="text-xs font-medium text-center">
-                      متميز
-                    </span>
-                  </div>
+                      {unlockedBadges.includes('ai_coder_badge') && (
+                        <div className="bg-purple-50 rounded-lg p-3 flex flex-col items-center justify-center">
+                          <Zap className="h-5 w-5 text-purple-500 mb-1" />
+                          <span className="text-xs font-medium text-center">
+                            مبرمج ذكاء اصطناعي
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                
-                */}
 
                 {/* Edit profile button */}
                 {!showProfileForm && (

@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Image, MessageSquare, Sparkles, RefreshCw, Award, ArrowLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { trackStageProgress } from '@/lib/firebase';
+import { toast } from '@/hooks/use-toast';
 
 interface WrapUpStageProps {
   onRestart: () => void;
@@ -16,6 +18,16 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
   // Handle mission completion and return to dashboard
   const handleCompleteMission = () => {
     if (onCompleteMission) {
+      // First log the completion with analytics
+      try {
+        trackStageProgress('mission1', 'mission_completed', {
+          badges_earned: unlockedBadges.length,
+          total_xp: totalXp
+        });
+      } catch (error) {
+        console.error("Error tracking mission completion:", error);
+      }
+      
       // Complete Mission 1
       onCompleteMission(1);
       console.log("Mission 1 completion triggered");
@@ -23,8 +35,18 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
       console.log("Mission completion function not available");
     }
     
-    // Navigate back to dashboard
-    navigate('/');
+    // Show success toast message
+    toast({
+      title: "تهانينا!",
+      description: "لقد أكملت المهمة الأولى بنجاح!",
+      variant: "default",
+      duration: 5000,
+    });
+    
+    // Navigate back to dashboard after a short delay to allow state to update
+    setTimeout(() => {
+      navigate('/');
+    }, 500);
   };
   
   const badges = [
@@ -53,21 +75,21 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
       <div className="max-w-3xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center">Congratulations!</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl text-center">مبروك! 🎉</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center mb-8">
               <p className="mb-4">
-                You've completed the GenAI Quest adventure and earned valuable knowledge about generative AI.
+                أكملت المهمة الأولى في رحلة الذكاء الاصطناعي التوليدي بنجاح وحصلت على معرفة قيمة.
               </p>
               
               <div className="bg-primary/10 text-primary font-bold text-xl rounded-full px-6 py-3 inline-block">
-                {totalXp} XP Earned
+                {totalXp} نقطة خبرة
               </div>
             </div>
             
             <div className="mb-8">
-              <h3 className="text-xl font-bold mb-4 text-center">Badges Earned</h3>
+              <h3 className="text-xl font-bold mb-4 text-center">الشارات المكتسبة</h3>
               <div className="flex justify-center gap-8 mx-auto">
                 {badges.map((badge) => {
                   const isUnlocked = unlockedBadges.includes(badge.id);
@@ -81,7 +103,9 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
                         </span>
                       </div>
                       <span className={`text-sm font-medium ${isUnlocked ? 'text-primary' : 'text-neutral-500'}`}>
-                        {badge.name}
+                        {badge.id === 'prompt_engineer_badge' && 'مهندس تحفيز'}
+                        {badge.id === 'image_artist_badge' && 'فنان الصور'}
+                        {badge.id === 'ai_coder_badge' && 'مبرمج ذكاء اصطناعي'}
                       </span>
                     </div>
                   );
@@ -90,23 +114,23 @@ export function WrapUpStage({ onRestart, totalXp, unlockedBadges, onCompleteMiss
             </div>
             
             <div className="bg-neutral-50 p-4 rounded-lg border">
-              <h3 className="font-bold mb-3">What You've Learned:</h3>
+              <h3 className="font-bold mb-3">ما تعلمته:</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                  <span>Understanding the basics of generative AI</span>
+                  <CheckCircle className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
+                  <span>فهم أساسيات الذكاء الاصطناعي التوليدي</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                  <span>Creating effective prompts for AI systems</span>
+                  <CheckCircle className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
+                  <span>إنشاء تحفيزات فعالة لأنظمة الذكاء الاصطناعي</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                  <span>Generating text and images with AI</span>
+                  <CheckCircle className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
+                  <span>توليد النصوص والصور باستخدام الذكاء الاصطناعي</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                  <span>Building web applications with AI</span>
+                  <CheckCircle className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
+                  <span>بناء تطبيقات ويب باستخدام الذكاء الاصطناعي</span>
                 </li>
               </ul>
             </div>
