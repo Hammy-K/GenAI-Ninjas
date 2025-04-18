@@ -1,14 +1,14 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 
-// Import route modules
+// Import route modules directly
 import { registerAITextRoutes } from "./routes/ai-text";
 import { registerAIImageRoutes } from "./routes/ai-image";
 import { registerGalleryRoutes } from "./routes/gallery";
 import { registerFirebaseRoutes } from "./routes/firebase";
 
-// Import logging service
-import { logEvent, logError } from "./services/logging";
+// Import services
+import { logEvent, logError } from "./services";
 
 // Import OpenAI client
 import OpenAI from "openai";
