@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -33,6 +33,25 @@ export const projectIdeas = pgTable("project_ideas", {
   createdAt: text("created_at").notNull(),
 });
 
+// Gallery image schema to store shared AI-generated images
+export const galleryImages = pgTable("gallery_images", {
+  id: serial("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  studentName: text("student_name").notNull(),
+  missionNumber: integer("mission_number").notNull(),
+  likes: integer("likes").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  sessionId: text("session_id"),
+});
+
+// Schema to track user likes to prevent duplicates
+export const galleryLikes = pgTable("gallery_likes", {
+  id: serial("id").primaryKey(),
+  imageId: integer("image_id").references(() => galleryImages.id).notNull(),
+  sessionId: text("session_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Define insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -47,11 +66,26 @@ export const insertProjectIdeaSchema = createInsertSchema(projectIdeas).omit({
   id: true,
 });
 
+export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
+  id: true,
+  createdAt: true,
+  likes: true,
+});
+
+export const insertGalleryLikeSchema = createInsertSchema(galleryLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Define types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
+export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
+export type InsertGalleryLike = z.infer<typeof insertGalleryLikeSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
 export type ProjectIdea = typeof projectIdeas.$inferSelect;
+export type GalleryImage = typeof galleryImages.$inferSelect;
+export type GalleryLike = typeof galleryLikes.$inferSelect;

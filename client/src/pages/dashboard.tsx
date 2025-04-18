@@ -60,9 +60,9 @@ export default function Dashboard() {
 
   // Calculate badges earned
   const badgeIcons: Record<string, JSX.Element> = {
-    'prompt_engineer_badge': <Star className="h-5 w-5" />,
-    'image_artist_badge': <Trophy className="h-5 w-5" />,
-    'ai_coder_badge': <Zap className="h-5 w-5" />,
+    prompt_engineer_badge: <Star className="h-5 w-5" />,
+    image_artist_badge: <Trophy className="h-5 w-5" />,
+    ai_coder_badge: <Zap className="h-5 w-5" />,
   };
 
   // Save student information when provided
@@ -77,8 +77,6 @@ export default function Dashboard() {
       localStorage.setItem("schoolName", schoolName);
     }
   }, [studentName, studentGrade, schoolName]);
-
-
 
   // Track mission completion status
   const isMission1Complete = isMissionCompleted(1);
@@ -303,12 +301,14 @@ export default function Dashboard() {
             {/* Left column: Mission Journey with zigzag path */}
             <div className="w-full md:w-2/3">
               {/* Learning path with zigzag flow */}
-              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]" style={{ minHeight: "3500px" }}>
-
+              <div
+                className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]"
+                style={{ minHeight: "3500px" }}
+              >
                 {/* Connected zigzag path - SVG for proper path alignment */}
                 <div className="absolute z-0 inset-0 right-12 left-12 h-full">
                   <svg
-                    className="w-full h-full" 
+                    className="w-full h-full"
                     preserveAspectRatio="none"
                     viewBox="0 0 100 2250"
                     fill="none"
@@ -465,6 +465,12 @@ export default function Dashboard() {
                       fill="none"
                     />
                   </svg>
+                </div>
+
+                <div className="relative z-10 flex justify-center mb-10">
+                  <div className="text-purple-600 font-bold text-xl px-5 py-2 rounded-xl shadow-lg bg-white border border-purple-300 animate-pulse">
+                    ⭐ ابدأ هنا ⭐
+                  </div>
                 </div>
 
                 {/* Mission 1 - "عبر عن نفسك بإبداع" */}
@@ -938,15 +944,17 @@ export default function Dashboard() {
 
                 {/* Badges section */}
                 <div className="mt-4">
-                  <h3 className="text-sm font-bold mb-3 text-gray-700">الشارات المكتسبة</h3>
-                  
+                  <h3 className="text-sm font-bold mb-3 text-gray-700">
+                    الشارات المكتسبة
+                  </h3>
+
                   {unlockedBadges.length === 0 ? (
                     <div className="text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg">
                       لم تحصل على أي شارات بعد. أكمل المهام للحصول على شارات!
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-2">
-                      {unlockedBadges.includes('prompt_engineer_badge') && (
+                      {unlockedBadges.includes("prompt_engineer_badge") && (
                         <div className="bg-amber-50 rounded-lg p-3 flex flex-col items-center justify-center">
                           <Star className="h-5 w-5 text-amber-400 mb-1" />
                           <span className="text-xs font-medium text-center">
@@ -955,7 +963,7 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {unlockedBadges.includes('image_artist_badge') && (
+                      {unlockedBadges.includes("image_artist_badge") && (
                         <div className="bg-blue-50 rounded-lg p-3 flex flex-col items-center justify-center">
                           <Trophy className="h-5 w-5 text-blue-400 mb-1" />
                           <span className="text-xs font-medium text-center">
@@ -964,7 +972,7 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {unlockedBadges.includes('ai_coder_badge') && (
+                      {unlockedBadges.includes("ai_coder_badge") && (
                         <div className="bg-purple-50 rounded-lg p-3 flex flex-col items-center justify-center">
                           <Zap className="h-5 w-5 text-purple-500 mb-1" />
                           <span className="text-xs font-medium text-center">

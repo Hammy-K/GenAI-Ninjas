@@ -1,14 +1,22 @@
 import { 
   users, 
   quests, 
-  projectIdeas, 
+  projectIdeas,
+  galleryImages,
+  galleryLikes,
   type User, 
   type InsertUser, 
   type Quest, 
   type InsertQuest, 
   type ProjectIdea, 
-  type InsertProjectIdea 
+  type InsertProjectIdea,
+  type GalleryImage,
+  type InsertGalleryImage,
+  type GalleryLike,
+  type InsertGalleryLike
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -27,85 +35,132 @@ export interface IStorage {
   getProjectIdea(id: number): Promise<ProjectIdea | undefined>;
   getProjectIdeasByUser(userId: number): Promise<ProjectIdea[]>;
   createProjectIdea(idea: InsertProjectIdea): Promise<ProjectIdea>;
+
+  // Gallery methods
+  createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
+  getAllGalleryImages(): Promise<GalleryImage[]>;
+  getGalleryImage(id: number): Promise<GalleryImage | undefined>;
+  incrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined>;
+  hasLiked(imageId: number, sessionId: string): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private quests: Map<number, Quest>;
-  private projectIdeas: Map<number, ProjectIdea>;
-  
-  private userIdCounter: number;
-  private questIdCounter: number;
-  private projectIdeaIdCounter: number;
-
-  constructor() {
-    this.users = new Map();
-    this.quests = new Map();
-    this.projectIdeas = new Map();
-    
-    this.userIdCounter = 1;
-    this.questIdCounter = 1;
-    this.projectIdeaIdCounter = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
   
   // Quest progress methods
   async getQuest(userId: number): Promise<Quest | undefined> {
-    return Array.from(this.quests.values()).find(
-      (quest) => quest.userId === userId,
-    );
+    const [quest] = await db.select().from(quests).where(eq(quests.userId, userId));
+    return quest || undefined;
   }
   
   async createQuest(insertQuest: InsertQuest): Promise<Quest> {
-    const id = this.questIdCounter++;
-    const quest: Quest = { ...insertQuest, id };
-    this.quests.set(id, quest);
+    const [quest] = await db
+      .insert(quests)
+      .values(insertQuest)
+      .returning();
     return quest;
   }
   
   async updateQuest(id: number, data: Partial<InsertQuest>): Promise<Quest | undefined> {
-    const quest = this.quests.get(id);
-    if (!quest) return undefined;
-    
-    const updatedQuest = { ...quest, ...data };
-    this.quests.set(id, updatedQuest);
-    return updatedQuest;
+    const [updatedQuest] = await db
+      .update(quests)
+      .set(data)
+      .where(eq(quests.id, id))
+      .returning();
+    return updatedQuest || undefined;
   }
   
   // Project idea methods
   async getProjectIdea(id: number): Promise<ProjectIdea | undefined> {
-    return this.projectIdeas.get(id);
+    const [idea] = await db.select().from(projectIdeas).where(eq(projectIdeas.id, id));
+    return idea || undefined;
   }
   
   async getProjectIdeasByUser(userId: number): Promise<ProjectIdea[]> {
-    return Array.from(this.projectIdeas.values()).filter(
-      (idea) => idea.userId === userId,
-    );
+    return db.select().from(projectIdeas).where(eq(projectIdeas.userId, userId));
   }
   
   async createProjectIdea(insertIdea: InsertProjectIdea): Promise<ProjectIdea> {
-    const id = this.projectIdeaIdCounter++;
-    const idea: ProjectIdea = { ...insertIdea, id };
-    this.projectIdeas.set(id, idea);
+    const [idea] = await db
+      .insert(projectIdeas)
+      .values(insertIdea)
+      .returning();
     return idea;
+  }
+
+  // Gallery methods
+  async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
+    const [galleryImage] = await db
+      .insert(galleryImages)
+      .values(image)
+      .returning();
+    return galleryImage;
+  }
+
+  async getAllGalleryImages(): Promise<GalleryImage[]> {
+    return db.select().from(galleryImages).orderBy(desc(galleryImages.likes));
+  }
+
+  async getGalleryImage(id: number): Promise<GalleryImage | undefined> {
+    const [image] = await db.select().from(galleryImages).where(eq(galleryImages.id, id));
+    return image || undefined;
+  }
+
+  async incrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined> {
+    // First check if the user has already liked this image
+    if (await this.hasLiked(imageId, sessionId)) {
+      // Just return the image without incrementing likes
+      return this.getGalleryImage(imageId);
+    }
+
+    // Record the like
+    await db.insert(galleryLikes).values({
+      imageId,
+      sessionId
+    });
+
+    // Increment the likes count
+    const [updatedImage] = await db
+      .update(galleryImages)
+      .set({
+        likes: (image) => image.likes + 1
+      })
+      .where(eq(galleryImages.id, imageId))
+      .returning();
+
+    return updatedImage || undefined;
+  }
+
+  async hasLiked(imageId: number, sessionId: string): Promise<boolean> {
+    const [like] = await db
+      .select()
+      .from(galleryLikes)
+      .where(
+        and(
+          eq(galleryLikes.imageId, imageId),
+          eq(galleryLikes.sessionId, sessionId)
+        )
+      );
+
+    return !!like;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
