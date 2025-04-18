@@ -6,7 +6,7 @@ const resources = {
   ar: {
     translation: {
       // General
-      app_name: "برنامج الجاهزية للمستقبل",
+      app_name: "بوابة التعلم الذكي",
       xp: "XP {{count}}",
       progress: "المرحلة {{current}} من {{total}}",
       next_stage: "انتقل للمرحلة التالية",

@@ -294,13 +294,14 @@ export default function Dashboard() {
             {/* Left column: Mission Journey with zigzag path */}
             <div className="w-full md:w-2/3">
               {/* Learning path with zigzag flow */}
-              <div className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]">
+              <div className="relative py-0 px-4 md:px-8 overflow-y-visible">
+
                 {/* Connected zigzag path - SVG for proper path alignment */}
-                <div className="absolute z-0 inset-0 right-12 left-12">
+                <div className="absolute z-0 right-12 left-12 h-[4000px] overflow-hidden">
                   <svg
                     className="w-full h-full"
                     preserveAspectRatio="none"
-                    viewBox="0 0 100 2250"
+                    viewBox="0 0 100 2700"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -640,7 +641,7 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Mission 5 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 5 Node - Right side */}
@@ -649,16 +650,16 @@ export default function Dashboard() {
                       <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
                         <Lock className="w-6 h-6 opacity-50" />
                       </div>
-                      
+
                       {/* Title below the square */}
                       <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
-                        مشاريع الأنظمة الذكية
+                        {/* مشاريع الأنظمة الذكية */}
                       </h3>
                     </div>
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 6 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -671,7 +672,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 7 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 7 Node - Right side */}
@@ -684,7 +685,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 8 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -697,7 +698,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 9 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 9 Node - Right side */}
@@ -710,7 +711,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 10 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -720,7 +721,7 @@ export default function Dashboard() {
                       <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
                         <Lock className="w-6 h-6 opacity-50" />
                       </div>
-                      
+
                       {/* Title below the square */}
                       <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
                         تطوير تطبيقات الذكاء الاصطناعي
@@ -728,7 +729,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 11 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 11 Node - Right side */}
@@ -741,7 +742,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 12 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -754,7 +755,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 13 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 13 Node - Right side */}
@@ -767,7 +768,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 14 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -780,7 +781,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 15 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 15 Node - Right side */}
@@ -793,7 +794,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 16 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -806,7 +807,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 17 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 17 Node - Right side */}
@@ -819,7 +820,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 18 - Left side */}
                 <div className="relative z-10 flex items-center mb-24">
                   <div className="flex-1"></div>
@@ -832,7 +833,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Mission 19 - Right side */}
                 <div className="relative z-10 flex items-center mb-24">
                   {/* Mission 19 Node - Right side */}
@@ -845,9 +846,9 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1"></div>
                 </div>
-                
+
                 {/* Mission 20 - Left side */}
-                <div className="relative z-10 flex items-center">
+                <div className="relative z-10 flex items-center !mb-0 !pb-0">
                   <div className="flex-1"></div>
                   {/* Mission 20 Node - Left side */}
                   <div className="flex items-center justify-start w-1/2">
@@ -855,7 +856,7 @@ export default function Dashboard() {
                       <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
                         <Lock className="w-6 h-6 opacity-50" />
                       </div>
-                      
+
                       {/* Title below the square */}
                       <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
                         مشروع التخرج
