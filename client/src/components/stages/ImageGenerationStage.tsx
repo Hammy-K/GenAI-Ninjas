@@ -221,7 +221,37 @@ export function ImageGenerationStage({
   
   // Helper function to share image to gallery
   const handleShareToGallery = async () => {
-    if (!state.generatedImageUrl) return;
+    if (!state.generatedImageUrl) {
+      toast({
+        title: "لا توجد صورة للمشاركة",
+        description: "يرجى إنشاء صورة أولاً قبل المشاركة في المعرض.",
+        variant: "destructive",
+        duration: 3000
+      });
+      return;
+    }
+    
+    // Validate the image URL first
+    const validateImage = (url: string) => {
+      return new Promise<boolean>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+    };
+    
+    // Check if image is valid before proceeding
+    const isValid = await validateImage(state.generatedImageUrl);
+    if (!isValid) {
+      toast({
+        title: "خطأ في الصورة",
+        description: "الصورة غير صالحة أو لا يمكن تحميلها. يرجى إنشاء صورة جديدة.",
+        variant: "destructive",
+        duration: 5000
+      });
+      return;
+    }
     
     try {
       // Get the latest prompt that generated the image (last user message)
@@ -231,6 +261,9 @@ export function ImageGenerationStage({
       // Get the current mission number (assuming it's 1 for now - could be passed as a prop in the future)
       const missionNumber = 1;
       
+      // Get the student name from localStorage
+      const studentName = localStorage.getItem("studentName") || "طالب مبدع";
+      
       // Call the API to share the image to the gallery
       const response = await fetch('/api/gallery/share', {
         method: 'POST',
@@ -239,6 +272,7 @@ export function ImageGenerationStage({
         },
         body: JSON.stringify({
           imageUrl: state.generatedImageUrl,
+          studentName,
           prompt: latestPrompt,
           missionNumber
         }),
@@ -259,7 +293,8 @@ export function ImageGenerationStage({
       });
       
       trackStageProgress("image_generation", "image_shared_to_gallery", {
-        gallery_image_id: result.id
+        gallery_image_id: result.id,
+        student_name: studentName
       });
       
     } catch (error) {

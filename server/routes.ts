@@ -792,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Share an image to the gallery from the image generator
   app.post("/api/gallery/share", async (req: Request & { session: { gallerySessionId?: string } }, res) => {
     try {
-      const { imageUrl, prompt, missionNumber } = req.body;
+      const { imageUrl, studentName, prompt, missionNumber } = req.body;
       
       // Validate required fields
       if (!imageUrl) {
@@ -804,19 +804,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.gallerySessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       }
 
-      // Use a default student name if not provided
-      const studentName = "طالب مبدع"; // Default name "Creative Student" in Arabic
+      // Use the provided student name or a default if not available
+      const finalStudentName = studentName && studentName.trim() !== '' 
+        ? studentName 
+        : "طالب مبدع"; // Default name "Creative Student" in Arabic
       
       // Create a new gallery image
       const galleryImage = await storage.createGalleryImage({
         imageUrl,
-        studentName,
+        studentName: finalStudentName,
         missionNumber: missionNumber || 1,
         sessionId: req.session.gallerySessionId
       });
 
       // Log successful sharing
       logServerPrompt('gallery_image_shared', 'Image shared to gallery from generator', {
+        student_name: finalStudentName,
         mission_number: missionNumber || 1,
         session_id: req.session.gallerySessionId,
         prompt_length: prompt ? prompt.length : 0
