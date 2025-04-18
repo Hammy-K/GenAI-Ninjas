@@ -81,7 +81,8 @@ export default function Mission1() {
       case 2: return 5;  // TryAI - 5 minutes
       case 3: return 5;  // Prompt Challenge - 5 minutes
       case 4: return 5;  // Image Generation - 5 minutes
-      case 5: return 25; // HTML Generator - 25 minutes
+      case 5: return 5;  // Gallery Exploration - 5 minutes
+      case 6: return 25; // HTML Generator - 25 minutes
       default: return 0; // No timer for other stages
     }
   };
@@ -139,14 +140,17 @@ export default function Mission1() {
         case 'images':
           targetStage = 4;
           break;
-        case 'webbuilder':
+        case 'gallery':
           targetStage = 5;
           break;
-        case 'submission':
+        case 'webbuilder':
           targetStage = 6;
           break;
-        case 'wrapup':
+        case 'submission':
           targetStage = 7;
+          break;
+        case 'wrapup':
+          targetStage = 8;
           break;
       }
       

@@ -11,7 +11,7 @@ export interface QuestState {
   stageTimerExpired: Record<number, boolean>; // Track which stage timers have expired
 }
 
-const TOTAL_STAGES = 7; // Updated with the new image generation stage
+const TOTAL_STAGES = 8; // Updated with the new gallery exploration stage
 const STORAGE_KEY = 'genAIQuestState';
 
 export function useQuest() {
