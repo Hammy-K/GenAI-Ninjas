@@ -4,6 +4,7 @@ import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
 import { ImageGenerationStage } from '@/components/stages/ImageGenerationStage';
+import { GalleryExplorationStage } from '@/components/stages/GalleryExplorationStage';
 import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
@@ -167,9 +168,10 @@ export default function Mission1() {
   // 2. Try AI Text Generation (Chat with Dr. Pengy)
   // 3. Prompt Engineering 101
   // 4. Create Images with AI
-  // 5. Build a Web App with AI (HTML Generator)
-  // 6. Submission Form
-  // 7. Final Celebratory Page
+  // 5. Explore Gallery of AI Images
+  // 6. Build a Web App with AI (HTML Generator)
+  // 7. Submission Form
+  // 8. Final Celebratory Page
   const renderStage = () => {
     switch (currentStage) {
       case 1:
@@ -203,7 +205,7 @@ export default function Mission1() {
         );
       case 5:
         return (
-          <HTMLGeneratorStage 
+          <GalleryExplorationStage 
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
@@ -212,12 +214,21 @@ export default function Mission1() {
         );
       case 6:
         return (
+          <HTMLGeneratorStage 
+            onComplete={goToNextStage} 
+            onEarnXp={earnXp}
+            onUnlockBadge={unlockBadge}
+            onBack={goToPrevStage}
+          />
+        );
+      case 7:
+        return (
           <SubmissionFormStage
             onComplete={goToNextStage}
             onBack={goToPrevStage}
           />
         );
-      case 7:
+      case 8:
         return (
           <WrapUpStage 
             onRestart={restart}
