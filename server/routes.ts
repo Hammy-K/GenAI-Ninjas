@@ -92,9 +92,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "messageHistory must be an array" });
       }
 
+      // Log the text generation request
+      logServerPrompt('text_generation', prompt, {
+        message_history_length: messageHistory.length,
+        prompt_length: prompt.length,
+        max_tokens: maxTokens
+      });
+
       // Check content moderation
       const moderationResult = await moderateContent(prompt, openai);
       if (moderationResult.flagged) {
+        // Log moderation failure
+        logServerPrompt('text_generation_moderation_failed', prompt, {
+          issues: moderationResult.categories
+        });
+        
         return res.status(400).json({
           error: "Content flagged as inappropriate",
           moderationResult,
@@ -120,9 +132,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         max_tokens: maxTokens,
       });
 
+      // Log successful text generation
+      logServerPrompt('text_generation_success', prompt, {
+        model: GPT_MODEL,
+        response_length: response.choices[0].message.content?.length || 0,
+        conversation_turns: messageHistory.length + 1
+      });
+
       return res.json({ text: response.choices[0].message.content });
     } catch (error) {
       console.error("Error generating text:", error);
+      
+      // Log the error
+      logServerPrompt('text_generation_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to generate text" });
     }
   });
@@ -154,9 +180,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Log the image generation request
+      logServerPrompt('image_generation', prompt, {
+        message_history_length: messageHistory.length,
+        prompt_length: prompt.length
+      });
+
       // Check content moderation
       const moderationResult = await moderateContent(prompt, openai);
       if (moderationResult.flagged) {
+        // Log moderation failure
+        logServerPrompt('image_generation_moderation_failed', prompt, {
+          issues: moderationResult.categories
+        });
+        
         return res.status(400).json({
           error: "Content flagged as inappropriate",
           moderationResult,
@@ -212,6 +249,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           console.log("Using comprehensive context-enhanced prompt for follow-up request");
+          
+          // Log the context-enhanced prompt analysis
+          logServerPrompt('image_generation_context_enhanced', enhancedPrompt, {
+            is_followup_request: true,
+            base_concept_length: baseImageConcept.length,
+            follow_up_count: followUpRequests.length,
+            enhanced_prompt_length: enhancedPrompt.length
+          });
         }
       }
 
@@ -224,9 +269,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quality: "standard",
       });
 
+      // Log successful image generation
+      logServerPrompt('image_generation_success', prompt, {
+        model: "dall-e-3",
+        is_context_enhanced: isFollowUpRequest,
+        conversation_turns: messageHistory.length
+      });
+
       return res.json({ url: response.data[0].url });
     } catch (error) {
       console.error("Error generating image:", error);
+      
+      // Log the error
+      logServerPrompt('image_generation_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to generate image" });
     }
   });
@@ -240,10 +299,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Text is required" });
       }
       
+      // Log the content moderation request
+      logServerPrompt('content_moderation', text.substring(0, 50) + '...', {
+        text_length: text.length
+      });
+      
       const moderationResult = await moderateContent(text, openai);
+      
+      // Log the moderation result
+      if (moderationResult.flagged) {
+        logServerPrompt('content_moderation_flagged', text.substring(0, 50) + '...', {
+          issues: moderationResult.categories
+        });
+      }
+      
       return res.json(moderationResult);
     } catch (error) {
       console.error("Error checking content moderation:", error);
+      
+      // Log the error
+      logServerPrompt('content_moderation_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to moderate content" });
     }
   });
@@ -274,6 +353,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+
+      // Log the prompt analysis request
+      logServerPrompt('prompt_analysis', prompt, {
+        message_history_length: messageHistory.length,
+        prompt_length: prompt.length
+      });
 
       const systemPrompt = {
         role: "system",
@@ -312,9 +397,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messageContent = response.choices[0].message.content || "{}";
       const result = JSON.parse(messageContent);
+      
+      // Log the analysis result with score
+      logServerPrompt('prompt_analysis_result', prompt, {
+        score: result.score,
+        passed_threshold: result.score >= 7,
+        model: GPT_MODEL
+      });
+      
       return res.json(result);
     } catch (error) {
       console.error("Error analyzing prompt:", error);
+      
+      // Log the error
+      logServerPrompt('prompt_analysis_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       return res.status(500).json({ error: "Failed to analyze prompt" });
     }
   });
@@ -554,6 +654,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Missing image URL' });
       }
       
+      // Log the image download request
+      logServerPrompt('image_download_request', imageUrl.substring(0, 50) + '...', {
+        url_length: imageUrl.length,
+        is_dalle_url: imageUrl.includes('openai') || imageUrl.includes('dall-e')
+      });
+      
       // Fetch the image using axios
       const response = await axios.get(imageUrl, {
         responseType: 'arraybuffer'
@@ -564,10 +670,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', 'attachment; filename="ai-generated-image.png"');
       
+      // Log successful download
+      logServerPrompt('image_download_success', imageUrl.substring(0, 50) + '...', {
+        content_type: contentType,
+        file_size: response.data.length,
+      });
+      
       // Send the image data
       res.send(response.data);
     } catch (error) {
       console.error('Error proxying image:', error);
+      
+      // Log the error
+      logServerPrompt('image_download_error', 
+        error instanceof Error ? error.message : 'Unknown error', 
+        { error_type: error instanceof Error ? error.name : 'Unknown' }
+      );
+      
       res.status(500).json({ error: 'Failed to download image' });
     }
   });
