@@ -115,9 +115,9 @@ export type GenerateHTMLResponse = {
   error?: string;
 };
 
-export async function generateHTML(messages: HTMLMessage[]): Promise<GenerateHTMLResponse> {
+export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/generate-html', { messages });
+    const response = await apiRequest('POST', '/api/ai/generate-html', { messageHistory });
     return await response.json();
   } catch (error) {
     console.error("Error generating HTML:", error);

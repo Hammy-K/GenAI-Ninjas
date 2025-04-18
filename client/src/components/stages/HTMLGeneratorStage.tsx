@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generateHTML, HTMLMessage } from '@/lib/openai';
-import { saveProject, loadProject } from '@/lib/firebase';
+import { saveProject, loadProject, logPromptToFirestore, trackStageProgress } from '@/lib/firebase';
 import { useLocation } from 'wouter';
 import penguinAvatar from '@/assets/Group 26087843.png';
 import { validateInput } from '@/lib/inputFilter';
@@ -186,6 +186,18 @@ export function HTMLGeneratorStage({
         }
       }
       
+      // Track this step
+      trackStageProgress('html_generator', 'prompt_submitted', {
+        message_count: state.messages.length + 1
+      });
+      
+      // Log the prompt to Firestore
+      await logPromptToFirestore(
+        'html_generation',
+        state.prompt,
+        { message_history_length: state.messages.length }
+      );
+      
       // Generate HTML using the complete message history
       const response = await generateHTML([...state.messages, userMessage]);
       
@@ -197,6 +209,11 @@ export function HTMLGeneratorStage({
         }));
         return;
       }
+      
+      // Track successful generation
+      trackStageProgress('html_generator', 'html_generated', {
+        html_length: response.html.length
+      });
       
       // Create a friendly assistant response instead of showing the raw HTML
       const friendlyResponse: HTMLMessage = {

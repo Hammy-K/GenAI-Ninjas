@@ -6,9 +6,12 @@ import {
   doc, 
   getDoc, 
   setDoc, 
+  addDoc,
+  Timestamp,
   DocumentData, 
   Firestore
 } from 'firebase/firestore';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 
 /**
  * Configuration object for Firebase
@@ -24,6 +27,7 @@ const firebaseConfig = {
 // Track Firebase configuration status
 let firebaseApp: FirebaseApp | null = null;
 let firestoreDb: Firestore | null = null;
+let firebaseAnalytics: any = null;
 let firebaseConfigured = false;
 let firebaseConfigurationError: any = null;
 
@@ -44,6 +48,14 @@ try {
   
   // Initialize Firestore
   firestoreDb = getFirestore(firebaseApp);
+  
+  // Initialize Analytics
+  try {
+    // getAnalytics() will throw in environments where analytics is not supported (like Node.js)
+    firebaseAnalytics = getAnalytics(firebaseApp);
+  } catch (analyticsError) {
+    console.warn("Firebase Analytics initialization failed. Analytics features will be disabled:", analyticsError);
+  }
   
   firebaseConfigured = true;
   console.log("Firebase configuration validated successfully!");
@@ -253,5 +265,87 @@ export async function loadProject(projectId: string): Promise<{ html: string } |
     return {
       html: `<html><body><h1>Error</h1><p>Failed to load project: ${error?.message || 'Unknown error'}</p></body></html>`
     };
+  }
+}
+
+/**
+ * Track student progress by logging completion of a specific step/stage
+ * @param stageName The name of the stage completed (e.g., 'discovery', 'html_generator')
+ * @param stepName The specific step within the stage (e.g., 'started', 'completed')
+ * @param additionalData Optional additional data to log with the event
+ */
+export function trackStageProgress(
+  stageName: string, 
+  stepName: string, 
+  additionalData: Record<string, any> = {}
+): void {
+  try {
+    if (!isFirebaseReady() || !firebaseApp || !firebaseAnalytics) {
+      console.log(`[Analytics Tracking Disabled] Stage Progress: ${stageName}/${stepName}`);
+      return;
+    }
+
+    // Log the event to Firebase Analytics
+    const eventName = `stage_${stageName}_${stepName}`;
+    logEvent(firebaseAnalytics, eventName, {
+      stage_name: stageName,
+      step_name: stepName,
+      timestamp: new Date().toISOString(),
+      ...additionalData
+    });
+
+    console.log(`[Analytics] Tracked stage progress: ${eventName}`);
+  } catch (error) {
+    console.warn('[Analytics] Failed to track stage progress:', error);
+  }
+}
+
+/**
+ * Log a prompt sent to OpenAI for analytics purposes
+ * @param promptType The type of prompt (e.g., 'html_generation', 'image_generation')
+ * @param promptContent The actual prompt content sent to OpenAI
+ * @param additionalData Optional additional context data
+ * @returns The logId if successful
+ */
+export async function logPromptToFirestore(
+  promptType: string,
+  promptContent: string,
+  additionalData: Record<string, any> = {}
+): Promise<string | null> {
+  try {
+    if (!isFirebaseReady() || !firestoreDb) {
+      console.log(`[Prompt Logging Disabled] ${promptType}`);
+      return null;
+    }
+
+    // Track in analytics
+    if (firebaseAnalytics) {
+      logEvent(firebaseAnalytics, 'prompt_sent', {
+        prompt_type: promptType,
+        content_length: promptContent.length,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Log to Firestore
+    const promptsCollection = collection(firestoreDb, 'prompts');
+    
+    const promptData = {
+      type: promptType,
+      content: promptContent,
+      timestamp: Timestamp.now(),
+      metadata: {
+        ...additionalData,
+        userAgent: navigator.userAgent,
+      }
+    };
+    
+    const docRef = await addDoc(promptsCollection, promptData);
+    console.log(`[Prompt Logged] ${promptType} with ID: ${docRef.id}`);
+    
+    return docRef.id;
+  } catch (error) {
+    console.warn('[Prompt Logging] Failed to log prompt:', error);
+    return null;
   }
 }

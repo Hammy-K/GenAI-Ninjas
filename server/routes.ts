@@ -237,34 +237,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prompt analysis endpoint
   app.post("/api/ai/analyze-prompt", async (req, res) => {
     try {
-      const { prompt } = req.body;
+      const { prompt, messageHistory = [] } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
+      // Validate messageHistory format if provided
+      if (messageHistory && !Array.isArray(messageHistory)) {
+        return res.status(400).json({ error: "messageHistory must be an array" });
+      }
+
+      // Validate that messageHistory has proper structure with roles
+      if (messageHistory.length > 0) {
+        const hasInvalidMessage = messageHistory.some(
+          (msg: any) => !msg.role || !msg.content || (msg.role !== 'user' && msg.role !== 'assistant')
+        );
+        
+        if (hasInvalidMessage) {
+          return res.status(400).json({ 
+            error: "messageHistory contains invalid messages. Each message must have 'role' ('user' or 'assistant') and 'content'." 
+          });
+        }
+      }
+
+      const systemPrompt = {
+        role: "system",
+        content: `أنت خبير في تحليل وتحسين توجيهات الذكاء الاصطناعي (prompts). 
+        قم بتحليل التوجيه المقدم وقيمه على مقياس من 1 إلى 10 استناداً إلى:
+        - التفاصيل والوضوح
+        - التحديد الدقيق للمطلوب
+        - الهيكل والتنظيم
+        
+        ثم قدم تقييماً نصياً واقتراحاً لتحسين التوجيه. استخدم اللغة العربية.
+        
+        يجب أن تعود بنتيجة بتنسيق JSON بالشكل التالي:
+        {
+          "score": number, // درجة التقييم من 1 إلى 10
+          "feedback": string, // تعليق على جودة التوجيه
+          "improvement": string // اقتراح لتحسين التوجيه
+        }`,
+      };
+      
+      const userMessage = { 
+        role: "user", 
+        content: prompt || "" 
+      };
+
+      const messages = [
+        systemPrompt,
+        ...messageHistory,
+        userMessage
+      ];
+
       const response = await openai.chat.completions.create({
         model: GPT_MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `أنت خبير في تحليل وتحسين توجيهات الذكاء الاصطناعي (prompts). 
-            قم بتحليل التوجيه المقدم وقيمه على مقياس من 1 إلى 10 استناداً إلى:
-            - التفاصيل والوضوح
-            - التحديد الدقيق للمطلوب
-            - الهيكل والتنظيم
-            
-            ثم قدم تقييماً نصياً واقتراحاً لتحسين التوجيه. استخدم اللغة العربية.
-            
-            يجب أن تعود بنتيجة بتنسيق JSON بالشكل التالي:
-            {
-              "score": number, // درجة التقييم من 1 إلى 10
-              "feedback": string, // تعليق على جودة التوجيه
-              "improvement": string // اقتراح لتحسين التوجيه
-            }`,
-          },
-          { role: "user", content: prompt || "" },
-        ],
+        messages,
         response_format: { type: "json_object" },
       });
 
@@ -382,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project idea generation endpoint
   app.post("/api/ai/project-idea", async (req, res) => {
     try {
-      const { interests, goal, tools } = req.body;
+      const { interests, goal, tools, messageHistory = [] } = req.body;
 
       if (!interests || !goal || !tools) {
         return res
@@ -390,29 +418,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ error: "Interests, goal, and tools are required" });
       }
 
+      // Validate messageHistory format if provided
+      if (messageHistory && !Array.isArray(messageHistory)) {
+        return res.status(400).json({ error: "messageHistory must be an array" });
+      }
+
+      // Validate that messageHistory has proper structure with roles
+      if (messageHistory.length > 0) {
+        const hasInvalidMessage = messageHistory.some(
+          (msg: any) => !msg.role || !msg.content || (msg.role !== 'user' && msg.role !== 'assistant')
+        );
+        
+        if (hasInvalidMessage) {
+          return res.status(400).json({ 
+            error: "messageHistory contains invalid messages. Each message must have 'role' ('user' or 'assistant') and 'content'." 
+          });
+        }
+      }
+
+      const systemPrompt = {
+        role: "system",
+        content: `أنت مساعد إبداعي متخصص في توليد أفكار المشاريع للطلاب. استناداً إلى اهتمامات الطالب وأهدافه والأدوات التي يرغب في استخدامها، قم بإنشاء فكرة مشروع مبتكرة ومفصلة.
+        
+        يجب أن تعود بنتيجة بتنسيق JSON بالشكل التالي:
+        {
+          "title": string, // عنوان المشروع
+          "description": string, // وصف موجز للمشروع
+          "steps": string[], // خطوات تنفيذ المشروع (3-5 خطوات)
+          "tools": string[], // الأدوات اللازمة للتنفيذ
+          "difficulty": "beginner" | "intermediate" | "advanced" // مستوى صعوبة المشروع
+        }
+        
+        تأكد من أن الفكرة ملائمة لمستوى طلاب المدارس (13-18 سنة) وتتعلق بالذكاء الاصطناعي التوليدي.`,
+      };
+
+      const userMessage = {
+        role: "user",
+        content: `اهتماماتي: ${interests}\nهدفي: ${goal}\nالأدوات: ${tools}\n\nساعدني في إيجاد فكرة مشروع مناسبة.`,
+      };
+
+      // Construct messages in the standard format
+      const messages = [
+        systemPrompt,
+        ...messageHistory,
+        userMessage
+      ];
+
       const response = await openai.chat.completions.create({
         model: GPT_MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `أنت مساعد إبداعي متخصص في توليد أفكار المشاريع للطلاب. استناداً إلى اهتمامات الطالب وأهدافه والأدوات التي يرغب في استخدامها، قم بإنشاء فكرة مشروع مبتكرة ومفصلة.
-            
-            يجب أن تعود بنتيجة بتنسيق JSON بالشكل التالي:
-            {
-              "title": string, // عنوان المشروع
-              "description": string, // وصف موجز للمشروع
-              "steps": string[], // خطوات تنفيذ المشروع (3-5 خطوات)
-              "tools": string[], // الأدوات اللازمة للتنفيذ
-              "difficulty": "beginner" | "intermediate" | "advanced" // مستوى صعوبة المشروع
-            }
-            
-            تأكد من أن الفكرة ملائمة لمستوى طلاب المدارس (13-18 سنة) وتتعلق بالذكاء الاصطناعي التوليدي.`,
-          },
-          {
-            role: "user",
-            content: `اهتماماتي: ${interests}\nهدفي: ${goal}\nالأدوات: ${tools}\n\nساعدني في إيجاد فكرة مشروع مناسبة.`,
-          },
-        ],
+        messages,
         response_format: { type: "json_object" },
       });
 
