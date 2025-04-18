@@ -23,9 +23,10 @@ const resources = {
       stage2: "د. بنجي",
       stage3: "البرومت",
       stage4: "الصور",
-      stage5: "الموقع",
-      stage6: "التسليم",
-      stage7: "🎉",
+      stage5: "معرض الصور",
+      stage6: "الموقع",
+      stage7: "التسليم",
+      stage8: "🎉",
 
       // Welcome Stage
       welcome_title: "أهلاً بك في رحلة الذكاء الاصطناعي التوليدي! 🚀",

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Home } from 'lucide-react';
+import { Home, ImageIcon } from 'lucide-react';
 import { useLocation } from 'wouter';
 import logoImage from '../../assets/logo.png';
 
@@ -13,6 +13,10 @@ export function Header({ xp }: HeaderProps) {
 
   const handleHomeClick = () => {
     navigate('/');
+  };
+  
+  const handleGalleryClick = () => {
+    navigate('/gallery');
   };
 
   return (
@@ -31,6 +35,15 @@ export function Header({ xp }: HeaderProps) {
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
           </svg>
         </div>
+        
+        <button 
+          className="text-white hover:text-white/80 focus:outline-none transition-colors ml-2" 
+          title={t('gallery')}
+          aria-label={t('gallery')}
+          onClick={handleGalleryClick}
+        >
+          <ImageIcon className="h-6 w-6" />
+        </button>
         
         <button 
           className="text-white hover:text-white/80 focus:outline-none transition-colors" 

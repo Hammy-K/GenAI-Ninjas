@@ -101,53 +101,57 @@ export default function Gallery() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => (
-              <div key={image.id} className="bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                <div className="aspect-square relative overflow-hidden">
-                  <img 
-                    src={image.imageUrl} 
-                    alt={`صورة بواسطة ${image.studentName}`}
-                    className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
-                  />
-                </div>
-                <div className="p-4">
-                  <div className="flex justify-between items-center">
-                    <p className="font-bold">بواسطة: {image.studentName}</p>
-                    <p className="text-sm text-muted-foreground">مهمة {image.missionNumber}</p>
+            {images
+              .filter(image => image.imageUrl && image.imageUrl.trim() !== "") // Skip images with missing URLs
+              .map((image) => (
+                <div key={image.id} className="bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                  <div className="aspect-square relative overflow-hidden">
+                    <img 
+                      src={image.imageUrl} 
+                      alt={`صورة بواسطة ${image.studentName}`}
+                      className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                      onError={(e) => {
+                        // Hide the card if image fails to load
+                        const card = e.currentTarget.closest('.bg-card');
+                        if (card) card.classList.add('hidden');
+                      }}
+                    />
                   </div>
-                  <div className="mt-3 flex justify-between items-center">
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(image.createdAt).toLocaleDateString('ar-SA')}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() => handleLike(image.id)}
-                      disabled={likeMutation.isPending}
-                    >
-                      <span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-heart"
-                        >
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                      </span>
-                      <span>{image.likes}</span>
-                    </Button>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center">
+                      <p className="font-bold">بواسطة: {image.studentName}</p>
+                      <p className="text-sm text-muted-foreground">مهمة {image.missionNumber}</p>
+                    </div>
+                    <div className="mt-3 flex justify-between items-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => handleLike(image.id)}
+                        disabled={likeMutation.isPending}
+                      >
+                        <span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-heart"
+                          >
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                          </svg>
+                        </span>
+                        <span>{image.likes}</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </main>
