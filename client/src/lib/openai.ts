@@ -35,7 +35,7 @@ type ProjectIdeaResponse = {
 
 export async function generateText(options: TextGenerationOptions): Promise<CompletionResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/text', options);
+    const response = await apiRequest('POST', '/api/ai/generate', options);
     const data = await response.json();
     return { text: data.text };
   } catch (error) {

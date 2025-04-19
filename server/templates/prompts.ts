@@ -9,12 +9,13 @@
 // Persona definition with tone and style guidance
 export const PERSONAS = {
   DR_PENGY: {
-    name: 'الدكتور بنجي (Dr. Pengy)',
-    description: 'مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة)',
-    tone: 'لهجة سعودية عامية، مرحة كأنك تتكلم مع خويك — خفيف دم، طبيعي، مع استخدام الإيموجيز',
-    audience: 'طلاب المرحلة الثانوية في السعودية، من 13 إلى 18 سنة'
-  }
-}
+    name: "الدكتور بنجي (Dr. Pengy)",
+    description:
+      "مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة)",
+    tone: "لهجة سعودية عامية، مرحة كأنك تتكلم مع خويك — خفيف دم، طبيعي، مع استخدام الإيموجيز",
+    audience: "طلاب المرحلة الثانوية في السعودية، من 13 إلى 18 سنة",
+  },
+};
 
 // Safety guidelines for all AI interactions
 export const SAFETY_RULES = `
@@ -52,21 +53,17 @@ export const TASK_INSTRUCTIONS = {
 `,
 
   HTML_GENERATION: `
-أنت مطور ويب خبير. قم بإنشاء كود HTML متكامل استناداً إلى طلب المستخدم. 
-يجب أن يكون الكود قابل للتنفيذ مباشرة وكاملاً مع HTML وCSS وJavaScript ضمن نفس الملف.
+  أنت مطور ويب خبير. قم بإنشاء كود HTML متكامل استناداً إلى طلب المستخدم.
 
-إرشادات مهمة:
-1. استخدم HTML5 مع العلامات الدلالية المناسبة (semantic tags)
-2. أنشئ واجهة بسيطة وجذابة مع CSS
-3. أضف تفاعلية باستخدام JavaScript عند الحاجة
-4. تأكد من توافق الكود مع المتصفحات الحديثة
-5. اجعل الصفحة متجاوبة مع مختلف أحجام الشاشات
-6. قدم تعليقات شارحة للأقسام الرئيسية في الكود
-7. ضمّن أي صور أو أيقونات مطلوبة عبر روابط عامة أو Base64
-8. تأكد من أن الكود آمن وخالٍ من الثغرات الأمنية
+   التعليمات المهمة:
+  - يجب أن يحتوي الرد فقط على كود HTML، بدون أي شرح أو مقدمة
+  - يجب أن يبدأ الرد بـ <!DOCTYPE html>
+  - يجب أن يكون الكود كاملاً ويحتوي على HTML وCSS وJavaScript في نفس الملف
+  - لا تستخدم علامات \`\`\` ولا تضف أي ملاحظات خارج الكود
+  - اجعل الكود بسيطاً، قابلاً للتنفيذ، وتعليميًا للطلاب
 
-قم بإرجاع الكود HTML كاملاً مسبوقاً بمقدمة موجزة تشرح ما قمت بإنشائه. ضع الكود بين علامات \`\`\`html و \`\`\`.
-`
+  تأكد من أن الكود متجاوب، آمن، ويعمل على مختلف المتصفحات.
+  `,
 };
 
 /**
@@ -75,10 +72,13 @@ export const TASK_INSTRUCTIONS = {
  * @param task The task key from TASK_INSTRUCTIONS object
  * @returns Complete system prompt ready to use with OpenAI
  */
-export function buildSystemPrompt(persona: keyof typeof PERSONAS, task: keyof typeof TASK_INSTRUCTIONS): string {
+export function buildSystemPrompt(
+  persona: keyof typeof PERSONAS,
+  task: keyof typeof TASK_INSTRUCTIONS,
+): string {
   const selectedPersona = PERSONAS[persona];
   const taskInstructions = TASK_INSTRUCTIONS[task];
-  
+
   return `
 أنت ${selectedPersona.name} — ${selectedPersona.description}.
 شخصيتك: ${selectedPersona.tone}
@@ -96,22 +96,25 @@ ${taskInstructions}
 export const FEW_SHOT_EXAMPLES = {
   PROMPT_ENGINEERING: [
     {
-      role: 'user',
-      content: 'عايز صورة حلوة'
+      role: "user",
+      content: "عايز صورة حلوة",
     },
     {
-      role: 'assistant',
-      content: 'هذا مثال لتوجيه ضعيف (2/10). يفتقر للتفاصيل والوضوح، مما سيجعل الذكاء الاصطناعي ينتج صورة عشوائية.\n\nتحسين مقترح: "أرغب في صورة لغروب الشمس على شاطئ رملي مع نخيل وبحر صافٍ بألوان دافئة وأسلوب فني واقعي"'
+      role: "assistant",
+      content:
+        'هذا مثال لتوجيه ضعيف (2/10). يفتقر للتفاصيل والوضوح، مما سيجعل الذكاء الاصطناعي ينتج صورة عشوائية.\n\nتحسين مقترح: "أرغب في صورة لغروب الشمس على شاطئ رملي مع نخيل وبحر صافٍ بألوان دافئة وأسلوب فني واقعي"',
     },
     {
-      role: 'user',
-      content: 'أريد صورة لمشهد خارجي في الغابة مع أشعة الشمس تتخلل الأشجار الطويلة، وضباب خفيف على الأرض، وجدول ماء صغير ينساب بين الصخور المغطاة بالطحالب، بألوان خريفية دافئة، بأسلوب تصوير واقعي عالي الدقة'
+      role: "user",
+      content:
+        "أريد صورة لمشهد خارجي في الغابة مع أشعة الشمس تتخلل الأشجار الطويلة، وضباب خفيف على الأرض، وجدول ماء صغير ينساب بين الصخور المغطاة بالطحالب، بألوان خريفية دافئة، بأسلوب تصوير واقعي عالي الدقة",
     },
     {
-      role: 'assistant',
-      content: 'هذا مثال لتوجيه ممتاز (9/10). غني بالتفاصيل الوصفية، يحدد المشهد والعناصر والأسلوب واللون بدقة، مما يعطي الذكاء الاصطناعي إرشادات واضحة لإنتاج صورة تطابق تصورك.'
-    }
-  ]
+      role: "assistant",
+      content:
+        "هذا مثال لتوجيه ممتاز (9/10). غني بالتفاصيل الوصفية، يحدد المشهد والعناصر والأسلوب واللون بدقة، مما يعطي الذكاء الاصطناعي إرشادات واضحة لإنتاج صورة تطابق تصورك.",
+    },
+  ],
 };
 
 /**
@@ -120,11 +123,14 @@ export const FEW_SHOT_EXAMPLES = {
  * @param maxMessages Maximum number of messages to keep (default: 5)
  * @returns Trimmed message history with most recent messages
  */
-export function trimMessageHistory(messageHistory: any[], maxMessages: number = 5): any[] {
+export function trimMessageHistory(
+  messageHistory: any[],
+  maxMessages: number = 5,
+): any[] {
   if (!messageHistory || messageHistory.length <= maxMessages) {
     return messageHistory;
   }
-  
+
   // Keep the most recent messages
   return messageHistory.slice(-maxMessages);
 }
