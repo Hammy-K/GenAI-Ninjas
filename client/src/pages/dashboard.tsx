@@ -467,8 +467,8 @@ export default function Dashboard() {
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex justify-center mb-10">
-                  <div className="text-purple-600 font-bold text-xl px-5 py-2 rounded-xl shadow-lg bg-white border border-purple-300 animate-pulse">
+                <div className="relative z-10 flex justify-center mb-2">
+                  <div className="text-purple-600 font-bold text-xl px-5 py-2 rounded-xl shadow-lg bg-white border border-purple-300">
                     ⭐ ابدأ هنا ⭐
                   </div>
                 </div>
