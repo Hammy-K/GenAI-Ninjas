@@ -54,6 +54,12 @@ export default function Mission1() {
       trackStageProgress('mission1', `stage_${nextStage}_started`);
     }
     
+    // Scroll to top of page when moving to next stage
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
     // Call the original function
     goToNextStageOriginal();
   };
@@ -69,6 +75,17 @@ export default function Mission1() {
     
     // Call the original function
     completeMissionOriginal(missionId);
+  };
+  
+  // Wrapped goToPrevStage to add scrolling behavior
+  const goToPrevStageWithScroll = () => {
+    // Scroll to top of page when moving to previous stage
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    goToPrevStage();
   };
   
   const [location, navigate] = useLocation();
@@ -186,7 +203,7 @@ export default function Mission1() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 3:
@@ -195,7 +212,7 @@ export default function Mission1() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 4:
@@ -204,7 +221,7 @@ export default function Mission1() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 5:
@@ -213,7 +230,7 @@ export default function Mission1() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 6:
@@ -222,14 +239,14 @@ export default function Mission1() {
             onComplete={goToNextStage} 
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 7:
         return (
           <SubmissionFormStage
             onComplete={goToNextStage}
-            onBack={goToPrevStage}
+            onBack={goToPrevStageWithScroll}
           />
         );
       case 8:

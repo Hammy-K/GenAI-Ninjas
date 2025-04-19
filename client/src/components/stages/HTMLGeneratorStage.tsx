@@ -138,10 +138,10 @@ export function HTMLGeneratorStage({
 
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
 
-        // Force chat open regardless of saved state with a 1-second delay
+        // Force chat open regardless of saved state with a 5-second delay
         setTimeout(() => {
           setState((prev) => ({ ...prev, isChatOpen: true }));
-        }, 1000);
+        }, 5000);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
