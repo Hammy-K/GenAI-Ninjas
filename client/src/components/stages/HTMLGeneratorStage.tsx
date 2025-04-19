@@ -172,7 +172,16 @@ export function HTMLGeneratorStage({
 
   // Scroll to bottom of chat when messages update
   useEffect(() => {
+    // Use both approaches for maximum compatibility
+    // 1. Use scrollIntoView for standard behavior
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    
+    // 2. Use a timeout as a fallback to ensure scrolling happens after render
+    const timer = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [state.messages]);
 
   // Handle prompt submission

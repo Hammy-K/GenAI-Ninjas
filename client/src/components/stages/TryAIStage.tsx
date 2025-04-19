@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -59,6 +59,23 @@ export function TryAIStage({
   // Local state for UI processing indicators
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [error, setError] = useState("");
+  
+  // Create ref for scrolling to bottom of chat
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to bottom of chat when message history changes
+  useEffect(() => {
+    // Use both approaches for maximum compatibility
+    // 1. Use scrollIntoView for standard behavior
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    
+    // 2. Use a timeout as a fallback to ensure scrolling happens after render
+    const timer = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [state.messageHistory]);
 
   const handleGenerateText = async () => {
     if (!state.textPrompt.trim()) return;
@@ -208,6 +225,8 @@ export function TryAIStage({
                       </div>
                     </div>
                   )}
+                  {/* Element for automatic scrolling */}
+                  <div ref={chatEndRef} />
                 </div>
 
                 {error && (
