@@ -309,16 +309,6 @@ export function ImageGenerationStage({
 
   // No longer needed - removing the getMentoringResponse function
 
-  // Helper function to validate an image URL
-  const validateImage = (url: string): Promise<boolean> => {
-    return new Promise<boolean>((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = url;
-    });
-  };
-
   // Handle prompt submission - simplified without prompt analysis
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

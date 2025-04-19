@@ -79,6 +79,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Register direct prompt analysis route to handle client requests
+  apiRouter.post('/ai/analyze-prompt', async (req: Request, res: Response) => {
+    try {
+      const { prompt, messageHistory = [] } = req.body;
+      
+      // Log the prompt analysis request
+      logEvent('prompt_analysis', prompt, {
+        message_history_length: messageHistory?.length || 0,
+        prompt_length: prompt?.length || 0
+      });
+
+      // Use OpenAI client with JSON response format
+      const systemPrompt = {
+        role: "system",
+        content: "You are Dr. Pengy, an AI assistant who analyzes prompts and provides feedback. Return a JSON with 'score' (1-10), 'feedback' (string), and 'improvement' (string)."
+      };
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          systemPrompt, 
+          ...messageHistory,
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        response_format: { type: "json_object" }
+      });
+
+      // Safely parse the response
+      let result = { score: 8, feedback: "توجيه جيد!", improvement: "يمكنك إضافة المزيد من التفاصيل." };
+      
+      try {
+        // Get the content and parse it
+        const content = response.choices[0].message.content || "{}";
+        const parsed = JSON.parse(content);
+        
+        // Validate and ensure all required fields exist
+        if (typeof parsed.score === 'number' && parsed.feedback && parsed.improvement) {
+          result = {
+            score: Math.min(10, Math.max(1, Math.round(parsed.score))),
+            feedback: parsed.feedback,
+            improvement: parsed.improvement
+          };
+        }
+      } catch (parseError) {
+        // Log the error and use the default values
+        logError('prompt_analysis_parse', parseError instanceof Error ? parseError : 'Unknown error', {
+          response_content: response.choices[0].message.content
+        });
+      }
+
+      return res.json(result);
+    } catch (error) {
+      logError('prompt_analysis_direct', error instanceof Error ? error : 'Unknown error');
+      // Return a fallback response
+      return res.json({ 
+        score: 8,
+        feedback: "توجيه جيد! استمر بالعمل الرائع.",
+        improvement: "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل."
+      });
+    }
+  });
+  
   // Register other route modules
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
