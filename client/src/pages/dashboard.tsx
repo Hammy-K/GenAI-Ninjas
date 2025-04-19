@@ -505,11 +505,11 @@ export default function Dashboard() {
 
                     {/* Dr. Pengy avatar for the next active mission */}
                     {nextActiveMission === 1 && (
-                      <div className="absolute left-1/2 -top-6 transform -translate-x-1/2">
+                      <div className="absolute left-1/2 -top-6 transform -translate-x-1/2 after:absolute after:inset-0 after:rounded-lg after:animate-pulse-ring after:bg-purple-400/50">
                         <img
                           src={penguinAvatar}
                           alt="د. بنجي"
-                          className="w-16 h-16 object-contain"
+                          className="w-16 h-16 object-contain relative z-10"
                         />
                       </div>
                     )}
