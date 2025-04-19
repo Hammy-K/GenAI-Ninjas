@@ -4,7 +4,7 @@
  */
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
-import { logEvent, logError } from "../services/logging";
+import { logEvent, logError } from "../services";
 import {
   validateChatHistory,
   validatePrompt,

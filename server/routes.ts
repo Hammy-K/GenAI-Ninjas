@@ -43,7 +43,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn("\n⚠️  WARNING: OPENAI_API_KEY environment variable is not set. AI features will not work properly.\n");
   }
 
-  // Register route modules
+  // Register direct text generation route to handle client requests
+  apiRouter.post('/ai/text', async (req: Request, res: Response) => {
+    try {
+      const { prompt, messageHistory = [], maxTokens = 1000 } = req.body;
+      
+      // Log the text generation request
+      logEvent('text_generation', prompt, {
+        message_history_length: messageHistory.length,
+        prompt_length: prompt.length,
+        max_tokens: maxTokens
+      });
+
+      // Use OpenAI client
+      const systemPrompt = {
+        role: "system",
+        content: "You are Dr. Pengy, an AI assistant helping students learn about generative AI."
+      };
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          systemPrompt, 
+          ...messageHistory,
+          { role: "user", content: prompt }
+        ],
+        max_tokens: maxTokens,
+        temperature: 0.7,
+      });
+
+      return res.json({ text: response.choices[0].message.content });
+    } catch (error) {
+      logError('text_generation_direct', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ error: "Failed to generate text" });
+    }
+  });
+  
+  // Register other route modules
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
   registerGalleryRoutes(apiRouter);
