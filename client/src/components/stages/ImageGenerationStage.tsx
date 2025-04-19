@@ -91,12 +91,12 @@ export function ImageGenerationStage({
     initialState,
   );
 
-  // Effect to ensure chat is open on mount with a 1-second delay
+  // Effect to ensure chat is open on mount with a 5-second delay
   useEffect(() => {
-    // Force the chat to be open on component mount after a 1-second delay
+    // Force the chat to be open on component mount after a 5-second delay
     const timer = setTimeout(() => {
       setState((prev) => ({ ...prev, isChatOpen: true }));
-    }, 1000);
+    }, 5000);
 
     // Clean up the timer if component unmounts before the delay completes
     return () => clearTimeout(timer);

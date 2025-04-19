@@ -24,7 +24,7 @@ export default function Gallery() {
   const queryClient = useQueryClient();
 
   // Query for fetching gallery images
-  const { data: images = [], isLoading, error } = useQuery({
+  const { data: images = [], isLoading, error, refetch } = useQuery({
     queryKey: ['/api/gallery/all'],
     queryFn: async () => {
       const response = await fetch('/api/gallery/all', {
@@ -34,8 +34,40 @@ export default function Gallery() {
       if (!response.ok) {
         throw new Error("Failed to fetch gallery images");
       }
-      return await response.json() as GalleryImage[];
-    }
+      
+      const galleryImages = await response.json() as GalleryImage[];
+      console.log(`Gallery page: Fetched ${galleryImages.length} gallery images`);
+      
+      // Filter out images with expired or invalid URLs on the client side
+      const currentTime = new Date().getTime();
+      const validImages = galleryImages.filter(img => {
+        // Check for expired DALL-E URLs
+        if (img.imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+          // Try to extract expiration time from URL
+          try {
+            const seMatch = img.imageUrl.match(/se=([^&]+)/);
+            if (seMatch && seMatch[1]) {
+              const expirationISO = decodeURIComponent(seMatch[1]);
+              const expirationTime = new Date(expirationISO).getTime();
+              
+              // If URL is expired, return false to filter it out
+              if (currentTime > expirationTime) {
+                console.log(`Gallery page: Filtering out expired image ID ${img.id}, expired at ${expirationISO}`);
+                return false;
+              }
+            }
+          } catch (err) {
+            console.error('Error parsing image URL expiration:', err);
+          }
+        }
+        return true;
+      });
+      
+      console.log(`Gallery page: Returning ${validImages.length} valid gallery images`);
+      return validImages;
+    },
+    staleTime: 60 * 1000, // 1 minute cache
+    refetchOnWindowFocus: true
   });
 
   // Mutation for liking an image
