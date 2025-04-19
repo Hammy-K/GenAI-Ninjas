@@ -32,7 +32,7 @@ export function GalleryExplorationStage({
 }: GalleryExplorationStageProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { awardXp, awardBadge } = useXpTracker();
+  const { awardXpOnce, isAlreadyAwarded, markAsAwarded } = useXpTracker();
   const [hasLikedImage, setHasLikedImage] = useState(false);
 
   // Track stage progress on mount
@@ -117,9 +117,11 @@ export function GalleryExplorationStage({
       if (!hasLikedImage) {
         setHasLikedImage(true);
         
-        // Award XP only once
-        const awarded = awardXp(onEarnXp, 10, 'gallery_exploration_like');
-        if (awarded) {
+        // Award XP and track it
+        if (!isAlreadyAwarded('gallery_exploration_like', 'xp')) {
+          onEarnXp(10, 'gallery_exploration_like');
+          markAsAwarded('gallery_exploration_like', 'xp');
+          
           trackStageProgress('gallery_exploration', 'xp_earned', {
             amount: 10,
             source: 'gallery_exploration_like'
@@ -127,11 +129,15 @@ export function GalleryExplorationStage({
         }
         
         // Award badge only once
-        const badgeAwarded = awardBadge(
-          onUnlockBadge,
-          'gallery_explorer_badge',
-          'gallery_exploration'
-        );
+        const badgeSource = 'gallery_exploration';
+        const badgeName = 'gallery_explorer_badge';
+        let badgeAwarded = false;
+        
+        if (!isAlreadyAwarded(badgeSource, badgeName)) {
+          onUnlockBadge(badgeName, badgeSource);
+          markAsAwarded(badgeSource, badgeName);
+          badgeAwarded = true;
+        }
         
         if (badgeAwarded) {
           trackStageProgress('gallery_exploration', 'badge_unlocked', {
