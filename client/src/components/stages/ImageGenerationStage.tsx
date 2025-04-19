@@ -25,7 +25,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@/assets/Group 26087843.png";
 import { validateInput } from "@/lib/inputFilter";
-import { analyzePrompt } from "@/lib/openai";
 import { trackStageProgress } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -234,7 +233,7 @@ export function ImageGenerationStage({
     // Validate the image URL first
     const validateImage = (url: string) => {
       return new Promise<boolean>((resolve) => {
-        const img = new Image();
+        const img = document.createElement('img');
         img.onload = () => resolve(true);
         img.onerror = () => resolve(false);
         img.src = url;
@@ -308,47 +307,19 @@ export function ImageGenerationStage({
     }
   };
 
-  // Create mentoring responses for weak prompts
-  const getMentoringResponse = (score: number, feedback: string): string => {
-    // Array of different encouraging responses
-    const encouragementPhrases = [
-      "أنت على الطريق الصحيح!",
-      "خطوة حلوة للبداية!",
-      "عندك فكرة وااضحة، بس نحتاج نطورها شوية",
-      "ممتازة! بس يمكن نضيف تفاصيل أكثر؟",
-      "فكرة حلوة، خلنا نخليها أوضح"
-    ];
-    
-    // Array of different learning reminder phrases
-    const learningReminderPhrases = [
-      "يا بطل 👋! تذكّر خطوة \"هندسة التوجيه\" اللي سويناها. عشان نطلع صورة رهيبة، نحتاج توجيه أوضح.",
-      "فكرنا مع بعض في خطوة \"هندسة التوجيه\" إن التفاصيل مهمة عشان نحصل على صور أفضل!",
-      "أتذكر خطوة \"هندسة التوجيه\"؟ خلنا نستخدم اللي تعلمناه لنحصل على صورة خيالية!",
-      "مثل ما تعلمنا في \"هندسة التوجيه\"، نحتاج وصف أكثر تفصيلاً لنحصل على صورة رائعة!",
-      "تفتكر الدرس اللي تعلمناه مع بعض؟ كل ما الوصف أدق، كل ما الصورة تطلع أحلى!"
-    ];
-    
-    // Array of different follow-up questions
-    const followUpQuestions = [
-      "تبغى الصورة تكون واقعية ولا كرتونية؟",
-      "فيه شخصية تبغاها تظهر في الصورة؟",
-      "ممكن توصف كيف تبغى الإضاءة تكون في الصورة؟",
-      "تقدر تقول لي كيف تبغى الألوان في الصورة؟",
-      "أي أسلوب فني تفضل للصورة؟ مثلاً رسم زيتي، أو أنمي، أو ثلاثي الأبعاد؟",
-      "تبغى خلفية محددة للصورة؟ مثلاً مدينة، طبيعة، فضاء؟",
-      "في أي وقت من اليوم تبغى المشهد يكون؟ صباح، غروب، ليل؟"
-    ];
-    
-    // Select a random phrase from each array
-    const randomEncouragement = encouragementPhrases[Math.floor(Math.random() * encouragementPhrases.length)];
-    const randomReminder = learningReminderPhrases[Math.floor(Math.random() * learningReminderPhrases.length)];
-    const randomQuestion = followUpQuestions[Math.floor(Math.random() * followUpQuestions.length)];
-    
-    // Construct the mentoring response
-    return `${randomEncouragement} ${randomReminder}\n\n${feedback}\n\n${randomQuestion}`;
+  // No longer needed - removing the getMentoringResponse function
+
+  // Helper function to validate an image URL
+  const validateImage = (url: string): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
   };
 
-  // Handle prompt submission
+  // Handle prompt submission - simplified without prompt analysis
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -414,35 +385,9 @@ export function ImageGenerationStage({
       trackStageProgress("image_generation", "prompt_submitted", {
         prompt_length: userMessage.content.length,
       });
-
-      // Analyze the prompt quality before generating an image
-      const promptAnalysis = await analyzePrompt(userMessage.content);
-      console.log("Prompt analysis:", promptAnalysis);
-
-      // Track the analysis result
-      trackStageProgress("image_generation", "prompt_analyzed", {
-        score: promptAnalysis.score,
-        passed_threshold: promptAnalysis.score >= 6,
-      });
-
-      // If the prompt is weak (score < 6), provide mentoring feedback instead of generating image
-      if (promptAnalysis.score < 6) {
-        const mentoringMessage: ChatMessage = {
-          role: "assistant",
-          content: getMentoringResponse(promptAnalysis.score, promptAnalysis.feedback)
-        };
-
-        setState((prev) => ({
-          ...prev,
-          messages: [...prev.messages, mentoringMessage],
-          isLoading: false,
-        }));
-
-        return;
-      }
-
-      // If content is appropriate and prompt is good, generate the image
-      // First, add a processing message
+      
+      // Skip prompt analysis - directly generate the image
+      // Add a processing message immediately
       const processingMessage: ChatMessage = {
         role: "assistant",
         content: "تمام! خلينا نشوف كيف بتطلع 😄",

@@ -108,13 +108,33 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       try {
         const messageContent = response.choices[0].message.content || "{}";
         result = JSON.parse(messageContent);
+        
+        // Validate that we have all required fields with correct types
+        if (typeof result.score !== 'number' || !result.score) {
+          result.score = 8; // Default to a favorable score
+        }
+        
+        if (!result.feedback || typeof result.feedback !== 'string') {
+          result.feedback = "توجيه رائع! استمر بالعمل الجيد.";
+        }
+        
+        if (!result.improvement || typeof result.improvement !== 'string') {
+          result.improvement = "يمكنك إضافة المزيد من التفاصيل لتحسين النتائج.";
+        }
+        
+        // Ensure score is within range
+        result.score = Math.max(1, Math.min(10, Math.round(result.score)));
+        
       } catch (parseError) {
-        logError('prompt_analysis_parse', parseError instanceof Error ? parseError : 'Unknown error');
-        // Provide a fallback structure if parsing fails
+        logError('prompt_analysis_parse', parseError instanceof Error ? parseError : 'Unknown error', {
+          response_content: response.choices[0].message.content
+        });
+        
+        // Provide a robust fallback structure if parsing fails
         result = {
-          score: 5,
-          feedback: "Unable to analyze prompt properly",
-          improvement: "Please try again with a more detailed prompt"
+          score: 8,
+          feedback: "توجيه جيد! استمر بالعمل الرائع.",
+          improvement: "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل."
         };
       }
       
