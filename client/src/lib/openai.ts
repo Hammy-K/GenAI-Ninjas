@@ -35,7 +35,7 @@ type ProjectIdeaResponse = {
 
 export async function generateText(options: TextGenerationOptions): Promise<CompletionResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/text/generate', options);
+    const response = await apiRequest('POST', '/api/ai/text', options);
     const data = await response.json();
     return { text: data.text };
   } catch (error) {
@@ -51,7 +51,7 @@ export async function generateText(options: TextGenerationOptions): Promise<Comp
 
 export async function analyzePrompt(prompt: string): Promise<PromptAnalysisResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/text/analyze-prompt', { prompt });
+    const response = await apiRequest('POST', '/api/ai/analyze-prompt', { prompt });
     return await response.json();
   } catch (error) {
     console.error("Error analyzing prompt:", error);
@@ -117,7 +117,7 @@ export type GenerateHTMLResponse = {
 
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/text/generate-html', { messageHistory });
+    const response = await apiRequest('POST', '/api/ai/generate-html', { messageHistory });
     return await response.json();
   } catch (error) {
     console.error("Error generating HTML:", error);

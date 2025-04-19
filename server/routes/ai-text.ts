@@ -236,5 +236,5 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
   });
 
   // Mount all AI text routes to the main router
-  router.use('/ai', aiRoutes);
+  router.use('/ai/text', aiRoutes);
 }
