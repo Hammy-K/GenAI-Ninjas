@@ -212,19 +212,6 @@ export default function Dashboard() {
         border: 2px solid #a78bfa;
         box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
       }
-      
-      .clickable-hint {
-        position: relative;
-      }
-      
-      .clickable-hint:after {
-        content: '👆';
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        font-size: 14px;
-        opacity: 0.9;
-      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -525,8 +512,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-end w-1/2">
                     {/* Square + Title wrapper */}
                     <div
-                      className={`cursor-pointer transition-transform hover:scale-105 mr-4 
-                      ${nextActiveMission === 1 ? 'clickable-hint' : ''}`}
+                      className="cursor-pointer transition-transform hover:scale-105 mr-4"
                       onClick={() => handleStartMission(1)}
                     >
                       {/* 16×16 square */}
@@ -573,8 +559,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-start w-1/2">
                     <div
                       className={`relative cursor-pointer transition-transform hover:scale-105 ml-4
-                        ${isMission2Complete ? "text-green-600" : isMission1Complete ? "text-purple-600" : "text-gray-400"}
-                        ${nextActiveMission === 2 ? 'clickable-hint' : ''}`}
+                        ${isMission2Complete ? "text-green-600" : isMission1Complete ? "text-purple-600" : "text-gray-400"}`}
                       onClick={() =>
                         isMission1Complete && handleStartMission(2)
                       }
@@ -626,8 +611,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-end w-1/2">
                     <div
                       className={`relative cursor-pointer transition-transform hover:scale-105 mr-4
-                        ${isMission3Complete ? "text-green-600" : isMission1Complete && isMission2Complete ? "text-purple-600" : "text-gray-400"}
-                        ${nextActiveMission === 3 ? 'clickable-hint' : ''}`}
+                        ${isMission3Complete ? "text-green-600" : isMission1Complete && isMission2Complete ? "text-purple-600" : "text-gray-400"}`}
                       onClick={() =>
                         isMission1Complete &&
                         isMission2Complete &&
