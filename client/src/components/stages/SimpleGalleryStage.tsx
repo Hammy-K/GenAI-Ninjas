@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, ArrowRight, AlertCircle, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlertCircle, Heart, Search, Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useXpTracker } from "@/hooks/useXpTracker";
 import { trackStageProgress } from "@/lib/firebase";
+import { Input } from "@/components/ui/input";
 
 interface GalleryExplorationStageProps {
   onComplete: () => void;
@@ -34,6 +35,17 @@ export function SimpleGalleryStage({
   const queryClient = useQueryClient();
   const { isAlreadyAwarded, markAsAwarded } = useXpTracker();
   const [hasLikedImage, setHasLikedImage] = useState(false);
+  const [nameFilter, setNameFilter] = useState("");
+  const [debouncedFilter, setDebouncedFilter] = useState("");
+  
+  // Debounce name filter changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilter(nameFilter);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [nameFilter]);
 
   // Track stage progress on mount
   useEffect(() => {
@@ -72,8 +84,16 @@ export function SimpleGalleryStage({
     staleTime: 60 * 1000, // 1 minute cache
   });
 
+  // Filter images by student name if filter is provided
+  const filteredImages = debouncedFilter 
+    ? images.filter(image => 
+        image.studentName && 
+        image.studentName.toLowerCase().includes(debouncedFilter.toLowerCase())
+      )
+    : images;
+    
   // Sort images by most liked
-  const sortedImages = [...images].sort((a, b) => b.likes - a.likes);
+  const sortedImages = [...filteredImages].sort((a, b) => b.likes - a.likes);
 
   // Mutation for liking an image
   const likeMutation = useMutation({
@@ -166,6 +186,36 @@ export function SimpleGalleryStage({
               استمتع بمشاهدة الصور التي أنشأها الطلاب باستخدام الذكاء الاصطناعي.
               اضغط على زر الإعجاب للصور المفضلة لديك!
             </p>
+          </div>
+          
+          {/* Search filter */}
+          <div className="relative mb-6">
+            <div className="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-1 focus-within:ring-primary focus-within:border-primary">
+              <Search className="h-4 w-4 text-muted-foreground mr-2" />
+              <Input 
+                type="text"
+                placeholder="ابحث باسم الطالب..."
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                className="border-0 p-0 shadow-none focus-visible:ring-0 w-full text-sm"
+                dir="auto"
+              />
+              {nameFilter && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0"
+                  onClick={() => setNameFilter("")}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+            {debouncedFilter && (
+              <p className="text-xs text-muted-foreground mt-1 mr-1">
+                عرض النتائج التي تطابق: "{debouncedFilter}"
+              </p>
+            )}
           </div>
 
           {isLoading ? (

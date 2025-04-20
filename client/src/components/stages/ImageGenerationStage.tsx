@@ -233,6 +233,21 @@ export function ImageGenerationStage({
 
   // Helper function to share image to gallery
   const handleShareToGallery = async () => {
+    // If image is already shared, don't allow sharing again
+    if (state.sharingStatus === "shared") {
+      toast({
+        title: "تم مشاركة الصورة بالفعل",
+        description: "تم مشاركة هذه الصورة في المعرض مسبقاً.",
+        duration: 3000,
+      });
+      return;
+    }
+    
+    // If sharing is in progress, don't allow multiple requests
+    if (state.sharingStatus === "sharing") {
+      return;
+    }
+
     if (!state.generatedImageUrl) {
       toast({
         title: "لا توجد صورة للمشاركة",
@@ -242,6 +257,12 @@ export function ImageGenerationStage({
       });
       return;
     }
+
+    // Set sharing status to "sharing" to show loading state
+    setState(prev => ({
+      ...prev,
+      sharingStatus: "sharing"
+    }));
 
     // Validate the image URL first
     const validateImage = (url: string) => {
@@ -256,6 +277,11 @@ export function ImageGenerationStage({
     // Check if image is valid before proceeding
     const isValid = await validateImage(state.generatedImageUrl);
     if (!isValid) {
+      setState(prev => ({
+        ...prev,
+        sharingStatus: "idle" // Reset sharing status on error
+      }));
+      
       toast({
         title: "خطأ في الصورة",
         description:
@@ -301,6 +327,13 @@ export function ImageGenerationStage({
 
       const result = await response.json();
 
+      // Update state to indicate sharing is complete and store the image ID
+      setState(prev => ({
+        ...prev,
+        sharingStatus: "shared",
+        sharedImageId: result.id
+      }));
+
       // Show success toast and track the event
       toast({
         title: "تم مشاركة الصورة!",
@@ -314,6 +347,13 @@ export function ImageGenerationStage({
       });
     } catch (error) {
       console.error("Error sharing image to gallery:", error);
+      
+      // Reset sharing status on error
+      setState(prev => ({
+        ...prev,
+        sharingStatus: "idle"
+      }));
+      
       toast({
         title: "خطأ في المشاركة",
         description: "حدث خطأ أثناء مشاركة الصورة. يرجى المحاولة مرة أخرى.",
@@ -424,12 +464,14 @@ export function ImageGenerationStage({
         content: successMessageContent,
       };
 
-      // Update state with the image and message
+      // Update state with the image and message, and reset sharing status since this is a new image
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, successMessage],
         generatedImageUrl: imageUrl,
         isLoading: false,
+        sharingStatus: "idle", // Reset sharing status for the new image
+        sharedImageId: undefined, // Clear any previously shared image ID
       }));
 
       // Always award the badge when an image is successfully generated
@@ -497,9 +539,24 @@ export function ImageGenerationStage({
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-1 text-xs"
+                        disabled={state.sharingStatus === "sharing" || state.sharingStatus === "shared"}
                       >
-                        <Share2 className="h-3 w-3" />
-                        مشاركة في المعرض
+                        {state.sharingStatus === "sharing" ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            جاري المشاركة...
+                          </>
+                        ) : state.sharingStatus === "shared" ? (
+                          <>
+                            <div className="text-green-500 h-3 w-3">✓</div>
+                            تمت المشاركة
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="h-3 w-3" />
+                            مشاركة في المعرض
+                          </>
+                        )}
                       </Button>
                       <Button
                         onClick={handleDownloadImage}
