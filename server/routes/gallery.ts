@@ -199,20 +199,112 @@ export function registerGalleryRoutes(router: Router) {
     }
   });
 
-  // Get all images from the gallery
+  // Get all images from the gallery with pagination and filtering
   galleryRoutes.get("/all", async (req: Request, res: Response) => {
     try {
-      const images = await storage.getAllGalleryImages();
+      // Parse query parameters for pagination and filtering
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const nameFilter = req.query.name as string || '';
+      const pageToken = req.query.pageToken as string || undefined;
       
-      // Log the request
-      logEvent('gallery_images_fetch', 'Fetched gallery images', {
-        image_count: images.length
-      });
-      
-      return res.json(images);
+      // First, try to get images from Firebase Storage
+      try {
+        const firebaseImages = await listGalleryImages(limit, pageToken);
+        
+        // Filter images by student name if filter is provided
+        const filteredImages = nameFilter 
+          ? firebaseImages.files.filter(img => {
+              const studentName = typeof img.metadata?.studentName === 'string' ? img.metadata.studentName.toLowerCase() : '';
+              return studentName.includes(nameFilter.toLowerCase());
+            })
+          : firebaseImages.files;
+            
+        // Log the successful Firebase fetch
+        logEvent('gallery_images_fetch_firebase', 'Fetched gallery images from Firebase', {
+          image_count: filteredImages.length,
+          filter: nameFilter ? true : false,
+          total_files: firebaseImages.files.length
+        });
+        
+        // Return the images with pagination info
+        return res.json({
+          images: filteredImages,
+          pagination: {
+            nextPageToken: firebaseImages.nextPageToken,
+            currentPage: page,
+            limit
+          }
+        });
+      } catch (firebaseError) {
+        // If Firebase fetch fails, fall back to database
+        logError('gallery_fetch_firebase', firebaseError instanceof Error ? firebaseError : 'Unknown error');
+        
+        // Fetch images from the database as fallback
+        const dbImages = await storage.getAllGalleryImages();
+        
+        // Apply filtering
+        const filteredImages = nameFilter
+          ? dbImages.filter(img => {
+              return (img.studentName || '').toLowerCase().includes(nameFilter.toLowerCase());
+            })
+          : dbImages;
+          
+        // Apply pagination manually (simple offset-based pagination)
+        const startIndex = (page - 1) * limit;
+        const paginatedImages = filteredImages.slice(startIndex, startIndex + limit);
+        
+        // Log the database fallback fetch
+        logEvent('gallery_images_fetch_db', 'Fetched gallery images from database (fallback)', {
+          image_count: paginatedImages.length,
+          total_count: dbImages.length,
+          filter: nameFilter ? true : false
+        });
+        
+        // Return the images with pagination info
+        return res.json({
+          images: paginatedImages,
+          pagination: {
+            totalCount: filteredImages.length,
+            currentPage: page,
+            totalPages: Math.ceil(filteredImages.length / limit),
+            limit
+          }
+        });
+      }
     } catch (error) {
       logError('gallery_fetch', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: 'Failed to fetch gallery images' });
+    }
+  });
+  
+  // Add a new endpoint to filter gallery images by student name
+  galleryRoutes.get("/search", async (req: Request, res: Response) => {
+    try {
+      const nameFilter = req.query.name as string;
+      
+      if (!nameFilter) {
+        return res.status(400).json({ error: 'Name filter is required' });
+      }
+      
+      // Get all images
+      const images = await storage.getAllGalleryImages();
+      
+      // Filter images by student name
+      const filteredImages = images.filter(img => {
+        return (img.studentName || '').toLowerCase().includes(nameFilter.toLowerCase());
+      });
+      
+      logEvent('gallery_images_search', 'Searched gallery images by name', {
+        filter: nameFilter,
+        results_count: filteredImages.length,
+        total_count: images.length
+      });
+      
+      return res.json(filteredImages);
+    } catch (error) {
+      logError('gallery_search', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ error: 'Failed to search gallery images' });
     }
   });
   

@@ -4,7 +4,7 @@ import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
 import { ImageGenerationStage } from '@/components/stages/ImageGenerationStage';
-import { GalleryExplorationStage } from '@/components/stages/GalleryExplorationStage';
+import { SimpleGalleryStage as GalleryExplorationStage } from '@/components/stages/SimpleGalleryStage';
 import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
