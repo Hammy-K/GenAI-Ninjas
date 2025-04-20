@@ -428,16 +428,17 @@ export function ImageGenerationStage({
         isLoading: false,
       }));
 
-      // Award XP if not already awarded
-      if (!state.hasEarnedXp) {
-        onEarnXp(30, "image_generation_complete");
-        onUnlockBadge("creative_artist_badge", "image_generation_complete");
-        setState((prev) => ({
-          ...prev,
-          hasEarnedXp: true,
-          hasUnlockedBadge: true,
-        }));
-      }
+      // Always award the badge when an image is successfully generated
+      // This ensures the badge is awarded even if the state was reset
+      onEarnXp(30, "image_generation_complete");
+      onUnlockBadge("creative_artist_badge", "image_generation_complete");
+      
+      // Mark as awarded in this session's state
+      setState((prev) => ({
+        ...prev,
+        hasEarnedXp: true,
+        hasUnlockedBadge: true,
+      }));
     } catch (error) {
       // Handle errors
       const errorMessage =
