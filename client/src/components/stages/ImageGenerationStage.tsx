@@ -55,6 +55,8 @@ interface ImageGenerationState {
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
   isChatOpen: boolean;
+  sharingStatus: "idle" | "sharing" | "shared"; // Track the sharing process state
+  sharedImageId?: number; // Store the ID of the shared image
 }
 
 export function ImageGenerationStage({
@@ -83,6 +85,8 @@ export function ImageGenerationStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     isChatOpen: false, // Start with chat closed, will open after delay
+    sharingStatus: "idle", // Start in idle state for sharing
+    sharedImageId: undefined,
   };
 
   // Initialize state with localStorage values or defaults
