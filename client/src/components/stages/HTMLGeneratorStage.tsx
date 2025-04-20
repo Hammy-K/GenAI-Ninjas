@@ -261,17 +261,16 @@ export function HTMLGeneratorStage({
         html_length: response.html.length,
       });
 
-      // Create a friendly assistant response instead of showing the raw HTML
-      const friendlyResponse: HTMLMessage = {
+      // Use the actual response message from the API instead of a hardcoded message
+      const aiResponse: HTMLMessage = response.message || {
         role: "assistant",
-        content:
-          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إ �راء أي تغييرات.",
+        content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات."
       };
 
       // Update state with the new message and HTML
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, userMessage, friendlyResponse],
+        messages: [...prev.messages, userMessage, aiResponse],
         currentHTML: response.html,
         isLoading: false,
       }));
