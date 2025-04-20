@@ -5,15 +5,16 @@
 import express, { Router, Request, Response } from 'express';
 import { storage } from '../storage';
 import { logEvent, logError } from '../services/logging';
+import { uploadImageFromUrl, listGalleryImages } from '../services/firebase';
 import { z } from 'zod';
 import { insertGalleryImageSchema } from '@shared/schema';
 import { SessionData } from 'express-session';
 
 // Extended request type with gallery session
 interface RequestWithGallery extends Request {
-  session: {
+  session: Request['session'] & {
     gallerySessionId?: string;
-  } & Record<string, any>;
+  };
 }
 
 // Validation schema for gallery image sharing
@@ -137,24 +138,61 @@ export function registerGalleryRoutes(router: Router) {
         ? studentName 
         : "طالب مبدع"; // Default name "Creative Student" in Arabic
       
-      // Create a new gallery image
       const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
-      const galleryImage = await storage.createGalleryImage({
-        imageUrl,
-        studentName: finalStudentName,
-        missionNumber: missionNumber || 1,
-        sessionId
-      });
-
-      // Log successful sharing
-      logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
-        student_name: finalStudentName,
-        mission_number: missionNumber || 1,
-        session_id: sessionId,
-        prompt_length: prompt ? prompt.length : 0
-      });
       
-      return res.status(201).json(galleryImage);
+      // Step 1: Upload the image to Firebase Storage first to get a permanent URL
+      try {
+        // Upload to Firebase Storage
+        logEvent('firebase_upload_start', 'Beginning Firebase upload process', {
+          original_url_length: imageUrl.length,
+          student_name: finalStudentName,
+        });
+        
+        const permanentImageUrl = await uploadImageFromUrl(imageUrl, {
+          studentName: finalStudentName,
+          missionNumber: missionNumber || 1,
+          sessionId,
+          prompt
+        });
+        
+        // Step 2: Create a gallery image record with the permanent Firebase URL
+        const galleryImage = await storage.createGalleryImage({
+          imageUrl: permanentImageUrl, // Use the permanent Firebase URL
+          studentName: finalStudentName,
+          missionNumber: missionNumber || 1,
+          sessionId
+        });
+
+        // Log successful sharing
+        logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
+          student_name: finalStudentName,
+          mission_number: missionNumber || 1,
+          session_id: sessionId,
+          prompt_length: prompt ? prompt.length : 0,
+          permanent_url: true
+        });
+        
+        return res.status(201).json(galleryImage);
+      } catch (firebaseError) {
+        // If Firebase upload fails, fall back to the original URL
+        logError('firebase_upload', firebaseError instanceof Error ? firebaseError : 'Unknown error');
+        
+        // Just create gallery image with original URL as fallback
+        const galleryImage = await storage.createGalleryImage({
+          imageUrl, // Use the original URL as fallback
+          studentName: finalStudentName,
+          missionNumber: missionNumber || 1,
+          sessionId
+        });
+        
+        logEvent('gallery_image_shared', 'Image shared to gallery with original URL (Firebase failed)', {
+          student_name: finalStudentName,
+          session_id: sessionId,
+          permanent_url: false
+        });
+        
+        return res.status(201).json(galleryImage);
+      }
     } catch (error) {
       logError('gallery_share', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: 'Failed to share image to gallery' });
