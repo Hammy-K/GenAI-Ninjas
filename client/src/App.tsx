@@ -8,6 +8,8 @@ import Dashboard from "@/pages/dashboard";
 import Mission1 from "@/pages/mission1";
 import Project from "@/pages/project";
 import Gallery from "@/pages/gallery";
+import ResetInstructions from "@/pages/reset-instructions";
+import { ResetSession } from "@/components/ResetSession";
 
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/mission1/stage/:stageName" component={Mission1} />
       <Route path="/project/:projectId" component={Project} />
       <Route path="/gallery" component={Gallery} />
+      <Route path="/reset-instructions" component={ResetInstructions} />
+      <Route path="/reset" component={ResetSession} />
       <Route component={NotFound} />
     </Switch>
   );
