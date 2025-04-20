@@ -75,6 +75,7 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
           n: 1,
           size: "1024x1024",
           quality: "hd",
+          detail: "high",
           // Remove the invalid "quality" parameter as requested
         });
 
@@ -82,6 +83,7 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
         logEvent("image_generation_success", prompt, {
           model: "dall-e-3",
           quality: "hd",
+          detail: "high",
           is_context_enhanced: isFollowUpRequest,
           conversation_turns: messageHistory.length,
         });
