@@ -143,6 +143,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add direct HTML generation route to handle client requests
+  apiRouter.post('/ai/generate-html', async (req: Request, res: Response) => {
+    try {
+      const { messageHistory = [] } = req.body;
+
+      // Make sure we have at least one user message
+      const userMessages = messageHistory.filter((msg: any) => msg.role === 'user');
+      if (userMessages.length === 0) {
+        return res.status(400).json({ error: "At least one user message is required in messageHistory" });
+      }
+
+      // Get the latest user message for logging
+      const latestUserMessage = userMessages[userMessages.length - 1];
+
+      // Log the HTML generation request
+      logEvent('html_generation', latestUserMessage.content, {
+        message_history_length: messageHistory.length
+      });
+
+      // Build the system prompt for HTML generation
+      const systemPrompt = {
+        role: "system",
+        content: "You are Dr. Pengy, an AI assistant who helps students generate creative HTML pages. Create a complete, self-contained HTML page based on the user's description. Include inline CSS and JavaScript where needed. Make the page visually appealing and interactive."
+      };
+
+      // Use specific parameters for consistent, high-quality code
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          systemPrompt, 
+          ...messageHistory
+        ],
+        temperature: 0.3, // Lower temperature for more consistent code
+        max_tokens: 2000, // Allow enough tokens for complex HTML
+      });
+
+      // Extract HTML from the response
+      let generatedHTML = response.choices[0].message.content || "";
+      
+      // Extract code blocks
+      const htmlPattern = /```html\s([\s\S]*?)```/;
+      const htmlMatch = generatedHTML.match(htmlPattern);
+      
+      if (htmlMatch && htmlMatch[1]) {
+        generatedHTML = htmlMatch[1].trim();
+      } else {
+        // Try to fix if missing proper HTML doctype
+        const doctypeIndex = generatedHTML.indexOf('<!DOCTYPE html>');
+        if (doctypeIndex >= 0) {
+          generatedHTML = generatedHTML.substring(doctypeIndex);
+        } else {
+          // Fallback to a basic HTML template
+          generatedHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generated Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+  </style>
+</head>
+<body>
+  <p>The AI had trouble generating HTML. Please try again with a different prompt.</p>
+</body>
+</html>`;
+
+          // Log the HTML generation failure
+          logEvent('html_generation_parsing_failed', latestUserMessage.content, {
+            model: "gpt-4o",
+            response_length: response.choices[0].message.content?.length || 0
+          });
+        }
+      }
+
+      // Log successful HTML generation with metrics
+      logEvent('html_generation_success', latestUserMessage.content, {
+        model: "gpt-4o",
+        html_size: generatedHTML.length,
+        html_type: generatedHTML.includes('<script') ? 'interactive' : 'static'
+      });
+
+      // Return the complete response with the assistant's message as JSON
+      return res.json({
+        html: generatedHTML,
+        message: {
+          role: "assistant",
+          content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+        },
+      });
+    } catch (error) {
+      logError('html_generation', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ 
+        error: "Failed to generate HTML",
+        html: '',
+        message: {
+          role: "assistant",
+          content: "حدث خطأ في توليد الصفحة. الرجاء المحاولة مرة أخرى بتوجيه مختلف."
+        }
+      });
+    }
+  });
+  
   // Register other route modules
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
