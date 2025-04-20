@@ -13,6 +13,9 @@ import { logEvent, logError } from "./services";
 // Import OpenAI client
 import OpenAI from "openai";
 
+// Import prompt templates
+import { buildSystemPrompt } from "./templates/prompts";
+
 /**
  * Legacy function for server-side prompt logging
  * @deprecated Use logEvent from services/logging instead
@@ -162,10 +165,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message_history_length: messageHistory.length
       });
 
-      // Build the system prompt for HTML generation
+      // Build the system prompt for HTML generation using our template system
       const systemPrompt = {
         role: "system",
-        content: "You are Dr. Pengy, an AI assistant who helps students generate creative HTML pages. Create a complete, self-contained HTML page based on the user's description. Include inline CSS and JavaScript where needed. Make the page visually appealing and interactive."
+        content: buildSystemPrompt('DR_PENGY', 'HTML_GENERATION')
       };
 
       // Use specific parameters for consistent, high-quality code
@@ -179,24 +182,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         max_tokens: 2000, // Allow enough tokens for complex HTML
       });
 
-      // Extract HTML from the response
-      let generatedHTML = response.choices[0].message.content || "";
+      // Extract message content from the response
+      const responseContent = response.choices[0].message.content || "";
+      let generatedHTML = "";
       
-      // Extract code blocks
-      const htmlPattern = /```html\s([\s\S]*?)```/;
-      const htmlMatch = generatedHTML.match(htmlPattern);
+      // Detect if this is a questioning phase (step 1) or generating HTML (step 2)
+      // If the response doesn't contain <!DOCTYPE html> and doesn't have code blocks,
+      // and it looks like it's asking questions, then we're in the questioning phase
+      const isQuestioningPhase = 
+        responseContent.indexOf('<!DOCTYPE html>') === -1 && 
+        !responseContent.includes('```html') &&
+        (responseContent.includes('?') || 
+         responseContent.includes('سؤال') || 
+         responseContent.includes('أسئلة'));
       
-      if (htmlMatch && htmlMatch[1]) {
-        generatedHTML = htmlMatch[1].trim();
+      if (isQuestioningPhase) {
+        // During questioning phase, we don't need to extract HTML
+        // Just provide an empty placeholder HTML
+        generatedHTML = `<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنشاء الصفحة</title>
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      direction: rtl;
+    }
+    .message {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 500px;
+    }
+    h1 { color: #4B5563; }
+    p { color: #6B7280; }
+  </style>
+</head>
+<body>
+  <div class="message">
+    <h1>جاري التخطيط للصفحة... 🤔</h1>
+    <p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p>
+  </div>
+</body>
+</html>`;
       } else {
-        // Try to fix if missing proper HTML doctype
-        const doctypeIndex = generatedHTML.indexOf('<!DOCTYPE html>');
-        if (doctypeIndex >= 0) {
-          generatedHTML = generatedHTML.substring(doctypeIndex);
+        // Move to HTML extraction for step 2
+        generatedHTML = responseContent;
+        
+        // Extract code blocks
+        const htmlPattern = /```html\s([\s\S]*?)```/;
+        const htmlMatch = generatedHTML.match(htmlPattern);
+        
+        if (htmlMatch && htmlMatch[1]) {
+          generatedHTML = htmlMatch[1].trim();
         } else {
-          // Fallback to a basic HTML template
-          generatedHTML = `<!DOCTYPE html>
-<html lang="en">
+          // Try to fix if missing proper HTML doctype
+          const doctypeIndex = generatedHTML.indexOf('<!DOCTYPE html>');
+          if (doctypeIndex >= 0) {
+            generatedHTML = generatedHTML.substring(doctypeIndex);
+          } else {
+            // Fallback to a basic HTML template
+            generatedHTML = `<!DOCTYPE html>
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -206,15 +263,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   </style>
 </head>
 <body>
-  <p>The AI had trouble generating HTML. Please try again with a different prompt.</p>
+  <p>حدث خطأ في عملية توليد HTML. الرجاء المحاولة مرة أخرى بوصف مختلف.</p>
 </body>
 </html>`;
 
-          // Log the HTML generation failure
-          logEvent('html_generation_parsing_failed', latestUserMessage.content, {
-            model: "gpt-4o",
-            response_length: response.choices[0].message.content?.length || 0
-          });
+            // Log the HTML generation failure
+            logEvent('html_generation_parsing_failed', latestUserMessage.content, {
+              model: "gpt-4o",
+              response_length: responseContent.length
+            });
+          }
         }
       }
 
@@ -225,12 +283,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html_type: generatedHTML.includes('<script') ? 'interactive' : 'static'
       });
 
-      // Return the complete response with the assistant's message as JSON
+      // Send back the actual AI response as the message
+      // For HTML-containing responses, only extract the HTML part for the html field
+      // but preserve the full message for the chat
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
-          content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+          content: response.choices[0].message.content || "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات."
         },
       });
     } catch (error) {
