@@ -246,7 +246,7 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
         html: generatedHTML,
         message: {
           role: "assistant",
-          content: generatedHTML,
+          content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
         },
       });
     } catch (error) {
