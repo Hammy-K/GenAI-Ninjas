@@ -32,6 +32,7 @@ interface TryAIState {
   generatedText: string;
   hasCompleted: boolean;
   messageHistory: Message[];
+  hasShownNudge: boolean;
 }
 
 export function TryAIStage({
@@ -46,6 +47,7 @@ export function TryAIStage({
     generatedText: "",
     hasCompleted: false,
     messageHistory: [],
+    hasShownNudge: false,
   });
 
   // Create individual updater functions
@@ -59,23 +61,52 @@ export function TryAIStage({
   // Local state for UI processing indicators
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Create ref for scrolling to bottom of chat
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Scroll to bottom of chat when message history changes
   useEffect(() => {
     // Use both approaches for maximum compatibility
     // 1. Use scrollIntoView for standard behavior
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    
+
     // 2. Use a timeout as a fallback to ensure scrolling happens after render
     const timer = setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [state.messageHistory]);
+  
+  // Check user message count and show nudge message after 6 user messages
+  useEffect(() => {
+    // Count user messages (role: 'user') in the message history
+    const userMessageCount = state.messageHistory?.filter(
+      msg => msg.role === 'user'
+    ).length || 0;
+    
+    // If we have exactly 6 user messages and haven't shown the nudge yet
+    if (userMessageCount >= 6 && !state.hasShownNudge) {
+      // Add a slight delay before showing the nudge message
+      const nudgeTimer = setTimeout(() => {
+        // Add the nudge message from Dr. Pengy
+        setState(prev => ({
+          ...prev,
+          messageHistory: [
+            ...(prev.messageHistory || []),
+            {
+              role: 'assistant',
+              content: 'بما إنك بدأت تتحمس! 😄 ليه ما ننتقل للخطوة الجاية ونشوف وش يمدينا نسوي بعد؟'
+            }
+          ],
+          hasShownNudge: true
+        }));
+      }, 1000); // Wait 1 second after the 6th user message
+      
+      return () => clearTimeout(nudgeTimer);
+    }
+  }, [state.messageHistory, state.hasShownNudge, setState]);
 
   const handleGenerateText = async () => {
     if (!state.textPrompt.trim()) return;
@@ -163,9 +194,8 @@ export function TryAIStage({
               />
               <p>
                 د. بنجي هنا عشان يكتشف معك عالم الذكاء التوليدي! 🐧 اسأله أي
-                شيء، جرّب أفكار، أو بس دردش معاه. يساعدك تكتب برومبتات رهيبة،
-                تطلع صور خرافية، ويمكن تبني تطبيقك بعدين! جرب تتكلم معاه وشوف وش
-                يقدر يسوي 💬✨
+                شيء، جرّب أفكار، أو بس دردش معاه. يساعدك تكتب تطلع بأفكار رهيبة،
+                تطلع صور خرافية، ويمكن تبني تطبيقك بعدين! ✨
               </p>
             </div>
 
@@ -283,19 +313,32 @@ export function TryAIStage({
                   اضغط Ctrl+Enter لإرسال رسالتك
                 </p>
               </div>
+              
+              {/* Show the "Next Step" button when the nudge has been shown */}
+              {state.hasShownNudge && (
+                <div className="mt-4 text-center">
+                  <Button 
+                    onClick={onComplete} 
+                    size="lg"
+                    className="animate-pulse px-8 py-6 bg-green-600 hover:bg-green-700 rounded-lg"
+                  >
+                    <span className="text-lg px-3">الخطوة التالية 🚀</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
               <ArrowRight className="ml-2 h-4 w-4" />
-              <span>السابق</span>
+              <span>للخلف</span>
             </Button>
             <Button
               onClick={onComplete}
               size="lg"
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>التالي</span>
+              <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>

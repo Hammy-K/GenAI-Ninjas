@@ -175,12 +175,12 @@ export function HTMLGeneratorStage({
     // Use both approaches for maximum compatibility
     // 1. Use scrollIntoView for standard behavior
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    
+
     // 2. Use a timeout as a fallback to ensure scrolling happens after render
     const timer = setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [state.messages]);
 
@@ -265,7 +265,7 @@ export function HTMLGeneratorStage({
       const friendlyResponse: HTMLMessage = {
         role: "assistant",
         content:
-          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إ �راء أي تغييرات.",
       };
 
       // Update state with the new message and HTML
@@ -921,10 +921,10 @@ export function HTMLGeneratorStage({
           <div className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
               <ArrowRight className="ml-2 h-4 w-4" />
-              <span>السابق</span>
+              <span>للخلف</span>
             </Button>
             <Button onClick={handleContinue} size="lg">
-              <span>التالي</span>
+              <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </div>

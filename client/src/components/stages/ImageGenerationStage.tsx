@@ -107,12 +107,12 @@ export function ImageGenerationStage({
     // Use both approaches for maximum compatibility
     // 1. Use scrollIntoView for standard behavior
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    
+
     // 2. Use a timeout as a fallback to ensure scrolling happens after render
     const timer = setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [state.messages]);
 
@@ -226,7 +226,7 @@ export function ImageGenerationStage({
       }));
     }
   };
-  
+
   // Helper function to share image to gallery
   const handleShareToGallery = async () => {
     if (!state.generatedImageUrl) {
@@ -234,84 +234,87 @@ export function ImageGenerationStage({
         title: "لا توجد صورة للمشاركة",
         description: "يرجى إنشاء صورة أولاً قبل المشاركة في المعرض.",
         variant: "destructive",
-        duration: 3000
+        duration: 3000,
       });
       return;
     }
-    
+
     // Validate the image URL first
     const validateImage = (url: string) => {
       return new Promise<boolean>((resolve) => {
-        const img = document.createElement('img');
+        const img = document.createElement("img");
         img.onload = () => resolve(true);
         img.onerror = () => resolve(false);
         img.src = url;
       });
     };
-    
+
     // Check if image is valid before proceeding
     const isValid = await validateImage(state.generatedImageUrl);
     if (!isValid) {
       toast({
         title: "خطأ في الصورة",
-        description: "الصورة غير صالحة أو لا يمكن تحميلها. يرجى إنشاء صورة جديدة.",
+        description:
+          "الصورة غير صالحة أو لا يمكن تحميلها. يرجى إنشاء صورة جديدة.",
         variant: "destructive",
-        duration: 5000
+        duration: 5000,
       });
       return;
     }
-    
+
     try {
       // Get the latest prompt that generated the image (last user message)
-      const userMessages = state.messages.filter(msg => msg.role === "user");
-      const latestPrompt = userMessages.length > 0 ? userMessages[userMessages.length - 1].content : "";
-      
+      const userMessages = state.messages.filter((msg) => msg.role === "user");
+      const latestPrompt =
+        userMessages.length > 0
+          ? userMessages[userMessages.length - 1].content
+          : "";
+
       // Get the current mission number (assuming it's 1 for now - could be passed as a prop in the future)
       const missionNumber = 1;
-      
+
       // Get the student name from localStorage
       const studentName = localStorage.getItem("studentName") || "طالب مبدع";
-      
+
       // Call the API to share the image to the gallery
-      const response = await fetch('/api/gallery/share', {
-        method: 'POST',
+      const response = await fetch("/api/gallery/share", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           imageUrl: state.generatedImageUrl,
           studentName,
           prompt: latestPrompt,
-          missionNumber
+          missionNumber,
         }),
-        credentials: 'include'
+        credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to share image to gallery");
       }
-      
+
       const result = await response.json();
-      
+
       // Show success toast and track the event
       toast({
         title: "تم مشاركة الصورة!",
         description: "يمكنك الآن رؤية صورتك في معرض الصور.",
-        duration: 5000
+        duration: 5000,
       });
-      
+
       trackStageProgress("image_generation", "image_shared_to_gallery", {
         gallery_image_id: result.id,
-        student_name: studentName
+        student_name: studentName,
       });
-      
     } catch (error) {
       console.error("Error sharing image to gallery:", error);
       toast({
         title: "خطأ في المشاركة",
         description: "حدث خطأ أثناء مشاركة الصورة. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
-        duration: 5000
+        duration: 5000,
       });
     }
   };
@@ -384,7 +387,7 @@ export function ImageGenerationStage({
       trackStageProgress("image_generation", "prompt_submitted", {
         prompt_length: userMessage.content.length,
       });
-      
+
       // Skip prompt analysis - directly generate the image
       // Add a processing message immediately
       const processingMessage: ChatMessage = {
@@ -670,14 +673,14 @@ export function ImageGenerationStage({
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
               <ArrowRight className="mr-2 h-4 w-4" />
-              <span>السابق</span>
+              <span>للخلف</span>
             </Button>
             <Button
               onClick={onComplete}
               size="lg"
               disabled={!state.generatedImageUrl && !state.hasEarnedXp}
             >
-              <span>التالي</span>
+              <span>المتابعة</span>
               <ArrowLeft className="mr-2 h-4 w-4" />
             </Button>
           </CardFooter>

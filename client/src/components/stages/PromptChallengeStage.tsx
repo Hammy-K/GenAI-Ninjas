@@ -369,7 +369,7 @@ export function PromptChallengeStage({
           <CardFooter className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
               <ArrowRight className="ml-2 h-4 w-4" />
-              <span>السابق</span>
+              <span>للخلف</span>
             </Button>
 
             <Button
@@ -377,7 +377,7 @@ export function PromptChallengeStage({
               size="lg"
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>التالي</span>
+              <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>

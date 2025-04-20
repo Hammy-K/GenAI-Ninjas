@@ -44,8 +44,8 @@ export function SubmissionFormStage({
                 variant="outline"
                 className="flex items-center"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                السابق
+                <ArrowRight className="mr-2 h-4 w-4" />
+                للخلف
               </Button>
               <Button onClick={onComplete} className="flex items-center">
                 !انهاء المهمه

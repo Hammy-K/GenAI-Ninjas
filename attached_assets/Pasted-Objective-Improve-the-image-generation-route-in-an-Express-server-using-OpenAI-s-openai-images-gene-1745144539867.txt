@@ -1,0 +1,83 @@
+Objective: Improve the image generation route in an Express server using OpenAI’s openai.images.generate() method to produce higher-quality illustrations from short student prompts.
+
+Tasks to implement precisely and without breaking any existing functionality:
+
+🛠️ 1. Prompt Enrichment
+Create a function enrichPromptWithStyle(prompt: string, style: string) that wraps short student prompts with stylistic, cultural, and compositional context.
+
+Use clear, friendly visuals suitable for Saudi high school students.
+
+The function must include:
+
+Description of desired style (cartoon, anime, etc.)
+
+Instruction to avoid generic or corporate-looking images
+
+Tone that encourages creativity and youth-friendly design
+
+Example prompt structure:
+
+arduino
+Copy
+Edit
+Create an image of: [prompt]. 
+Style: [inserted style hint from template]. 
+Youthful, creative tone. Avoid generic visuals or cold corporate styles.
+🎨 2. Style Selector Integration
+Support a new request field style, passed from the frontend. Values could include:
+
+"cartoon"
+
+"illustration"
+
+"realistic"
+
+"anime"
+
+"vector"
+
+"surprise"
+
+Based on this, map each style to a specific style template inside the enrichment function using a styleTemplates object.
+
+If style is missing or invalid, default to "cartoon".
+
+Example:
+
+ts
+Copy
+Edit
+const styleTemplates = {
+  cartoon: "cartoon-style, expressive faces, warm colors",
+  illustration: "storybook-style, detailed textures, artistic brush strokes",
+  realistic: "photo-realistic lighting, natural proportions, lifelike shadows",
+  anime: "anime-style, clean lines, big expressive eyes, soft gradients",
+  vector: "flat vector art, bold outlines, minimal shading",
+  surprise: "creative visual style, imaginative and playful composition"
+};
+🚀 3. Image Generation Call
+Replace the existing enhancedPrompt logic with the enriched version using the selected style.
+
+Keep the OpenAI image request:
+
+ts
+Copy
+Edit
+const response = await openai.images.generate({
+  model: "dall-e-3",
+  prompt: enrichedPrompt,
+  n: 1,
+  size: "1024x1024",
+  style: "vivid" // test if this works, fallback if unsupported
+});
+Preserve all existing behavior, including logging, error handling, moderation middleware, and follow-up detection.
+
+🔒 4. Stability & Compatibility
+Do not remove or modify any existing logging or middleware.
+
+Do not alter /moderate or /image-proxy endpoints.
+
+Make sure the route still returns { url } as JSON.
+
+✅ Result
+Students can submit short prompts + select a style, and your backend turns it into rich, creative, youth-appropriate image prompts — without requiring them to write long descriptions.
