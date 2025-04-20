@@ -1,4 +1,9 @@
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import { createServer, type Server } from "http";
 
 // Import route modules directly
@@ -17,13 +22,17 @@ import OpenAI from "openai";
  * Legacy function for server-side prompt logging
  * @deprecated Use logEvent from services/logging instead
  */
-function logServerPrompt(promptType: string, promptContent: string, metadata: any = {}) {
+function logServerPrompt(
+  promptType: string,
+  promptContent: string,
+  metadata: any = {},
+) {
   try {
     console.log(`[Server Analytics] Logging ${promptType} prompt`);
     console.log(`[Server Analytics] Length: ${promptContent.length} chars`);
     console.log(`[Server Analytics] Metadata:`, JSON.stringify(metadata));
   } catch (error) {
-    console.error('[Server Analytics] Failed to log prompt:', error);
+    console.error("[Server Analytics] Failed to log prompt:", error);
   }
 }
 
@@ -35,38 +44,41 @@ function logServerPrompt(promptType: string, promptContent: string, metadata: an
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create router for API endpoints
   const apiRouter = express.Router();
-  
+
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  
+
   if (!process.env.OPENAI_API_KEY) {
-    console.warn("\n⚠️  WARNING: OPENAI_API_KEY environment variable is not set. AI features will not work properly.\n");
+    console.warn(
+      "\n⚠️  WARNING: OPENAI_API_KEY environment variable is not set. AI features will not work properly.\n",
+    );
   }
 
   // Register direct text generation route to handle client requests
-  apiRouter.post('/ai/text', async (req: Request, res: Response) => {
+  apiRouter.post("/ai/text", async (req: Request, res: Response) => {
     try {
       const { prompt, messageHistory = [], maxTokens = 1000 } = req.body;
-      
+
       // Log the text generation request
-      logEvent('text_generation', prompt, {
+      logEvent("text_generation", prompt, {
         message_history_length: messageHistory.length,
         prompt_length: prompt.length,
-        max_tokens: maxTokens
+        max_tokens: maxTokens,
       });
 
       // Use OpenAI client
       const systemPrompt = {
         role: "system",
-        content: "You are Dr. Pengy, an AI assistant helping students learn about generative AI."
+        content:
+          'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊. تقدر تسألهم، تمزح مزح خفيف، أو تقول توقفات (زي: "مممم... خلني أفكر 😄") عشان تحسسهم إنك تتفاعل معهم. ركز على مساعدتهم يفهمون GenAI، يجربون أدوات جديدة، ويطلعون أفكار ومشاريع يفتخرون فيها. لو سأل الطالب عن شي تعليمي عام، عادي ترد عليه، بس حاول ترجع تركّز معه على المهمة أو الخطوة اللي هو فيها داخل المنصة. والمهم! لا ترد على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شي مايناسب، نبهه بلطافة، ووضح له إنك موجود عشان تساعده يتعلم ويبدع بأفكار ممتعة وآمنة. خلك دايمًا إيجابي، محفّز، وخلي التجربة كأنها مغامرة تعليمية ممتعة.',
       };
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          systemPrompt, 
+          systemPrompt,
           ...messageHistory,
-          { role: "user", content: prompt }
+          { role: "user", content: prompt },
         ],
         max_tokens: maxTokens,
         temperature: 0.7,
@@ -74,74 +86,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return res.json({ text: response.choices[0].message.content });
     } catch (error) {
-      logError('text_generation_direct', error instanceof Error ? error : 'Unknown error');
+      logError(
+        "text_generation_direct",
+        error instanceof Error ? error : "Unknown error",
+      );
       return res.status(500).json({ error: "Failed to generate text" });
     }
   });
-  
+
   // Register direct prompt analysis route to handle client requests
-  apiRouter.post('/ai/analyze-prompt', async (req: Request, res: Response) => {
+  apiRouter.post("/ai/analyze-prompt", async (req: Request, res: Response) => {
     try {
       const { prompt, messageHistory = [] } = req.body;
-      
+
       // Log the prompt analysis request
-      logEvent('prompt_analysis', prompt, {
+      logEvent("prompt_analysis", prompt, {
         message_history_length: messageHistory?.length || 0,
-        prompt_length: prompt?.length || 0
+        prompt_length: prompt?.length || 0,
       });
 
       // Use OpenAI client with JSON response format
       const systemPrompt = {
         role: "system",
-        content: "You are Dr. Pengy, an AI assistant who analyzes prompts and provides feedback. Return a JSON with 'score' (1-10), 'feedback' (string), and 'improvement' (string)."
+      role: "system",
+        content: أنت خبير في تحليل وتحسين توجيهات الذكاء الاصطناعي (prompts). 
+        قم بتحليل التوجيه المقدم وقيمه على مقياس من 1 إلى 10 استناداً إلى:
+        - التفاصيل والوضوح
+        - التحديد الدقيق للمطلوب
+        - الهيكل والتنظيم
+
+        ثم قدم تقييماً نصياً واقتراحاً لتحسين التوجيه. استخدم اللغة العربية.
+
+        يجب أن تعود بنتيجة بتنسيق JSON بالشكل التالي:
+        {
+          "score": number, // درجة التقييم من 1 إلى 10
+          "feedback": string, // تعليق على جودة التوجيه
+          "improvement": string // اقتراح لتحسين التوجيه
+        },
       };
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          systemPrompt, 
+          systemPrompt,
           ...messageHistory,
-          { role: "user", content: prompt }
+          { role: "user", content: prompt },
         ],
         temperature: 0.5,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
       });
 
       // Safely parse the response
-      let result = { score: 8, feedback: "توجيه جيد!", improvement: "يمكنك إضافة المزيد من التفاصيل." };
-      
+      let result = {
+        score: 8,
+        feedback: "توجيه جيد!",
+        improvement: "يمكنك إضافة المزيد من التفاصيل.",
+      };
+
       try {
         // Get the content and parse it
         const content = response.choices[0].message.content || "{}";
         const parsed = JSON.parse(content);
-        
+
         // Validate and ensure all required fields exist
-        if (typeof parsed.score === 'number' && parsed.feedback && parsed.improvement) {
+        if (
+          typeof parsed.score === "number" &&
+          parsed.feedback &&
+          parsed.improvement
+        ) {
           result = {
             score: Math.min(10, Math.max(1, Math.round(parsed.score))),
             feedback: parsed.feedback,
-            improvement: parsed.improvement
+            improvement: parsed.improvement,
           };
         }
       } catch (parseError) {
         // Log the error and use the default values
-        logError('prompt_analysis_parse', parseError instanceof Error ? parseError : 'Unknown error', {
-          response_content: response.choices[0].message.content
-        });
+        logError(
+          "prompt_analysis_parse",
+          parseError instanceof Error ? parseError : "Unknown error",
+          {
+            response_content: response.choices[0].message.content,
+          },
+        );
       }
 
       return res.json(result);
     } catch (error) {
-      logError('prompt_analysis_direct', error instanceof Error ? error : 'Unknown error');
+      logError(
+        "prompt_analysis_direct",
+        error instanceof Error ? error : "Unknown error",
+      );
       // Return a fallback response
-      return res.json({ 
+      return res.json({
         score: 8,
         feedback: "توجيه جيد! استمر بالعمل الرائع.",
-        improvement: "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل."
+        improvement:
+          "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل.",
       });
     }
   });
-  
+
   // Register other route modules
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
@@ -150,16 +195,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
-  
+
   // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Global error handler caught:', err);
-    
-    logError('global_error', err instanceof Error ? err : 'Unknown error');
-    
+    console.error("Global error handler caught:", err);
+
+    logError("global_error", err instanceof Error ? err : "Unknown error");
+
     // Don't expose server errors to clients
     res.status(500).json({
-      error: "An internal server error occurred"
+      error: "An internal server error occurred",
     });
   });
 
