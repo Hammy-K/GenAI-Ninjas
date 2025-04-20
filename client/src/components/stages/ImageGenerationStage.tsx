@@ -432,7 +432,7 @@ export function ImageGenerationStage({
       // This ensures the badge is awarded even if the state was reset
       onEarnXp(30, "image_generation_complete");
       onUnlockBadge("creative_artist_badge", "image_generation_complete");
-      
+
       // Mark as awarded in this session's state
       setState((prev) => ({
         ...prev,
@@ -476,7 +476,8 @@ export function ImageGenerationStage({
           <CardContent>
             <div className="text-center mb-6">
               <p>
-                وصف ما تريد أن تراه ودع الذكاء الاصطناعي يحول خيالك إلى حقيقة!
+                تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
+                شارك ابداعك.
               </p>
             </div>
 
