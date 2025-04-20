@@ -845,7 +845,9 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.content}
+                          {msg.role === "assistant" && msg.content.includes("<!DOCTYPE html") 
+                            ? "سويت لك الصفحة! شوف النتيجة في الأسفل 👇" 
+                            : msg.content}
                         </div>
                       </div>
                     ))}
