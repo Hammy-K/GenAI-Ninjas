@@ -219,6 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract message content from the response
       const responseContent = response.choices[0].message.content || "";
       let generatedHTML = "";
+      let explanatoryMessage = "";
 
       // Detect if this is a questioning phase (step 1) or generating HTML (step 2)
       // If the response doesn't contain <!DOCTYPE html> and doesn't have code blocks,
@@ -321,16 +322,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html_type: generatedHTML.includes("<script") ? "interactive" : "static",
       });
 
-      // Send back the actual AI response as the message
-      // For HTML-containing responses, only extract the HTML part for the html field
-      // but preserve the full message for the chat
+      // If we're in the HTML generation phase (not questioning phase) and have HTML content,
+      // Try to extract a final explanatory message from the beginning of the response
+      if (!isQuestioningPhase && generatedHTML.includes('<!DOCTYPE html>')) {
+        // Try to find any explanatory text at the beginning of the response
+        const htmlStartIndex = responseContent.indexOf('<!DOCTYPE html>');
+        const codeBlockStartIndex = responseContent.indexOf('```html');
+        
+        let explanatoryText = "";
+        if (htmlStartIndex > 0) {
+          // There's text before the HTML
+          explanatoryText = responseContent.substring(0, htmlStartIndex).trim();
+        } else if (codeBlockStartIndex > 0) {
+          // There's text before the code block
+          explanatoryText = responseContent.substring(0, codeBlockStartIndex).trim();
+        }
+        
+        // If we found explanatory text, use it as the message
+        if (explanatoryText) {
+          explanatoryMessage = explanatoryText;
+        } else {
+          // Default message if no explanation was found
+          explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+        }
+      } else if (!isQuestioningPhase) {
+        // Default message for non-questioning phase without valid HTML
+        explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+      } else {
+        // In questioning phase, use the original response
+        explanatoryMessage = responseContent;
+      }
+      
+      // Send back the HTML and appropriate message
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
-          content:
-            response.choices[0].message.content ||
-            "لقد بنيت فكرتك! جربها وأخبرني إذا ترغب في أي تغييرات.",
+          content: explanatoryMessage || "لقد بنيت فكرتك! جربها وأخبرني إذا ترغب في أي تغييرات.",
         },
       });
     } catch (error) {
