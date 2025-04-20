@@ -201,11 +201,11 @@ export function PromptChallengeStage({
             </div>
 
             <CardTitle className="text-2xl md:text-3xl text-center">
-              تحدي هندسة البرومبت
+              تحدي هندسة الأوامر
             </CardTitle>
 
             <p className="text-center mt-3 font-medium text-lg">
-              تعلم كيف تكتب برومبت يخلّي الذكاء الاصطناعي يفهمك تمام 👀
+              تعلم كيف تكتب أوامر يخلّي الذكاء الاصطناعي يفهمك تمام.
             </p>
           </CardHeader>
 
@@ -223,7 +223,7 @@ export function PromptChallengeStage({
             {/* Examples Section with Check/X Icons */}
             <div className="bg-neutral-50 rounded-lg border p-4 mb-6">
               <h3 className="font-bold text-lg mb-3 text-center">
-                أمثلة على البرومبتات
+                أمثلة على الأوامر
               </h3>
 
               <div className="flex items-center mb-3 bg-red-50 p-3 rounded-lg border border-red-200">
@@ -255,7 +255,7 @@ export function PromptChallengeStage({
 
             {/* Challenge Section */}
             <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3">حسّن البرومبت هذا:</h3>
+              <h3 className="text-lg font-bold mb-3">حسّن هذا:</h3>
 
               <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
                 <p className="font-medium">{weakPrompt}</p>

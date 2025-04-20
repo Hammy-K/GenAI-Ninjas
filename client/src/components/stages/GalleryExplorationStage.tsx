@@ -239,9 +239,6 @@ export function GalleryExplorationStage({
                     <div className="p-4">
                       <div className="flex justify-between items-center">
                         <p className="font-bold">بواسطة: {image.studentName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          مهمة {image.missionNumber}
-                        </p>
                       </div>
                       <div className="mt-3 flex justify-end">
                         <Button

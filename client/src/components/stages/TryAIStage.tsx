@@ -65,45 +65,52 @@ export function TryAIStage({
   // Create ref for scrolling to bottom of chat
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom of chat when message history changes
+  // Scroll only the chat area to bottom when message history changes
   useEffect(() => {
-    // Use both approaches for maximum compatibility
-    // 1. Use scrollIntoView for standard behavior
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollChatAreaOnly = () => {
+      // Find the chat area container (the div with the overflow-y-auto class)
+      const chatContainer = chatEndRef.current?.closest('.overflow-y-auto');
+      
+      if (chatContainer) {
+        // Scroll the chat container to its bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    };
 
-    // 2. Use a timeout as a fallback to ensure scrolling happens after render
-    const timer = setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }, 100);
+    // Use both immediate and delayed scrolling for reliability
+    scrollChatAreaOnly();
+    
+    // Also use a timeout as a fallback to ensure scrolling happens after render
+    const timer = setTimeout(scrollChatAreaOnly, 100);
 
     return () => clearTimeout(timer);
   }, [state.messageHistory]);
-  
+
   // Check user message count and show nudge message after 6 user messages
   useEffect(() => {
     // Count user messages (role: 'user') in the message history
-    const userMessageCount = state.messageHistory?.filter(
-      msg => msg.role === 'user'
-    ).length || 0;
-    
+    const userMessageCount =
+      state.messageHistory?.filter((msg) => msg.role === "user").length || 0;
+
     // If we have exactly 6 user messages and haven't shown the nudge yet
     if (userMessageCount >= 6 && !state.hasShownNudge) {
       // Add a slight delay before showing the nudge message
       const nudgeTimer = setTimeout(() => {
         // Add the nudge message from Dr. Pengy
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           messageHistory: [
             ...(prev.messageHistory || []),
             {
-              role: 'assistant',
-              content: 'بما إنك بدأت تتحمس! 😄 ليه ما ننتقل للخطوة الجاية ونشوف وش يمدينا نسوي بعد؟'
-            }
+              role: "assistant",
+              content:
+                "بما إنك بدأت تتحمس! 😄 ليه ما ننتقل للخطوة الجاية ونشوف وش يمدينا نسوي بعد؟",
+            },
           ],
-          hasShownNudge: true
+          hasShownNudge: true,
         }));
       }, 1000); // Wait 1 second after the 6th user message
-      
+
       return () => clearTimeout(nudgeTimer);
     }
   }, [state.messageHistory, state.hasShownNudge, setState]);
@@ -193,9 +200,8 @@ export function TryAIStage({
                 className="h-20 w-20 mb-3 rounded-full border-2 border-amber-100"
               />
               <p>
-                د. بنجي هنا عشان يكتشف معك عالم الذكاء التوليدي! 🐧 اسأله أي
-                شيء، جرّب أفكار، أو بس دردش معاه. يساعدك تكتب تطلع بأفكار رهيبة،
-                تطلع صور خرافية، ويمكن تبني تطبيقك بعدين! ✨
+                أنا د. بنجي 🐧، مساعدك الذكي! بس لا تشيل هم، أنا مو معقّد 😄
+                شغلي أساعدك تتعلم وتخترع أشياء رهيبة باستخدام الذكاء الاصطناعي!
               </p>
             </div>
 
@@ -269,12 +275,14 @@ export function TryAIStage({
 
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="اكتب رسالتك هنا... (مثال: 'اكتب قصة قصيرة عن مغامرة في الفضاء')"
+                    placeholder={state.hasShownNudge 
+                      ? "تم قفل المحادثة. اضغط زر المتابعة للانتقال للمرحلة التالية"
+                      : "اكتب رسالتك هنا... (مثال: 'اكتب قصة قصيرة عن مغامرة في الفضاء')"}
                     value={state.textPrompt}
-                    onChange={(e) => setTextPrompt(e.target.value)}
-                    className="min-h-[80px] flex-grow"
+                    onChange={(e) => !state.hasShownNudge && setTextPrompt(e.target.value)}
+                    className={`min-h-[80px] flex-grow ${state.hasShownNudge ? 'bg-gray-100 text-gray-500' : ''}`}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.ctrlKey) {
+                      if (e.key === "Enter" && e.ctrlKey && !state.hasShownNudge) {
                         e.preventDefault();
                         if (!isGeneratingText && state.textPrompt.trim()) {
                           handleGenerateText();
@@ -282,10 +290,11 @@ export function TryAIStage({
                       }
                     }}
                     dir="auto" // Auto-detect text direction for RTL support
+                    disabled={state.hasShownNudge} // Disable input after nudge message
                   />
                   <Button
                     onClick={handleGenerateText}
-                    disabled={isGeneratingText || !state.textPrompt.trim()}
+                    disabled={isGeneratingText || !state.textPrompt.trim() || state.hasShownNudge}
                     className="self-end h-10 px-4"
                   >
                     {isGeneratingText ? (
@@ -309,23 +318,18 @@ export function TryAIStage({
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  اضغط Ctrl+Enter لإرسال رسالتك
-                </p>
+                {state.hasShownNudge ? (
+                  <p className="text-sm text-amber-600 font-medium mt-2">
+                    المحادثة مغلقة. استخدم زر المتابعة للانتقال للمرحلة التالية.
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-2">
+                    اضغط Ctrl+Enter لإرسال رسالتك
+                  </p>
+                )}
               </div>
-              
-              {/* Show the "Next Step" button when the nudge has been shown */}
-              {state.hasShownNudge && (
-                <div className="mt-4 text-center">
-                  <Button 
-                    onClick={onComplete} 
-                    size="lg"
-                    className="animate-pulse px-8 py-6 bg-green-600 hover:bg-green-700 rounded-lg"
-                  >
-                    <span className="text-lg px-3">الخطوة التالية 🚀</span>
-                  </Button>
-                </div>
-              )}
+
+              {/* No "Next Step" button as per new requirements */}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -336,9 +340,13 @@ export function TryAIStage({
             <Button
               onClick={onComplete}
               size="lg"
+              className={state.hasShownNudge ? 
+                "animate-pulse bg-green-600 hover:bg-green-700 shadow-lg transform transition-all px-10 py-6" : 
+                ""
+              }
               disabled={false} // Allow users to proceed even if API calls fail
             >
-              <span>المتابعة</span>
+              <span className={state.hasShownNudge ? "font-bold text-lg" : ""}>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>

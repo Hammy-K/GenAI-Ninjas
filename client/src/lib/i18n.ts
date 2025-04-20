@@ -21,7 +21,7 @@ const resources = {
       // Progress stages
       stage1: "👋",
       stage2: "د. بنجي",
-      stage3: "البرومت",
+      stage3: "الأوامر",
       stage4: "الصور",
       stage5: "معرض الصور",
       stage6: "الموقع",
