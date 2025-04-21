@@ -6,3 +6,4 @@ export { registerAITextRoutes } from './ai-text';
 export { registerAIImageRoutes } from './ai-image';
 export { registerGalleryRoutes } from './gallery';
 export { registerFirebaseRoutes } from './firebase';
+export { registerAIAssistantRoutes } from './ai-assistant';
