@@ -95,7 +95,7 @@ export class AssistantService {
       const assistantMessages = messages.data
         .filter(msg => msg.role === 'assistant')
         .map(msg => {
-          if (msg.content[0].type === 'text') {
+          if (msg.content[0]?.type === 'text') {
             return {
               role: 'assistant',
               content: msg.content[0].text.value
@@ -103,7 +103,7 @@ export class AssistantService {
           }
           return null;
         })
-        .filter(Boolean);
+        .filter(Boolean) as AssistantMessage[];
       
       if (assistantMessages.length === 0) {
         return this.createErrorResponse("No assistant response received");
@@ -112,7 +112,11 @@ export class AssistantService {
       const latestAssistantMessage = assistantMessages[0];
       
       // Process the assistant's response to extract HTML and explanatory text
-      return this.processAssistantResponse(latestAssistantMessage.content);
+      if (latestAssistantMessage && latestAssistantMessage.content) {
+        return this.processAssistantResponse(latestAssistantMessage.content);
+      } else {
+        return this.createErrorResponse("Invalid assistant response format");
+      }
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";

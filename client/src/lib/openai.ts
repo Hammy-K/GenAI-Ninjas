@@ -118,17 +118,27 @@ export type GenerateHTMLResponse = {
 
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/generate-html', { messageHistory });
+    // Use the new Assistant API endpoint for better context preservation and clarification handling
+    const response = await apiRequest('POST', '/api/assistant/generate-html', { messageHistory });
     return await response.json();
   } catch (error) {
     console.error("Error generating HTML:", error);
-    return {
-      html: '',
-      message: {
-        role: 'assistant',
-        content: ''
-      },
-      error: error instanceof Error ? error.message : "Unknown error occurred"
-    };
+    
+    // Try falling back to the original endpoint if the assistant API fails
+    try {
+      console.log("Assistant API failed, falling back to standard endpoint");
+      const fallbackResponse = await apiRequest('POST', '/api/ai/generate-html', { messageHistory });
+      return await fallbackResponse.json();
+    } catch (fallbackError) {
+      console.error("Both HTML generation endpoints failed:", fallbackError);
+      return {
+        html: '',
+        message: {
+          role: 'assistant',
+          content: 'عذرًا، حدث خطأ في عملية توليد HTML. هل يمكنك إعادة المحاولة؟'
+        },
+        error: error instanceof Error ? error.message : "Unknown error occurred"
+      };
+    }
   }
 }
