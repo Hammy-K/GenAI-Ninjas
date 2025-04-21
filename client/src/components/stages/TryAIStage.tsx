@@ -120,13 +120,30 @@ export function TryAIStage({
 
     setError("");
     setIsGeneratingText(true);
+    
+    // Store the current prompt before clearing it
+    const currentPrompt = state.textPrompt;
+
+    // Immediately show the user message and the "thinking" message
+    setState((prev) => {
+      const prevMessageHistory = prev.messageHistory || [];
+      return {
+        ...prev,
+        messageHistory: [
+          ...prevMessageHistory,
+          { role: "user", content: currentPrompt },
+          { role: "assistant", content: "د. بنجي قاعد يفكر... 😄" }, // Thinking message
+        ],
+        textPrompt: "", // Clear the input right away
+      };
+    });
 
     try {
       // Use an empty array as fallback if messageHistory is undefined
       const messageHistory = state.messageHistory || [];
 
       const response = await generateText({
-        prompt: state.textPrompt,
+        prompt: currentPrompt,
         messageHistory: messageHistory,
       });
 
@@ -134,15 +151,17 @@ export function TryAIStage({
         setState((prev) => {
           // Create a safe copy of the message history with fallback
           const prevMessageHistory = prev.messageHistory || [];
+          
+          // Replace the "thinking" message with the actual response
+          const updatedHistory = [...prevMessageHistory];
+          // Remove the last message (thinking message)
+          updatedHistory.pop();
+          // Add the actual response
+          updatedHistory.push({ role: "assistant", content: response.text });
 
           return {
             ...prev,
-            messageHistory: [
-              ...prevMessageHistory,
-              { role: "user", content: state.textPrompt },
-              { role: "assistant", content: response.text },
-            ],
-            textPrompt: "", // Clear the input after successful response
+            messageHistory: updatedHistory,
           };
         });
       }
@@ -277,7 +296,7 @@ export function TryAIStage({
                   <Textarea
                     placeholder={state.hasShownNudge 
                       ? "تم إكمال مرحلة الدردشة! اضغط زر المتابعة لمواصلة المغامرة ✨"
-                      : "اكتب رسالتك هنا... (مثال: 'اكتب قصة قصيرة عن مغامرة في الفضاء')"}
+                      : "اكتب رسالتك هنا... (مثال: 'اكتب قصيدة عن التعلم')"}
                     value={state.textPrompt}
                     onChange={(e) => !state.hasShownNudge && setTextPrompt(e.target.value)}
                     className={`min-h-[80px] flex-grow transition-all duration-500 ${
