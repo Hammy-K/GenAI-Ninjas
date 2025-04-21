@@ -177,289 +177,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add direct HTML generation route to handle client requests
+  // HTML Generation Route - handles creating web pages based on user prompts
   apiRouter.post("/ai/generate-html", async (req: Request, res: Response) => {
     try {
       const { messageHistory = [] } = req.body;
 
-      // Make sure we have at least one user message
-      const userMessages = messageHistory.filter(
-        (msg: any) => msg.role === "user",
-      );
+      // Validate message history
+      const userMessages = messageHistory.filter(msg => msg.role === "user");
       if (userMessages.length === 0) {
-        return res
-          .status(400)
-          .json({
-            error: "At least one user message is required in messageHistory",
-          });
+        return res.status(400).json({
+          error: "At least one user message is required in messageHistory"
+        });
       }
 
       // Get the latest user message for logging
       const latestUserMessage = userMessages[userMessages.length - 1];
-
+      
       // Log the HTML generation request
       logEvent("html_generation", latestUserMessage.content, {
-        message_history_length: messageHistory.length,
+        message_history_length: messageHistory.length
       });
 
-      // Build the system prompt for HTML generation using our template system
+      // Build the system prompt using our template system
       const systemPrompt = {
         role: "system",
-        content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION"),
+        content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION")
       };
 
-      // Use specific parameters for consistent, high-quality code
+      // Make the API request with optimized parameters
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [systemPrompt, ...messageHistory],
-        temperature: 0.3, // Lower temperature for more consistent code
-        max_tokens: 2000, // Allow enough tokens for complex HTML
+        temperature: 0.2,           // Lower for consistent code
+        max_tokens: 3000,           // Higher for complex pages
+        presence_penalty: 0.0,
+        frequency_penalty: 0.0
       });
 
-      // Extract message content from the response
+      // Extract response content
       const responseContent = response.choices[0].message.content || "";
       let generatedHTML = "";
       let explanatoryMessage = "";
 
-      // Detect if this is a questioning phase (step 1) or generating HTML (step 2)
-      // If the response doesn't contain <!DOCTYPE html> and doesn't have code blocks,
-      // and it looks like it's asking questions, then we're in the questioning phase
-      const isQuestioningPhase =
+      // Determine if we're in questioning phase or generation phase
+      const isQuestioningPhase = 
         responseContent.indexOf("<!DOCTYPE html>") === -1 &&
         !responseContent.includes("```html") &&
-        (responseContent.includes("?") ||
-          responseContent.includes("سؤال") ||
-          responseContent.includes("أسئلة"));
+        (responseContent.includes("?") || 
+         responseContent.includes("سؤال") || 
+         responseContent.includes("أسئلة"));
 
       if (isQuestioningPhase) {
-        // During questioning phase, we don't need to extract HTML
-        // Just provide an empty placeholder HTML
-        generatedHTML = '<!DOCTYPE html>' +
-'<html lang="ar">' +
-'<head>' +
-'  <meta charset="UTF-8">' +
-'  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-'  <title>إنشاء الصفحة</title>' +
-'  <style>' +
-'    body { ' +
-'      font-family: system-ui, -apple-system, sans-serif;' +
-'      background-color: #f8f9fa;' +
-'      display: flex;' +
-'      justify-content: center;' +
-'      align-items: center;' +
-'      height: 100vh;' +
-'      margin: 0;' +
-'      text-align: center;' +
-'      direction: rtl;' +
-'    }' +
-'    .message {' +
-'      background-color: white;' +
-'      padding: 20px;' +
-'      border-radius: 10px;' +
-'      box-shadow: 0 2px 8px rgba(0,0,0,0.1);' +
-'      max-width: 500px;' +
-'    }' +
-'    h1 { color: #4B5563; }' +
-'    p { color: #6B7280; }' +
-'  </style>' +
-'</head>' +
-'<body>' +
-'  <div class="message">' +
-'    <h1>جاري التخطيط للصفحة... 🤔</h1>' +
-'    <p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p>' +
-'  </div>' +
-'</body>' +
-'</html>';
+        // Generate placeholder HTML for questioning phase
+        generatedHTML = '<!DOCTYPE html><html lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>إنشاء الصفحة</title><style>body{font-family:system-ui,-apple-system,sans-serif;background-color:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;text-align:center;direction:rtl;}.message{background-color:white;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:500px;}h1{color:#4B5563;}p{color:#6B7280;}</style></head><body><div class="message"><h1>جاري التخطيط للصفحة... 🤔</h1><p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p></div></body></html>';
+        explanatoryMessage = responseContent;
       } else {
-        // Move to HTML extraction for step 2
-        generatedHTML = responseContent;
-
-        // Extract code blocks
+        // Extract HTML from response using multiple methods
+        
+        // Method 1: Try to extract from code blocks
         const htmlPattern = /```html\s([\s\S]*?)```/;
-        const htmlMatch = generatedHTML.match(htmlPattern);
-
+        const htmlMatch = responseContent.match(htmlPattern);
+        
         if (htmlMatch && htmlMatch[1]) {
+          // Successfully found HTML in code block
           generatedHTML = htmlMatch[1].trim();
+          
+          // Ensure HTML has proper structure
+          if (!generatedHTML.includes('<!DOCTYPE html>')) {
+            generatedHTML = '<!DOCTYPE html>\n' + generatedHTML;
+          }
+          
+          if (!generatedHTML.includes('</html>')) {
+            generatedHTML += '\n</html>';
+          }
         } else {
-          // Try to extract HTML directly from the response if no code blocks are present
-          const doctypeIndex = generatedHTML.indexOf("<!DOCTYPE html>");
+          // Method 2: Look for direct HTML in response
+          const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
+          
           if (doctypeIndex >= 0) {
-            // Found a DOCTYPE, assume this is the start of the HTML
-            generatedHTML = generatedHTML.substring(doctypeIndex);
+            // Extract from DOCTYPE to end of HTML
+            generatedHTML = responseContent.substring(doctypeIndex);
             
-            // Check if there's text after the HTML closing tag and remove it
             const htmlEndIndex = generatedHTML.lastIndexOf("</html>");
             if (htmlEndIndex >= 0) {
-              generatedHTML = generatedHTML.substring(0, htmlEndIndex + 7); // Include the closing </html> tag
+              generatedHTML = generatedHTML.substring(0, htmlEndIndex + 7);
             }
           } else {
-            // Neither code block nor DOCTYPE found - create a simple interactive page
-            // Create a fallback interactive HTML page as a simple string without template literals in JS code
-            generatedHTML = '<!DOCTYPE html>' +
-                '<html lang="ar" dir="rtl">' +
-                '<head>' +
-                  '<meta charset="UTF-8">' +
-                  '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-                  '<title>صفحة تفاعلية</title>' +
-                  '<style>' +
-                    'body { ' +
-                      'font-family: system-ui, -apple-system, sans-serif; ' +
-                      'padding: 20px;' +
-                      'background-color: #f8f9fa;' +
-                      'color: #333;' +
-                      'line-height: 1.6;' +
-                      'text-align: center;' +
-                      'direction: rtl;' +
-                    '}' +
-                    '.container {' +
-                      'max-width: 800px;' +
-                      'margin: 0 auto;' +
-                      'padding: 20px;' +
-                      'background: white;' +
-                      'border-radius: 10px;' +
-                      'box-shadow: 0 2px 10px rgba(0,0,0,0.1);' +
-                    '}' +
-                    'h1 { color: #2563eb; margin-bottom: 15px; }' +
-                    'button {' +
-                      'background: #2563eb;' +
-                      'color: white;' +
-                      'border: none;' +
-                      'padding: 10px 20px;' +
-                      'border-radius: 5px;' +
-                      'cursor: pointer;' +
-                      'font-size: 16px;' +
-                      'margin: 10px;' +
-                      'transition: background 0.3s;' +
-                    '}' +
-                    'button:hover { background: #1d4ed8; }' +
-                    '.output { ' +
-                      'margin-top: 20px; ' +
-                      'min-height: 100px;' +
-                      'background: #f0f4ff;' +
-                      'padding: 15px;' +
-                      'border-radius: 5px;' +
-                      'text-align: right;' +
-                    '}' +
-                  '</style>' +
-                '</head>' +
-                '<body>' +
-                  '<div class="container">' +
-                    '<h1>مرحباً بك في صفحتك التفاعلية</h1>' +
-                    '<p>هذه صفحة بسيطة تم إنشاؤها لك. يمكنك التفاعل معها بالضغط على الأزرار أدناه.</p>' +
-                    
-                    '<div>' +
-                      '<button onclick="changeColor()">تغيير الألوان</button>' +
-                      '<button onclick="addElement()">إضافة عنصر</button>' +
-                      '<button onclick="showMessage()">عرض رسالة</button>' +
-                    '</div>' +
-                    
-                    '<div class="output" id="output">' +
-                      'النتائج ستظهر هنا...' +
-                    '</div>' +
-                  '</div>' +
-
-                  '<script>' +
-                    'function changeColor() {' +
-                      'const colors = ["#f87171", "#60a5fa", "#34d399", "#fbbf24", "#a78bfa"];' +
-                      'const randomColor = colors[Math.floor(Math.random() * colors.length)];' +
-                      'document.querySelector(".container").style.borderTop = "5px solid " + randomColor;' +
-                      'document.getElementById("output").textContent = "تم تغيير اللون!";' +
-                    '}' +
-                    
-                    'function addElement() {' +
-                      'const output = document.getElementById("output");' +
-                      'const newElement = document.createElement("p");' +
-                      'newElement.textContent = "عنصر جديد تمت إضافته! " + new Date().toLocaleTimeString();' +
-                      'output.appendChild(newElement);' +
-                    '}' +
-                    
-                    'function showMessage() {' +
-                      'const messages = [' +
-                        '"مرحباً بك!",' +
-                        '"أتمنى لك يوماً رائعاً!",' +
-                        '"استمتع بتجربة الذكاء الاصطناعي!",' +
-                        '"يمكنك إنشاء صفحات أكثر تعقيداً بوصف أكثر تفصيلاً",' +
-                        '"جرب تقديم وصف مفصل لموقع متكامل في المرة القادمة!"' +
-                      '];' +
-                      'const randomMessage = messages[Math.floor(Math.random() * messages.length)];' +
-                      'document.getElementById("output").textContent = randomMessage;' +
-                    '}' +
-                  '</script>' +
-                '</body>' +
-                '</html>';
-
-            // Log the HTML generation failure
-            logEvent(
-              "html_generation_parsing_failed",
-              latestUserMessage.content,
-              {
+            // Method 3: Look for HTML structure elements
+            const htmlStartIndex = responseContent.indexOf("<html");
+            const headIndex = responseContent.indexOf("<head");
+            const bodyIndex = responseContent.indexOf("<body");
+            
+            if (htmlStartIndex >= 0 || headIndex >= 0 || bodyIndex >= 0) {
+              // Reconstruct from HTML parts
+              if (htmlStartIndex >= 0) {
+                generatedHTML = '<!DOCTYPE html>\n' + responseContent.substring(htmlStartIndex);
+              } else {
+                // Build from head/body parts if found
+                generatedHTML = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n';
+                
+                // Add head section
+                if (headIndex >= 0) {
+                  const headEndIndex = responseContent.indexOf('</head>', headIndex);
+                  if (headEndIndex >= 0) {
+                    generatedHTML += responseContent.substring(headIndex, headEndIndex + 7) + '\n';
+                  } else {
+                    generatedHTML += '<head><meta charset="UTF-8"><title>صفحة تم إنشاؤها</title></head>\n';
+                  }
+                } else {
+                  generatedHTML += '<head><meta charset="UTF-8"><title>صفحة تم إنشاؤها</title></head>\n';
+                }
+                
+                // Add body section
+                if (bodyIndex >= 0) {
+                  const bodyEndIndex = responseContent.indexOf('</body>', bodyIndex);
+                  if (bodyEndIndex >= 0) {
+                    generatedHTML += responseContent.substring(bodyIndex, bodyEndIndex + 7) + '\n';
+                  } else {
+                    generatedHTML += responseContent.substring(bodyIndex) + '\n</body>\n';
+                  }
+                } else {
+                  generatedHTML += '<body><div class="content">محتوى الصفحة</div></body>\n';
+                }
+                
+                generatedHTML += '</html>';
+              }
+            } else {
+              // Last resort: Generate a minimal fallback template
+              logEvent("html_generation_parsing_failed", latestUserMessage.content, {
                 model: "gpt-4o",
-                response_length: responseContent.length,
-              },
-            );
+                response_length: responseContent.length
+              });
+              
+              // Very basic fallback
+              generatedHTML = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>صفحة تفاعلية</title><style>body{font-family:system-ui,sans-serif;padding:20px;background:#f8f9fa;color:#333;line-height:1.6;text-align:center;direction:rtl}.container{max-width:800px;margin:0 auto;padding:20px;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}h1{color:#2563eb;margin-bottom:15px}button{background:#2563eb;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-size:16px;margin:10px;transition:background 0.3s}button:hover{background:#1d4ed8}.output{margin-top:20px;min-height:100px;background:#f0f4ff;padding:15px;border-radius:5px;text-align:right}</style></head><body><div class="container"><h1>مرحباً بك في صفحتك التفاعلية</h1><p>هذه صفحة بسيطة تم إنشاؤها لك. يمكنك التفاعل معها بالضغط على الأزرار أدناه.</p><div><button onclick="changeColor()">تغيير الألوان</button><button onclick="addElement()">إضافة عنصر</button><button onclick="showMessage()">عرض رسالة</button></div><div class="output" id="output">النتائج ستظهر هنا...</div></div><script>function changeColor(){const colors=["#f87171","#60a5fa","#34d399","#fbbf24","#a78bfa"];const randomColor=colors[Math.floor(Math.random()*colors.length)];document.querySelector(".container").style.borderTop="5px solid "+randomColor;document.getElementById("output").textContent="تم تغيير اللون!";}function addElement(){const output=document.getElementById("output");const newElement=document.createElement("p");newElement.textContent="عنصر جديد تمت إضافته! "+new Date().toLocaleTimeString();output.appendChild(newElement);}function showMessage(){const messages=["مرحباً بك!","أتمنى لك يوماً رائعاً!","استمتع بتجربة الذكاء الاصطناعي!","يمكنك إنشاء صفحات أكثر تعقيداً بوصف أكثر تفصيلاً","جرب تقديم وصف مفصل لموقع متكامل في المرة القادمة!"];const randomMessage=messages[Math.floor(Math.random()*messages.length)];document.getElementById("output").textContent=randomMessage;}</script></body></html>`;
+            }
           }
         }
-      }
-
-      // Log successful HTML generation with metrics
-      logEvent("html_generation_success", latestUserMessage.content, {
-        model: "gpt-4o",
-        html_size: generatedHTML.length,
-        html_type: generatedHTML.includes("<script") ? "interactive" : "static",
-      });
-
-      // If we're in the HTML generation phase (not questioning phase) and have HTML content,
-      // Try to extract a final explanatory message from the beginning of the response
-      if (!isQuestioningPhase && generatedHTML.includes('<!DOCTYPE html>')) {
-        // Try to find any explanatory text at the beginning of the response
+        
+        // Extract explanatory message
+        let explanatoryText = "";
         const htmlStartIndex = responseContent.indexOf('<!DOCTYPE html>');
         const codeBlockStartIndex = responseContent.indexOf('```html');
         
-        let explanatoryText = "";
         if (htmlStartIndex > 0) {
-          // There's text before the HTML
           explanatoryText = responseContent.substring(0, htmlStartIndex).trim();
         } else if (codeBlockStartIndex > 0) {
-          // There's text before the code block
           explanatoryText = responseContent.substring(0, codeBlockStartIndex).trim();
         }
         
-        // If we found explanatory text, use it as the message
         if (explanatoryText) {
           explanatoryMessage = explanatoryText;
         } else {
-          // Default message if no explanation was found
           explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
         }
-      } else if (!isQuestioningPhase) {
-        // Default message for non-questioning phase without valid HTML
-        explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
-      } else {
-        // In questioning phase, use the original response
-        explanatoryMessage = responseContent;
       }
       
-      // Send back the HTML and appropriate message
+      // Log successful generation
+      logEvent("html_generation_success", latestUserMessage.content, {
+        model: "gpt-4o",
+        html_size: generatedHTML.length,
+        html_type: generatedHTML.includes("<script") ? "interactive" : "static"
+      });
+      
+      // Send response
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
-          content: explanatoryMessage || "لقد بنيت فكرتك! جربها وأخبرني إذا ترغب في أي تغييرات.",
-        },
+          content: explanatoryMessage || "لقد بنيت فكرتك! جربها وأخبرني إذا ترغب في أي تغييرات."
+        }
       });
+      
     } catch (error) {
-      logError(
-        "html_generation",
-        error instanceof Error ? error : "Unknown error",
-      );
+      // Log and handle errors
+      logError("html_generation", error instanceof Error ? error : "Unknown error");
+      
       return res.status(500).json({
         error: "Failed to generate HTML",
         html: "",
         message: {
           role: "assistant",
-          content:
-            "حدث خطأ في توليد الصفحة. الرجاء المحاولة مرة أخرى بتوجيه مختلف.",
-        },
+          content: "حدث خطأ في توليد الصفحة. الرجاء المحاولة مرة أخرى بتوجيه مختلف."
+        }
       });
     }
   });
