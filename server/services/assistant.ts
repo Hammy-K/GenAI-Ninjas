@@ -7,18 +7,20 @@
 import OpenAI from 'openai';
 import { logEvent, logError } from './logging';
 
-// Constants for the HTML Generator Assistant
-const ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j';
-const MODEL = 'gpt-4.1-mini';
+// Constants for the Assistant
+const ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // Our HTML generator assistant
+const HTML_INSTRUCTION = "Please generate HTML based on the user's request, ensuring it's fully functional. Include any necessary CSS and JavaScript inline in the HTML document. Respond with HTML for the webpage and a brief explanation of what you created. Never use fallbacks or template placeholders - always generate original content based on the user's request.";
 
-// In-memory storage for active thread IDs (in production, use a database)
-const activeThreads: Record<string, string> = {};
+// Thread Map for session persistence
+const threadMap = new Map<string, string>();
 
+// Message types matching the client's expected format
 interface AssistantMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
+// Response format for HTML generation
 interface AssistantResponse {
   html: string;
   message: AssistantMessage;
@@ -32,7 +34,7 @@ export class AssistantService {
   constructor(openai: OpenAI) {
     this.openai = openai;
   }
-
+  
   /**
    * Generate HTML using the Assistant API
    * 
@@ -45,69 +47,80 @@ export class AssistantService {
     sessionId: string
   ): Promise<AssistantResponse> {
     try {
-      // Get session thread or create a new one
+      // Get or create thread for this session
       let threadId = this.getThreadId(sessionId);
       
-      // Get latest user message
-      const userMessages = messageHistory.filter((msg) => msg.role === 'user');
-      if (userMessages.length === 0) {
-        return this.createErrorResponse('No user messages found in history');
-      }
-      
-      const latestUserMessage = userMessages[userMessages.length - 1];
-      
-      // Log the request
-      logEvent('assistant_html_generation', latestUserMessage.content, {
-        message_history_length: messageHistory.length,
-        assistant_id: ASSISTANT_ID,
-        model: MODEL,
-        thread_id: threadId || 'new'
-      });
-
-      // If no thread exists yet, create one
       if (!threadId) {
         threadId = await this.createThread(sessionId);
       }
-
-      // Add the user message to the thread
-      await this.openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: latestUserMessage.content
-      });
-
-      // Run the assistant on the thread
-      const run = await this.openai.beta.threads.runs.create(threadId, {
-        assistant_id: ASSISTANT_ID
-      });
-
-      // Poll for the completion of the run
-      const result = await this.waitForRunCompletion(threadId, run.id);
       
-      // Get the assistant's response
+      // Get the last user message
+      const latestUserMessage = messageHistory
+        .filter(msg => msg.role === 'user')
+        .pop();
+      
+      if (!latestUserMessage) {
+        return this.createErrorResponse("No user messages found in history");
+      }
+      
+      // Add message to thread
+      await this.openai.beta.threads.messages.create(
+        threadId,
+        {
+          role: "user",
+          content: latestUserMessage.content,
+        }
+      );
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(
+        threadId,
+        {
+          assistant_id: ASSISTANT_ID,
+          instructions: HTML_INSTRUCTION,
+        }
+      );
+      
+      // Wait for the run to complete
+      const completedRun = await this.waitForRunCompletion(threadId, run.id);
+      
+      if (completedRun.status !== 'completed') {
+        return this.createErrorResponse(`Assistant run failed with status: ${completedRun.status}`);
+      }
+      
+      // Get messages from the thread
       const messages = await this.openai.beta.threads.messages.list(threadId);
-      const assistantMessages = messages.data.filter(msg => msg.role === 'assistant');
+      
+      // Extract the latest assistant message
+      const assistantMessages = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .map(msg => {
+          if (msg.content[0].type === 'text') {
+            return {
+              role: 'assistant',
+              content: msg.content[0].text.value
+            } as AssistantMessage;
+          }
+          return null;
+        })
+        .filter(Boolean);
       
       if (assistantMessages.length === 0) {
-        return this.createErrorResponse('No response from assistant');
+        return this.createErrorResponse("No assistant response received");
       }
-
-      // Get the most recent assistant message
-      const latestMessage = assistantMessages[0];
       
-      // Extract the content
-      let messageContent = '';
-      if (latestMessage.content[0].type === 'text') {
-        messageContent = latestMessage.content[0].text.value;
-      }
-
-      // Process the response to extract HTML and explanatory text
-      return this.processAssistantResponse(messageContent);
+      const latestAssistantMessage = assistantMessages[0];
+      
+      // Process the assistant's response to extract HTML and explanatory text
+      return this.processAssistantResponse(latestAssistantMessage.content);
+      
     } catch (error) {
-      logError('assistant_html_generation', error instanceof Error ? error : 'Unknown error');
-      return this.createErrorResponse(error instanceof Error ? error.message : 'Failed to generate HTML');
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      logError("assistant_html_generation", errorMessage);
+      return this.createErrorResponse(errorMessage);
     }
   }
-
+  
   /**
    * Create a new thread and store it for the session
    * 
@@ -115,14 +128,18 @@ export class AssistantService {
    * @returns Thread ID
    */
   private async createThread(sessionId: string): Promise<string> {
-    const thread = await this.openai.beta.threads.create();
-    
-    // Store the thread ID for this session
-    activeThreads[sessionId] = thread.id;
-    
-    return thread.id;
+    try {
+      const thread = await this.openai.beta.threads.create();
+      
+      // Store the thread ID for this session
+      threadMap.set(sessionId, thread.id);
+      return thread.id;
+    } catch (error) {
+      logError("assistant_create_thread", error instanceof Error ? error.message : "Unknown error");
+      throw error;
+    }
   }
-
+  
   /**
    * Get thread ID for a session, if exists
    * 
@@ -130,9 +147,9 @@ export class AssistantService {
    * @returns Thread ID or undefined
    */
   private getThreadId(sessionId: string): string | undefined {
-    return activeThreads[sessionId];
+    return threadMap.get(sessionId);
   }
-
+  
   /**
    * Poll for run completion
    * 
@@ -141,23 +158,24 @@ export class AssistantService {
    * @returns Run result
    */
   private async waitForRunCompletion(threadId: string, runId: string): Promise<any> {
-    let runStatus = await this.openai.beta.threads.runs.retrieve(threadId, runId);
+    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    let attempts = 0;
     
-    // Poll in a loop until run is completed or fails
-    while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
-      // Wait for 1 second before polling again
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await this.openai.beta.threads.runs.retrieve(threadId, runId);
-    }
-
-    // Check if run completed successfully
-    if (runStatus.status !== 'completed') {
-      throw new Error(`Run failed with status: ${runStatus.status}`);
+    while (attempts < maxAttempts) {
+      const run = await this.openai.beta.threads.runs.retrieve(threadId, runId);
+      
+      if (['completed', 'failed', 'cancelled', 'expired'].includes(run.status)) {
+        return run;
+      }
+      
+      // Wait for 5 seconds before checking again
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      attempts++;
     }
     
-    return runStatus;
+    throw new Error("Run timed out after 5 minutes");
   }
-
+  
   /**
    * Process the assistant's response to extract HTML and explanatory text
    * 
@@ -165,11 +183,12 @@ export class AssistantService {
    * @returns Structured response with HTML and message
    */
   private processAssistantResponse(responseContent: string): AssistantResponse {
-    let generatedHTML = '';
-    let explanatoryMessage = '';
-    let isGeneratingHTML = false;
-
-    // Check if this is a questioning phase (no HTML)
+    let generatedHTML = "";
+    let explanatoryMessage = "";
+    let isGeneratingHTMLPhase = false;
+    
+    // Check if we're in questioning phase or generation phase
+    // If there's no DOCTYPE, it's likely a clarifying question
     const isQuestioningPhase = 
       responseContent.indexOf("<!DOCTYPE html>") === -1 &&
       (responseContent.includes("?") || 
@@ -178,13 +197,13 @@ export class AssistantService {
        responseContent.includes("ممكن توضح") ||
        responseContent.includes("بغيت أفهم") ||
        responseContent.includes("توصف أكثر"));
-
+       
     if (isQuestioningPhase) {
       // In questioning phase, pass through the questions as a message
       explanatoryMessage = responseContent;
-      isGeneratingHTML = false;
+      isGeneratingHTMLPhase = false;
       
-      // Minimal HTML structure for an empty preview
+      // Pass through a minimal HTML structure
       generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -197,12 +216,12 @@ export class AssistantService {
 </body>
 </html>`;
     } else {
-      // Extract HTML from the response if present
+      // Extract HTML directly from the response
       const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
       
       if (doctypeIndex >= 0) {
         // We found DOCTYPE, so we're in HTML generation phase
-        isGeneratingHTML = true;
+        isGeneratingHTMLPhase = true;
 
         // Extract just the content from doctype to </html> closing tag
         const htmlContent = responseContent.substring(doctypeIndex);
@@ -212,12 +231,15 @@ export class AssistantService {
           // Found the closing tag - extract ONLY up to and including </html>
           generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7); // +7 to include the </html> tag
           
-          // Extract explanatory text that came before the HTML
+          // All explanatory text is either before the DOCTYPE or will be moved to the chat
+          let explanationText = "";
+          
           if (doctypeIndex > 0) {
-            explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
-          } else {
-            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+            // There's text before the DOCTYPE
+            explanationText = responseContent.substring(0, doctypeIndex).trim();
           }
+          
+          explanatoryMessage = explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
         } else {
           // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
           generatedHTML = htmlContent;
@@ -229,7 +251,7 @@ export class AssistantService {
             generatedHTML += "\n</html>";
           }
           
-          // Extract explanatory text that came before the HTML
+          // Extract any text before DOCTYPE as explanatory message
           if (doctypeIndex > 0) {
             explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
           } else {
@@ -237,11 +259,11 @@ export class AssistantService {
           }
         }
       } else {
-        // No HTML found in the response
+        // If no DOCTYPE found, send the entire response back to the user as a message
         explanatoryMessage = responseContent;
-        isGeneratingHTML = false;
+        isGeneratingHTMLPhase = false;
         
-        // Minimal HTML structure for an empty preview
+        // Provide a placeholder HTML
         generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -250,29 +272,23 @@ export class AssistantService {
   <title>استكشاف الفكرة</title>
 </head>
 <body style="font-family:system-ui;background-color:#f5f5f5;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
-  <!-- Empty body - no HTML generated yet -->
+  <!-- Empty body - will be replaced with real HTML after clarification -->
 </body>
 </html>`;
       }
     }
-
-    // Log generation details
-    logEvent('assistant_html_generation_success', responseContent.substring(0, 50) + '...', {
-      html_size: generatedHTML.length,
-      html_type: generatedHTML.includes("<script") ? "interactive" : "static",
-      is_question_phase: isQuestioningPhase
-    });
-
+    
+    // Return structured response
     return {
       html: generatedHTML,
       message: {
-        role: 'assistant',
+        role: "assistant",
         content: explanatoryMessage
       },
-      isGeneratingHTML
+      isGeneratingHTML: isGeneratingHTMLPhase
     };
   }
-
+  
   /**
    * Create an error response
    * 
@@ -280,11 +296,13 @@ export class AssistantService {
    * @returns Error response object
    */
   private createErrorResponse(errorMessage: string): AssistantResponse {
+    logError("assistant_service", errorMessage);
+    
     return {
-      html: '',
+      html: "",
       message: {
-        role: 'assistant',
-        content: 'حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟'
+        role: "assistant",
+        content: "حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟"
       },
       isGeneratingHTML: false,
       error: errorMessage
@@ -292,7 +310,11 @@ export class AssistantService {
   }
 }
 
-// Export a factory function to create the service
+/**
+ * Factory function to create an instance of the AssistantService
+ * @param openai OpenAI client instance
+ * @returns AssistantService instance
+ */
 export function createAssistantService(openai: OpenAI): AssistantService {
   return new AssistantService(openai);
 }
