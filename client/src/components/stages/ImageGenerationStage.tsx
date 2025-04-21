@@ -465,11 +465,13 @@ export function ImageGenerationStage({
       };
 
       // Update state with the image and message, and reset sharing status since this is a new image
+      // Also collapse the chat UI to focus on the generated image
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, successMessage],
         generatedImageUrl: imageUrl,
         isLoading: false,
+        isChatOpen: false, // Collapse the chat to focus on the generated image
         sharingStatus: "idle", // Reset sharing status for the new image
         sharedImageId: undefined, // Clear any previously shared image ID
       }));

@@ -268,11 +268,13 @@ export function HTMLGeneratorStage({
       };
 
       // Update state with the new message and HTML
+      // Also collapse the chat UI to focus on the generated HTML preview
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, userMessage, aiResponse],
         currentHTML: response.html,
         isLoading: false,
+        isChatOpen: false, // Collapse chat to focus attention on the HTML preview
       }));
 
       // Award XP for receiving a response if not already awarded
