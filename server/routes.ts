@@ -14,12 +14,10 @@ import { registerFirebaseRoutes } from "./routes/firebase";
 
 // Import services
 import { logEvent, logError } from "./services";
+import { buildSystemPrompt } from "./templates/prompts";
 
 // Import OpenAI client
 import OpenAI from "openai";
-
-// Import prompt templates
-import { buildSystemPrompt } from "./templates/prompts";
 
 /**
  * Legacy function for server-side prompt logging
@@ -183,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { messageHistory = [] } = req.body;
 
       // Validate message history
-      const userMessages = messageHistory.filter(msg => msg.role === "user");
+      const userMessages = messageHistory.filter((msg: {role: string, content: string}) => msg.role === "user");
       if (userMessages.length === 0) {
         return res.status(400).json({
           error: "At least one user message is required in messageHistory"
@@ -198,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message_history_length: messageHistory.length
       });
 
-      // Build the system prompt using our template system
+      // Build the system prompt using our template
       const systemPrompt = {
         role: "system",
         content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION")
@@ -208,8 +206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [systemPrompt, ...messageHistory],
-        temperature: 0.2,           // Lower for consistent code
-        max_tokens: 3000,           // Higher for complex pages
+        temperature: 0.2,         // Keep low for consistency
+        max_tokens: 4000,         // Higher to allow full HTML pages
         presence_penalty: 0.0,
         frequency_penalty: 0.0
       });
@@ -222,118 +220,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine if we're in questioning phase or generation phase
       const isQuestioningPhase = 
         responseContent.indexOf("<!DOCTYPE html>") === -1 &&
-        !responseContent.includes("```html") &&
         (responseContent.includes("?") || 
          responseContent.includes("سؤال") || 
          responseContent.includes("أسئلة"));
 
       if (isQuestioningPhase) {
-        // Generate placeholder HTML for questioning phase
-        generatedHTML = '<!DOCTYPE html><html lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>إنشاء الصفحة</title><style>body{font-family:system-ui,-apple-system,sans-serif;background-color:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;text-align:center;direction:rtl;}.message{background-color:white;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:500px;}h1{color:#4B5563;}p{color:#6B7280;}</style></head><body><div class="message"><h1>جاري التخطيط للصفحة... 🤔</h1><p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p></div></body></html>';
+        // In questioning phase, pass through the questions as a message
         explanatoryMessage = responseContent;
+        
+        // Pass through a minimal HTML structure - NOT a fallback, just to maintain the UI flow
+        // This is empty HTML with a message that Dr. Pengy is asking questions
+        generatedHTML = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>استكشاف الفكرة</title>
+</head>
+<body style="font-family:system-ui;background-color:#f5f5f5;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
+  <!-- Empty body - will be replaced with real HTML after questions are answered -->
+</body>
+</html>`;
       } else {
-        // Extract HTML from response using multiple methods
+        // Extract HTML directly from the response
+        const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
         
-        // Method 1: Try to extract from code blocks
-        const htmlPattern = /```html\s([\s\S]*?)```/;
-        const htmlMatch = responseContent.match(htmlPattern);
-        
-        if (htmlMatch && htmlMatch[1]) {
-          // Successfully found HTML in code block
-          generatedHTML = htmlMatch[1].trim();
+        if (doctypeIndex >= 0) {
+          // Found raw HTML - extract it directly
+          generatedHTML = responseContent.substring(doctypeIndex);
           
-          // Ensure HTML has proper structure
-          if (!generatedHTML.includes('<!DOCTYPE html>')) {
-            generatedHTML = '<!DOCTYPE html>\n' + generatedHTML;
-          }
-          
-          if (!generatedHTML.includes('</html>')) {
-            generatedHTML += '\n</html>';
-          }
-        } else {
-          // Method 2: Look for direct HTML in response
-          const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
-          
-          if (doctypeIndex >= 0) {
-            // Extract from DOCTYPE to end of HTML
-            generatedHTML = responseContent.substring(doctypeIndex);
-            
-            const htmlEndIndex = generatedHTML.lastIndexOf("</html>");
-            if (htmlEndIndex >= 0) {
-              generatedHTML = generatedHTML.substring(0, htmlEndIndex + 7);
-            }
+          // If there's text before the HTML, use it as explanation message
+          if (doctypeIndex > 0) {
+            explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
           } else {
-            // Method 3: Look for HTML structure elements
-            const htmlStartIndex = responseContent.indexOf("<html");
-            const headIndex = responseContent.indexOf("<head");
-            const bodyIndex = responseContent.indexOf("<body");
-            
-            if (htmlStartIndex >= 0 || headIndex >= 0 || bodyIndex >= 0) {
-              // Reconstruct from HTML parts
-              if (htmlStartIndex >= 0) {
-                generatedHTML = '<!DOCTYPE html>\n' + responseContent.substring(htmlStartIndex);
-              } else {
-                // Build from head/body parts if found
-                generatedHTML = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n';
-                
-                // Add head section
-                if (headIndex >= 0) {
-                  const headEndIndex = responseContent.indexOf('</head>', headIndex);
-                  if (headEndIndex >= 0) {
-                    generatedHTML += responseContent.substring(headIndex, headEndIndex + 7) + '\n';
-                  } else {
-                    generatedHTML += '<head><meta charset="UTF-8"><title>صفحة تم إنشاؤها</title></head>\n';
-                  }
-                } else {
-                  generatedHTML += '<head><meta charset="UTF-8"><title>صفحة تم إنشاؤها</title></head>\n';
-                }
-                
-                // Add body section
-                if (bodyIndex >= 0) {
-                  const bodyEndIndex = responseContent.indexOf('</body>', bodyIndex);
-                  if (bodyEndIndex >= 0) {
-                    generatedHTML += responseContent.substring(bodyIndex, bodyEndIndex + 7) + '\n';
-                  } else {
-                    generatedHTML += responseContent.substring(bodyIndex) + '\n</body>\n';
-                  }
-                } else {
-                  generatedHTML += '<body><div class="content">محتوى الصفحة</div></body>\n';
-                }
-                
-                generatedHTML += '</html>';
-              }
-            } else {
-              // Last resort: Generate a minimal fallback template
-              logEvent("html_generation_parsing_failed", latestUserMessage.content, {
-                model: "gpt-4o",
-                response_length: responseContent.length
-              });
-              
-              // Very basic fallback
-              generatedHTML = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>صفحة تفاعلية</title><style>body{font-family:system-ui,sans-serif;padding:20px;background:#f8f9fa;color:#333;line-height:1.6;text-align:center;direction:rtl}.container{max-width:800px;margin:0 auto;padding:20px;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}h1{color:#2563eb;margin-bottom:15px}button{background:#2563eb;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-size:16px;margin:10px;transition:background 0.3s}button:hover{background:#1d4ed8}.output{margin-top:20px;min-height:100px;background:#f0f4ff;padding:15px;border-radius:5px;text-align:right}</style></head><body><div class="container"><h1>مرحباً بك في صفحتك التفاعلية</h1><p>هذه صفحة بسيطة تم إنشاؤها لك. يمكنك التفاعل معها بالضغط على الأزرار أدناه.</p><div><button onclick="changeColor()">تغيير الألوان</button><button onclick="addElement()">إضافة عنصر</button><button onclick="showMessage()">عرض رسالة</button></div><div class="output" id="output">النتائج ستظهر هنا...</div></div><script>function changeColor(){const colors=["#f87171","#60a5fa","#34d399","#fbbf24","#a78bfa"];const randomColor=colors[Math.floor(Math.random()*colors.length)];document.querySelector(".container").style.borderTop="5px solid "+randomColor;document.getElementById("output").textContent="تم تغيير اللون!";}function addElement(){const output=document.getElementById("output");const newElement=document.createElement("p");newElement.textContent="عنصر جديد تمت إضافته! "+new Date().toLocaleTimeString();output.appendChild(newElement);}function showMessage(){const messages=["مرحباً بك!","أتمنى لك يوماً رائعاً!","استمتع بتجربة الذكاء الاصطناعي!","يمكنك إنشاء صفحات أكثر تعقيداً بوصف أكثر تفصيلاً","جرب تقديم وصف مفصل لموقع متكامل في المرة القادمة!"];const randomMessage=messages[Math.floor(Math.random()*messages.length)];document.getElementById("output").textContent=randomMessage;}</script></body></html>`;
-            }
+            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
           }
-        }
-        
-        // Extract explanatory message
-        let explanatoryText = "";
-        const htmlStartIndex = responseContent.indexOf('<!DOCTYPE html>');
-        const codeBlockStartIndex = responseContent.indexOf('```html');
-        
-        if (htmlStartIndex > 0) {
-          explanatoryText = responseContent.substring(0, htmlStartIndex).trim();
-        } else if (codeBlockStartIndex > 0) {
-          explanatoryText = responseContent.substring(0, codeBlockStartIndex).trim();
-        }
-        
-        if (explanatoryText) {
-          explanatoryMessage = explanatoryText;
         } else {
-          explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+          // If no DOCTYPE found, send the entire response back to the user
+          // This allows the model to communicate when it can't generate proper HTML
+          explanatoryMessage = responseContent;
+          
+          // Get just enough HTML to show the message that the request wasn't clear
+          generatedHTML = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>استكشاف الفكرة</title>
+</head>
+<body style="font-family:system-ui;background-color:#f5f5f5;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
+  <!-- Empty body - no HTML generated yet -->
+</body>
+</html>`;
         }
       }
       
-      // Log successful generation
+      // Log generation status
       logEvent("html_generation_success", latestUserMessage.content, {
         model: "gpt-4o",
         html_size: generatedHTML.length,
@@ -345,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html: generatedHTML,
         message: {
           role: "assistant",
-          content: explanatoryMessage || "لقد بنيت فكرتك! جربها وأخبرني إذا ترغب في أي تغييرات."
+          content: explanatoryMessage || "تم إنشاء الصفحة"
         }
       });
       
@@ -358,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html: "",
         message: {
           role: "assistant",
-          content: "حدث خطأ في توليد الصفحة. الرجاء المحاولة مرة أخرى بتوجيه مختلف."
+          content: "حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟"
         }
       });
     }
