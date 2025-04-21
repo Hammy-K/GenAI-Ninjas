@@ -267,11 +267,11 @@ export function HTMLGeneratorStage({
         content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات."
       };
 
-      // Update state with the new message and HTML
+      // Update state with the AI response and HTML
       // Also collapse the chat UI to focus on the generated HTML preview
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, userMessage, aiResponse],
+        messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
         currentHTML: response.html,
         isLoading: false,
         isChatOpen: false, // Collapse chat to focus attention on the HTML preview
@@ -847,9 +847,9 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" && msg.content.includes("<!DOCTYPE html") 
+                          {msg.role === "assistant" && (msg.content.includes("<!DOCTYPE html") || msg.content.includes("<html")) 
                             ? "سويت لك الصفحة! شوف النتيجة في الأسفل 👇" 
-                            : msg.content}
+                            : (msg.content.split("<!DOCTYPE html")[0] || msg.content)}
                         </div>
                       </div>
                     ))}

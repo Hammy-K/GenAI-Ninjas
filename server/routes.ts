@@ -218,11 +218,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let explanatoryMessage = "";
 
       // Determine if we're in questioning phase or generation phase
+      // Enhanced detection for when the model is asking clarifying questions
       const isQuestioningPhase = 
         responseContent.indexOf("<!DOCTYPE html>") === -1 &&
         (responseContent.includes("?") || 
          responseContent.includes("سؤال") || 
-         responseContent.includes("أسئلة"));
+         responseContent.includes("أسئلة") ||
+         responseContent.includes("ممكن توضح") ||
+         responseContent.includes("بغيت أفهم") ||
+         responseContent.includes("توصف أكثر"));
 
       if (isQuestioningPhase) {
         // In questioning phase, pass through the questions as a message
