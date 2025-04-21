@@ -104,7 +104,7 @@ export function TryAIStage({
             {
               role: "assistant",
               content:
-                "بما إنك بدأت تتحمس! 😄 ليه ما ننتقل للخطوة الجاية ونشوف وش يمدينا نسوي بعد؟",
+                "بما انك متحمس! خلنا نكمل ونشوف وش تقدر تسوي بالذكاء الاصطناعي 😉 في المرحلة الجاية فيه أدوات أحلى! اضغط على زر المتابعة عشان نبدأ المغامرة!",
             },
           ],
           hasShownNudge: true,
@@ -273,14 +273,18 @@ export function TryAIStage({
                   </Alert>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                   <Textarea
                     placeholder={state.hasShownNudge 
-                      ? "تم قفل المحادثة. اضغط زر المتابعة للانتقال للمرحلة التالية"
+                      ? "تم إكمال مرحلة الدردشة! اضغط زر المتابعة لمواصلة المغامرة ✨"
                       : "اكتب رسالتك هنا... (مثال: 'اكتب قصة قصيرة عن مغامرة في الفضاء')"}
                     value={state.textPrompt}
                     onChange={(e) => !state.hasShownNudge && setTextPrompt(e.target.value)}
-                    className={`min-h-[80px] flex-grow ${state.hasShownNudge ? 'bg-gray-100 text-gray-500' : ''}`}
+                    className={`min-h-[80px] flex-grow transition-all duration-500 ${
+                      state.hasShownNudge 
+                        ? 'bg-gray-50 text-gray-400 border-gray-200' 
+                        : 'border-input'
+                    }`}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && e.ctrlKey && !state.hasShownNudge) {
                         e.preventDefault();
@@ -292,10 +296,19 @@ export function TryAIStage({
                     dir="auto" // Auto-detect text direction for RTL support
                     disabled={state.hasShownNudge} // Disable input after nudge message
                   />
+                  {state.hasShownNudge && (
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50 pointer-events-none rounded-md flex items-end justify-center pb-2">
+                      <div className="text-amber-600 font-medium text-sm bg-white/80 px-3 py-1 rounded-full shadow-sm border border-amber-100">
+                        انتقل للخطوة التالية!
+                      </div>
+                    </div>
+                  )}
                   <Button
                     onClick={handleGenerateText}
                     disabled={isGeneratingText || !state.textPrompt.trim() || state.hasShownNudge}
-                    className="self-end h-10 px-4"
+                    className={`self-end h-10 px-4 transition-all duration-300 ${
+                      state.hasShownNudge ? 'opacity-50' : ''
+                    }`}
                   >
                     {isGeneratingText ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -319,8 +332,8 @@ export function TryAIStage({
                   </Button>
                 </div>
                 {state.hasShownNudge ? (
-                  <p className="text-sm text-amber-600 font-medium mt-2">
-                    المحادثة مغلقة. استخدم زر المتابعة للانتقال للمرحلة التالية.
+                  <p className="text-sm text-amber-600 font-medium mt-4 text-center animate-pulse">
+                    أحسنت! خلنا نكمل المغامرة. اضغط زر المتابعة للانتقال للمرحلة التالية 🚀
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-2">
