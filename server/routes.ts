@@ -234,42 +234,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isQuestioningPhase) {
         // During questioning phase, we don't need to extract HTML
         // Just provide an empty placeholder HTML
-        generatedHTML = `<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء الصفحة</title>
-  <style>
-    body { 
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: #f8f9fa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-      direction: rtl;
-    }
-    .message {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-width: 500px;
-    }
-    h1 { color: #4B5563; }
-    p { color: #6B7280; }
-  </style>
-</head>
-<body>
-  <div class="message">
-    <h1>جاري التخطيط للصفحة... 🤔</h1>
-    <p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p>
-  </div>
-</body>
-</html>`;
+        generatedHTML = '<!DOCTYPE html>' +
+'<html lang="ar">' +
+'<head>' +
+'  <meta charset="UTF-8">' +
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+'  <title>إنشاء الصفحة</title>' +
+'  <style>' +
+'    body { ' +
+'      font-family: system-ui, -apple-system, sans-serif;' +
+'      background-color: #f8f9fa;' +
+'      display: flex;' +
+'      justify-content: center;' +
+'      align-items: center;' +
+'      height: 100vh;' +
+'      margin: 0;' +
+'      text-align: center;' +
+'      direction: rtl;' +
+'    }' +
+'    .message {' +
+'      background-color: white;' +
+'      padding: 20px;' +
+'      border-radius: 10px;' +
+'      box-shadow: 0 2px 8px rgba(0,0,0,0.1);' +
+'      max-width: 500px;' +
+'    }' +
+'    h1 { color: #4B5563; }' +
+'    p { color: #6B7280; }' +
+'  </style>' +
+'</head>' +
+'<body>' +
+'  <div class="message">' +
+'    <h1>جاري التخطيط للصفحة... 🤔</h1>' +
+'    <p>في هذه المرحلة، د. بنجي يطرح أسئلة لمعرفة متطلباتك بالضبط.<br>أجب عن الأسئلة ليتمكن من إنشاء الصفحة المناسبة لك.</p>' +
+'  </div>' +
+'</body>' +
+'</html>';
       } else {
         // Move to HTML extraction for step 2
         generatedHTML = responseContent;
@@ -281,26 +281,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (htmlMatch && htmlMatch[1]) {
           generatedHTML = htmlMatch[1].trim();
         } else {
-          // Try to fix if missing proper HTML doctype
+          // Try to extract HTML directly from the response if no code blocks are present
           const doctypeIndex = generatedHTML.indexOf("<!DOCTYPE html>");
           if (doctypeIndex >= 0) {
+            // Found a DOCTYPE, assume this is the start of the HTML
             generatedHTML = generatedHTML.substring(doctypeIndex);
+            
+            // Check if there's text after the HTML closing tag and remove it
+            const htmlEndIndex = generatedHTML.lastIndexOf("</html>");
+            if (htmlEndIndex >= 0) {
+              generatedHTML = generatedHTML.substring(0, htmlEndIndex + 7); // Include the closing </html> tag
+            }
           } else {
-            // Fallback to a basic HTML template
-            generatedHTML = `<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generated Page</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-  </style>
-</head>
-<body>
-  <p>حدث خطأ في عملية توليد HTML. الرجاء المحاولة مرة أخرى بوصف مختلف.</p>
-</body>
-</html>`;
+            // Neither code block nor DOCTYPE found - create a simple interactive page
+            // Create a fallback interactive HTML page as a simple string without template literals in JS code
+            generatedHTML = '<!DOCTYPE html>' +
+                '<html lang="ar" dir="rtl">' +
+                '<head>' +
+                  '<meta charset="UTF-8">' +
+                  '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                  '<title>صفحة تفاعلية</title>' +
+                  '<style>' +
+                    'body { ' +
+                      'font-family: system-ui, -apple-system, sans-serif; ' +
+                      'padding: 20px;' +
+                      'background-color: #f8f9fa;' +
+                      'color: #333;' +
+                      'line-height: 1.6;' +
+                      'text-align: center;' +
+                      'direction: rtl;' +
+                    '}' +
+                    '.container {' +
+                      'max-width: 800px;' +
+                      'margin: 0 auto;' +
+                      'padding: 20px;' +
+                      'background: white;' +
+                      'border-radius: 10px;' +
+                      'box-shadow: 0 2px 10px rgba(0,0,0,0.1);' +
+                    '}' +
+                    'h1 { color: #2563eb; margin-bottom: 15px; }' +
+                    'button {' +
+                      'background: #2563eb;' +
+                      'color: white;' +
+                      'border: none;' +
+                      'padding: 10px 20px;' +
+                      'border-radius: 5px;' +
+                      'cursor: pointer;' +
+                      'font-size: 16px;' +
+                      'margin: 10px;' +
+                      'transition: background 0.3s;' +
+                    '}' +
+                    'button:hover { background: #1d4ed8; }' +
+                    '.output { ' +
+                      'margin-top: 20px; ' +
+                      'min-height: 100px;' +
+                      'background: #f0f4ff;' +
+                      'padding: 15px;' +
+                      'border-radius: 5px;' +
+                      'text-align: right;' +
+                    '}' +
+                  '</style>' +
+                '</head>' +
+                '<body>' +
+                  '<div class="container">' +
+                    '<h1>مرحباً بك في صفحتك التفاعلية</h1>' +
+                    '<p>هذه صفحة بسيطة تم إنشاؤها لك. يمكنك التفاعل معها بالضغط على الأزرار أدناه.</p>' +
+                    
+                    '<div>' +
+                      '<button onclick="changeColor()">تغيير الألوان</button>' +
+                      '<button onclick="addElement()">إضافة عنصر</button>' +
+                      '<button onclick="showMessage()">عرض رسالة</button>' +
+                    '</div>' +
+                    
+                    '<div class="output" id="output">' +
+                      'النتائج ستظهر هنا...' +
+                    '</div>' +
+                  '</div>' +
+
+                  '<script>' +
+                    'function changeColor() {' +
+                      'const colors = ["#f87171", "#60a5fa", "#34d399", "#fbbf24", "#a78bfa"];' +
+                      'const randomColor = colors[Math.floor(Math.random() * colors.length)];' +
+                      'document.querySelector(".container").style.borderTop = "5px solid " + randomColor;' +
+                      'document.getElementById("output").textContent = "تم تغيير اللون!";' +
+                    '}' +
+                    
+                    'function addElement() {' +
+                      'const output = document.getElementById("output");' +
+                      'const newElement = document.createElement("p");' +
+                      'newElement.textContent = "عنصر جديد تمت إضافته! " + new Date().toLocaleTimeString();' +
+                      'output.appendChild(newElement);' +
+                    '}' +
+                    
+                    'function showMessage() {' +
+                      'const messages = [' +
+                        '"مرحباً بك!",' +
+                        '"أتمنى لك يوماً رائعاً!",' +
+                        '"استمتع بتجربة الذكاء الاصطناعي!",' +
+                        '"يمكنك إنشاء صفحات أكثر تعقيداً بوصف أكثر تفصيلاً",' +
+                        '"جرب تقديم وصف مفصل لموقع متكامل في المرة القادمة!"' +
+                      '];' +
+                      'const randomMessage = messages[Math.floor(Math.random() * messages.length)];' +
+                      'document.getElementById("output").textContent = randomMessage;' +
+                    '}' +
+                  '</script>' +
+                '</body>' +
+                '</html>';
 
             // Log the HTML generation failure
             logEvent(

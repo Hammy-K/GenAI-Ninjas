@@ -315,13 +315,7 @@ export function TryAIStage({
                     dir="auto" // Auto-detect text direction for RTL support
                     disabled={state.hasShownNudge} // Disable input after nudge message
                   />
-                  {state.hasShownNudge && (
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50 pointer-events-none rounded-md flex items-end justify-center pb-2">
-                      <div className="text-amber-600 font-medium text-sm bg-white/80 px-3 py-1 rounded-full shadow-sm border border-amber-100">
-                        انتقل للخطوة التالية!
-                      </div>
-                    </div>
-                  )}
+                  {/* Remove overlay completely */}
                   <Button
                     onClick={handleGenerateText}
                     disabled={isGeneratingText || !state.textPrompt.trim() || state.hasShownNudge}
@@ -351,8 +345,8 @@ export function TryAIStage({
                   </Button>
                 </div>
                 {state.hasShownNudge ? (
-                  <p className="text-sm text-amber-600 font-medium mt-4 text-center animate-pulse">
-                    أحسنت! خلنا نكمل المغامرة. اضغط زر المتابعة للانتقال للمرحلة التالية 🚀
+                  <p className="text-sm text-gray-600 mt-4 text-center">
+                    تم إكمال مرحلة الدردشة! اضغط زر المتابعة لمواصلة المغامرة ✨ هذي فقط مقدمة و راح اكون معاك بالخطوات القادمة
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-2">
