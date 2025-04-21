@@ -70,7 +70,7 @@ export function TryAIStage({
     const scrollChatAreaOnly = () => {
       // Find the chat area container (the div with the overflow-y-auto class)
       const chatContainer = chatEndRef.current?.closest('.overflow-y-auto');
-      
+
       if (chatContainer) {
         // Scroll the chat container to its bottom
         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -79,7 +79,7 @@ export function TryAIStage({
 
     // Use both immediate and delayed scrolling for reliability
     scrollChatAreaOnly();
-    
+
     // Also use a timeout as a fallback to ensure scrolling happens after render
     const timer = setTimeout(scrollChatAreaOnly, 100);
 
@@ -120,7 +120,7 @@ export function TryAIStage({
 
     setError("");
     setIsGeneratingText(true);
-    
+
     // Store the current prompt before clearing it
     const currentPrompt = state.textPrompt;
 
@@ -151,7 +151,7 @@ export function TryAIStage({
         setState((prev) => {
           // Create a safe copy of the message history with fallback
           const prevMessageHistory = prev.messageHistory || [];
-          
+
           // Replace the "thinking" message with the actual response
           const updatedHistory = [...prevMessageHistory];
           // Remove the last message (thinking message)
@@ -346,7 +346,7 @@ export function TryAIStage({
                 </div>
                 {state.hasShownNudge ? (
                   <p className="text-sm text-gray-600 mt-4 text-center">
-                    تم إكمال مرحلة الدردشة! اضغط زر المتابعة لمواصلة المغامرة ✨ هذي فقط مقدمة و راح اكون معاك بالخطوات القادمة
+                    هذي فقط مقدمة و راح اكون معاك بالخطوات القادمة
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-2">
