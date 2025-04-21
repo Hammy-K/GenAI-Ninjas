@@ -391,15 +391,25 @@ export function ImageGenerationStage({
       return;
     }
 
-    // Add user message
+    // Store current prompt before clearing
+    const currentPrompt = state.prompt;
+    
+    // Add user message immediately
     const userMessage: ChatMessage = {
       role: "user",
-      content: state.prompt,
+      content: currentPrompt,
+    };
+    
+    // Add a thinking message from Dr. Pengy immediately
+    const thinkingMessage: ChatMessage = {
+      role: "assistant",
+      content: "د. بنجي قاعد يرسم الصورة... 🎨",
     };
 
+    // Update state immediately to show user message, thinking message, and clear prompt
     setState((prev) => ({
       ...prev,
-      messages: [...prev.messages, userMessage],
+      messages: [...prev.messages, userMessage, thinkingMessage],
       prompt: "",
       isLoading: true,
       error: "",
@@ -410,19 +420,24 @@ export function ImageGenerationStage({
       const isAppropriate = await checkContentModeration(userMessage.content);
 
       if (!isAppropriate) {
-        // If content is inappropriate, add a warning message from د. بنجي
+        // If content is inappropriate, replace the thinking message with a warning
         const moderationWarning: ChatMessage = {
           role: "assistant",
           content:
             "هذا النوع من المحتوى ما نقدر نشتغل عليه. خلنا نركز على أفكار ممتعة وآمنة مع بعض 💡",
         };
 
-        setState((prev) => ({
-          ...prev,
-          messages: [...prev.messages, moderationWarning],
-          isLoading: false,
-          error: "",
-        }));
+        setState((prev) => {
+          // Get messages without the thinking message
+          const messagesWithoutThinking = prev.messages.slice(0, -1);
+          
+          return {
+            ...prev,
+            messages: [...messagesWithoutThinking, moderationWarning],
+            isLoading: false,
+            error: "",
+          };
+        });
 
         return;
       }
@@ -431,18 +446,6 @@ export function ImageGenerationStage({
       trackStageProgress("image_generation", "prompt_submitted", {
         prompt_length: userMessage.content.length,
       });
-
-      // Skip prompt analysis - directly generate the image
-      // Add a processing message immediately
-      const processingMessage: ChatMessage = {
-        role: "assistant",
-        content: "تمام! خلينا نشوف كيف بتطلع 😄",
-      };
-
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, processingMessage],
-      }));
 
       // Generate the image with message history for context
       const imageUrl = await generateImage(userMessage.content, state.messages);
@@ -466,15 +469,20 @@ export function ImageGenerationStage({
 
       // Update state with the image and message, and reset sharing status since this is a new image
       // Also collapse the chat UI to focus on the generated image
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, successMessage],
-        generatedImageUrl: imageUrl,
-        isLoading: false,
-        isChatOpen: false, // Collapse the chat to focus on the generated image
-        sharingStatus: "idle", // Reset sharing status for the new image
-        sharedImageId: undefined, // Clear any previously shared image ID
-      }));
+      setState((prev) => {
+        // Get messages without the thinking message
+        const messagesWithoutThinking = prev.messages.slice(0, -1);
+        
+        return {
+          ...prev,
+          messages: [...messagesWithoutThinking, successMessage],
+          generatedImageUrl: imageUrl,
+          isLoading: false,
+          isChatOpen: false, // Collapse the chat to focus on the generated image
+          sharingStatus: "idle", // Reset sharing status for the new image
+          sharedImageId: undefined, // Clear any previously shared image ID
+        };
+      });
 
       // Always award the badge when an image is successfully generated
       // This ensures the badge is awarded even if the state was reset
@@ -492,6 +500,7 @@ export function ImageGenerationStage({
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred";
 
+      // First update to clear loading state
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -505,10 +514,16 @@ export function ImageGenerationStage({
           "عفواً، واجهنا مشكلة أثناء إنشاء الصورة. يرجى المحاولة مرة أخرى بوصف مختلف.",
       };
 
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, aiErrorMessage],
-      }));
+      // Then replace the thinking message with the error message
+      setState((prev) => {
+        // Get messages without the thinking message
+        const messagesWithoutThinking = prev.messages.slice(0, -1);
+        
+        return {
+          ...prev,
+          messages: [...messagesWithoutThinking, aiErrorMessage],
+        };
+      });
     }
   };
 
