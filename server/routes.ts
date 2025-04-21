@@ -250,14 +250,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
         
         if (doctypeIndex >= 0) {
-          // Found raw HTML - extract it directly
-          generatedHTML = responseContent.substring(doctypeIndex);
+          // Extract HTML only up to </html> closing tag
+          const htmlContent = responseContent.substring(doctypeIndex);
+          const closingHtmlTagIndex = htmlContent.indexOf("</html>") + 7; // +7 to include the tag
           
-          // If there's text before the HTML, use it as explanation message
-          if (doctypeIndex > 0) {
-            explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
+          if (closingHtmlTagIndex > 7) { // Make sure there's an actual closing tag
+            // Only include content up to and including </html>
+            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex);
+            
+            // Everything else becomes explanatory text (both before doctype and after closing tag)
+            let beforeExplanation = "";
+            let afterExplanation = "";
+            
+            if (doctypeIndex > 0) {
+              beforeExplanation = responseContent.substring(0, doctypeIndex).trim();
+            }
+            
+            if (closingHtmlTagIndex < htmlContent.length) {
+              afterExplanation = htmlContent.substring(closingHtmlTagIndex).trim();
+            }
+            
+            explanatoryMessage = [beforeExplanation, afterExplanation].filter(Boolean).join("\n\n").trim();
+            
+            if (!explanatoryMessage) {
+              explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+            }
           } else {
-            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+            // Found DOCTYPE but no closing HTML tag - just use the entire content after DOCTYPE
+            generatedHTML = htmlContent;
+            
+            if (doctypeIndex > 0) {
+              explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
+            } else {
+              explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+            }
           }
         } else {
           // If no DOCTYPE found, send the entire response back to the user
