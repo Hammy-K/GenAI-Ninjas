@@ -216,6 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const responseContent = response.choices[0].message.content || "";
       let generatedHTML = "";
       let explanatoryMessage = "";
+      let isGeneratingHTMLPhase = false;
 
       // Determine if we're in questioning phase or generation phase
       // Enhanced detection for when the model is asking clarifying questions
@@ -231,6 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isQuestioningPhase) {
         // In questioning phase, pass through the questions as a message
         explanatoryMessage = responseContent;
+        isGeneratingHTMLPhase = false;
         
         // Pass through a minimal HTML structure - NOT a fallback, just to maintain the UI flow
         // This is empty HTML with a message that Dr. Pengy is asking questions
@@ -250,35 +252,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
         
         if (doctypeIndex >= 0) {
-          // Extract HTML only up to </html> closing tag
+          // We found DOCTYPE, so we're in HTML generation phase
+          isGeneratingHTMLPhase = true;
+
+          // Extract just the content from doctype to </html> closing tag
           const htmlContent = responseContent.substring(doctypeIndex);
-          const closingHtmlTagIndex = htmlContent.indexOf("</html>") + 7; // +7 to include the tag
+          const closingHtmlTagIndex = htmlContent.indexOf("</html>");
           
-          if (closingHtmlTagIndex > 7) { // Make sure there's an actual closing tag
-            // Only include content up to and including </html>
-            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex);
+          if (closingHtmlTagIndex > 0) {
+            // Found the closing tag - extract ONLY up to and including </html>
+            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7); // +7 to include the </html> tag
             
-            // Everything else becomes explanatory text (both before doctype and after closing tag)
-            let beforeExplanation = "";
-            let afterExplanation = "";
+            // All explanatory text is either before the DOCTYPE or will be moved to the chat
+            let explanationText = "";
             
             if (doctypeIndex > 0) {
-              beforeExplanation = responseContent.substring(0, doctypeIndex).trim();
+              // There's text before the DOCTYPE
+              explanationText = responseContent.substring(0, doctypeIndex).trim();
             }
             
-            if (closingHtmlTagIndex < htmlContent.length) {
-              afterExplanation = htmlContent.substring(closingHtmlTagIndex).trim();
-            }
-            
-            explanatoryMessage = [beforeExplanation, afterExplanation].filter(Boolean).join("\n\n").trim();
-            
-            if (!explanatoryMessage) {
-              explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
-            }
+            explanatoryMessage = explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
           } else {
-            // Found DOCTYPE but no closing HTML tag - just use the entire content after DOCTYPE
+            // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
             generatedHTML = htmlContent;
             
+            if (!generatedHTML.includes("</body>")) {
+              generatedHTML += "\n</body>";
+            }
+            if (!generatedHTML.includes("</html>")) {
+              generatedHTML += "\n</html>";
+            }
+            
+            // Extract any text before DOCTYPE as explanatory message
             if (doctypeIndex > 0) {
               explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
             } else {
@@ -286,11 +291,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } else {
-          // If no DOCTYPE found, send the entire response back to the user
+          // If no DOCTYPE found, send the entire response back to the user as a message
           // This allows the model to communicate when it can't generate proper HTML
           explanatoryMessage = responseContent;
+          isGeneratingHTMLPhase = false;
           
-          // Get just enough HTML to show the message that the request wasn't clear
+          // Get just enough HTML to show an empty preview
           generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -312,13 +318,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html_type: generatedHTML.includes("<script") ? "interactive" : "static"
       });
       
-      // Send response
+      // Send response with a flag indicating if we're generating HTML or asking questions
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
           content: explanatoryMessage || "تم إنشاء الصفحة"
-        }
+        },
+        isGeneratingHTML: isGeneratingHTMLPhase // Add flag to tell client whether to close chat (only when generating HTML)
       });
       
     } catch (error) {

@@ -268,13 +268,13 @@ export function HTMLGeneratorStage({
       };
 
       // Update state with the AI response and HTML
-      // Also collapse the chat UI to focus on the generated HTML preview
+      // Only collapse the chat UI when generating HTML (not when asking clarifying questions)
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
         currentHTML: response.html,
         isLoading: false,
-        isChatOpen: false, // Collapse chat to focus attention on the HTML preview
+        isChatOpen: !response.isGeneratingHTML, // Only close chat when we're showing HTML, not when asking questions
       }));
 
       // Award XP for receiving a response if not already awarded

@@ -113,6 +113,7 @@ export type GenerateHTMLResponse = {
   html: string;
   message: HTMLMessage;
   error?: string;
+  isGeneratingHTML?: boolean; // Flag to indicate if we're generating HTML (close chat) or asking questions (keep chat open)
 };
 
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
