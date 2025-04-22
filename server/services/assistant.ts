@@ -9,7 +9,6 @@ import { logEvent, logError } from './logging';
 
 // Constants for the Assistant
 const ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // Our HTML generator assistant
-const HTML_INSTRUCTION = "Please generate HTML based on the user's request, ensuring it's fully functional. Include any necessary CSS and JavaScript inline in the HTML document. Respond with HTML for the webpage and a brief explanation of what you created. Never use fallbacks or template placeholders - always generate original content based on the user's request.";
 
 // Thread Map for session persistence
 const threadMap = new Map<string, string>();
@@ -72,12 +71,11 @@ export class AssistantService {
         }
       );
       
-      // Run the assistant on the thread
+      // Run the assistant on the thread - using the instructions already set up in the OpenAI Assistant portal
       const run = await this.openai.beta.threads.runs.create(
         threadId,
         {
           assistant_id: ASSISTANT_ID,
-          instructions: HTML_INSTRUCTION,
         }
       );
       

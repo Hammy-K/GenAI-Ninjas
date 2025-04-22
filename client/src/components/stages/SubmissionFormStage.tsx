@@ -17,13 +17,13 @@ export function SubmissionFormStage({
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl text-center">
-              Submit Your Project
+              سلم اول مشروعك لك 🎉
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center mb-6 text-muted-foreground">
-              Please submit your AI-generated project link using the form below
-              to complete your assignment.
+              يرجى إرسال رابط مشروعك المُنتج من الخطوة السابقة.
+
             </p>
 
             <div className="rounded-md overflow-hidden border mb-6">
