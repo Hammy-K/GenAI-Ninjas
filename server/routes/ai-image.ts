@@ -18,7 +18,7 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
   imageRoutes.use(validateChatHistory);
   imageRoutes.use(moderateContentMiddleware(openai));
 
-  // Image generation endpoint with chat history support
+  // Image generation endpoint with GPT-4.1-mini prompt enhancement and DALL-E 3 generation
   imageRoutes.post(
     "/image",
     validatePrompt,
@@ -32,59 +32,54 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
           prompt_length: prompt.length,
         });
 
-        // Determine if this is a follow-up request by checking for previous images
-        const isFollowUpRequest = messageHistory.some(
-          (msg: any) =>
-            msg.role === "assistant" && msg.content.includes("image"),
-        );
+        // Use GPT-4.1-mini to enhance the user's prompt
+        // Call GPT-4.1-mini to enhance the prompt with proper typing
+        const promptEnhancementResponse = await openai.chat.completions.create({
+          model: "gpt-4.1-mini",
+          messages: [
+            { 
+              role: "system", 
+              content: `You are an expert at writing beautiful, high-quality prompts for DALL·E 3. 
+Your job is to convert short or vague user inputs into detailed, vivid, and specific prompts 
+that create stunning and useful images. Avoid adding any text or writing in the image unless the student clearly asks for it. 
+Your reply should only include the final image prompt — no explanations or extra commentary.`
+            },
+            { 
+              role: "user", 
+              content: `I want an image of: ${prompt}` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 300
+        });
 
-        // Extract the base concept if this is a follow-up request
-        let enhancedPrompt = prompt;
+        // Extract the enhanced prompt
+        const enhancedPrompt = promptEnhancementResponse.choices[0].message.content || prompt;
 
-        if (isFollowUpRequest) {
-          // Find all user messages to gather context
-          const userMessages = messageHistory.filter(
-            (msg: any) => msg.role === "user",
-          );
+        // Log that we've enhanced the prompt
+        logEvent("prompt_enhancement", prompt, {
+          original_length: prompt.length,
+          enhanced_length: enhancedPrompt.length,
+          model: "gpt-4.1-mini"
+        });
 
-          // Extract the base concept (first substantive prompt)
-          const baseImageConcept =
-            userMessages.length > 0 ? userMessages[0].content : "";
-
-          // Extract follow-up requests for context
-          const followUpRequests = userMessages.slice(1);
-
-          // If this is a follow-up request, enhance the prompt with context
-          if (baseImageConcept && baseImageConcept !== prompt) {
-            enhancedPrompt = `Original concept: "${baseImageConcept}". Now changing to: "${prompt}"`;
-
-            // Log the enhanced prompt
-            logEvent("image_generation_enhanced", prompt, {
-              is_followup_request: true,
-              base_concept_length: baseImageConcept.length,
-              follow_up_count: followUpRequests.length,
-              enhanced_prompt_length: enhancedPrompt.length,
-            });
-          }
-        }
-
-        // Generate image with appropriate parameters
+        // Generate image with DALL-E 3 using the enhanced prompt
         const response = await openai.images.generate({
           model: "dall-e-3",
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
           quality: "hd",
-
-          // Remove the invalid "quality" parameter as requested
+          style: "vivid"
         });
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
           model: "dall-e-3",
           quality: "hd",
-
-          is_context_enhanced: isFollowUpRequest,
+          style: "vivid",
+          enhanced: true,
+          enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
         });
 
