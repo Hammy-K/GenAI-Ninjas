@@ -95,8 +95,22 @@ export function HTMLGeneratorStage({
       'أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،',
   };
 
+  const examplesMessage: HTMLMessage = {
+    role: "assistant",
+    content: `
+مثلاً:
+- لعبة شطرنج (او اي لعبة بسيطة)
+- لوحة رسم بسيطة
+- كويز تفاعلي فيه كم سؤال مضحك
+- صفحة تسهل وش ألبس اليوم من دولابي
+- صفحة أختار فيها وجهة سفري المفضلة
+- تطبيق يرشّح لك وش تأكل حسب مزاجك
+`,
+  };
+
+
   const initialState: HTMLGeneratorState = {
-    messages: [welcomeMessage],
+    messages: [welcomeMessage, examplesMessage],
     prompt: "",
     currentHTML: "",
     isLoading: false,
@@ -225,7 +239,7 @@ export function HTMLGeneratorStage({
 
     try {
       // Award XP for the first prompt if not already awarded
-      if (state.messages.length === 0) {
+      if (state.messages.length === 2) { // Adjust length check to account for new message
         if (
           awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")
         ) {
@@ -278,7 +292,7 @@ export function HTMLGeneratorStage({
       }));
 
       // Award XP for receiving a response if not already awarded
-      if (state.messages.length <= 2) {
+      if (state.messages.length <= 3) { // Adjust length check to account for new message
         if (
           awardIfNotAlreadyAwarded(
             onEarnXp,
@@ -545,7 +559,7 @@ export function HTMLGeneratorStage({
     setState((prev) => ({
       ...prev,
       currentHTML: "",
-      messages: [welcomeMessage], // Retain the welcome message
+      messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
       projectId: null,
       shareUrl: null,
       showShareDialog: false,
