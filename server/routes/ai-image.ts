@@ -37,30 +37,31 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
         const promptEnhancementResponse = await openai.chat.completions.create({
           model: "gpt-4.1-mini",
           messages: [
-            { 
-              role: "system", 
+            {
+              role: "system",
               content: `You are an expert at writing beautiful, high-quality prompts for DALL·E 3. 
 Your job is to convert short or vague user inputs into detailed, vivid, and specific prompts 
 that create stunning and useful images. Avoid adding any text or writing in the image unless the student clearly asks for it. 
-Your reply should only include the final image prompt — no explanations or extra commentary.`
+Your reply should only include the final image prompt — no explanations or extra commentary.`,
             },
-            { 
-              role: "user", 
-              content: `I want an image of: ${prompt}` 
-            }
+            {
+              role: "user",
+              content: `I want an image of: ${prompt}`,
+            },
           ],
           temperature: 0.7,
-          max_tokens: 300
+          max_tokens: 300,
         });
 
         // Extract the enhanced prompt
-        const enhancedPrompt = promptEnhancementResponse.choices[0].message.content || prompt;
+        const enhancedPrompt =
+          promptEnhancementResponse.choices[0].message.content || prompt;
 
         // Log that we've enhanced the prompt
         logEvent("prompt_enhancement", prompt, {
           original_length: prompt.length,
           enhanced_length: enhancedPrompt.length,
-          model: "gpt-4.1-mini"
+          model: "gpt-4.1-mini",
         });
 
         // Generate image with DALL-E 3 using the enhanced prompt
@@ -70,7 +71,7 @@ Your reply should only include the final image prompt — no explanations or ext
           n: 1,
           size: "1024x1024",
           quality: "hd",
-          style: "vivid"
+          style: "vivid",
         });
 
         // Log successful image generation
