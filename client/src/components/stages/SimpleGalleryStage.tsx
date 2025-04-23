@@ -37,6 +37,7 @@ export function SimpleGalleryStage({
   const [hasLikedImage, setHasLikedImage] = useState(false);
   const [nameFilter, setNameFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
+  const [likedImageIds, setLikedImageIds] = useState<Set<number>>(new Set());
   
   // Debounce name filter changes
   useEffect(() => {
@@ -162,6 +163,25 @@ export function SimpleGalleryStage({
 
   // Handle liking an image
   const handleLike = (imageId: number) => {
+    // Check if the image has already been liked
+    if (likedImageIds.has(imageId)) {
+      // Image already liked, show toast
+      toast({
+        title: "ملاحظة",
+        description: "لقد قمت بالإعجاب بهذه الصورة مسبقاً",
+        variant: "default",
+      });
+      return;
+    }
+    
+    // Add to liked images set
+    setLikedImageIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(imageId);
+      return newSet;
+    });
+    
+    // Call API to like the image
     likeMutation.mutate(imageId);
   };
 
@@ -267,13 +287,14 @@ export function SimpleGalleryStage({
                       </div>
                       <div className="mt-3 flex justify-end">
                         <Button
-                          variant="outline"
+                          variant={likedImageIds.has(image.id) ? "default" : "outline"}
                           size="sm"
-                          className="flex items-center gap-2"
+                          className={`flex items-center gap-2 ${likedImageIds.has(image.id) ? "bg-pink-100 hover:bg-pink-200 border-pink-200" : ""}`}
                           onClick={() => handleLike(image.id)}
-                          disabled={likeMutation.isPending}
+                          disabled={likeMutation.isPending || likedImageIds.has(image.id)}
+                          title={likedImageIds.has(image.id) ? "لقد قمت بالإعجاب بهذه الصورة" : "أعجبني"}
                         >
-                          <Heart className="h-4 w-4" />
+                          <Heart className={`h-4 w-4 ${likedImageIds.has(image.id) ? "fill-red-500 text-red-500" : ""}`} />
                           <span>{image.likes}</span>
                         </Button>
                       </div>

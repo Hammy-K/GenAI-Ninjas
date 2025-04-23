@@ -86,14 +86,14 @@ export function TryAIStage({
     return () => clearTimeout(timer);
   }, [state.messageHistory]);
 
-  // Check user message count and show nudge message after 6 user messages
+  // Check user message count and show nudge message after 5 user messages
   useEffect(() => {
     // Count user messages (role: 'user') in the message history
     const userMessageCount =
       state.messageHistory?.filter((msg) => msg.role === "user").length || 0;
 
-    // If we have exactly 6 user messages and haven't shown the nudge yet
-    if (userMessageCount >= 6 && !state.hasShownNudge) {
+    // If we have exactly 5 user messages and haven't shown the nudge yet
+    if (userMessageCount >= 5 && !state.hasShownNudge) {
       // Add a slight delay before showing the nudge message
       const nudgeTimer = setTimeout(() => {
         // Add the nudge message from Dr. Pengy
@@ -109,7 +109,7 @@ export function TryAIStage({
           ],
           hasShownNudge: true,
         }));
-      }, 1000); // Wait 1 second after the 6th user message
+      }, 1000); // Wait 1 second after the 5th user message
 
       return () => clearTimeout(nudgeTimer);
     }
