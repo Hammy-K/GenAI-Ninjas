@@ -1,14 +1,15 @@
 /**
- * OpenAI Assistant Service for HTML Generation
+ * OpenAI Assistant Service
  * 
- * This service uses the OpenAI Assistant API to generate HTML content
+ * This service uses the OpenAI Assistant API to interact with different assistants
  * with persistent thread history for better contextual understanding.
  */
 import OpenAI from 'openai';
 import { logEvent, logError } from './logging';
 
-// Constants for the Assistant
-const ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // Our HTML generator assistant
+// Constants for the Assistants
+const HTML_ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // HTML generator assistant
+const TRYAI_ASSISTANT_ID = 'asst_x31y8qYnTlwvs1gAxKCNG5KB'; // TryAI stage assistant
 
 // Thread Map for session persistence
 const threadMap = new Map<string, string>();
@@ -24,6 +25,12 @@ interface AssistantResponse {
   html: string;
   message: AssistantMessage;
   isGeneratingHTML: boolean;
+  error?: string;
+}
+
+// Response format for TryAI stage chat
+interface TryAIResponse {
+  text: string;
   error?: string;
 }
 
@@ -75,7 +82,7 @@ export class AssistantService {
       const run = await this.openai.beta.threads.runs.create(
         threadId,
         {
-          assistant_id: ASSISTANT_ID,
+          assistant_id: HTML_ASSISTANT_ID,
         }
       );
       
@@ -309,6 +316,83 @@ export class AssistantService {
       isGeneratingHTML: false,
       error: errorMessage
     };
+  }
+  
+  /**
+   * Generate text response using the TryAI Assistant
+   * 
+   * @param prompt User prompt to respond to
+   * @param messageHistory Previous messages for context
+   * @param sessionId Unique identifier for the user session
+   * @returns Text response from the assistant
+   */
+  async generateText(
+    prompt: string,
+    messageHistory: AssistantMessage[],
+    sessionId: string
+  ): Promise<TryAIResponse> {
+    try {
+      // Get or create thread for this session
+      let threadId = this.getThreadId(sessionId);
+      
+      if (!threadId) {
+        threadId = await this.createThread(sessionId);
+      }
+      
+      // Add message to thread
+      await this.openai.beta.threads.messages.create(
+        threadId,
+        {
+          role: "user",
+          content: prompt
+        }
+      );
+      
+      // Run the TryAI assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(
+        threadId,
+        {
+          assistant_id: TRYAI_ASSISTANT_ID
+        }
+      );
+      
+      // Wait for the run to complete
+      const completedRun = await this.waitForRunCompletion(threadId, run.id);
+      
+      if (completedRun.status !== 'completed') {
+        throw new Error(`Assistant run failed with status: ${completedRun.status}`);
+      }
+      
+      // Get messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(threadId);
+      
+      // Extract the latest assistant message
+      const assistantMessages: string[] = [];
+      for (const msg of messages.data) {
+        if (msg.role === 'assistant' && msg.content[0]?.type === 'text') {
+          assistantMessages.push(msg.content[0].text.value);
+        }
+      }
+      
+      if (assistantMessages.length === 0) {
+        throw new Error("No assistant response received");
+      }
+      
+      // Return the latest message
+      const latestResponse = assistantMessages[0] || "";
+      
+      return {
+        text: latestResponse
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      logError("tryai_text_generation", errorMessage);
+      
+      return {
+        text: "حدث خطأ أثناء التواصل مع د. بنجي. هل يمكنك إعادة صياغة السؤال بشكل مختلف؟",
+        error: errorMessage
+      };
+    }
   }
 }
 

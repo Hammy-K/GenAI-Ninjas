@@ -3,15 +3,30 @@
  * Handles all text-based AI operations including chat, completions, and HTML generation
  */
 import { Router, Request, Response } from 'express';
+import { Session } from 'express-session';
 import OpenAI from 'openai';
-import { logEvent, logError } from '../services';
+import { logEvent, logError, createAssistantService } from '../services';
 import { validateChatHistory, validatePrompt, moderateContentMiddleware } from '../middleware/validation';
 import { buildSystemPrompt, trimMessageHistory, FEW_SHOT_EXAMPLES } from '../templates/prompts';
+import { v4 as uuidv4 } from 'uuid';
+
+// Session tracking for TryAI Assistant
+const TRYAI_SESSION_PREFIX = 'tryai_';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const GPT_MODEL = "gpt-4o";
 
+// Extended request with TryAI session
+interface RequestWithTryAISession extends Request {
+  session: Session & {
+    tryaiSessionId?: string;
+  }
+}
+
 export function registerAITextRoutes(router: Router, openai: OpenAI) {
+  // Create an instance of the Assistant service
+  const assistantService = createAssistantService(openai);
+  
   // Apply common middleware to all routes
   const aiRoutes = Router();
   aiRoutes.use(validateChatHistory);
@@ -252,6 +267,44 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
     } catch (error) {
       logError('html_generation', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: "Failed to generate HTML" });
+    }
+  });
+
+  // TryAI Assistant endpoint
+  aiRoutes.post("/try-ai-assistant", validatePrompt, async (req: RequestWithTryAISession, res: Response) => {
+    try {
+      const { prompt, messageHistory = [] } = req.body;
+      
+      // Log the TryAI assistant request
+      logEvent('tryai_assistant', prompt, {
+        message_history_length: messageHistory.length,
+        prompt_length: prompt.length
+      });
+
+      // Get or create session ID for this user to maintain thread history
+      let sessionId = req.session.tryaiSessionId;
+      if (!sessionId) {
+        sessionId = `${TRYAI_SESSION_PREFIX}${uuidv4()}`;
+        req.session.tryaiSessionId = sessionId;
+      }
+      
+      // Generate text using the TryAI Assistant API
+      const response = await assistantService.generateText(prompt, messageHistory, sessionId);
+      
+      // Log successful text generation
+      logEvent('tryai_assistant_success', prompt, {
+        response_length: response.text.length,
+        conversation_turns: messageHistory.length + 1,
+        has_error: !!response.error
+      });
+      
+      return res.json(response);
+    } catch (error) {
+      logError('tryai_assistant', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ 
+        error: "Failed to generate response",
+        text: "حدث خطأ أثناء التواصل مع د. بنجي. هل يمكنك إعادة صياغة السؤال بشكل مختلف؟"
+      });
     }
   });
 
