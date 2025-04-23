@@ -308,6 +308,51 @@ export function registerGalleryRoutes(router: Router) {
     }
   });
   
+  // Unlike an image in the gallery
+  galleryRoutes.post("/unlike", async (req: RequestWithGallery, res: Response) => {
+    try {
+      // Validate request with Zod
+      const validation = likeImageSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validation.error.format()
+        });
+      }
+      
+      const { imageId } = validation.data;
+
+      // Get session ID
+      const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
+      
+      // Check if user has liked this image
+      const hasLiked = await storage.hasLiked(imageId, sessionId);
+      
+      // If not liked, return an error
+      if (!hasLiked) {
+        return res.status(400).json({ error: 'You have not liked this image' });
+      }
+
+      // Decrement the like count
+      const updatedImage = await storage.decrementLike(imageId, sessionId);
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: 'Image not found' });
+      }
+
+      // Log the unlike
+      logEvent('gallery_image_unliked', `Image ${imageId} unliked`, {
+        image_id: imageId,
+        session_id: sessionId
+      });
+      
+      return res.json(updatedImage);
+    } catch (error) {
+      logError('gallery_unlike', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ error: 'Failed to unlike image' });
+    }
+  });
+
   // Mount gallery routes
   router.use('/gallery', galleryRoutes);
 }

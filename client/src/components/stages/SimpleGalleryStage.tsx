@@ -117,6 +117,30 @@ export function SimpleGalleryStage({
     onSuccess: () => {
       // Invalidate the gallery query to refresh the data
       queryClient.invalidateQueries({ queryKey: ["/api/gallery/all"] });
+    },
+  });
+  
+  // Mutation for unliking an image
+  const unlikeMutation = useMutation({
+    mutationFn: async (imageId: number) => {
+      const response = await fetch("/api/gallery/unlike", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageId }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to unlike image");
+      }
+
+      return (await response.json()) as GalleryImage;
+    },
+    onSuccess: () => {
+      // Invalidate the gallery query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/gallery/all"] });
 
       // Award XP for first like if not already awarded
       if (!hasLikedImage) {

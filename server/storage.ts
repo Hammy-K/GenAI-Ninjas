@@ -41,6 +41,7 @@ export interface IStorage {
   getAllGalleryImages(): Promise<GalleryImage[]>;
   getGalleryImage(id: number): Promise<GalleryImage | undefined>;
   incrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined>;
+  decrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined>;
   hasLiked(imageId: number, sessionId: string): Promise<boolean>;
 }
 
@@ -141,6 +142,35 @@ export class DatabaseStorage implements IStorage {
       .update(galleryImages)
       .set({
         likes: sql`${galleryImages.likes} + 1`
+      })
+      .where(eq(galleryImages.id, imageId))
+      .returning();
+
+    return updatedImage || undefined;
+  }
+
+  async decrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined> {
+    // First check if the user has liked this image
+    if (!(await this.hasLiked(imageId, sessionId))) {
+      // If not liked, just return the image without changes
+      return this.getGalleryImage(imageId);
+    }
+
+    // Delete the like record
+    await db
+      .delete(galleryLikes)
+      .where(
+        and(
+          eq(galleryLikes.imageId, imageId),
+          eq(galleryLikes.sessionId, sessionId)
+        )
+      );
+
+    // Decrement the likes count using SQL, ensuring it doesn't go below 0
+    const [updatedImage] = await db
+      .update(galleryImages)
+      .set({
+        likes: sql`GREATEST(${galleryImages.likes} - 1, 0)`
       })
       .where(eq(galleryImages.id, imageId))
       .returning();
