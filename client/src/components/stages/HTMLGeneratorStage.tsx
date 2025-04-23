@@ -69,6 +69,7 @@ interface HTMLGeneratorState {
   projectId: string | null;
   isSaving: boolean;
   shareUrl: string | null;
+  hasSharedLink: boolean; // Track if the user has copied the share link
   showShareDialog: boolean;
   showResetDialog: boolean;
 }
@@ -121,6 +122,7 @@ export function HTMLGeneratorStage({
     projectId: null,
     isSaving: false,
     shareUrl: null,
+    hasSharedLink: false, // Initialize as false, will be set to true when the user copies the link
     showShareDialog: false,
     showResetDialog: false,
   };
