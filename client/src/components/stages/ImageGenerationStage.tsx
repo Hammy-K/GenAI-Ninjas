@@ -553,9 +553,13 @@ export function ImageGenerationStage({
                     <div className="flex gap-2">
                       <Button
                         onClick={handleShareToGallery}
-                        variant="outline"
+                        variant={state.sharingStatus === "idle" ? "default" : "outline"}
                         size="sm"
-                        className="flex items-center gap-1 text-xs"
+                        className={`flex items-center gap-1 text-xs ${
+                          state.sharingStatus === "idle" 
+                            ? "animate-pulse bg-amber-500 hover:bg-amber-600 shadow-md" 
+                            : ""
+                        }`}
                         disabled={state.sharingStatus === "sharing" || state.sharingStatus === "shared"}
                       >
                         {state.sharingStatus === "sharing" ? (
@@ -758,7 +762,8 @@ export function ImageGenerationStage({
             <Button
               onClick={onComplete}
               size="lg"
-              disabled={!state.generatedImageUrl && !state.hasEarnedXp}
+              disabled={!state.generatedImageUrl || state.sharingStatus !== "shared"}
+              className={state.sharingStatus === "shared" ? "bg-green-600 hover:bg-green-700" : ""}
             >
               <span>المتابعة</span>
               <ArrowLeft className="mr-2 h-4 w-4" />
