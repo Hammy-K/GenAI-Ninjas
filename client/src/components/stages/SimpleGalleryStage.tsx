@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -117,30 +117,6 @@ export function SimpleGalleryStage({
     onSuccess: () => {
       // Invalidate the gallery query to refresh the data
       queryClient.invalidateQueries({ queryKey: ["/api/gallery/all"] });
-    },
-  });
-  
-  // Mutation for unliking an image
-  const unlikeMutation = useMutation({
-    mutationFn: async (imageId: number) => {
-      const response = await fetch("/api/gallery/unlike", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageId }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to unlike image");
-      }
-
-      return (await response.json()) as GalleryImage;
-    },
-    onSuccess: () => {
-      // Invalidate the gallery query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["/api/gallery/all"] });
 
       // Award XP for first like if not already awarded
       if (!hasLikedImage) {
@@ -184,21 +160,64 @@ export function SimpleGalleryStage({
       console.error("Error liking image:", error);
     },
   });
+  
+  // Mutation for unliking an image
+  const unlikeMutation = useMutation({
+    mutationFn: async (imageId: number) => {
+      const response = await fetch("/api/gallery/unlike", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageId }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to unlike image");
+      }
+
+      return (await response.json()) as GalleryImage;
+    },
+    onSuccess: () => {
+      // Invalidate the gallery query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/gallery/all"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "خطأ",
+        description: "فشل في إلغاء الإعجاب بالصورة. حاول مرة أخرى لاحقًا.",
+        variant: "destructive",
+      });
+      console.error("Error unliking image:", error);
+    },
+  });
 
   // Handle liking an image
   const handleLike = (imageId: number) => {
-    // Check if the image has already been liked
+    // Image already liked - unlike it
     if (likedImageIds.has(imageId)) {
-      // Image already liked, show toast
+      // Remove from liked images set
+      setLikedImageIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(imageId);
+        return newSet;
+      });
+      
+      // Call API to unlike the image
+      unlikeMutation.mutate(imageId);
+      
+      // Show toast
       toast({
-        title: "ملاحظة",
-        description: "لقد قمت بالإعجاب بهذه الصورة مسبقاً",
+        title: "تم إلغاء الإعجاب",
+        description: "تم إلغاء إعجابك بالصورة",
         variant: "default",
       });
+      
       return;
     }
     
-    // Add to liked images set
+    // Add to liked images set for a new like
     setLikedImageIds(prev => {
       const newSet = new Set(prev);
       newSet.add(imageId);
@@ -315,8 +334,8 @@ export function SimpleGalleryStage({
                           size="sm"
                           className={`flex items-center gap-2 ${likedImageIds.has(image.id) ? "bg-pink-100 hover:bg-pink-200 border-pink-200" : ""}`}
                           onClick={() => handleLike(image.id)}
-                          disabled={likeMutation.isPending || likedImageIds.has(image.id)}
-                          title={likedImageIds.has(image.id) ? "لقد قمت بالإعجاب بهذه الصورة" : "أعجبني"}
+                          disabled={likeMutation.isPending || unlikeMutation.isPending}
+                          title={likedImageIds.has(image.id) ? "إلغاء الإعجاب" : "أعجبني"}
                         >
                           <Heart className={`h-4 w-4 ${likedImageIds.has(image.id) ? "fill-red-500 text-red-500" : ""}`} />
                           <span>{image.likes}</span>
