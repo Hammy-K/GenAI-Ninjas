@@ -35,12 +35,26 @@ type ProjectIdeaResponse = {
 
 export async function generateText(options: TextGenerationOptions): Promise<CompletionResponse> {
   try {
-    const response = await apiRequest('POST', '/api/ai/text', options);
+    // Use the new TryAI assistant endpoint which uses the specific assistant ID
+    const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', options);
     const data = await response.json();
-    return { text: data.text };
+    return { text: data.text, error: data.error };
   } catch (error) {
     console.error("Error generating text:", error);
-    return { text: "", error: error instanceof Error ? error.message : "Unknown error occurred" };
+    
+    // Try falling back to the original endpoint if the assistant API fails
+    try {
+      console.log("TryAI Assistant API failed, falling back to standard endpoint");
+      const fallbackResponse = await apiRequest('POST', '/api/ai/text', options);
+      const fallbackData = await fallbackResponse.json();
+      return { text: fallbackData.text };
+    } catch (fallbackError) {
+      console.error("Both text generation endpoints failed:", fallbackError);
+      return { 
+        text: "عذرًا، حدث خطأ في التواصل مع د. بنجي. هل يمكنك إعادة المحاولة؟", 
+        error: error instanceof Error ? error.message : "Unknown error occurred" 
+      };
+    }
   }
 }
 
