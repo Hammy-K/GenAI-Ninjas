@@ -19,7 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { analyzePrompt } from "@/lib/openai";
 import { useStageState } from "@/hooks/useStageState";
-import { validateInput } from "@/lib/inputFilter";
+import { validateInput, validatePromptAnalyzerInput } from "@/lib/inputFilter";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { useQuest } from "@/hooks/useQuest";
 import { trackStageProgress, logPromptToFirestore } from "@/lib/firebase";
@@ -101,10 +101,23 @@ export function PromptChallengeStage({
   const badPromptExample = "سوي لي تطبيق";
 
   const handleSubmitImprovement = async () => {
-    // Validate the input using the shared utility function
-    const validation = validateInput(state.improvedPrompt);
-    if (!validation.isValid) {
-      setError(validation.errorMessage);
+    // First validate the input using the shared utility function
+    const generalValidation = validateInput(state.improvedPrompt);
+    if (!generalValidation.isValid) {
+      setError(generalValidation.errorMessage);
+      return;
+    }
+    
+    // Then check if the prompt is too similar to the example prompt
+    const exampleCheck = validatePromptAnalyzerInput(state.improvedPrompt);
+    if (!exampleCheck.isValid) {
+      setError(exampleCheck.errorMessage);
+      
+      // Track this as a plagiarism attempt in analytics
+      trackStageProgress("prompt_challenge", "example_copied", {
+        prompt_length: state.improvedPrompt.length,
+      });
+      
       return;
     }
 

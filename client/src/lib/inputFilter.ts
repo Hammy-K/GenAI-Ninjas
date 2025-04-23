@@ -4,6 +4,58 @@
  */
 
 /**
+ * Checks if a prompt appears to be copied from the example prompt in the Prompt Analyzer stage
+ * @param input The user input to check against the example prompt
+ * @returns An object indicating if the prompt is valid and an error message if not
+ */
+export function validatePromptAnalyzerInput(input: string): {
+  isValid: boolean;
+  errorMessage: string;
+} {
+  try {
+    // List of 5 flagged keywords from the example prompt
+    const flaggedKeywords = [
+      "Flappy", 
+      "شخصية تقفز", 
+      "تخطى عقبات", 
+      "لعبة بسيطة", 
+      "ألوان زاهية"
+    ];
+    
+    // Count how many flagged keywords exist in the input
+    const lowerCaseInput = input.toLowerCase();
+    let matchCount = 0;
+    
+    for (const keyword of flaggedKeywords) {
+      if (lowerCaseInput.includes(keyword.toLowerCase())) {
+        matchCount++;
+      }
+    }
+    
+    // If 2 or more keywords match, consider it too similar to the example
+    if (matchCount >= 2) {
+      return {
+        isValid: false,
+        errorMessage: "جرب فكرة جديدة بأسلوبك الخاص — لا تنس أن الإبداع هو أهم مهارة هنا!"
+      };
+    }
+    
+    // Otherwise, the prompt is valid
+    return {
+      isValid: true,
+      errorMessage: ""
+    };
+  } catch (error) {
+    // Ensure we don't crash the app - fallback to allowing the prompt
+    console.error("Error in validatePromptAnalyzerInput:", error);
+    return {
+      isValid: true,
+      errorMessage: ""
+    };
+  }
+}
+
+/**
  * Checks if input contains meaningless or inappropriate content
  * @param input The user input string to validate
  * @returns An object with the validation result and an error message if invalid
