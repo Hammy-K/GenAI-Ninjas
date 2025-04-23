@@ -44,6 +44,26 @@ function logServerPrompt(
  * @returns HTTP server instance
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add a utility endpoint to clear session data (temporary, for debugging)
+  app.get('/api/debug/clear-session', (req: Request, res: Response) => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Failed to destroy session:', err);
+          return res.status(500).json({ success: false, error: 'Failed to clear session' });
+        }
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Session cleared successfully. Refresh the page to see changes.'
+        });
+      });
+    } else {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'No active session to clear. Refresh the page to start fresh.'
+      });
+    }
+  });
   // Create router for API endpoints
   const apiRouter = express.Router();
 
