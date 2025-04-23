@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { clearAllDataAndReload } from '@/lib/clearData';
+import { clearAllDataAndReload } from '@/lib/clearData.ts';
 
 /**
  * Debug Panel Component

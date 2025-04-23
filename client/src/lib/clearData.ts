@@ -2,8 +2,14 @@
  * Utility functions to clear all application data
  */
 
+interface ClearResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 // Function to clear local storage
-export function clearLocalStorage() {
+export function clearLocalStorage(): ClearResponse {
   // Clear localStorage
   localStorage.clear();
   console.log('LocalStorage cleared successfully');
@@ -24,20 +30,23 @@ export function clearLocalStorage() {
 }
 
 // Function to clear server session data
-export async function clearServerSession() {
+export async function clearServerSession(): Promise<ClearResponse> {
   try {
     const response = await fetch('/api/debug/clear-session');
-    const data = await response.json();
+    const data = await response.json() as ClearResponse;
     console.log('Server session cleared:', data);
     return data;
   } catch (error) {
     console.error('Failed to clear server session:', error);
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
 
 // Clear all data and reload the page
-export async function clearAllDataAndReload() {
+export async function clearAllDataAndReload(): Promise<void> {
   // Clear client-side storage
   clearLocalStorage();
   

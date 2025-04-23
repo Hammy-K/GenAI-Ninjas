@@ -10,6 +10,7 @@ import Project from "@/pages/project";
 import Gallery from "@/pages/gallery";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
+import { DebugPanel } from "@/components/debug/DebugPanel";
 
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
@@ -37,6 +38,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Toaster />
+      <DebugPanel />
     </QueryClientProvider>
   );
 }
