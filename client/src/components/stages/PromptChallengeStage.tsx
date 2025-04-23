@@ -375,7 +375,8 @@ export function PromptChallengeStage({
             <Button
               onClick={onComplete}
               size="lg"
-              disabled={false} // Allow users to proceed even if API calls fail
+              disabled={!(state.analysis && state.analysis.score >= 7)} // Disable until score is 7 or higher
+              className={state.analysis && state.analysis.score >= 7 ? "bg-green-600 hover:bg-green-700" : ""}
             >
               <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
