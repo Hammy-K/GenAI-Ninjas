@@ -92,7 +92,7 @@ export function HTMLGeneratorStage({
   const welcomeMessage: HTMLMessage = {
     role: "assistant",
     content:
-      'أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،',
+      "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
   };
 
   const examplesMessage: HTMLMessage = {
@@ -107,7 +107,6 @@ export function HTMLGeneratorStage({
 - تطبيق يرشّح لك وش تأكل حسب مزاجك
 `,
   };
-
 
   const initialState: HTMLGeneratorState = {
     messages: [welcomeMessage, examplesMessage],
@@ -239,7 +238,8 @@ export function HTMLGeneratorStage({
 
     try {
       // Award XP for the first prompt if not already awarded
-      if (state.messages.length === 2) { // Adjust length check to account for new message
+      if (state.messages.length === 2) {
+        // Adjust length check to account for new message
         if (
           awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")
         ) {
@@ -278,7 +278,8 @@ export function HTMLGeneratorStage({
       // Use the actual response message from the API instead of a hardcoded message
       const aiResponse: HTMLMessage = response.message || {
         role: "assistant",
-        content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات."
+        content:
+          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
       };
 
       // Update state with the AI response and HTML
@@ -292,7 +293,8 @@ export function HTMLGeneratorStage({
       }));
 
       // Award XP for receiving a response if not already awarded
-      if (state.messages.length <= 3) { // Adjust length check to account for new message
+      if (state.messages.length <= 3) {
+        // Adjust length check to account for new message
         if (
           awardIfNotAlreadyAwarded(
             onEarnXp,
@@ -861,9 +863,12 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" && (msg.content.includes("<!DOCTYPE html") || msg.content.includes("<html")) 
-                            ? "سويت لك الصفحة! شوف النتيجة في الأسفل 👇" 
-                            : (msg.content.split("<!DOCTYPE html")[0] || msg.content)}
+                          {msg.role === "assistant" &&
+                          (msg.content.includes("<!DOCTYPE html") ||
+                            msg.content.includes("<html"))
+                            ? "سويت لك الصفحة! شوف النتيجة في الأسفل 👇"
+                            : msg.content.split("<!DOCTYPE html")[0] ||
+                              msg.content}
                         </div>
                       </div>
                     ))}
