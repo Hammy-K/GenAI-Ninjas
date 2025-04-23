@@ -320,15 +320,43 @@ export function HTMLGeneratorStage({
 
   // Award badge when user continues to next stage
   const handleContinue = () => {
-    // Award AI-Coder badge if not already awarded
-    if (!state.hasUnlockedBadge) {
-      if (!isAlreadyAwarded("html_generator_badge", "ai_coder_badge")) {
-        onUnlockBadge("ai_coder_badge", "html_generator_badge");
-        markAsAwarded("html_generator_badge", "ai_coder_badge");
-        setState((prev) => ({ ...prev, hasUnlockedBadge: true }));
+    // Only proceed if the user has satisfied all requirements (saved project and copied link)
+    if (state.projectId && state.hasSharedLink) {
+      // Award AI-Coder badge if not already awarded
+      if (!state.hasUnlockedBadge) {
+        if (!isAlreadyAwarded("html_generator_badge", "ai_coder_badge")) {
+          onUnlockBadge("ai_coder_badge", "html_generator_badge");
+          markAsAwarded("html_generator_badge", "ai_coder_badge");
+          setState((prev) => ({ ...prev, hasUnlockedBadge: true }));
+        }
       }
+      
+      // Track completion of this stage with all requirements met
+      trackStageProgress("html_generator", "completed", {
+        requirements_met: true,
+        has_project: Boolean(state.projectId),
+        has_shared_link: state.hasSharedLink
+      });
+      
+      onComplete();
+    } else {
+      // Show a toast notification explaining the requirements
+      toast({
+        title: "متطلبات إتمام المهمة",
+        description: !state.projectId 
+          ? "يجب عليك حفظ مشروعك أولاً قبل الانتقال للمرحلة التالية" 
+          : "يجب نسخ رابط مشروعك قبل الانتقال للمرحلة التالية",
+        variant: "default",
+        className: "bg-amber-50 border-amber-200 text-amber-800"
+      });
+      
+      // Track attempt to proceed without meeting requirements
+      trackStageProgress("html_generator", "continue_attempted", {
+        requirements_met: false,
+        has_project: Boolean(state.projectId),
+        has_shared_link: state.hasSharedLink
+      });
     }
-    onComplete();
   };
 
   // Handle toggling the chat widget
@@ -530,6 +558,17 @@ export function HTMLGeneratorStage({
     navigator.clipboard
       .writeText(state.shareUrl)
       .then(() => {
+        // Set hasSharedLink to true to enable progression
+        setState((prev) => ({
+          ...prev,
+          hasSharedLink: true
+        }));
+        
+        // Track this action
+        trackStageProgress("html_generator", "project_link_copied", {
+          project_id: state.projectId
+        });
+        
         // Show minimalist toast notification
         toast({
           description: "Copied to clipboard",
@@ -566,6 +605,7 @@ export function HTMLGeneratorStage({
       messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
       projectId: null,
       shareUrl: null,
+      hasSharedLink: false, // Reset the shared link flag
       showShareDialog: false,
       showResetDialog: false,
     }));
@@ -606,7 +646,7 @@ export function HTMLGeneratorStage({
             <Button
               type="button"
               size="sm"
-              className="px-3"
+              className={`px-3 ${state.projectId && !state.hasSharedLink ? "animate-pulse bg-green-100 hover:bg-green-200 text-green-800" : ""}`}
               onClick={copyShareUrl}
             >
               <span className="sr-only">نسخ</span>
@@ -730,8 +770,8 @@ export function HTMLGeneratorStage({
                 <div className="flex items-center gap-1">
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="h-8 flex items-center gap-1 text-xs"
+                    variant={state.currentHTML && !state.projectId ? "default" : "outline"}
+                    className={`h-8 flex items-center gap-1 text-xs ${state.currentHTML && !state.projectId ? "animate-pulse" : ""}`}
                     onClick={saveAndShareProject}
                     disabled={state.isSaving}
                   >
@@ -947,7 +987,17 @@ export function HTMLGeneratorStage({
               <ArrowRight className="ml-2 h-4 w-4" />
               <span>للخلف</span>
             </Button>
-            <Button onClick={handleContinue} size="lg">
+            <Button 
+              onClick={handleContinue} 
+              size="lg"
+              className={!state.projectId || !state.hasSharedLink ? "relative" : ""}
+              variant={state.projectId && state.hasSharedLink ? "default" : "outline"}
+            >
+              {!state.projectId || !state.hasSharedLink ? (
+                <div className="absolute -top-8 right-0 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
+                  {!state.projectId ? "احفظ مشروعك" : "انسخ الرابط"}
+                </div>
+              ) : null}
               <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
