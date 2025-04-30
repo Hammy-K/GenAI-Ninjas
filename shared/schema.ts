@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  firebaseUid: text("firebase_uid").unique(), // Add Firebase UID for anonymous auth integration
 });
 
 // Quest progress schema to store user progress
@@ -75,6 +76,7 @@ export const assistantLogs = pgTable("assistant_logs", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  firebaseUid: true,
 });
 
 export const insertQuestSchema = createInsertSchema(quests).omit({

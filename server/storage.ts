@@ -24,6 +24,7 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   // Quest progress methods
@@ -54,6 +55,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+  
+  async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
     return user || undefined;
   }
 
@@ -124,9 +130,9 @@ export class DatabaseStorage implements IStorage {
     return image || undefined;
   }
 
-  async incrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined> {
+  async incrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined> {
     // First check if the user has already liked this image
-    if (await this.hasLiked(imageId, sessionId)) {
+    if (await this.hasLiked(imageId, sessionId, firebaseUid)) {
       // Just return the image without incrementing likes
       return this.getGalleryImage(imageId);
     }
@@ -134,7 +140,8 @@ export class DatabaseStorage implements IStorage {
     // Record the like
     await db.insert(galleryLikes).values({
       imageId,
-      sessionId
+      sessionId,
+      firebaseUid: firebaseUid || null // Include Firebase UID if available
     });
 
     // Increment the likes count using SQL
@@ -149,22 +156,28 @@ export class DatabaseStorage implements IStorage {
     return updatedImage || undefined;
   }
 
-  async decrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined> {
+  async decrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined> {
     // First check if the user has liked this image
-    if (!(await this.hasLiked(imageId, sessionId))) {
+    if (!(await this.hasLiked(imageId, sessionId, firebaseUid))) {
       // If not liked, just return the image without changes
       return this.getGalleryImage(imageId);
+    }
+
+    // Build the conditions for finding the like
+    const conditions = [
+      eq(galleryLikes.imageId, imageId),
+      eq(galleryLikes.sessionId, sessionId)
+    ];
+    
+    // Add Firebase UID condition if available
+    if (firebaseUid) {
+      conditions.push(eq(galleryLikes.firebaseUid, firebaseUid));
     }
 
     // Delete the like record
     await db
       .delete(galleryLikes)
-      .where(
-        and(
-          eq(galleryLikes.imageId, imageId),
-          eq(galleryLikes.sessionId, sessionId)
-        )
-      );
+      .where(and(...conditions));
 
     // Decrement the likes count using SQL, ensuring it doesn't go below 0
     const [updatedImage] = await db
@@ -178,16 +191,22 @@ export class DatabaseStorage implements IStorage {
     return updatedImage || undefined;
   }
 
-  async hasLiked(imageId: number, sessionId: string): Promise<boolean> {
+  async hasLiked(imageId: number, sessionId: string, firebaseUid?: string): Promise<boolean> {
+    // Build the conditions for finding the like
+    const conditions = [
+      eq(galleryLikes.imageId, imageId),
+      eq(galleryLikes.sessionId, sessionId)
+    ];
+    
+    // Add Firebase UID condition if available
+    if (firebaseUid) {
+      conditions.push(eq(galleryLikes.firebaseUid, firebaseUid));
+    }
+
     const [like] = await db
       .select()
       .from(galleryLikes)
-      .where(
-        and(
-          eq(galleryLikes.imageId, imageId),
-          eq(galleryLikes.sessionId, sessionId)
-        )
-      );
+      .where(and(...conditions));
 
     return !!like;
   }
