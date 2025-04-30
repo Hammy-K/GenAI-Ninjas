@@ -42,6 +42,7 @@ export const galleryImages = pgTable("gallery_images", {
   likes: integer("likes").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   sessionId: text("session_id"),
+  firebaseUid: text("firebase_uid"),
 });
 
 // Schema to track user likes to prevent duplicates
@@ -49,6 +50,7 @@ export const galleryLikes = pgTable("gallery_likes", {
   id: serial("id").primaryKey(),
   imageId: integer("image_id").references(() => galleryImages.id).notNull(),
   sessionId: text("session_id").notNull(),
+  firebaseUid: text("firebase_uid"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -57,6 +59,8 @@ export const assistantLogs = pgTable("assistant_logs", {
   id: serial("id").primaryKey(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   userId: integer("user_id").references(() => users.id),
+  firebaseUid: text("firebase_uid"),
+  userName: text("user_name"),
   sessionId: text("session_id").notNull(),
   threadId: text("thread_id").notNull(),
   assistantId: text("assistant_id").notNull(),
