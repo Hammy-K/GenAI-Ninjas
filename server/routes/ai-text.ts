@@ -293,7 +293,7 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       }
       
       // Generate text using the TryAI Assistant API
-      const response = await assistantService.generateText(prompt, messageHistory, sessionId);
+      const response = await assistantService.generateText(prompt, messageHistory, sessionId, firebaseUid);
       
       // Log successful text generation
       logEvent('tryai_assistant_success', prompt, {
