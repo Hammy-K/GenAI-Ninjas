@@ -52,6 +52,21 @@ export const galleryLikes = pgTable("gallery_likes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Schema to log OpenAI Assistant API interactions
+export const assistantLogs = pgTable("assistant_logs", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: text("session_id").notNull(),
+  threadId: text("thread_id").notNull(),
+  assistantId: text("assistant_id").notNull(),
+  model: text("model").notNull(),
+  promptContent: jsonb("prompt_content").notNull(),
+  responseContent: jsonb("response_content").notNull(),
+  tokens: jsonb("tokens"),
+  errorMessage: text("error_message"),
+});
+
 // Define insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -77,15 +92,22 @@ export const insertGalleryLikeSchema = createInsertSchema(galleryLikes).omit({
   createdAt: true,
 });
 
+export const insertAssistantLogSchema = createInsertSchema(assistantLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
 // Define types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type InsertGalleryLike = z.infer<typeof insertGalleryLikeSchema>;
+export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
 export type ProjectIdea = typeof projectIdeas.$inferSelect;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GalleryLike = typeof galleryLikes.$inferSelect;
+export type AssistantLog = typeof assistantLogs.$inferSelect;
