@@ -41,9 +41,9 @@ export interface IStorage {
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
   getAllGalleryImages(): Promise<GalleryImage[]>;
   getGalleryImage(id: number): Promise<GalleryImage | undefined>;
-  incrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined>;
-  decrementLike(imageId: number, sessionId: string): Promise<GalleryImage | undefined>;
-  hasLiked(imageId: number, sessionId: string): Promise<boolean>;
+  incrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined>;
+  decrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined>;
+  hasLiked(imageId: number, sessionId: string, firebaseUid?: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {

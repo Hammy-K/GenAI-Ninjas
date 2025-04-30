@@ -15,6 +15,10 @@ interface RequestWithGallery extends Request {
   session: Request['session'] & {
     gallerySessionId?: string;
   };
+  // Include firebaseUid in request body if available
+  body: any & {
+    firebaseUid?: string;
+  };
 }
 
 // Validation schema for gallery image sharing
@@ -45,7 +49,7 @@ export function registerGalleryRoutes(router: Router) {
   // Upload an image to the gallery
   galleryRoutes.post("/upload", async (req: RequestWithGallery, res: Response) => {
     try {
-      const { imageUrl, studentName, missionNumber } = req.body;
+      const { imageUrl, studentName, missionNumber, firebaseUid } = req.body;
       
       // Validate required fields
       if (!imageUrl || !studentName || missionNumber === undefined) {
@@ -58,14 +62,16 @@ export function registerGalleryRoutes(router: Router) {
         imageUrl,
         studentName,
         missionNumber,
-        sessionId
+        sessionId,
+        firebaseUid: firebaseUid || null // Include Firebase UID if available
       });
 
       // Log successful upload
       logEvent('gallery_image_upload', 'Image uploaded to gallery', {
         student_name: studentName,
         mission_number: missionNumber,
-        session_id: sessionId
+        session_id: sessionId,
+        firebase_uid: firebaseUid || null
       });
       
       return res.status(201).json(galleryImage);
@@ -87,11 +93,11 @@ export function registerGalleryRoutes(router: Router) {
         });
       }
       
-      const { imageId } = validation.data;
+      const { imageId, firebaseUid } = req.body;
 
       // Check if user already liked this image
       const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
-      const hasLiked = await storage.hasLiked(imageId, sessionId);
+      const hasLiked = await storage.hasLiked(imageId, sessionId, firebaseUid);
       
       // If already liked, return the current image without incrementing
       if (hasLiked) {
@@ -99,8 +105,8 @@ export function registerGalleryRoutes(router: Router) {
         return res.json(image);
       }
 
-      // Increment the like count using the same session ID
-      const updatedImage = await storage.incrementLike(imageId, sessionId);
+      // Increment the like count using the session ID and Firebase UID
+      const updatedImage = await storage.incrementLike(imageId, sessionId, firebaseUid);
       
       if (!updatedImage) {
         return res.status(404).json({ error: 'Image not found' });
@@ -109,7 +115,8 @@ export function registerGalleryRoutes(router: Router) {
       // Log the like
       logEvent('gallery_image_liked', `Image ${imageId} liked`, {
         image_id: imageId,
-        session_id: sessionId
+        session_id: sessionId,
+        firebase_uid: firebaseUid || null
       });
       
       return res.json(updatedImage);
@@ -132,6 +139,7 @@ export function registerGalleryRoutes(router: Router) {
       }
       
       const { imageUrl, studentName, prompt, missionNumber } = validation.data;
+      const { firebaseUid } = req.body;
 
       // Use the provided student name or a default if not available
       const finalStudentName = studentName && studentName.trim() !== '' 
@@ -160,7 +168,8 @@ export function registerGalleryRoutes(router: Router) {
           imageUrl: permanentImageUrl, // Use the permanent Firebase URL
           studentName: finalStudentName,
           missionNumber: missionNumber || 1,
-          sessionId
+          sessionId,
+          firebaseUid: firebaseUid || null // Include Firebase UID if available
         });
 
         // Log successful sharing
@@ -169,7 +178,8 @@ export function registerGalleryRoutes(router: Router) {
           mission_number: missionNumber || 1,
           session_id: sessionId,
           prompt_length: prompt ? prompt.length : 0,
-          permanent_url: true
+          permanent_url: true,
+          firebase_uid: firebaseUid || null
         });
         
         return res.status(201).json(galleryImage);
@@ -182,7 +192,8 @@ export function registerGalleryRoutes(router: Router) {
           imageUrl, // Use the original URL as fallback
           studentName: finalStudentName,
           missionNumber: missionNumber || 1,
-          sessionId
+          sessionId,
+          firebaseUid: firebaseUid || null // Include Firebase UID if available
         });
         
         logEvent('gallery_image_shared', 'Image shared to gallery with original URL (Firebase failed)', {
@@ -320,13 +331,13 @@ export function registerGalleryRoutes(router: Router) {
         });
       }
       
-      const { imageId } = validation.data;
+      const { imageId, firebaseUid } = req.body;
 
       // Get session ID
       const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
       
       // Check if user has liked this image
-      const hasLiked = await storage.hasLiked(imageId, sessionId);
+      const hasLiked = await storage.hasLiked(imageId, sessionId, firebaseUid);
       
       // If not liked, return an error
       if (!hasLiked) {
@@ -334,7 +345,7 @@ export function registerGalleryRoutes(router: Router) {
       }
 
       // Decrement the like count
-      const updatedImage = await storage.decrementLike(imageId, sessionId);
+      const updatedImage = await storage.decrementLike(imageId, sessionId, firebaseUid);
       
       if (!updatedImage) {
         return res.status(404).json({ error: 'Image not found' });
@@ -343,7 +354,8 @@ export function registerGalleryRoutes(router: Router) {
       // Log the unlike
       logEvent('gallery_image_unliked', `Image ${imageId} unliked`, {
         image_id: imageId,
-        session_id: sessionId
+        session_id: sessionId,
+        firebase_uid: firebaseUid || null
       });
       
       return res.json(updatedImage);
