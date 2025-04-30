@@ -16,6 +16,10 @@ const HTML_GENERATOR_SESSION_PREFIX = 'html_generator_';
 interface RequestWithAssistantSession extends Request {
   session: Session & {
     assistantSessionId?: string;
+  };
+  body: any & {
+    firebaseUid?: string;
+    deviceId?: string;
   }
 }
 

@@ -21,6 +21,21 @@ function getSessionId(prefix: string = 'user'): string {
   return sessionId;
 }
 
+// Function to get a device ID from localStorage or create a new one
+// This provides a persistent identifier across sessions even when Firebase auth isn't available
+function getDeviceId(): string {
+  const key = 'device_id';
+  let deviceId = localStorage.getItem(key);
+  
+  if (!deviceId) {
+    // Create a more reliable device ID with timestamp and random component
+    deviceId = `device_${Math.random().toString(36).substring(2, 15)}_${Date.now().toString(36)}`;
+    localStorage.setItem(key, deviceId);
+  }
+  
+  return deviceId;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -29,15 +44,26 @@ export async function apiRequest(
   // Add user identity information to the request data
   const firebaseUid = getUserId();
   const sessionId = getSessionId();
+  const deviceId = getDeviceId();
   
   // Combine original data with user identity
   const enrichedData = data 
     ? { 
         ...(typeof data === 'object' ? data : {}), 
         firebaseUid, 
-        sessionId
+        sessionId,
+        deviceId // Add device ID for persistent tracking when Firebase auth is not available
       } 
-    : { firebaseUid, sessionId };
+    : { firebaseUid, sessionId, deviceId };
+  
+  // Log the identity info (without exposing sensitive values)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('API request with identity:', {
+      hasFirebaseId: !!firebaseUid,
+      hasSessionId: !!sessionId,
+      hasDeviceId: !!deviceId
+    });
+  }
   
   const res = await fetch(url, {
     method,
@@ -60,12 +86,23 @@ export const getQueryFn: <T>(options: {
     const url = new URL(queryKey[0] as string, window.location.origin);
     const firebaseUid = getUserId();
     const sessionId = getSessionId();
+    const deviceId = getDeviceId();
     
     // Add user identity to query params if available
     if (firebaseUid) {
       url.searchParams.append('firebaseUid', firebaseUid);
     }
     url.searchParams.append('sessionId', sessionId);
+    url.searchParams.append('deviceId', deviceId);
+    
+    // Log identity info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('GET request with identity:', {
+        hasFirebaseId: !!firebaseUid,
+        hasSessionId: !!sessionId,
+        hasDeviceId: !!deviceId
+      });
+    }
     
     const res = await fetch(url.toString(), {
       credentials: "include",
