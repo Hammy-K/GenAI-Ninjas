@@ -414,7 +414,8 @@ export class AssistantService {
   async generateText(
     prompt: string,
     messageHistory: AssistantMessage[],
-    sessionId: string
+    sessionId: string,
+    firebaseUid?: string
   ): Promise<TryAIResponse> {
     const startTime = Date.now();
     let threadId: string = "";

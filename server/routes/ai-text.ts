@@ -20,6 +20,9 @@ const GPT_MODEL = "gpt-4o";
 interface RequestWithTryAISession extends Request {
   session: Session & {
     tryaiSessionId?: string;
+  };
+  body: any & {
+    firebaseUid?: string;
   }
 }
 
@@ -273,12 +276,13 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
   // TryAI Assistant endpoint
   aiRoutes.post("/try-ai-assistant", validatePrompt, async (req: RequestWithTryAISession, res: Response) => {
     try {
-      const { prompt, messageHistory = [] } = req.body;
+      const { prompt, messageHistory = [], firebaseUid } = req.body;
       
       // Log the TryAI assistant request
       logEvent('tryai_assistant', prompt, {
         message_history_length: messageHistory.length,
-        prompt_length: prompt.length
+        prompt_length: prompt.length,
+        firebase_uid: firebaseUid || null
       });
 
       // Get or create session ID for this user to maintain thread history
@@ -295,7 +299,8 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       logEvent('tryai_assistant_success', prompt, {
         response_length: response.text.length,
         conversation_turns: messageHistory.length + 1,
-        has_error: !!response.error
+        has_error: !!response.error,
+        firebase_uid: firebaseUid || null
       });
       
       return res.json(response);
