@@ -15,9 +15,10 @@ interface RequestWithGallery extends Request {
   session: Request['session'] & {
     gallerySessionId?: string;
   };
-  // Include firebaseUid in request body if available
+  // Include user identity fields if available
   body: any & {
     firebaseUid?: string;
+    deviceId?: string;
   };
 }
 
@@ -49,7 +50,7 @@ export function registerGalleryRoutes(router: Router) {
   // Upload an image to the gallery
   galleryRoutes.post("/upload", async (req: RequestWithGallery, res: Response) => {
     try {
-      const { imageUrl, studentName, missionNumber, firebaseUid } = req.body;
+      const { imageUrl, studentName, missionNumber, firebaseUid, deviceId } = req.body;
       
       // Validate required fields
       if (!imageUrl || !studentName || missionNumber === undefined) {
@@ -71,7 +72,8 @@ export function registerGalleryRoutes(router: Router) {
         student_name: studentName,
         mission_number: missionNumber,
         session_id: sessionId,
-        firebase_uid: firebaseUid || null
+        firebase_uid: firebaseUid || null,
+        device_id: deviceId || null
       });
       
       return res.status(201).json(galleryImage);
