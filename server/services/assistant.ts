@@ -48,12 +48,14 @@ export class AssistantService {
    * @param messageHistory Previous messages for context
    * @param sessionId Unique identifier for the user session
    * @param firebaseUid Optional Firebase Anonymous Auth UID for persistent user identification
+   * @param deviceId Optional device ID as a fallback when Firebase auth is not available
    * @returns HTML and explanatory message
    */
   async generateHTML(
     messageHistory: AssistantMessage[],
     sessionId: string,
-    firebaseUid?: string
+    firebaseUid?: string,
+    deviceId?: string
   ): Promise<AssistantResponse> {
     const startTime = Date.now();
     let threadId: string = "";
@@ -110,7 +112,8 @@ export class AssistantService {
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
-          firebaseUid: firebaseUid || null
+          firebaseUid: firebaseUid || null,
+          deviceId: deviceId || null
         }).catch(e => console.error("Failed to log assistant error:", e));
         
         return this.createErrorResponse(errorMsg);
@@ -177,7 +180,8 @@ export class AssistantService {
             completion: Math.round(responseTokens),
             total: Math.round(promptTokens + responseTokens)
           },
-          firebaseUid: firebaseUid || null
+          firebaseUid: firebaseUid || null,
+          deviceId: deviceId || null
         }).catch(e => console.error("Failed to log assistant interaction:", e));
         
         return response;
@@ -414,13 +418,15 @@ export class AssistantService {
    * @param messageHistory Previous messages for context
    * @param sessionId Unique identifier for the user session
    * @param firebaseUid Optional Firebase Anonymous Auth UID for persistent user identification
+   * @param deviceId Optional device ID as a fallback when Firebase auth is not available
    * @returns Text response from the assistant
    */
   async generateText(
     prompt: string,
     messageHistory: AssistantMessage[],
     sessionId: string,
-    firebaseUid?: string
+    firebaseUid?: string,
+    deviceId?: string
   ): Promise<TryAIResponse> {
     const startTime = Date.now();
     let threadId: string = "";

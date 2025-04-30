@@ -50,8 +50,16 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         req.session.assistantSessionId = sessionId;
       }
       
-      // Generate HTML using the Assistant API
-      const response = await assistantService.generateHTML(messageHistory, sessionId);
+      // Extract user identity information
+      const { firebaseUid, deviceId } = req.body;
+      
+      // Generate HTML using the Assistant API with identity tracking
+      const response = await assistantService.generateHTML(
+        messageHistory, 
+        sessionId,
+        firebaseUid,
+        deviceId
+      );
       
       // Return the response
       return res.json(response);

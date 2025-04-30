@@ -23,6 +23,7 @@ interface RequestWithTryAISession extends Request {
   };
   body: any & {
     firebaseUid?: string;
+    deviceId?: string;
   }
 }
 
@@ -276,13 +277,14 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
   // TryAI Assistant endpoint
   aiRoutes.post("/try-ai-assistant", validatePrompt, async (req: RequestWithTryAISession, res: Response) => {
     try {
-      const { prompt, messageHistory = [], firebaseUid } = req.body;
+      const { prompt, messageHistory = [], firebaseUid, deviceId } = req.body;
       
       // Log the TryAI assistant request
       logEvent('tryai_assistant', prompt, {
         message_history_length: messageHistory.length,
         prompt_length: prompt.length,
-        firebase_uid: firebaseUid || null
+        firebase_uid: firebaseUid || null,
+        device_id: deviceId || null
       });
 
       // Get or create session ID for this user to maintain thread history
@@ -293,14 +295,21 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       }
       
       // Generate text using the TryAI Assistant API
-      const response = await assistantService.generateText(prompt, messageHistory, sessionId, firebaseUid);
+      const response = await assistantService.generateText(
+        prompt, 
+        messageHistory, 
+        sessionId, 
+        firebaseUid,
+        deviceId
+      );
       
       // Log successful text generation
       logEvent('tryai_assistant_success', prompt, {
         response_length: response.text.length,
         conversation_turns: messageHistory.length + 1,
         has_error: !!response.error,
-        firebase_uid: firebaseUid || null
+        firebase_uid: firebaseUid || null,
+        device_id: deviceId || null
       });
       
       return res.json(response);
