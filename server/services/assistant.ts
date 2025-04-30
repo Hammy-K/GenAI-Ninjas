@@ -500,7 +500,9 @@ export class AssistantService {
           model: "gpt-4o",
           promptContent: { prompt, messageHistory },
           responseContent: { error: errorMsg },
-          errorMessage: errorMsg
+          errorMessage: errorMsg,
+          firebaseUid: firebaseUid || null,
+          deviceId: deviceId || null
         }).catch(e => console.error("Failed to log TryAI error:", e));
         
         throw new Error(errorMsg);
@@ -526,7 +528,8 @@ export class AssistantService {
           completion: Math.round(responseTokens),
           total: Math.round(promptTokens + responseTokens)
         },
-        firebaseUid: firebaseUid || null
+        firebaseUid: firebaseUid || null,
+        deviceId: deviceId || null
       }).catch(e => console.error("Failed to log TryAI interaction:", e));
       
       return {
@@ -546,7 +549,8 @@ export class AssistantService {
           promptContent: { prompt, messageHistory },
           responseContent: { error: errorMessage },
           errorMessage: errorMessage,
-          firebaseUid: firebaseUid || null
+          firebaseUid: firebaseUid || null,
+          deviceId: deviceId || null
         }).catch(e => console.error("Failed to log TryAI error:", e));
       }
       
