@@ -51,7 +51,8 @@ export class AssistantService {
    */
   async generateHTML(
     messageHistory: AssistantMessage[],
-    sessionId: string
+    sessionId: string,
+    firebaseUid?: string
   ): Promise<AssistantResponse> {
     const startTime = Date.now();
     let threadId: string = "";
@@ -107,7 +108,8 @@ export class AssistantService {
           model: "gpt-4o", // Assistants use GPT-4o by default
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
-          errorMessage: errorMsg
+          errorMessage: errorMsg,
+          firebaseUid: firebaseUid || null
         }).catch(e => console.error("Failed to log assistant error:", e));
         
         return this.createErrorResponse(errorMsg);
@@ -173,7 +175,8 @@ export class AssistantService {
             prompt: Math.round(promptTokens),
             completion: Math.round(responseTokens),
             total: Math.round(promptTokens + responseTokens)
-          }
+          },
+          firebaseUid: firebaseUid || null
         }).catch(e => console.error("Failed to log assistant interaction:", e));
         
         return response;
