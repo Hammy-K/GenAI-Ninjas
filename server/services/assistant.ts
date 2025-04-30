@@ -47,6 +47,7 @@ export class AssistantService {
    * 
    * @param messageHistory Previous messages for context
    * @param sessionId Unique identifier for the user session
+   * @param firebaseUid Optional Firebase Anonymous Auth UID for persistent user identification
    * @returns HTML and explanatory message
    */
   async generateHTML(
@@ -412,6 +413,7 @@ export class AssistantService {
    * @param prompt User prompt to respond to
    * @param messageHistory Previous messages for context
    * @param sessionId Unique identifier for the user session
+   * @param firebaseUid Optional Firebase Anonymous Auth UID for persistent user identification
    * @returns Text response from the assistant
    */
   async generateText(

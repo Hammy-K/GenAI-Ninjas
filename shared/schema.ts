@@ -60,7 +60,9 @@ export const assistantLogs = pgTable("assistant_logs", {
   id: serial("id").primaryKey(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   userId: integer("user_id").references(() => users.id),
+  // User identity fields for cross-session tracking
   firebaseUid: text("firebase_uid"),
+  deviceId: text("device_id"), // Fallback persistent ID when Firebase auth is not available
   userName: text("user_name"),
   sessionId: text("session_id").notNull(),
   threadId: text("thread_id").notNull(),

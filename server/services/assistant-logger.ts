@@ -3,6 +3,9 @@
  * 
  * This service handles logging of all OpenAI Assistant API interactions
  * for analytics, debugging, and audit purposes.
+ * 
+ * Enhanced with Firebase Anonymous Auth tracking to provide persistent
+ * user identity across sessions for better analytics and tracking.
  */
 import { db } from '../db';
 import { assistantLogs, type InsertAssistantLog } from '@shared/schema';
@@ -19,9 +22,12 @@ export async function logAssistantInteraction(logData: InsertAssistantLog): Prom
     // Note: timestamp is automatically added by the database with defaultNow()
     const logEntry: InsertAssistantLog = {
       ...logData,
-      // Make sure firebaseUid is properly passed through if available
+      // Make sure identity fields are properly passed through if available
       firebaseUid: logData.firebaseUid || null,
-      userName: logData.userName || null
+      userName: logData.userName || null,
+      // Use deviceId as a fallback when Firebase UID is not available
+      // This allows us to track interactions across sessions even when Firebase Anonymous Auth is not enabled
+      deviceId: logData.deviceId || null
     };
 
     // Insert into database

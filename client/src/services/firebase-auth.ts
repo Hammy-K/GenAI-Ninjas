@@ -15,9 +15,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Log configuration to help with debugging (excluding sensitive values)
+console.log("Checking Firebase configuration:", {
+  apiKey: firebaseConfig.apiKey ? "API_KEY_PROVIDED" : "MISSING",
+  projectId: firebaseConfig.projectId,
+  appId: firebaseConfig.appId ? "APP_ID_PROVIDED" : "MISSING"
+});
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Print success message if initialized correctly
+console.log("Firebase configuration validated successfully!");
 
 let currentUser: FirebaseUser | null = null;
 let authInitialized = false;
@@ -31,6 +41,7 @@ export async function signInAnonymousUser(): Promise<FirebaseUser | null> {
     // Check if user is already signed in
     if (auth.currentUser) {
       currentUser = auth.currentUser;
+      console.log("Using existing anonymous user with UID:", auth.currentUser.uid);
       return auth.currentUser;
     }
 
@@ -41,6 +52,16 @@ export async function signInAnonymousUser(): Promise<FirebaseUser | null> {
     return result.user;
   } catch (error) {
     console.error("Error signing in anonymously:", error);
+    
+    // Check for specific error codes related to anonymous auth not being enabled
+    if (error && typeof error === 'object' && 'code' in error) {
+      const errorCode = (error as {code: string}).code;
+      if (errorCode === 'auth/admin-restricted-operation') {
+        console.warn("Anonymous authentication is not enabled in Firebase console. Please enable it in the Authentication > Sign-in method section.");
+      }
+    }
+    
+    // Return null but don't break the app flow
     return null;
   }
 }
