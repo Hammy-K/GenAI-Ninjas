@@ -11,6 +11,7 @@ import Gallery from "@/pages/gallery";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
 import { DebugPanel } from "@/components/debug/DebugPanel";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function Router() {
   // Set the HTML dir and lang attributes for RTL support
@@ -36,9 +37,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
-      <DebugPanel />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+        <DebugPanel />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

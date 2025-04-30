@@ -18,7 +18,10 @@ export async function logAssistantInteraction(logData: InsertAssistantLog): Prom
   try {
     // Note: timestamp is automatically added by the database with defaultNow()
     const logEntry: InsertAssistantLog = {
-      ...logData
+      ...logData,
+      // Make sure firebaseUid is properly passed through if available
+      firebaseUid: logData.firebaseUid || null,
+      userName: logData.userName || null
     };
 
     // Insert into database
