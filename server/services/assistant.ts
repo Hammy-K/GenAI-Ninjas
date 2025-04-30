@@ -6,6 +6,7 @@
  */
 import OpenAI from 'openai';
 import { logEvent, logError } from './logging';
+import { logAssistantInteraction, extractTokenUsage } from './assistant-logger';
 
 // Constants for the Assistants
 const HTML_ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // HTML generator assistant
@@ -52,16 +53,22 @@ export class AssistantService {
     messageHistory: AssistantMessage[],
     sessionId: string
   ): Promise<AssistantResponse> {
+    const startTime = Date.now();
+    let threadId: string = "";
+    let latestUserMessage: AssistantMessage | undefined;
+    
     try {
       // Get or create thread for this session
-      let threadId = this.getThreadId(sessionId);
+      const existingThreadId = this.getThreadId(sessionId);
       
-      if (!threadId) {
+      if (existingThreadId) {
+        threadId = existingThreadId;
+      } else {
         threadId = await this.createThread(sessionId);
       }
       
       // Get the last user message
-      const latestUserMessage = messageHistory
+      latestUserMessage = messageHistory
         .filter(msg => msg.role === 'user')
         .pop();
       
@@ -90,7 +97,20 @@ export class AssistantService {
       const completedRun = await this.waitForRunCompletion(threadId, run.id);
       
       if (completedRun.status !== 'completed') {
-        return this.createErrorResponse(`Assistant run failed with status: ${completedRun.status}`);
+        const errorMsg = `Assistant run failed with status: ${completedRun.status}`;
+        
+        // Log the failed interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: HTML_ASSISTANT_ID,
+          model: "gpt-4o", // Assistants use GPT-4o by default
+          promptContent: messageHistory,
+          responseContent: { error: errorMsg },
+          errorMessage: errorMsg
+        }).catch(e => console.error("Failed to log assistant error:", e));
+        
+        return this.createErrorResponse(errorMsg);
       }
       
       // Get messages from the thread
@@ -111,21 +131,86 @@ export class AssistantService {
         .filter(Boolean) as AssistantMessage[];
       
       if (assistantMessages.length === 0) {
-        return this.createErrorResponse("No assistant response received");
+        const errorMsg = "No assistant response received";
+        
+        // Log the failed interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: HTML_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: messageHistory,
+          responseContent: { error: errorMsg },
+          errorMessage: errorMsg
+        }).catch(e => console.error("Failed to log assistant error:", e));
+        
+        return this.createErrorResponse(errorMsg);
       }
       
       const latestAssistantMessage = assistantMessages[0];
       
       // Process the assistant's response to extract HTML and explanatory text
       if (latestAssistantMessage && latestAssistantMessage.content) {
-        return this.processAssistantResponse(latestAssistantMessage.content);
+        const response = this.processAssistantResponse(latestAssistantMessage.content);
+        
+        // Calculate tokens based on prompt and response length (approximate)
+        const promptTokens = JSON.stringify(messageHistory).length / 4; // ~4 chars per token
+        const responseTokens = latestAssistantMessage.content.length / 4;
+        
+        // Log the successful interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: HTML_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: messageHistory,
+          responseContent: {
+            message: latestAssistantMessage.content,
+            html: response.html,
+            isGeneratingHTML: response.isGeneratingHTML
+          },
+          tokens: {
+            prompt: Math.round(promptTokens),
+            completion: Math.round(responseTokens),
+            total: Math.round(promptTokens + responseTokens)
+          }
+        }).catch(e => console.error("Failed to log assistant interaction:", e));
+        
+        return response;
       } else {
-        return this.createErrorResponse("Invalid assistant response format");
+        const errorMsg = "Invalid assistant response format";
+        
+        // Log the failed interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: HTML_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: messageHistory,
+          responseContent: { error: errorMsg },
+          errorMessage: errorMsg
+        }).catch(e => console.error("Failed to log assistant error:", e));
+        
+        return this.createErrorResponse(errorMsg);
       }
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       logError("assistant_html_generation", errorMessage);
+      
+      // Log the error asynchronously (fire and forget)
+      if (latestUserMessage && threadId) {
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: HTML_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: messageHistory,
+          responseContent: { error: errorMessage },
+          errorMessage: errorMessage
+        }).catch(e => console.error("Failed to log assistant error:", e));
+      }
+      
       return this.createErrorResponse(errorMessage);
     }
   }
@@ -331,11 +416,16 @@ export class AssistantService {
     messageHistory: AssistantMessage[],
     sessionId: string
   ): Promise<TryAIResponse> {
+    const startTime = Date.now();
+    let threadId: string = "";
+    
     try {
       // Get or create thread for this session
-      let threadId = this.getThreadId(sessionId);
+      const existingThreadId = this.getThreadId(sessionId);
       
-      if (!threadId) {
+      if (existingThreadId) {
+        threadId = existingThreadId;
+      } else {
         threadId = await this.createThread(sessionId);
       }
       
@@ -360,7 +450,20 @@ export class AssistantService {
       const completedRun = await this.waitForRunCompletion(threadId, run.id);
       
       if (completedRun.status !== 'completed') {
-        throw new Error(`Assistant run failed with status: ${completedRun.status}`);
+        const errorMsg = `Assistant run failed with status: ${completedRun.status}`;
+        
+        // Log the failed interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: TRYAI_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: { prompt, messageHistory },
+          responseContent: { error: errorMsg },
+          errorMessage: errorMsg
+        }).catch(e => console.error("Failed to log TryAI error:", e));
+        
+        throw new Error(errorMsg);
       }
       
       // Get messages from the thread
@@ -375,11 +478,43 @@ export class AssistantService {
       }
       
       if (assistantMessages.length === 0) {
-        throw new Error("No assistant response received");
+        const errorMsg = "No assistant response received";
+        
+        // Log the failed interaction asynchronously (fire and forget)
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: TRYAI_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: { prompt, messageHistory },
+          responseContent: { error: errorMsg },
+          errorMessage: errorMsg
+        }).catch(e => console.error("Failed to log TryAI error:", e));
+        
+        throw new Error(errorMsg);
       }
       
       // Return the latest message
       const latestResponse = assistantMessages[0] || "";
+      
+      // Calculate tokens based on prompt and response length (approximate)
+      const promptTokens = (prompt.length + JSON.stringify(messageHistory).length) / 4; // ~4 chars per token
+      const responseTokens = latestResponse.length / 4;
+      
+      // Log the successful interaction asynchronously (fire and forget)
+      logAssistantInteraction({
+        sessionId,
+        threadId,
+        assistantId: TRYAI_ASSISTANT_ID,
+        model: "gpt-4o",
+        promptContent: { prompt, messageHistory },
+        responseContent: { text: latestResponse },
+        tokens: {
+          prompt: Math.round(promptTokens),
+          completion: Math.round(responseTokens),
+          total: Math.round(promptTokens + responseTokens)
+        }
+      }).catch(e => console.error("Failed to log TryAI interaction:", e));
       
       return {
         text: latestResponse
@@ -387,6 +522,19 @@ export class AssistantService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       logError("tryai_text_generation", errorMessage);
+      
+      // Log the error asynchronously if we have a threadId (fire and forget)
+      if (threadId) {
+        logAssistantInteraction({
+          sessionId,
+          threadId,
+          assistantId: TRYAI_ASSISTANT_ID,
+          model: "gpt-4o",
+          promptContent: { prompt, messageHistory },
+          responseContent: { error: errorMessage },
+          errorMessage: errorMessage
+        }).catch(e => console.error("Failed to log TryAI error:", e));
+      }
       
       return {
         text: "حدث خطأ أثناء التواصل مع د. بنجي. هل يمكنك إعادة صياغة السؤال بشكل مختلف؟",

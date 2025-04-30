@@ -4,9 +4,9 @@
  * This service handles logging of all OpenAI Assistant API interactions
  * for analytics, debugging, and audit purposes.
  */
-
 import { db } from '../db';
-import { assistantLogs, InsertAssistantLog } from '@shared/schema';
+import { assistantLogs, type InsertAssistantLog } from '@shared/schema';
+import { logError } from './logging';
 
 /**
  * Logs an OpenAI Assistant API interaction to the database
@@ -14,19 +14,21 @@ import { assistantLogs, InsertAssistantLog } from '@shared/schema';
  * 
  * @param logData Data about the API interaction to log
  */
-export async function logAssistantInteraction(logData: Omit<InsertAssistantLog, 'timestamp'>): Promise<void> {
+export async function logAssistantInteraction(logData: InsertAssistantLog): Promise<void> {
   try {
-    // Insert the log asynchronously
-    await db.insert(assistantLogs).values({
-      ...logData,
-      // These fields are required but can be null in DB
-      userId: logData.userId || null,
-      tokens: logData.tokens || null,
-      errorMessage: logData.errorMessage || null,
-    });
+    // Note: timestamp is automatically added by the database with defaultNow()
+    const logEntry: InsertAssistantLog = {
+      ...logData
+    };
+
+    // Insert into database
+    await db.insert(assistantLogs).values(logEntry);
   } catch (error) {
-    // Log the error but don't throw - this is intentionally fire-and-forget
-    console.error('[AssistantLogger] Failed to log assistant interaction:', error);
+    // Log the error, but don't throw - this should never block the main application flow
+    logError(
+      'assistant_logger', 
+      `Failed to log assistant interaction: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -38,21 +40,16 @@ export async function logAssistantInteraction(logData: Omit<InsertAssistantLog, 
  */
 export function extractTokenUsage(response: any): { prompt: number; completion: number; total: number } | null {
   try {
-    if (
-      response?.usage &&
-      typeof response.usage.prompt_tokens === 'number' &&
-      typeof response.usage.completion_tokens === 'number' &&
-      typeof response.usage.total_tokens === 'number'
-    ) {
+    if (response?.usage) {
       return {
-        prompt: response.usage.prompt_tokens,
-        completion: response.usage.completion_tokens,
-        total: response.usage.total_tokens,
+        prompt: response.usage.prompt_tokens || 0,
+        completion: response.usage.completion_tokens || 0,
+        total: response.usage.total_tokens || 0
       };
     }
     return null;
   } catch (error) {
-    console.error('[AssistantLogger] Error extracting token usage:', error);
+    logError('token_extraction', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

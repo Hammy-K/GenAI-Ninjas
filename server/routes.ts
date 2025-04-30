@@ -12,6 +12,7 @@ import { registerAIImageRoutes } from "./routes/ai-image";
 import { registerGalleryRoutes } from "./routes/gallery";
 import { registerFirebaseRoutes } from "./routes/firebase";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
+import { registerLogsRoutes } from "./routes/logs";
 
 // Import services
 import { logEvent, logError } from "./services";
@@ -370,6 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGalleryRoutes(apiRouter);
   registerFirebaseRoutes(apiRouter);
   registerAIAssistantRoutes(apiRouter, openai);
+  registerLogsRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
