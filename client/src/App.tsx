@@ -40,7 +40,7 @@ function App() {
       <AuthProvider>
         <Router />
         <Toaster />
-        <DebugPanel />
+        {/* Debug panel removed as requested */}
       </AuthProvider>
     </QueryClientProvider>
   );
