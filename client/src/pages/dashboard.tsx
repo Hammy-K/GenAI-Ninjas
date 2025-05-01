@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Lock,
   CheckCircle2,
   User,
@@ -17,6 +18,7 @@ import {
   PenTool,
   FlaskRound,
   ArrowLeftCircle,
+  ArrowRightCircle,
 } from "lucide-react";
 
 import { useQuest } from "@/hooks/useQuest";
@@ -600,7 +602,7 @@ export default function Dashboard() {
                           className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
                           onClick={handleBackToStreams}
                         >
-                          <ArrowLeftCircle className="h-4 w-4" />
+                          <ArrowRightCircle className="h-4 w-4" />
                           <span>العودة للمسارات</span>
                         </Button>
 
