@@ -12,13 +12,12 @@ import {
   Star,
   AlertCircle,
   ChevronRight,
-  Gamepad2, 
-  AppWindow, 
-  PenTool, 
+  Gamepad2,
+  AppWindow,
+  PenTool,
   FlaskRound,
-  ArrowLeftCircle
+  ArrowLeftCircle,
 } from "lucide-react";
-
 
 import { useQuest } from "@/hooks/useQuest";
 import penguinAvatar from "@assets/WelcomePenguin.png";
@@ -42,7 +41,7 @@ export default function Dashboard() {
   // Stream navigation state
   const [selectedStream, setSelectedStream] = useState<string | null>(null);
   const [showStreamContent, setShowStreamContent] = useState(false);
-  
+
   // Student profile data - using state to handle user input
   const [studentName, setStudentName] = useState<string>(() => {
     // Try to get from localStorage
@@ -200,7 +199,7 @@ export default function Dashboard() {
 
   // Add the pulse animation styles
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       @keyframes pulse {
         0% {
@@ -295,8 +294,8 @@ export default function Dashboard() {
   // Define stream data with icons, titles and lock status
   const streams = [
     {
-      id: 'games',
-      title: 'تصميم العاب خرافية',
+      id: "games",
+      title: "تصميم العاب خرافية",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl transform rotate-3"></div>
@@ -308,8 +307,8 @@ export default function Dashboard() {
       isLocked: !isMission1Complete,
     },
     {
-      id: 'apps',
-      title: 'تطوير تطبيقات مفيدة',
+      id: "apps",
+      title: "تطوير تطبيقات مفيدة",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl transform rotate-3"></div>
@@ -321,8 +320,8 @@ export default function Dashboard() {
       isLocked: true, // Always locked for now
     },
     {
-      id: 'content',
-      title: 'انشاء محتوى و قصص',
+      id: "content",
+      title: "انشاء محتوى و قصص",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl transform rotate-3"></div>
@@ -334,13 +333,16 @@ export default function Dashboard() {
       isLocked: true, // Always locked for now
     },
     {
-      id: 'science',
-      title: 'تجارب علمية وتقنية ممتعة',
+      id: "science",
+      title: "تجارب علمية وتقنية ممتعة",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl transform rotate-3"></div>
           <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <FlaskRound className="w-14 h-14 text-emerald-500" strokeWidth={1.5} />
+            <FlaskRound
+              className="w-14 h-14 text-emerald-500"
+              strokeWidth={1.5}
+            />
           </div>
         </div>
       ),
@@ -351,15 +353,15 @@ export default function Dashboard() {
   // Handle stream selection
   const handleStreamSelect = (streamId: string) => {
     // Find the stream
-    const stream = streams.find(s => s.id === streamId);
-    
+    const stream = streams.find((s) => s.id === streamId);
+
     // Don't do anything if stream is locked
     if (stream?.isLocked) return;
-    
+
     setSelectedStream(streamId);
     setShowStreamContent(true);
   };
-  
+
   // Handle back button from stream to streams grid
   const handleBackToStreams = () => {
     setSelectedStream(null);
@@ -482,39 +484,44 @@ export default function Dashboard() {
             <div className="w-full md:w-2/3">
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
-                <div className={`relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? 'collapsed' : ''}`}>
-                  {/* Title and description on right side */}
-                  <div className="text-right mb-4">
-                    <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
-                    <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    {/* Status indicator - left side */}
-                    <div className="flex items-center">
-                      {/* Penguin image centered above button */}
-                      <div className="absolute left-6 -top-3">
-                        <img 
-                          src={penguinAvatar} 
-                          alt="د. بنجي" 
-                          className="w-16 h-16 pointer-events-none" 
-                        />
-                      </div>
-                      
-                      <div className="mt-9 flex items-center">
-                        <span className={`text-sm ${isMission1Complete ? 'text-green-600' : 'text-purple-600'}`}>
-                          {isMission1Complete ? 'مكتملة' : 'غير مكتملة'}
-                        </span>
-                        <div className={`h-3 w-3 rounded-full ${isMission1Complete ? 'bg-green-500' : 'bg-purple-500 animate-pulse'} mr-2 ml-2`}></div>
-                      </div>
+                <div
+                  className={`relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? "collapsed" : ""}`}
+                >
+                  <div className="flex flex-row-reverse justify-between items-start mb-3">
+                    <div className="flex-shrink-0 ml-3">
+                      <h2 className="text-xl font-bold text-purple-700 text-left">
+                        المهمة التعريفية
+                      </h2>
+                      <p className="text-sm text-purple-600">
+                        تعرف على الذكاء الاصطناعي التوليدي
+                      </p>
                     </div>
-                    
-                    {/* Button on right side */}
+                    <div className="flex-shrink-0 ml-2">
+                      <img
+                        src={penguinAvatar}
+                        alt="د. بنجي"
+                        className="w-16 h-16 pointer-events-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-end">
+                      <span
+                        className={`text-sm ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
+                      >
+                        {isMission1Complete ? "مكتملة" : "غير مكتملة"}
+                      </span>
+                      <div
+                        className={`h-3 w-3 rounded-full ${isMission1Complete ? "bg-green-500" : "bg-purple-500 animate-pulse"} mr-2 ml-2`}
+                      ></div>
+                    </div>
+
                     <Button
-                      className={`${isMission1Complete ? 'bg-purple-200 hover:bg-purple-300 text-purple-800' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
+                      className={`${isMission1Complete ? "bg-purple-200 hover:bg-purple-300 text-purple-800" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
                       onClick={() => handleStartMission(1)}
                     >
-                      {isMission1Complete ? 'إعادة المهمة' : '⭐ ابدأ هنا ⭐'}
+                      {isMission1Complete ? "إعادة المهمة" : "⭐ ابدأ هنا ⭐"}
                     </Button>
                   </div>
                 </div>
@@ -522,32 +529,46 @@ export default function Dashboard() {
                 {/* Stream Content Container - Changes based on state */}
                 <div className="min-h-[400px]">
                   {/* Always render both states, use CSS to control visibility */}
-                  <div className={`stream-grid ${showStreamContent ? 'content-active' : ''}`}>
+                  <div
+                    className={`stream-grid ${showStreamContent ? "content-active" : ""}`}
+                  >
                     {/* Stream Selection Grid */}
-                    <div className={`${showStreamContent ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'} transition-all duration-500`}>
-                      <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">اختر مسارك التعليمي</h2>
-                      
+                    <div
+                      className={`${showStreamContent ? "opacity-0 pointer-events-none absolute" : "opacity-100"} transition-all duration-500`}
+                    >
+                      <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                        اختر مسارك التعليمي
+                      </h2>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {streams.map((stream) => (
-                          <div 
+                          <div
                             key={stream.id}
                             onClick={() => handleStreamSelect(stream.id)}
                             className={`stream-card bg-white rounded-xl p-6 border shadow-sm cursor-pointer ${
-                              stream.isLocked ? 'locked border-gray-200' : 'border-purple-200 hover:border-purple-300'
-                            } ${selectedStream === stream.id ? 'selected' : ''}`}
+                              stream.isLocked
+                                ? "locked border-gray-200"
+                                : "border-purple-200 hover:border-purple-300"
+                            } ${selectedStream === stream.id ? "selected" : ""}`}
                           >
                             {/* Status badge - only visible in selected state */}
-                            <div className={`absolute top-2 left-2 stream-status flex items-center ${selectedStream === stream.id ? 'opacity-100' : 'opacity-0'}`}>
+                            <div
+                              className={`absolute top-2 left-2 stream-status flex items-center ${selectedStream === stream.id ? "opacity-100" : "opacity-0"}`}
+                            >
                               <div className="w-2 h-2 rounded-full bg-green-500 ml-1"></div>
-                              <span className="text-xs text-green-600">متاح</span>
+                              <span className="text-xs text-green-600">
+                                متاح
+                              </span>
                             </div>
-                            
+
                             {/* Icon */}
                             {stream.icon}
-                            
+
                             {/* Title */}
-                            <h3 className="text-lg font-bold text-center mt-4 mb-2">{stream.title}</h3>
-                            
+                            <h3 className="text-lg font-bold text-center mt-4 mb-2">
+                              {stream.title}
+                            </h3>
+
                             {/* Lock Status */}
                             <div className="flex justify-center items-center">
                               {stream.isLocked ? (
@@ -566,9 +587,11 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Selected Stream Content */}
-                    <div className={`${!showStreamContent ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'} transition-all duration-500`}>
+                    <div
+                      className={`${!showStreamContent ? "opacity-0 pointer-events-none absolute" : "opacity-100"} transition-all duration-500`}
+                    >
                       {/* Back Button Bar */}
                       <div className="flex items-center mb-6">
                         <Button
@@ -579,18 +602,23 @@ export default function Dashboard() {
                           <ArrowLeftCircle className="h-4 w-4" />
                           <span>العودة للمسارات</span>
                         </Button>
-                        
+
                         <div className="mx-auto text-center">
                           <h2 className="text-xl font-bold text-purple-700">
-                            {streams.find(s => s.id === selectedStream)?.title}
+                            {
+                              streams.find((s) => s.id === selectedStream)
+                                ?.title
+                            }
                           </h2>
                         </div>
                       </div>
-                      
+
                       {/* Stream-specific journey content */}
-                      {selectedStream === 'games' && (
+                      {selectedStream === "games" && (
                         <div className="p-3 space-y-4">
-                          <p className="text-gray-500 text-sm">هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.</p>
+                          <p className="text-gray-500 text-sm">
+                            هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.
+                          </p>
                           <div className="flex justify-center">
                             <div className="bg-purple-50 p-10 rounded-xl w-64 h-64 flex items-center justify-center">
                               <Gamepad2 className="h-20 w-20 text-purple-300" />
@@ -638,14 +666,18 @@ export default function Dashboard() {
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">(XP) نقاط الخبرة</p>
+                    <p className="font-medium text-gray-500">
+                      (XP) نقاط الخبرة
+                    </p>
                   </div>
                   <div>
                     <p className="font-medium text-purple-600">{xp} نقطة</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">المهمات المكتملة</p>
+                    <p className="font-medium text-gray-500">
+                      المهمات المكتملة
+                    </p>
                   </div>
                   <div>
                     <p className="font-medium">
