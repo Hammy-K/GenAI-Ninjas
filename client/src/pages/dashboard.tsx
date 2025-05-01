@@ -197,22 +197,6 @@ export default function Dashboard() {
     setShowCaptcha(true);
   };
 
-  // Animation end cleanup
-  useEffect(() => {
-    // After animation completes, clean up any transform artifacts
-    if (showStreamContent) {
-      const timer = setTimeout(() => {
-        // Apply any cleanup needed after animation completes
-        document.querySelectorAll('.stream-card:not(.selected)').forEach(el => {
-          (el as HTMLElement).style.transform = 'none';
-          (el as HTMLElement).style.opacity = '0';
-        });
-      }, 500); // Match animation duration
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showStreamContent]);
-
   // Add the pulse animation styles
   useEffect(() => {
     const style = document.createElement("style");
@@ -241,9 +225,6 @@ export default function Dashboard() {
         transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
         position: relative;
         transform-origin: center;
-        will-change: transform, opacity;
-        backface-visibility: hidden;
-        transform: translateZ(0);
       }
       
       .stream-card:hover:not(.locked):not(.selected) {
@@ -276,7 +257,6 @@ export default function Dashboard() {
       
       .stream-grid {
         transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        will-change: transform, opacity;
       }
       
       .stream-grid.content-active .stream-card:not(.selected) {
@@ -295,8 +275,6 @@ export default function Dashboard() {
         max-height: 200px;
         overflow: hidden;
         opacity: 1;
-        will-change: max-height, opacity;
-        transform: translateZ(0);
       }
       
       .intro-mission-card.collapsed {
@@ -379,25 +357,15 @@ export default function Dashboard() {
 
     // Don't do anything if stream is locked
     if (stream?.isLocked) return;
-    
-    // First set the selected stream
+
     setSelectedStream(streamId);
-    
-    // Then after a small delay, trigger the content transition
-    setTimeout(() => {
-      setShowStreamContent(true);
-    }, 50); // 50ms delay creates a smoother staggered effect
+    setShowStreamContent(true);
   };
 
   // Handle back button from stream to streams grid
   const handleBackToStreams = () => {
-    // First hide content
+    setSelectedStream(null);
     setShowStreamContent(false);
-    
-    // Then reset the selection after animation completes
-    setTimeout(() => {
-      setSelectedStream(null);
-    }, 500); // Match this to your animation duration
   };
 
   return (
