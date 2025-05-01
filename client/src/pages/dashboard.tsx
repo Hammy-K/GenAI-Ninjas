@@ -223,10 +223,12 @@ export default function Dashboard() {
       }
 
       .stream-card {
-        transition: all 0.3s ease;
+        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        position: relative;
+        transform-origin: center;
       }
       
-      .stream-card:hover:not(.locked) {
+      .stream-card:hover:not(.locked):not(.selected) {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.4);
       }
@@ -234,6 +236,54 @@ export default function Dashboard() {
       .stream-card.locked {
         opacity: 0.7;
         filter: grayscale(0.8);
+      }
+      
+      .stream-grid.content-active .stream-card.selected {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.1);
+        width: 80%;
+        max-width: 320px;
+        margin: 0 auto;
+        z-index: 10;
+        box-shadow: 0 20px 50px -15px rgba(167, 139, 250, 0.6);
+        padding: 1rem !important;
+      }
+      
+      /* Make title slightly smaller in expanded view */
+      .stream-grid.content-active .stream-card.selected h3 {
+        font-size: 1rem;
+      }
+      
+      .stream-grid {
+        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      
+      .stream-grid.content-active .stream-card:not(.selected) {
+        opacity: 0.15;
+        transform: scale(0.85) translateY(20px);
+        pointer-events: none;
+      }
+      
+      .stream-status {
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+      }
+      
+      .intro-mission-card {
+        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        max-height: 200px;
+        overflow: hidden;
+        opacity: 1;
+      }
+      
+      .intro-mission-card.collapsed {
+        max-height: 0;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+        border: none;
       }
     `;
     document.head.appendChild(style);
@@ -431,8 +481,8 @@ export default function Dashboard() {
             {/* Left column: Streams & Journey UI */}
             <div className="w-full md:w-2/3">
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
-                {/* Intro Mission Card - Always shown on top */}
-                <div className="relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100">
+                {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
+                <div className={`relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? 'collapsed' : ''}`}>
                   <div className="absolute -top-5 -right-5">
                     <img 
                       src={penguinAvatar} 
@@ -455,7 +505,7 @@ export default function Dashboard() {
                     </div>
                     
                     <Button
-                      className={`${isMission1Complete ? 'bg-green-500 hover:bg-green-600' : 'bg-purple-500 hover:bg-purple-600'} text-white`}
+                      className={`${isMission1Complete ? 'bg-gray-300 hover:bg-gray-400 text-gray-800' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
                       onClick={() => handleStartMission(1)}
                     >
                       {isMission1Complete ? 'إعادة المهمة' : '⭐ ابدأ هنا ⭐'}
@@ -465,9 +515,10 @@ export default function Dashboard() {
 
                 {/* Stream Content Container - Changes based on state */}
                 <div className="min-h-[400px]">
-                  {!showStreamContent ? (
-                    /* Stream Selection Grid */
-                    <>
+                  {/* Always render both states, use CSS to control visibility */}
+                  <div className={`stream-grid ${showStreamContent ? 'content-active' : ''}`}>
+                    {/* Stream Selection Grid */}
+                    <div className={`${showStreamContent ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'} transition-all duration-500`}>
                       <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">اختر مسارك التعليمي</h2>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -475,10 +526,16 @@ export default function Dashboard() {
                           <div 
                             key={stream.id}
                             onClick={() => handleStreamSelect(stream.id)}
-                            className={`stream-card bg-white rounded-xl p-6 border transition-all shadow-sm cursor-pointer ${
+                            className={`stream-card bg-white rounded-xl p-6 border shadow-sm cursor-pointer ${
                               stream.isLocked ? 'locked border-gray-200' : 'border-purple-200 hover:border-purple-300'
-                            }`}
+                            } ${selectedStream === stream.id ? 'selected' : ''}`}
                           >
+                            {/* Status badge - only visible in selected state */}
+                            <div className={`absolute top-2 right-2 stream-status flex items-center ${selectedStream === stream.id ? 'opacity-100' : 'opacity-0'}`}>
+                              <div className="w-2 h-2 rounded-full bg-green-500 ml-1"></div>
+                              <span className="text-xs text-green-600">متاح</span>
+                            </div>
+                            
                             {/* Icon */}
                             {stream.icon}
                             
@@ -502,10 +559,10 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
-                    </>
-                  ) : (
-                    /* Selected Stream Content */
-                    <div className="space-y-6">
+                    </div>
+                    
+                    {/* Selected Stream Content */}
+                    <div className={`${!showStreamContent ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'} transition-all duration-500`}>
                       {/* Back Button Bar */}
                       <div className="flex items-center mb-6">
                         <Button
@@ -526,8 +583,8 @@ export default function Dashboard() {
                       
                       {/* Stream-specific journey content */}
                       {selectedStream === 'games' && (
-                        <div className="space-y-6 text-center">
-                          <p className="text-gray-500">هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.</p>
+                        <div className="p-3 space-y-4">
+                          <p className="text-gray-500 text-sm">هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.</p>
                           <div className="flex justify-center">
                             <div className="bg-purple-50 p-10 rounded-xl w-64 h-64 flex items-center justify-center">
                               <Gamepad2 className="h-20 w-20 text-purple-300" />
@@ -536,7 +593,7 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
