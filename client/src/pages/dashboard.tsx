@@ -484,31 +484,41 @@ export default function Dashboard() {
             <div className="w-full md:w-2/3">
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
-                <div className={`relative mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? "collapsed" : ""}`}>
+                <div
+                  className={`relative mb-8 min-h-[145px] bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? "collapsed" : ""}`}
+                >
                   {/* Penguin Avatar positioned at top-left corner */}
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-4 left-10">
                     <img
                       src={penguinAvatar}
                       alt="د. بنجي"
                       className="w-16 h-16 pointer-events-none"
                     />
                   </div>
-                  
+
                   {/* Right-aligned content with margin to accommodate avatar */}
                   <div className="text-right ml-16">
-                    <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
-                    <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
-                    
-                    <div className="flex justify-end items-center mt-2">
-                      <span className={`text-sm ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}>
+                    <h2 className="text-xl font-bold text-purple-700">
+                      المهمة التعريفية
+                    </h2>
+                    <p className="text-sm text-purple-600">
+                      تعرف على الذكاء الاصطناعي التوليدي
+                    </p>
+
+                    <div className="text-right absolute bottom-4 right-6">
+                      <span
+                        className={`text-sm ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
+                      >
                         {isMission1Complete ? "مكتملة" : "غير مكتملة"}
                       </span>
-                      <div className={`h-3 w-3 rounded-full ${isMission1Complete ? "bg-green-500" : "bg-purple-500 animate-pulse"} mr-2 ml-2`}></div>
+                      <div
+                        className={`h-3 w-3 rounded-full ${isMission1Complete ? "bg-green-500" : "bg-purple-500 animate-pulse"} mr-2 ml-2 inline-block`}
+                      ></div>
                     </div>
-                    
+
                     <div className="mt-3 flex justify-end">
                       <Button
-                        className={`${isMission1Complete ? "bg-purple-200 hover:bg-purple-300 text-purple-800" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
+                        className={`${isMission1Complete ? "absolute bottom-3 left-4 bg-purple-200 hover:bg-purple-300 text-purple-800" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
                         onClick={() => handleStartMission(1)}
                       >
                         {isMission1Complete ? "إعادة المهمة" : "⭐ ابدأ هنا ⭐"}
