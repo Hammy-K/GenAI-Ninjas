@@ -13,7 +13,12 @@ const HTML_ASSISTANT_ID = 'asst_o8p9ImGTnvhGKDge3x8qht3j'; // HTML generator ass
 const TRYAI_ASSISTANT_ID = 'asst_x31y8qYnTlwvs1gAxKCNG5KB'; // TryAI stage assistant
 
 // Thread Map for session persistence
+// Using a file-backed storage solution would be better in production
+// This is a simple in-memory solution that persists threads until server restart
 const threadMap = new Map<string, string>();
+
+// Optional: load thread map from database on startup and save on shutdown
+// This could be implemented with a PostgreSQL table for thread persistence
 
 // Message types matching the client's expected format
 interface AssistantMessage {
@@ -71,7 +76,7 @@ export class AssistantService {
         threadId = await this.createThread(sessionId);
       }
       
-      // Get the last user message
+      // Get the last user message for logging purposes
       latestUserMessage = messageHistory
         .filter(msg => msg.role === 'user')
         .pop();
@@ -80,14 +85,30 @@ export class AssistantService {
         return this.createErrorResponse("No user messages found in history");
       }
       
-      // Add message to thread
-      await this.openai.beta.threads.messages.create(
-        threadId,
-        {
-          role: "user",
-          content: latestUserMessage.content,
+      // Check if this is a new thread - if so, add ALL messages for context
+      if (!existingThreadId) {
+        // Add all messages to the thread in the correct order to build context
+        for (const message of messageHistory) {
+          if (message.role === 'user' || message.role === 'assistant') {
+            await this.openai.beta.threads.messages.create(
+              threadId,
+              {
+                role: message.role,
+                content: message.content,
+              }
+            );
+          }
         }
-      );
+      } else {
+        // If existing thread, just add the latest user message to continue the conversation
+        await this.openai.beta.threads.messages.create(
+          threadId,
+          {
+            role: "user",
+            content: latestUserMessage.content,
+          }
+        );
+      }
       
       // Run the assistant on the thread - using the instructions already set up in the OpenAI Assistant portal
       const run = await this.openai.beta.threads.runs.create(

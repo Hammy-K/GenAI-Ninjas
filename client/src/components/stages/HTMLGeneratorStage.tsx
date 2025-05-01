@@ -260,8 +260,12 @@ export function HTMLGeneratorStage({
         message_history_length: state.messages.length,
       });
 
-      // Generate HTML using the complete message history
-      const response = await generateHTML([...state.messages, userMessage]);
+      // First add user message to message history for persistence in localStorage
+      const updatedMessages = [...state.messages, userMessage];
+      
+      // Generate HTML using the complete message history including the new user message
+      // This ensures each follow-up request has the full context of previous interactions
+      const response = await generateHTML(updatedMessages);
 
       if (response.error) {
         setState((prev) => ({
@@ -599,6 +603,8 @@ export function HTMLGeneratorStage({
 
   // Start a new project
   const startNewProject = () => {
+    // Reset state to initial state while preserving any existing session ID
+    // This ensures thread continuity with the OpenAI Assistant API
     setState((prev) => ({
       ...prev,
       currentHTML: "",
@@ -609,6 +615,11 @@ export function HTMLGeneratorStage({
       showShareDialog: false,
       showResetDialog: false,
     }));
+    
+    // Track this for analytics
+    trackStageProgress("html_generator", "new_project_started", {
+      previous_messages_count: state.messages.length
+    });
   };
 
   // Confirm before starting new project
