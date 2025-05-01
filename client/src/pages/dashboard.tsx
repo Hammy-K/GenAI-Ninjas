@@ -483,17 +483,17 @@ export default function Dashboard() {
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
                 <div className={`relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? 'collapsed' : ''}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h2 className="text-xl font-bold text-purple-700 text-left">المهمة التعريفية</h2>
-                      <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
-                    </div>
-                    <div className="flex-shrink-0 ml-2">
+                  <div className="flex flex-row-reverse justify-between items-start mb-3">
+                    <div className="flex-shrink-0 ml-3">
                       <img 
                         src={penguinAvatar} 
                         alt="د. بنجي" 
                         className="w-16 h-16 pointer-events-none" 
                       />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
+                      <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
                     </div>
                   </div>
                   
