@@ -12,6 +12,11 @@ import {
   Star,
   AlertCircle,
   ChevronRight,
+  Gamepad2, 
+  AppWindow, 
+  PenTool, 
+  FlaskRound,
+  ArrowLeftCircle
 } from "lucide-react";
 
 
@@ -34,6 +39,10 @@ export default function Dashboard() {
     isMissionCompleted,
   } = useQuest();
 
+  // Stream navigation state
+  const [selectedStream, setSelectedStream] = useState<string | null>(null);
+  const [showStreamContent, setShowStreamContent] = useState(false);
+  
   // Student profile data - using state to handle user input
   const [studentName, setStudentName] = useState<string>(() => {
     // Try to get from localStorage
@@ -212,12 +221,100 @@ export default function Dashboard() {
         border: 2px solid #a78bfa;
         box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
       }
+
+      .stream-card {
+        transition: all 0.3s ease;
+      }
+      
+      .stream-card:hover:not(.locked) {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.4);
+      }
+      
+      .stream-card.locked {
+        opacity: 0.7;
+        filter: grayscale(0.8);
+      }
     `;
     document.head.appendChild(style);
     return () => {
       document.head.removeChild(style);
     };
   }, []);
+
+  // Define stream data with icons, titles and lock status
+  const streams = [
+    {
+      id: 'games',
+      title: 'تصميم العاب خرافية',
+      icon: (
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
+            <Gamepad2 className="w-14 h-14 text-purple-600" strokeWidth={1.5} />
+          </div>
+        </div>
+      ),
+      isLocked: !isMission1Complete,
+    },
+    {
+      id: 'apps',
+      title: 'تطوير تطبيقات مفيدة',
+      icon: (
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
+            <AppWindow className="w-14 h-14 text-blue-500" strokeWidth={1.5} />
+          </div>
+        </div>
+      ),
+      isLocked: true, // Always locked for now
+    },
+    {
+      id: 'content',
+      title: 'انشاء محتوى و قصص',
+      icon: (
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
+            <PenTool className="w-14 h-14 text-amber-500" strokeWidth={1.5} />
+          </div>
+        </div>
+      ),
+      isLocked: true, // Always locked for now
+    },
+    {
+      id: 'science',
+      title: 'تجارب علمية وتقنية ممتعة',
+      icon: (
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
+            <FlaskRound className="w-14 h-14 text-emerald-500" strokeWidth={1.5} />
+          </div>
+        </div>
+      ),
+      isLocked: true, // Always locked for now
+    },
+  ];
+
+  // Handle stream selection
+  const handleStreamSelect = (streamId: string) => {
+    // Find the stream
+    const stream = streams.find(s => s.id === streamId);
+    
+    // Don't do anything if stream is locked
+    if (stream?.isLocked) return;
+    
+    setSelectedStream(streamId);
+    setShowStreamContent(true);
+  };
+  
+  // Handle back button from stream to streams grid
+  const handleBackToStreams = () => {
+    setSelectedStream(null);
+    setShowStreamContent(false);
+  };
 
   return (
     <div
@@ -331,592 +428,115 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto">
           {/* Two-column layout: Journey on left, profile on right */}
           <div className="flex flex-col-reverse md:flex-row gap-6">
-            {/* Left column: Mission Journey with zigzag path */}
+            {/* Left column: Streams & Journey UI */}
             <div className="w-full md:w-2/3">
-              {/* Learning path with zigzag flow */}
-              <div
-                className="relative py-6 px-4 md:px-8 overflow-y-auto max-h-[80vh]"
-                style={{ minHeight: "3500px" }}
-              >
-                {/* Connected zigzag path - SVG for proper path alignment */}
-                <div className="absolute z-0 inset-0 right-12 left-12 h-full">
-                  <svg
-                    className="w-full h-full"
-                    preserveAspectRatio="none"
-                    viewBox="0 0 100 2250"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    {/* Main zigzag path - Full path for 20 missions */}
-                    <path
-                      d="M80 10 L20 120 L80 230 L20 340 L80 450 L20 560 L80 670 L20 780 L80 890 L20 1000 L80 1110 L20 1220 L80 1330 L20 1440 L80 1550 L20 1660 L80 1770 L20 1880 L80 1990 L20 2100 L80 2210"
-                      stroke="#e2e8f0"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
+              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
+                {/* Intro Mission Card - Always shown on top */}
+                <div className="relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100">
+                  <div className="absolute -top-5 -right-5">
+                    <img 
+                      src={penguinAvatar} 
+                      alt="د. بنجي" 
+                      className="w-16 h-16 pointer-events-none" 
                     />
-
-                    {/* Active section of the path - Only shows up to the current mission */}
-                    <path
-                      d={nextActiveMission >= 1 ? "M80 10 L20 120" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 2 ? "M20 120 L80 230" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 3 ? "M80 230 L20 340" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 4 ? "M20 340 L80 450" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 5 ? "M80 450 L20 560" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 6 ? "M20 560 L80 670" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 7 ? "M80 670 L20 780" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 8 ? "M20 780 L80 890" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 9 ? "M80 890 L20 1000" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 10 ? "M20 1000 L80 1110" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 11 ? "M80 1110 L20 1220" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 12 ? "M20 1220 L80 1330" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 13 ? "M80 1330 L20 1440" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 14 ? "M20 1440 L80 1550" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 15 ? "M80 1550 L20 1660" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 16 ? "M20 1660 L80 1770" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 17 ? "M80 1770 L20 1880" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 18 ? "M20 1880 L80 1990" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 19 ? "M80 1990 L20 2100" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d={nextActiveMission >= 20 ? "M20 2100 L80 2210" : ""}
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
-
-                <div className="relative z-10 flex justify-center mb-2">
-                  <div className="text-purple-600 font-bold text-xl px-5 py-2 rounded-xl shadow-lg bg-white border border-purple-300">
-                    ⭐ ابدأ هنا ⭐
                   </div>
-                </div>
-
-                {/* Mission 1 - "عبر عن نفسك بإبداع" */}
-                {/* Mission 1 – "تعرف على الذكاء الاصطناعي التوليدي" */}
-                <div className="relative z-10 mb-36">
-                  <div className="flex items-center justify-end w-1/2">
-                    {/* Square + Title wrapper */}
-                    <div
-                      className="cursor-pointer transition-transform hover:scale-105 mr-4"
+                  
+                  <div className="mr-12 mb-3">
+                    <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
+                    <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className={`h-3 w-3 rounded-full ${isMission1Complete ? 'bg-green-500' : 'bg-purple-500 animate-pulse'} mr-2`}></div>
+                      <span className={`text-sm ${isMission1Complete ? 'text-green-600' : 'text-purple-600'}`}>
+                        {isMission1Complete ? 'مكتملة' : 'غير مكتملة'}
+                      </span>
+                    </div>
+                    
+                    <Button
+                      className={`${isMission1Complete ? 'bg-green-500 hover:bg-green-600' : 'bg-purple-500 hover:bg-purple-600'} text-white`}
                       onClick={() => handleStartMission(1)}
                     >
-                      {/* 16×16 square */}
-                      <div
-                        className={`w-16 h-16 rounded-lg flex items-center justify-center
-                          ${isMission1Complete ? "bg-green-100 text-green-600" : 
-                            nextActiveMission === 1 ? "bg-purple-100 text-purple-600 pulse mission-highlight" : 
-                            "bg-purple-100 text-purple-600"}`}
-                      >
-                        {isMission1Complete ? (
-                          <CheckCircle2 className="w-8 h-8" />
-                        ) : (
-                          <span className="text-lg font-bold">1</span>
-                        )}
-                      </div>
-
-                      {/* Title, now directly below the square */}
-                      <h3
-                        className={`mt-1 text-sm font-medium
-                          ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
-                      >
-                        تعرف على الذكاء الاصطناعي التوليدي
-                      </h3>
-                    </div>
-
-                    {/* Dr. Pengy avatar for the next active mission */}
-                    {nextActiveMission === 1 && (
-                      <div className="absolute left-1/2 -top-6 transform -translate-x-1/2 after:absolute after:inset-0 after:rounded-lg after:animate-pulse-ring">
-                        <img
-                          src={penguinAvatar}
-                          alt="د. بنجي"
-                          className="w-16 h-16 object-contain relative z-10"
-                        />
-                      </div>
-                    )}
+                      {isMission1Complete ? 'إعادة المهمة' : '⭐ ابدأ هنا ⭐'}
+                    </Button>
                   </div>
                 </div>
 
-                {/* Mission 2 - "كيف تصنع قصص تعلق في البال" */}
-                <div className="relative z-10 flex items-center mb-36">
-                  <div className="flex-1"></div>
-
-                  {/* Mission 2 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div
-                      className={`relative cursor-pointer transition-transform hover:scale-105 ml-4
-                        ${isMission2Complete ? "text-green-600" : isMission1Complete ? "text-purple-600" : "text-gray-400"}`}
-                      onClick={() =>
-                        isMission1Complete && handleStartMission(2)
-                      }
-                    >
-                      <div
-                        className={`w-16 h-16 rounded-lg flex items-center justify-center 
-                        ${isMission2Complete ? "bg-green-100" : 
-                          isMission1Complete && nextActiveMission === 2 ? "bg-purple-100 pulse mission-highlight" : 
-                          isMission1Complete ? "bg-purple-100" : "bg-gray-100"}`}
-                      >
-                        {isMission2Complete ? (
-                          <CheckCircle2 className="w-8 h-8" />
-                        ) : !isMission1Complete ? (
-                          <Lock className="w-6 h-6 opacity-50" />
-                        ) : (
-                          <div className="text-lg font-bold">٢</div>
-                        )}
+                {/* Stream Content Container - Changes based on state */}
+                <div className="min-h-[400px]">
+                  {!showStreamContent ? (
+                    /* Stream Selection Grid */
+                    <>
+                      <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">اختر مسارك التعليمي</h2>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {streams.map((stream) => (
+                          <div 
+                            key={stream.id}
+                            onClick={() => handleStreamSelect(stream.id)}
+                            className={`stream-card bg-white rounded-xl p-6 border transition-all shadow-sm cursor-pointer ${
+                              stream.isLocked ? 'locked border-gray-200' : 'border-purple-200 hover:border-purple-300'
+                            }`}
+                          >
+                            {/* Icon */}
+                            {stream.icon}
+                            
+                            {/* Title */}
+                            <h3 className="text-lg font-bold text-center mt-4 mb-2">{stream.title}</h3>
+                            
+                            {/* Lock Status */}
+                            <div className="flex justify-center items-center">
+                              {stream.isLocked ? (
+                                <div className="flex items-center text-gray-500 text-sm">
+                                  <Lock className="w-4 h-4 ml-1" />
+                                  <span>أكمل المهمة التعريفية للفتح</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-purple-600 text-sm">
+                                  <div className="w-2 h-2 rounded-full bg-green-500 ml-2"></div>
+                                  <span>متاح</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-
-                    <h3
-                      className={`font-medium text-sm
-                        ${isMission2Complete ? "text-green-600" : isMission1Complete ? "text-purple-600 cursor-pointer hover:opacity-80" : "text-gray-400"}`}
-                      onClick={() =>
-                        isMission1Complete && handleStartMission(2)
-                      }
-                    >
-                      تعرف على اهتماماتك
-                    </h3>
-
-                    {/* د. بنجي avatar - only show for next active mission */}
-                    {nextActiveMission === 2 && (
-                      <div className="absolute left-1/2 -translate-x-1/2. transform translate-y-0">
-                        <div className="w-16 h-16 rounded-full overflow-hidden">
-                          <img
-                            src={penguinAvatar}
-                            alt="د. بنجي"
-                            className="w-full h-full object-contain"
-                          />
+                    </>
+                  ) : (
+                    /* Selected Stream Content */
+                    <div className="space-y-6">
+                      {/* Back Button Bar */}
+                      <div className="flex items-center mb-6">
+                        <Button
+                          variant="ghost"
+                          className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                          onClick={handleBackToStreams}
+                        >
+                          <ArrowLeftCircle className="h-4 w-4" />
+                          <span>العودة للمسارات</span>
+                        </Button>
+                        
+                        <div className="mx-auto text-center">
+                          <h2 className="text-xl font-bold text-purple-700">
+                            {streams.find(s => s.id === selectedStream)?.title}
+                          </h2>
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mission 3 - "مهارات التصميم اللي تشد الانتباه" */}
-                <div className="relative z-10 flex items-center mb-36">
-                  {/* Mission 3 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div
-                      className={`relative cursor-pointer transition-transform hover:scale-105 mr-4
-                        ${isMission3Complete ? "text-green-600" : isMission1Complete && isMission2Complete ? "text-purple-600" : "text-gray-400"}`}
-                      onClick={() =>
-                        isMission1Complete &&
-                        isMission2Complete &&
-                        handleStartMission(3)
-                      }
-                    >
-                      <div
-                        className={`w-16 h-16 rounded-lg flex items-center justify-center 
-                        ${isMission3Complete ? "bg-green-100" : 
-                          isMission1Complete && isMission2Complete && nextActiveMission === 3 ? "bg-purple-100 pulse mission-highlight" : 
-                          isMission1Complete && isMission2Complete ? "bg-purple-100" : "bg-gray-100"}`}
-                      >
-                        {isMission3Complete ? (
-                          <CheckCircle2 className="w-8 h-8" />
-                        ) : !(isMission1Complete && isMission2Complete) ? (
-                          <Lock className="w-6 h-6 opacity-50" />
-                        ) : (
-                          <div className="text-lg font-bold">٣</div>
-                        )}
-                      </div>
-                    </div>
-
-                    <h3
-                      className={`font-medium text-sm
-                        ${isMission3Complete ? "text-green-600" : isMission1Complete && isMission2Complete ? "text-purple-600 cursor-pointer hover:opacity-80" : "text-gray-400"}`}
-                      onClick={() =>
-                        isMission1Complete &&
-                        isMission2Complete &&
-                        handleStartMission(3)
-                      }
-                    >
-                      تعرف على المسارات و المشاريع
-                    </h3>
-
-                    {/* د. بنجي avatar - only show for next active mission */}
-                    {nextActiveMission === 3 && (
-                      <div className="absolute right-16 -top-6 transform translate-y-0">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
-                          <img
-                            src={penguinAvatar}
-                            alt="د. بنجي"
-                            className="w-full h-full object-contain"
-                          />
+                      
+                      {/* Stream-specific journey content */}
+                      {selectedStream === 'games' && (
+                        <div className="space-y-6 text-center">
+                          <p className="text-gray-500">هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.</p>
+                          <div className="flex justify-center">
+                            <div className="bg-purple-50 p-10 rounded-xl w-64 h-64 flex items-center justify-center">
+                              <Gamepad2 className="h-20 w-20 text-purple-300" />
+                            </div>
+                          </div>
                         </div>
-                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 4 - "انشر ووسع جمهورك" */}
-                <div className="relative z-10 flex items-center mb-36">
-                  <div className="flex-1"></div>
-
-                  {/* Mission 4 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
+                      )}
                     </div>
-
-                    <h3 className="font-medium text-sm text-gray-400">
-                      اختر مسارك و ابني!
-                    </h3>
-
-                    {/* د. بنجي avatar - only show for next active mission */}
-                    {nextActiveMission === 4 && (
-                      <div className="absolute left-16 -top-6 transform translate-y-0">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow-md border-2 border-purple-200">
-                          <img
-                            src={penguinAvatar}
-                            alt="د. بنجي"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mission 5 - Right side */}
-                <div className="relative z-10 flex items-center mb-36">
-                  {/* Mission 5 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-
-                      {/* Title below the square */}
-                      <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
-                        {/* مشاريع الأنظمة الذكية */}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 6 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 6 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 7 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 7 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 8 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 8 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 9 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 9 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 10 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 10 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-
-                      {/* Title below the square */}
-                      <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
-                        تطوير تطبيقات الذكاء الاصطناعي
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 11 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 11 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 12 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 12 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 13 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 13 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 14 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 14 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 15 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 15 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 16 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 16 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 17 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 17 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 18 - Left side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  <div className="flex-1"></div>
-                  {/* Mission 18 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mission 19 - Right side */}
-                <div className="relative z-10 flex items-center mb-24">
-                  {/* Mission 19 Node - Right side */}
-                  <div className="flex items-center justify-end w-1/2">
-                    <div className="relative mr-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1"></div>
-                </div>
-
-                {/* Mission 20 - Left side */}
-                <div className="relative z-10 flex items-center !mb-0 !pb-0">
-                  <div className="flex-1"></div>
-                  {/* Mission 20 Node - Left side */}
-                  <div className="flex items-center justify-start w-1/2">
-                    <div className="relative ml-4 text-gray-400">
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
-                        <Lock className="w-6 h-6 opacity-50" />
-                      </div>
-
-                      {/* Title below the square */}
-                      <h3 className="mt-1 text-sm font-medium text-gray-400 text-center">
-                        مشروع التخرج
-                      </h3>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -924,12 +544,6 @@ export default function Dashboard() {
             {/* Right column: Student Profile Card - with sticky positioning */}
             <div className="w-full md:w-1/3 md:sticky md:top-4 self-start">
               <Card className="border border-gray-100 rounded-xl p-5">
-                {/* Card Header
-                <div className="text-center mb-4"> 
-                  <h2 className="text-xl font-bold mb-0.5">ملف الطالب</h2>
-                </div>
-                
-                */}
                 {/* Profile picture */}
                 <div className="flex justify-center mb-5">
                   <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
@@ -961,70 +575,50 @@ export default function Dashboard() {
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">
-                      (XP) نقاط الخبرة
-                    </p>
+                    <p className="font-medium text-gray-500">(XP) نقاط الخبرة</p>
                   </div>
                   <div>
-                    <p className="font-medium">{xp || 0} نقطة</p>
+                    <p className="font-medium text-purple-600">{xp} نقطة</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">
-                      المهمات المكتملة
-                    </p>
+                    <p className="font-medium text-gray-500">المهمات المكتملة</p>
                   </div>
                   <div>
                     <p className="font-medium">
-                      {completedMissions?.length || 0} / 20
+                      {completedMissions.length} / 20
                     </p>
                   </div>
                 </div>
 
                 {/* Badges section */}
-                <div className="mt-4">
-                  <h3 className="text-sm font-bold mb-3 text-gray-700">
+                <div className="mb-5">
+                  <h3 className="font-semibold text-gray-600 mb-3">
                     الشارات المكتسبة
                   </h3>
-
-                  {unlockedBadges.length === 0 ? (
-                    <div className="text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg">
-                      لم تحصل على أي شارات بعد. أكمل المهام للحصول على شارات!
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {unlockedBadges.includes("prompt_engineer_badge") && (
-                        <div className="bg-amber-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                          <Star className="h-5 w-5 text-amber-400 mb-1" />
-                          <span className="text-xs font-medium text-center">
-                            مهندس تحفيز
-                          </span>
+                  <div className="flex space-x-2 space-x-reverse">
+                    {unlockedBadges.length > 0 ? (
+                      unlockedBadges.map((badge, index) => (
+                        <div
+                          key={index}
+                          className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center"
+                          title={badge}
+                        >
+                          {badgeIcons[badge] || (
+                            <Star className="h-5 w-5 text-purple-500" />
+                          )}
                         </div>
-                      )}
-
-                      {unlockedBadges.includes("image_artist_badge") && (
-                        <div className="bg-blue-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                          <Trophy className="h-5 w-5 text-blue-400 mb-1" />
-                          <span className="text-xs font-medium text-center">
-                            فنان الصور
-                          </span>
-                        </div>
-                      )}
-
-                      {unlockedBadges.includes("ai_coder_badge") && (
-                        <div className="bg-purple-50 rounded-lg p-3 flex flex-col items-center justify-center">
-                          <Zap className="h-5 w-5 text-purple-500 mb-1" />
-                          <span className="text-xs font-medium text-center">
-                            مبرمج ذكاء اصطناعي
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        لم تحصل على أي شارات بعد
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Edit profile button */}
-                {!showProfileForm && (
+                {studentName && studentGrade && schoolName && (
                   <Button
                     variant="outline"
                     className="w-full mt-4 text-sm"
