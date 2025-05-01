@@ -21,7 +21,7 @@ import {
 
 
 import { useQuest } from "@/hooks/useQuest";
-import penguinAvatar from "@assets/Penguin.png";
+import penguinAvatar from "@assets/WelcomePenguin.png";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -483,28 +483,33 @@ export default function Dashboard() {
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
                 <div className={`relative flex flex-col mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? 'collapsed' : ''}`}>
-                  <div className="flex flex-row-reverse justify-between items-start mb-3">
-                    <div className="flex-shrink-0 ml-3">
-                      <img 
-                        src={penguinAvatar} 
-                        alt="د. بنجي" 
-                        className="w-16 h-16 pointer-events-none" 
-                      />
-                    </div>
-                    <div className="flex-1 text-right">
-                      <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
-                      <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
-                    </div>
+                  {/* Title and description on right side */}
+                  <div className="text-right mb-4">
+                    <h2 className="text-xl font-bold text-purple-700">المهمة التعريفية</h2>
+                    <p className="text-sm text-purple-600">تعرف على الذكاء الاصطناعي التوليدي</p>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center justify-end">
-                      <span className={`text-sm ${isMission1Complete ? 'text-green-600' : 'text-purple-600'}`}>
-                        {isMission1Complete ? 'مكتملة' : 'غير مكتملة'}
-                      </span>
-                      <div className={`h-3 w-3 rounded-full ${isMission1Complete ? 'bg-green-500' : 'bg-purple-500 animate-pulse'} mr-2 ml-2`}></div>
+                    {/* Status indicator - left side */}
+                    <div className="flex items-center">
+                      {/* Penguin image centered above button */}
+                      <div className="absolute left-6 -top-3">
+                        <img 
+                          src={penguinAvatar} 
+                          alt="د. بنجي" 
+                          className="w-16 h-16 pointer-events-none" 
+                        />
+                      </div>
+                      
+                      <div className="mt-9 flex items-center">
+                        <span className={`text-sm ${isMission1Complete ? 'text-green-600' : 'text-purple-600'}`}>
+                          {isMission1Complete ? 'مكتملة' : 'غير مكتملة'}
+                        </span>
+                        <div className={`h-3 w-3 rounded-full ${isMission1Complete ? 'bg-green-500' : 'bg-purple-500 animate-pulse'} mr-2 ml-2`}></div>
+                      </div>
                     </div>
                     
+                    {/* Button on right side */}
                     <Button
                       className={`${isMission1Complete ? 'bg-purple-200 hover:bg-purple-300 text-purple-800' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
                       onClick={() => handleStartMission(1)}
