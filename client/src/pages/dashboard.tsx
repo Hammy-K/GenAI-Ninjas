@@ -654,24 +654,17 @@ export default function Dashboard() {
 
                               <div className="relative">
                                 <div
-                                  className={`bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 ${isMissionCompleted(1) ? "border-green-400" : "border-gray-300"} h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(1) ? "opacity-70" : ""}`}
+                                  className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70"
                                 >
                                   <div className="text-2xl mb-2">💡</div>
                                   <div className="font-medium text-sm">
                                     وش فكرة لعبتك؟
                                   </div>
-                                  {!isMissionCompleted(1) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(1) && (
-                                  <Link
-                                    href="/game/mission2"
-                                    className="absolute inset-0"
-                                  />
-                                )}
+                                {/* Removing link to Mission 2 as requested */}
                               </div>
 
                               <div className="relative">
