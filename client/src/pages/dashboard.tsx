@@ -621,18 +621,9 @@ export default function Dashboard() {
                           className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
                           onClick={handleBackToStreams}
                         >
-                          <ArrowLeftCircle className="h-4 w-4" />
+                          <ArrowRight className="h-4 w-4" />
                           <span>العودة للمسارات</span>
                         </Button>
-
-                        <div className="mx-auto text-center">
-                          <h2 className="text-xl font-bold text-purple-700">
-                            {
-                              streams.find((s) => s.id === selectedStream)
-                                ?.title
-                            }
-                          </h2>
-                        </div>
                       </div>
 
                       {/* Stream-specific journey content */}
@@ -641,40 +632,34 @@ export default function Dashboard() {
                           <h2 className="text-xl font-semibold text-center mb-8">
                             رحلة تعلم تطوير الألعاب
                           </h2>
-                          
-                          {/* Puzzle-style learning journey with zigzag path pattern */}
+
+                          {/* Puzzle-style learning journey with uniform styling */}
                           <div className="relative max-w-3xl mx-auto">
-                            {/* Zigzag connector path - positioned underneath the cards */}
-                            <div className="absolute top-0 left-0 w-full h-full z-0">
-                              <svg width="100%" height="100%" className="absolute inset-0" style={{ zIndex: -1 }}>
-                                <path
-                                  d="M 100,70 L 230,70 L 230,190 L 360,190 L 360,70 L 490,70 L 490,190 L 620,190 L 620,70 L 750,70"
-                                  stroke="#d1d5db" 
-                                  strokeWidth="6" 
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeDasharray="8,12"
-                                  fill="none"
-                                />
-                              </svg>
-                            </div>
-                          
                             {/* 2x4 grid of mission tiles */}
                             <div className="grid grid-cols-4 gap-5">
                               {/* Row 1 */}
                               <div className="relative">
-                                <Link href="/game/mission1" className="block transform hover:scale-105 transition-transform">
-                                  <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-purple-200 h-36 flex flex-col items-center justify-center text-center">
+                                <Link
+                                  href="/game/mission1"
+                                  className="block transform hover:scale-105 transition-transform"
+                                >
+                                  <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-green-400 h-36 flex flex-col items-center justify-center text-center">
                                     <div className="text-2xl mb-2">🎮</div>
-                                    <div className="font-medium text-sm">ليش نحب الألعاب؟</div>
+                                    <div className="font-medium text-sm">
+                                      ليش نحب الألعاب؟
+                                    </div>
                                   </div>
                                 </Link>
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-indigo-50 hover:bg-indigo-100 p-4 rounded-lg shadow-md border-2 border-indigo-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(1) ? 'opacity-70' : ''}`}>
+                                <div
+                                  className={`bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 ${isMissionCompleted(1) ? "border-green-400" : "border-gray-300"} h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(1) ? "opacity-70" : ""}`}
+                                >
                                   <div className="text-2xl mb-2">💡</div>
-                                  <div className="font-medium text-sm">وش فكرة لعبتك؟</div>
+                                  <div className="font-medium text-sm">
+                                    وش فكرة لعبتك؟
+                                  </div>
                                   {!isMissionCompleted(1) && (
                                     <div className="absolute top-2 left-2">
                                       <Lock className="h-5 w-5 text-gray-400" />
@@ -682,114 +667,89 @@ export default function Dashboard() {
                                   )}
                                 </div>
                                 {isMissionCompleted(1) && (
-                                  <Link href="/game/mission2" className="absolute inset-0" />
+                                  <Link
+                                    href="/game/mission2"
+                                    className="absolute inset-0"
+                                  />
                                 )}
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-blue-50 hover:bg-blue-100 p-4 rounded-lg shadow-md border-2 border-blue-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(2) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎯</div>
-                                  <div className="font-medium text-sm">الأساسيات والميكانيكيات الرئيسية</div>
-                                  {!isMissionCompleted(2) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    الأساسيات والميكانيكيات الرئيسية
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(2) && (
-                                  <Link href="/game/mission3" className="absolute inset-0" />
-                                )}
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-cyan-50 hover:bg-cyan-100 p-4 rounded-lg shadow-md border-2 border-cyan-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(3) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🧪</div>
-                                  <div className="font-medium text-sm">نموذج أولي لأول مرحلة</div>
-                                  {!isMissionCompleted(3) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    نموذج أولي لأول مرحلة
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(3) && (
-                                  <Link href="/game/mission4" className="absolute inset-0" />
-                                )}
                               </div>
-                              
-                              {/* Row 2 - Visually connected in zigzag pattern */}
+
+                              {/* Row 2 */}
                               <div className="relative">
-                                <div className={`bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg shadow-md border-2 border-emerald-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(7) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🚀</div>
-                                  <div className="font-medium text-sm">النشر، الإطلاق، والمشاركة</div>
-                                  {!isMissionCompleted(7) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    النشر، الإطلاق، والمشاركة
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(7) && (
-                                  <Link href="/game/mission8" className="absolute inset-0" />
-                                )}
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-teal-50 hover:bg-teal-100 p-4 rounded-lg shadow-md border-2 border-teal-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(6) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🔁</div>
-                                  <div className="font-medium text-sm">الاختبار والتعديل</div>
-                                  {!isMissionCompleted(6) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    الاختبار والتعديل
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(6) && (
-                                  <Link href="/game/mission7" className="absolute inset-0" />
-                                )}
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-green-50 hover:bg-green-100 p-4 rounded-lg shadow-md border-2 border-green-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(5) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎵</div>
-                                  <div className="font-medium text-sm">الصوت، الموسيقى، والتفاعل مع اللاعب</div>
-                                  {!isMissionCompleted(5) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    الصوت والموسيقى
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(5) && (
-                                  <Link href="/game/mission6" className="absolute inset-0" />
-                                )}
                               </div>
-                              
+
                               <div className="relative">
-                                <div className={`bg-lime-50 hover:bg-lime-100 p-4 rounded-lg shadow-md border-2 border-lime-200 h-36 flex flex-col items-center justify-center text-center ${!isMissionCompleted(4) ? 'opacity-70' : ''}`}>
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎨</div>
-                                  <div className="font-medium text-sm">تصميم الرسومات والشكل البصري</div>
-                                  {!isMissionCompleted(4) && (
-                                    <div className="absolute top-2 left-2">
-                                      <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                                  <div className="font-medium text-sm">
+                                    الرسوميات والفن
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 </div>
-                                {isMissionCompleted(4) && (
-                                  <Link href="/game/mission5" className="absolute inset-0" />
-                                )}
                               </div>
                             </div>
                           </div>
+
                           
-                          {/* Back to streams button */}
-                          <div className="flex justify-center mt-10">
-                            <Button 
-                              variant="outline" 
-                              className="flex items-center gap-2"
-                              onClick={handleBackToStreams}
-                            >
-                              <ArrowRight className="h-4 w-4" />
-                              <span>العودة إلى المسارات</span>
-                            </Button>
-                          </div>
                         </div>
                       )}
                     </div>
@@ -881,7 +841,6 @@ export default function Dashboard() {
                   </div>
                 </div>
                 */}
-                
 
                 {/* Edit profile button */}
                 {studentName && studentGrade && schoolName && (
