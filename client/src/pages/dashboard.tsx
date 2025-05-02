@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useState, useEffect } from "react";
@@ -636,14 +636,70 @@ export default function Dashboard() {
 
                       {/* Stream-specific journey content */}
                       {selectedStream === "games" && (
-                        <div className="p-3 space-y-4">
-                          <p className="text-gray-500 text-sm">
-                            هذا المسار قيد التطوير حالياً. سيكون متاحاً قريباً.
-                          </p>
-                          <div className="flex justify-center">
-                            <div className="bg-purple-50 p-10 rounded-xl w-64 h-64 flex items-center justify-center">
-                              <Gamepad2 className="h-20 w-20 text-purple-300" />
-                            </div>
+                        <div className="p-6 space-y-6">
+                          <h3 className="text-lg font-semibold text-center mb-6">
+                            رحلة تعلم تطوير الألعاب
+                          </h3>
+                          
+                          {/* Puzzle-style learning journey - 8 tiles in a zig-zag pattern */}
+                          <div className="grid grid-cols-4 gap-4 w-full max-w-4xl mx-auto">
+                            {/* Row 1 */}
+                            <Link href="/mission1/stage/game1" className="col-start-1 transform hover:scale-105 transition-transform">
+                              <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-purple-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🎮</div>
+                                <div className="font-medium text-sm">ليش نحب الألعاب؟</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game2" className="col-start-2 transform hover:scale-105 transition-transform">
+                              <div className="bg-indigo-50 hover:bg-indigo-100 p-4 rounded-lg shadow-md border-2 border-indigo-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">💡</div>
+                                <div className="font-medium text-sm">وش فكرة لعبتك؟</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game3" className="col-start-3 transform hover:scale-105 transition-transform">
+                              <div className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg shadow-md border-2 border-blue-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🎯</div>
+                                <div className="font-medium text-sm">الأساسيات والميكانيكيات الرئيسية</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game4" className="col-start-4 transform hover:scale-105 transition-transform">
+                              <div className="bg-cyan-50 hover:bg-cyan-100 p-4 rounded-lg shadow-md border-2 border-cyan-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🧪</div>
+                                <div className="font-medium text-sm">نموذج أولي لأول مرحلة</div>
+                              </div>
+                            </Link>
+                            
+                            {/* Row 2 - Reverse order to create zig-zag */}
+                            <Link href="/mission1/stage/game8" className="col-start-1 transform hover:scale-105 transition-transform">
+                              <div className="bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg shadow-md border-2 border-emerald-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🚀</div>
+                                <div className="font-medium text-sm">النشر، الإطلاق، والمشاركة</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game7" className="col-start-2 transform hover:scale-105 transition-transform">
+                              <div className="bg-teal-50 hover:bg-teal-100 p-4 rounded-lg shadow-md border-2 border-teal-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🔁</div>
+                                <div className="font-medium text-sm">الاختبار والتعديل</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game6" className="col-start-3 transform hover:scale-105 transition-transform">
+                              <div className="bg-green-50 hover:bg-green-100 p-4 rounded-lg shadow-md border-2 border-green-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🎵</div>
+                                <div className="font-medium text-sm">الصوت، الموسيقى، والتفاعل مع اللاعب</div>
+                              </div>
+                            </Link>
+                            
+                            <Link href="/mission1/stage/game5" className="col-start-4 transform hover:scale-105 transition-transform">
+                              <div className="bg-lime-50 hover:bg-lime-100 p-4 rounded-lg shadow-md border-2 border-lime-200 h-36 flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl mb-2">🎨</div>
+                                <div className="font-medium text-sm">تصميم الرسومات والشكل البصري</div>
+                              </div>
+                            </Link>
                           </div>
                         </div>
                       )}
@@ -707,7 +763,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Badges section */}
+                {/* Badges section
                 <div className="mb-5">
                   <h3 className="font-semibold text-gray-600 mb-3">
                     الشارات المكتسبة
@@ -735,6 +791,8 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
+                */}
+                
 
                 {/* Edit profile button */}
                 {studentName && studentGrade && schoolName && (
