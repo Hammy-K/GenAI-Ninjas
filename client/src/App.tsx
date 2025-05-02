@@ -9,6 +9,7 @@ import Mission1 from "@/pages/mission1";
 import GameMission from "@/pages/game-mission";
 import Project from "@/pages/project";
 import Gallery from "@/pages/gallery";
+import EmptyMission from "@/pages/missions/empty";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
 import { DebugPanel } from "@/components/debug/DebugPanel";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/game/mission:id" component={GameMission} />
       <Route path="/project/:projectId" component={Project} />
       <Route path="/gallery" component={Gallery} />
+      <Route path="/missions/empty" component={EmptyMission} />
       <Route path="/reset-instructions" component={ResetInstructions} />
       <Route path="/reset" component={ResetSession} />
       <Route component={NotFound} />
