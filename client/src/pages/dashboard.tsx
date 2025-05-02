@@ -197,21 +197,7 @@ export default function Dashboard() {
     setShowCaptcha(true);
   };
 
-  // Animation cleanup effect
-  useEffect(() => {
-    // After animation completes, clean up any transform artifacts
-    if (showStreamContent) {
-      const timer = setTimeout(() => {
-        // Apply any cleanup needed after animation completes
-        document.querySelectorAll('.stream-card:not(.selected)').forEach(el => {
-          (el as HTMLElement).style.transform = 'none';
-          (el as HTMLElement).style.opacity = '0';
-        });
-      }, 500); // Match your animation duration
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showStreamContent]);
+  // Animation cleanup effect - removed as it was causing issues with streams display
 
   // Add the pulse animation styles
   useEffect(() => {
@@ -384,32 +370,22 @@ export default function Dashboard() {
     },
   ];
 
-  // Handle stream selection with staggered animation
+  // Handle stream selection (reverted to original functionality)
   const handleStreamSelect = (streamId: string) => {
     // Find the stream
     const stream = streams.find((s) => s.id === streamId);
 
     // Don't do anything if stream is locked
     if (stream?.isLocked) return;
-    
-    // First set the selected stream
+
     setSelectedStream(streamId);
-    
-    // Then after a small delay, trigger the content transition
-    setTimeout(() => {
-      setShowStreamContent(true);
-    }, 50); // 50ms delay creates a smoother staggered effect
+    setShowStreamContent(true);
   };
 
   // Handle back button from stream to streams grid
   const handleBackToStreams = () => {
-    // First hide content
+    setSelectedStream(null);
     setShowStreamContent(false);
-    
-    // Then reset the selection after animation completes
-    setTimeout(() => {
-      setSelectedStream(null);
-    }, 500); // Match this to your animation duration
   };
 
   return (
