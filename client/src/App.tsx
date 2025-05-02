@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 import Dashboard from "@/pages/dashboard";
 import Mission1 from "@/pages/mission1";
+import GameMission from "@/pages/game-mission";
 import Project from "@/pages/project";
 import Gallery from "@/pages/gallery";
 import ResetInstructions from "@/pages/reset-instructions";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/mission1" component={Mission1} />
       <Route path="/mission1/stage/:stageName" component={Mission1} />
+      <Route path="/game/mission:id" component={GameMission} />
       <Route path="/project/:projectId" component={Project} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/reset-instructions" component={ResetInstructions} />

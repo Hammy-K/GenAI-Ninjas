@@ -644,62 +644,151 @@ export default function Dashboard() {
                           {/* Puzzle-style learning journey - 8 tiles in a zig-zag pattern */}
                           <div className="grid grid-cols-4 gap-4 w-full max-w-4xl mx-auto">
                             {/* Row 1 */}
-                            <Link href="/mission1/stage/game1" className="col-start-1 transform hover:scale-105 transition-transform">
+                            <Link href="/game/mission1" className="col-start-1 transform hover:scale-105 transition-transform">
                               <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-purple-200 h-36 flex flex-col items-center justify-center text-center">
                                 <div className="text-2xl mb-2">🎮</div>
                                 <div className="font-medium text-sm">ليش نحب الألعاب؟</div>
                               </div>
                             </Link>
                             
-                            <Link href="/mission1/stage/game2" className="col-start-2 transform hover:scale-105 transition-transform">
-                              <div className="bg-indigo-50 hover:bg-indigo-100 p-4 rounded-lg shadow-md border-2 border-indigo-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">💡</div>
-                                <div className="font-medium text-sm">وش فكرة لعبتك؟</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-2">
+                              {isMissionCompleted(1) ? (
+                                <Link href="/game/mission2" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-indigo-50 hover:bg-indigo-100 p-4 rounded-lg shadow-md border-2 border-indigo-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">💡</div>
+                                    <div className="font-medium text-sm">وش فكرة لعبتك؟</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">💡</div>
+                                  <div className="font-medium text-sm text-gray-500">وش فكرة لعبتك؟</div>
+                                </div>
+                              )}
+                            </div>
                             
-                            <Link href="/mission1/stage/game3" className="col-start-3 transform hover:scale-105 transition-transform">
-                              <div className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg shadow-md border-2 border-blue-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🎯</div>
-                                <div className="font-medium text-sm">الأساسيات والميكانيكيات الرئيسية</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-3">
+                              {isMissionCompleted(1) && isMissionCompleted(2) ? (
+                                <Link href="/game/mission3" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg shadow-md border-2 border-blue-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🎯</div>
+                                    <div className="font-medium text-sm">الأساسيات والميكانيكيات الرئيسية</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🎯</div>
+                                  <div className="font-medium text-sm text-gray-500">الأساسيات والميكانيكيات الرئيسية</div>
+                                </div>
+                              )}
+                            </div>
                             
-                            <Link href="/mission1/stage/game4" className="col-start-4 transform hover:scale-105 transition-transform">
-                              <div className="bg-cyan-50 hover:bg-cyan-100 p-4 rounded-lg shadow-md border-2 border-cyan-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🧪</div>
-                                <div className="font-medium text-sm">نموذج أولي لأول مرحلة</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-4">
+                              {isMissionCompleted(1) && isMissionCompleted(2) && isMissionCompleted(3) ? (
+                                <Link href="/game/mission4" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-cyan-50 hover:bg-cyan-100 p-4 rounded-lg shadow-md border-2 border-cyan-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🧪</div>
+                                    <div className="font-medium text-sm">نموذج أولي لأول مرحلة</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🧪</div>
+                                  <div className="font-medium text-sm text-gray-500">نموذج أولي لأول مرحلة</div>
+                                </div>
+                              )}
+                            </div>
                             
                             {/* Row 2 - Reverse order to create zig-zag */}
-                            <Link href="/mission1/stage/game8" className="col-start-1 transform hover:scale-105 transition-transform">
-                              <div className="bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg shadow-md border-2 border-emerald-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🚀</div>
-                                <div className="font-medium text-sm">النشر، الإطلاق، والمشاركة</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-1">
+                              {isMissionCompleted(1) && isMissionCompleted(2) && isMissionCompleted(3) && 
+                               isMissionCompleted(4) && isMissionCompleted(5) && isMissionCompleted(6) && 
+                               isMissionCompleted(7) ? (
+                                <Link href="/game/mission8" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg shadow-md border-2 border-emerald-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🚀</div>
+                                    <div className="font-medium text-sm">النشر، الإطلاق، والمشاركة</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🚀</div>
+                                  <div className="font-medium text-sm text-gray-500">النشر، الإطلاق، والمشاركة</div>
+                                </div>
+                              )}
+                            </div>
                             
-                            <Link href="/mission1/stage/game7" className="col-start-2 transform hover:scale-105 transition-transform">
-                              <div className="bg-teal-50 hover:bg-teal-100 p-4 rounded-lg shadow-md border-2 border-teal-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🔁</div>
-                                <div className="font-medium text-sm">الاختبار والتعديل</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-2">
+                              {isMissionCompleted(1) && isMissionCompleted(2) && isMissionCompleted(3) && 
+                               isMissionCompleted(4) && isMissionCompleted(5) && isMissionCompleted(6) ? (
+                                <Link href="/game/mission7" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-teal-50 hover:bg-teal-100 p-4 rounded-lg shadow-md border-2 border-teal-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🔁</div>
+                                    <div className="font-medium text-sm">الاختبار والتعديل</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🔁</div>
+                                  <div className="font-medium text-sm text-gray-500">الاختبار والتعديل</div>
+                                </div>
+                              )}
+                            </div>
                             
-                            <Link href="/mission1/stage/game6" className="col-start-3 transform hover:scale-105 transition-transform">
-                              <div className="bg-green-50 hover:bg-green-100 p-4 rounded-lg shadow-md border-2 border-green-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🎵</div>
-                                <div className="font-medium text-sm">الصوت، الموسيقى، والتفاعل مع اللاعب</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-3">
+                              {isMissionCompleted(1) && isMissionCompleted(2) && isMissionCompleted(3) && 
+                               isMissionCompleted(4) && isMissionCompleted(5) ? (
+                                <Link href="/game/mission6" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-green-50 hover:bg-green-100 p-4 rounded-lg shadow-md border-2 border-green-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🎵</div>
+                                    <div className="font-medium text-sm">الصوت، الموسيقى، والتفاعل مع اللاعب</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🎵</div>
+                                  <div className="font-medium text-sm text-gray-500">الصوت، الموسيقى، والتفاعل مع اللاعب</div>
+                                </div>
+                              )}
+                            </div>
                             
-                            <Link href="/mission1/stage/game5" className="col-start-4 transform hover:scale-105 transition-transform">
-                              <div className="bg-lime-50 hover:bg-lime-100 p-4 rounded-lg shadow-md border-2 border-lime-200 h-36 flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl mb-2">🎨</div>
-                                <div className="font-medium text-sm">تصميم الرسومات والشكل البصري</div>
-                              </div>
-                            </Link>
+                            <div className="col-start-4">
+                              {isMissionCompleted(1) && isMissionCompleted(2) && isMissionCompleted(3) && 
+                               isMissionCompleted(4) ? (
+                                <Link href="/game/mission5" className="transform hover:scale-105 transition-transform block">
+                                  <div className="bg-lime-50 hover:bg-lime-100 p-4 rounded-lg shadow-md border-2 border-lime-200 h-36 flex flex-col items-center justify-center text-center">
+                                    <div className="text-2xl mb-2">🎨</div>
+                                    <div className="font-medium text-sm">تصميم الرسومات والشكل البصري</div>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="bg-gray-100 p-4 rounded-lg shadow-md border-2 border-gray-200 h-36 flex flex-col items-center justify-center text-center opacity-60">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-gray-500 opacity-60" />
+                                  </div>
+                                  <div className="text-2xl mb-2 blur-sm">🎨</div>
+                                  <div className="font-medium text-sm text-gray-500">تصميم الرسومات والشكل البصري</div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}
