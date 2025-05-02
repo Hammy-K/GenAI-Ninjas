@@ -1,7 +1,8 @@
 import React, { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { ProgressBar } from "@/components/layout/ProgressBar";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 /**
  * MissionTemplate Props
@@ -61,6 +62,11 @@ interface MissionTemplateProps {
    * Optional custom text for the back button
    */
   backText?: string;
+  
+  /**
+   * Optional handler for returning to dashboard
+   */
+  onBackToDashboard?: () => void;
 }
 
 /**
@@ -68,6 +74,7 @@ interface MissionTemplateProps {
  * 
  * A reusable template for mission steps with navigation and progress tracking.
  * Designed to be used as a container for mission content.
+ * Based on the exact structure of the Intro Mission.
  */
 export function MissionTemplate({
   totalSteps,
@@ -80,66 +87,78 @@ export function MissionTemplate({
   nextDisabled = false,
   backDisabled = false,
   nextText = "التالي",
-  backText = "رجوع"
+  backText = "رجوع",
+  onBackToDashboard
 }: MissionTemplateProps) {
-  // Calculate progress percentage
-  const progressValue = (currentStep / totalSteps) * 100;
-  
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-tajawal" dir="rtl">
-      <main className="flex-1 container max-w-4xl py-6 px-4">
-        {/* Optional Title Section */}
-        {(title || subtitle) && (
-          <div className="mb-6">
-            {title && <h1 className="text-2xl font-bold text-center mb-2">{title}</h1>}
-            {subtitle && <h2 className="text-xl font-medium text-center text-muted-foreground mb-6">{subtitle}</h2>}
+    <>
+      {/* Back to Dashboard Button */}
+      {onBackToDashboard && (
+        <div className="bg-white border-b py-2">
+          <div className="max-w-6xl mx-auto px-4">
+            <Button 
+              variant="ghost" 
+              onClick={onBackToDashboard}
+              className="flex items-center text-sm"
+            >
+              <ArrowRight className="h-4 w-4 ml-2" />
+              العودة إلى لوحة المهام
+            </Button>
           </div>
-        )}
-        
-        {/* Progress Tracking */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-primary">
-              الخطوة {currentStep} من {totalSteps}
-            </span>
-          </div>
-          <Progress value={progressValue} className="h-2" />
         </div>
-        
-        {/* Content Area */}
-        <div className="bg-card rounded-lg p-8 shadow-sm min-h-[300px] mb-6">
-          {children || (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground text-center">محتوى هذه الخطوة قيد التطوير</p>
+      )}
+      
+      {/* Progress Bar */}
+      <ProgressBar currentStage={currentStep} totalStages={totalSteps} />
+      
+      {/* Main Content */}
+      <main className="flex-grow p-4 md:p-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Optional Title Section */}
+          {(title || subtitle) && (
+            <div className="mb-6 text-center">
+              {title && <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>}
+              {subtitle && <h2 className="text-xl font-medium text-neutral-600 mt-2">{subtitle}</h2>}
             </div>
           )}
-        </div>
-        
-        {/* Navigation Buttons - Fixed at Bottom */}
-        <div className="flex justify-between mt-6 sticky bottom-4 bg-background py-2">
-          <Button
-            onClick={onBack}
-            variant="outline"
-            size="lg"
-            className="flex items-center gap-2"
-            disabled={backDisabled}
-          >
-            <ArrowRight className="h-4 w-4" />
-            <span>{backText}</span>
-          </Button>
           
-          <Button
-            onClick={onNext}
-            variant="default"
-            size="lg"
-            className="flex items-center gap-2"
-            disabled={nextDisabled}
-          >
-            <span>{nextText}</span>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          {/* Content Card */}
+          <Card className="mb-6 shadow-sm">
+            <CardContent className="p-6">
+              {children || (
+                <div className="flex items-center justify-center min-h-[300px]">
+                  <p className="text-neutral-500 text-center">محتوى هذه الخطوة قيد التطوير</p>
+                </div>
+              )}
+            </CardContent>
+            
+            {/* Navigation Buttons */}
+            <CardFooter className="flex justify-between px-6 pb-6">
+              <Button
+                onClick={onBack}
+                variant="outline"
+                size="lg"
+                className="flex items-center gap-2"
+                disabled={backDisabled}
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span>{backText}</span>
+              </Button>
+              
+              <Button
+                onClick={onNext}
+                variant="default"
+                size="lg"
+                className="flex items-center gap-2"
+                disabled={nextDisabled}
+              >
+                <span>{nextText}</span>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </main>
-    </div>
+    </>
   );
 }

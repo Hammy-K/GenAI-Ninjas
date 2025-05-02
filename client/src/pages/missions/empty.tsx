@@ -40,11 +40,15 @@ export default function EmptyMission() {
     }
   };
   
+  const handleBackToDashboard = () => {
+    navigate("/");
+  };
+  
   // Customize next button text on last step
   const nextText = currentStep === TOTAL_STEPS ? "إنهاء" : "التالي";
   
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-tajawal" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-neutral-50 text-neutral-700 font-tajawal">
       <Header xp={xp} />
       
       <MissionTemplate
@@ -56,11 +60,12 @@ export default function EmptyMission() {
         subtitle="نموذج فارغ للمهمات التعليمية"
         nextText={nextText}
         backDisabled={false} // Always allow going back in this demo
+        onBackToDashboard={handleBackToDashboard}
       >
         {/* Placeholder content showing which step we're on */}
         <div className="flex flex-col items-center justify-center py-10">
           <h2 className="text-2xl font-bold mb-4">المحتوى للخطوة {currentStep}</h2>
-          <p className="text-muted-foreground">
+          <p className="text-neutral-600">
             هذا محتوى توضيحي فقط. يمكن استبداله بأي محتوى مطلوب لكل خطوة.
           </p>
         </div>
