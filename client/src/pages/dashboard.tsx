@@ -714,17 +714,20 @@ export default function Dashboard() {
                   </h3>
                   <div className="flex space-x-2 space-x-reverse">
                     {unlockedBadges.length > 0 ? (
-                      unlockedBadges.map((badge, index) => (
-                        <div
-                          key={index}
-                          className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center"
-                          title={badge}
-                        >
-                          {badgeIcons[badge] || (
-                            <Star className="h-5 w-5 text-purple-500" />
-                          )}
-                        </div>
-                      ))
+                      // Only show badges that are in our approved list (badgeIcons)
+                      unlockedBadges
+                        .filter(badge => Object.keys(badgeIcons).includes(badge))
+                        .map((badge, index) => (
+                          <div
+                            key={index}
+                            className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center"
+                            title={badge.replace('_badge', '').replace(/_/g, ' ')}
+                          >
+                            {badgeIcons[badge] || (
+                              <Star className="h-5 w-5 text-purple-500" />
+                            )}
+                          </div>
+                        ))
                     ) : (
                       <p className="text-sm text-gray-500">
                         لم تحصل على أي شارات بعد

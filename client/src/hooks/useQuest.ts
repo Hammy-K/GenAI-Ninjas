@@ -18,7 +18,24 @@ export function useQuest() {
   // Initialize state from localStorage or defaults
   const [state, setState] = useState<QuestState>(() => {
     const savedState = localStorage.getItem(STORAGE_KEY);
-    const parsedState = savedState ? JSON.parse(savedState) : null;
+    let parsedState = savedState ? JSON.parse(savedState) : null;
+    
+    // Clean up any fake badges if they exist in stored state
+    if (parsedState && parsedState.unlockedBadges && parsedState.unlockedBadges.length > 0) {
+      // Filter out non-legitimate badges (badges not earned through proper completion)
+      const legitimateBadges = [
+        'prompt_engineer_badge',  // Earned from prompt engineering task
+        'image_artist_badge'      // Earned from sharing image to gallery
+      ];
+      
+      // Keep only legitimate badges that should be in the list
+      parsedState.unlockedBadges = parsedState.unlockedBadges.filter(
+        (badge: string) => legitimateBadges.includes(badge)
+      );
+      
+      // Save the cleaned state back to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedState));
+    }
     
     return parsedState || { 
       currentStage: 1, 
