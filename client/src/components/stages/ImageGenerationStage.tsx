@@ -334,16 +334,23 @@ export function ImageGenerationStage({
         sharedImageId: result.id
       }));
 
+      // Award the Image Artist Badge when an image is successfully shared
+      onUnlockBadge("image_artist_badge", "image_shared_to_gallery");
+
+      // Award XP for sharing to gallery
+      onEarnXp(50, "image_shared_to_gallery");
+
       // Show success toast and track the event
       toast({
         title: "تم مشاركة الصورة!",
-        description: "يمكنك الآن رؤية صورتك في معرض الصور.",
+        description: "يمكنك الآن رؤية صورتك في معرض الصور وتم منحك شارة (فنان الصور) 🏆",
         duration: 5000,
       });
 
       trackStageProgress("image_generation", "image_shared_to_gallery", {
         gallery_image_id: result.id,
         student_name: studentName,
+        badge_awarded: "image_artist_badge"
       });
     } catch (error) {
       console.error("Error sharing image to gallery:", error);
@@ -484,10 +491,9 @@ export function ImageGenerationStage({
         };
       });
 
-      // Always award the badge when an image is successfully generated
-      // This ensures the badge is awarded even if the state was reset
+      // Award XP when an image is successfully generated, but don't award a badge yet
+      // The badge will be awarded when the student shares the image
       onEarnXp(30, "image_generation_complete");
-      onUnlockBadge("creative_artist_badge", "image_generation_complete");
 
       // Mark as awarded in this session's state
       setState((prev) => ({

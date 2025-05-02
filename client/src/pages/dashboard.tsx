@@ -69,7 +69,7 @@ export default function Dashboard() {
   const captchaEmojis = ["💜", "🌟", "🎮", "🎨", "📱"];
   const targetEmoji = "💜"; // The heart emoji users need to click
 
-  // Calculate badges earned
+  // Badge icons for legitimate earned badges - no fake badges
   const badgeIcons: Record<string, JSX.Element> = {
     prompt_engineer_badge: <Star className="h-5 w-5" />,
     image_artist_badge: <Trophy className="h-5 w-5" />,
