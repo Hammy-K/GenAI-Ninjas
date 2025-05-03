@@ -45,7 +45,7 @@ export default function Gallery() {
         
         // Filter out images with expired or invalid URLs on the client side
         const currentTime = new Date().getTime();
-        const validImages = galleryImages.filter(img => {
+        const validImages = galleryImages.filter((img: any) => {
           // Skip images without a valid URL
           if (!img || !img.imageUrl) return false;
           
@@ -148,8 +148,8 @@ export default function Gallery() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {images
-              .filter(image => image.imageUrl && image.imageUrl.trim() !== "") // Skip images with missing URLs
-              .map((image) => (
+              .filter((image: any) => image.imageUrl && image.imageUrl.trim() !== "") // Skip images with missing URLs
+              .map((image: any) => (
                 <div key={image.id} className="bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                   <div className="aspect-square relative overflow-hidden">
                     <img 

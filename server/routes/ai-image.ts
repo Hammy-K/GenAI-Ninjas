@@ -70,14 +70,14 @@ Your reply should only include the final image prompt — no explanations or ext
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
-          quality: "hd",
+          quality: "medium", // Changed from "hd" to "medium" for gpt-image-1 compatibility
           // Note: 'style' parameter removed as it's not supported by gpt-image-1
         });
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
-          quality: "hd",
+          quality: "medium",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
