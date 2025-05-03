@@ -71,14 +71,13 @@ Your reply should only include the final image prompt — no explanations or ext
           n: 1,
           size: "1024x1024",
           quality: "hd",
-          style: "vivid",
+          // Note: 'style' parameter removed as it's not supported by gpt-image-1
         });
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
           quality: "hd",
-          style: "vivid",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
@@ -138,7 +137,10 @@ Your reply should only include the final image prompt — no explanations or ext
       }
 
       // Only proxy images from trusted domains (OpenAI)
-      if (!url.startsWith("https://oaidalleapiprodscus")) {
+      // Support both DALL-E and GPT Image URL formats
+      if (!url.startsWith("https://oaidalleapiprodscus") && 
+          !url.startsWith("https://dalleclient.blob.core.windows.net") && 
+          !url.startsWith("https://gptimageprodsus")) {
         return res
           .status(403)
           .json({ error: "Only OpenAI image URLs are supported" });

@@ -49,8 +49,10 @@ export default function Gallery() {
           // Skip images without a valid URL
           if (!img || !img.imageUrl) return false;
           
-          // Check for expired DALL-E URLs
-          if (img.imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+          // Check for expired image URLs from various OpenAI models
+          if (img.imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net') || 
+              img.imageUrl.includes('dalleclient.blob.core.windows.net') ||
+              img.imageUrl.includes('gptimageprodsus')) {
             // Try to extract expiration time from URL
             try {
               const seMatch = img.imageUrl.match(/se=([^&]+)/);
