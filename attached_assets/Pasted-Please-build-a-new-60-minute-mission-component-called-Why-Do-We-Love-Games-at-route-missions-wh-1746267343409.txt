@@ -1,0 +1,37 @@
+Please build a new 60-minute mission component called “Why Do We Love Games?” at route `/missions/why-do-we-love-games` using our existing mission UI template (progress bar + Next/Back buttons, RTL layout, Dr. Pengy widget).
+
+The flow has 6 segments—each with a time window, an interactive block, and a submission area. Stub out each block as follows:
+
+1. **Hook Play & Analyze (0–8′)**  
+   - Embed a Flappy-Bird clone iframe or canvas.  
+   - Show prompt: “Play until you fail three times—note what kept you coming back.”  
+   - Provide a 3-line text input for students to list their 3 “hook reasons.”
+
+2. **AI Breakdown (8–15′)**  
+   - Show a chat block pre-filled with:  
+     `{ role: "user", content: "@DrPengy, why is Flappy-Bird so addictive? Help me refine my 3 reasons." }`  
+   - Render AI response area for a 3-bullet “design insights” list.  
+   - Submission: store the refined 3-item list.
+
+3. **Mini Quiz: Game Elements (15–25′)**  
+   - Display 4 multiple-choice questions on goals, rules, loops, feedback.  
+   - Give instant feedback after each choice.  
+   - Submission: quiz score and auto-unlock next segment.
+
+4. **Prompt & Generate (25–35′)**  
+   - Show a text input: “Describe your own simple game idea in 1 sentence.”  
+   - On submit, call `/api/ai/text` with system+user prompt to generate a 30-word “hook statement.”  
+   - Display and let student copy their hook statement to a journal field.
+
+5. **Sprint Challenge (35–50′)**  
+   - Show a 10-minute countdown timer.  
+   - Instructions: “Sketch a 2-screen game concept that uses your hook statement.”  
+   - Add a button: “@DrPengy, suggest two mechanics for my hook.” (chat call)  
+   - Submission: file upload or image paste of their sketch + 1-line mechanics list.
+
+6. **Peer Feedback Submission (50–60′)**  
+   - Display two card slots side by side: one for “My Hook & Sketch,” one for “Peer’s Hook & Sketch.”  
+   - Provide a 3-point rubric dropdown (“Clear goal?”, “Fun rule?”, “Effective loop?”) and a one-line comment field.  
+   - Submission: save rubric ratings + comment.
+
+Use stub components for each block, wire up basic state/localStorage, and leave TODOs for real API calls and styling. Ensure the Next button only enables once each segment’s “Exit Criterion” is met. Thank you!

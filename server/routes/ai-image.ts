@@ -18,7 +18,7 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
   imageRoutes.use(validateChatHistory);
   imageRoutes.use(moderateContentMiddleware(openai));
 
-  // Image generation endpoint with GPT-4.1-mini prompt enhancement and DALL-E 3 generation
+  // Image generation endpoint with GPT-4.1-mini prompt enhancement and GPT Image generation
   imageRoutes.post(
     "/image",
     validatePrompt,
@@ -39,7 +39,7 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
           messages: [
             {
               role: "system",
-              content: `You are an expert at writing beautiful, high-quality prompts for DALL·E 3. 
+              content: `You are an expert at writing beautiful, high-quality prompts for image generation. 
 Your job is to convert short or vague user inputs into detailed, vivid, and specific prompts 
 that create stunning and useful images. Avoid adding any text or writing in the image unless the student clearly asks for it. 
 Your reply should only include the final image prompt — no explanations or extra commentary.`,
@@ -64,9 +64,9 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image with DALL-E 3 using the enhanced prompt
+        // Generate image with GPT Image using the enhanced prompt
         const response = await openai.images.generate({
-          model: "dall-e-3",
+          model: "gpt-image-1",
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
@@ -76,7 +76,7 @@ Your reply should only include the final image prompt — no explanations or ext
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
-          model: "dall-e-3",
+          model: "gpt-image-1",
           quality: "hd",
           style: "vivid",
           enhanced: true,
