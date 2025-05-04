@@ -64,23 +64,23 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image with DALL-E 3 using the enhanced prompt
-        console.log("🔍 DEBUG - Calling OpenAI with model: dall-e-3");
+        // Generate image with GPT Image using the enhanced prompt and explicitly requesting URL format
+        console.log("🔍 DEBUG - Calling OpenAI with model: gpt-image-1");
         const response = await openai.images.generate({
-          model: "dall-e-3",
+          model: "gpt-image-1",
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
-          quality: "standard",
-          style: "vivid"
+          quality: "medium" as any, // Cast to any to avoid TypeScript error
+          response_format: "url" // Explicitly request URL format
         });
         console.log("🔍 DEBUG - OpenAI response URL:", response.data[0].url);
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
-          model: "dall-e-3",
-          quality: "standard",
-          style: "vivid",
+          model: "gpt-image-1",
+          quality: "medium",
+          response_format: "url",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
