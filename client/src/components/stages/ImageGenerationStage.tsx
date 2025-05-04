@@ -211,7 +211,7 @@ export function ImageGenerationStage({
     try {
       // Use our server-side proxy to handle the download
       // This avoids CORS issues with direct downloads
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`;
+      const proxyUrl = `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`;
 
       // Create a temporary link element to trigger the download
       const link = document.createElement("a");
@@ -597,7 +597,7 @@ export function ImageGenerationStage({
                     </div>
                   </div>
                   <img
-                    src={state.generatedImageUrl}
+                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`}
                     alt="AI Generated Image"
                     className="max-w-full h-auto rounded"
                   />

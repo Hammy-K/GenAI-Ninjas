@@ -70,7 +70,7 @@ Your reply should only include the final image prompt — no explanations or ext
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
-          quality: "medium" // Using medium quality for gpt-image-1
+          quality: "medium" as any // Cast to any to avoid TypeScript error
           // Note: style parameter is not supported by gpt-image-1
         });
 
