@@ -116,7 +116,13 @@ export function GalleryExplorationStage({
     const data = await response.json();
     
     // Log fetched data for debugging
-    console.log(`Fetched gallery images (page: ${data.pagination?.currentPage || 1})`);
+    console.log(`🔍 CLIENT DEBUG - Gallery fetch response:`, {
+      page: data.pagination?.currentPage || 1,
+      imageCount: data.images?.length || 0,
+      hasImages: Boolean(data.images?.length),
+      firstImageUrl: data.images?.[0]?.imageUrl || data.images?.[0]?.url || 'none',
+      paginationInfo: data.pagination || 'none'
+    });
     
     // For API compatibility with older versions
     let images: GenericImage[] = [];
@@ -380,10 +386,35 @@ export function GalleryExplorationStage({
                               : imageUrl}
                             alt={`صورة بواسطة ${studentName}`}
                             className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                            onLoad={() => {
+                              console.log(`🔍 CLIENT DEBUG - Gallery image loaded successfully:`, {
+                                imageId,
+                                studentName,
+                                imageUrl: imageUrl.substring(0, 30) + '...'
+                              });
+                            }}
                             onError={(e) => {
-                              // Hide the card if image fails to load
+                              console.error(`🔍 CLIENT DEBUG - Gallery image load error:`, {
+                                imageId,
+                                studentName,
+                                imageUrl: imageUrl.substring(0, 30) + '...',
+                                error: e
+                              });
+                              
+                              // Try with image proxy as fallback for all images
+                              const img = e.currentTarget as HTMLImageElement;
+                              if (!imageUrl.startsWith('/generated-images/') && !img.src.includes('/api/ai/image-proxy')) {
+                                console.log(`🔍 CLIENT DEBUG - Trying fallback with image proxy for:`, imageUrl.substring(0, 30) + '...');
+                                img.src = `/api/ai/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+                                return; // Give the proxy a chance to work
+                              }
+                              
+                              // If proxy also fails or we already tried it, hide the card
                               const card = e.currentTarget.closest(".bg-card");
-                              if (card) card.classList.add("hidden");
+                              if (card) {
+                                console.log(`🔍 CLIENT DEBUG - Hiding gallery card due to image load failure`);
+                                card.classList.add("hidden");
+                              }
                             }}
                           />
                         </div>

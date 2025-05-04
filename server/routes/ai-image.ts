@@ -181,7 +181,8 @@ Your reply should only include the final image prompt — no explanations or ext
   imageRoutes.get("/image-proxy", async (req: Request, res: Response) => {
     try {
       const { url } = req.query;
-      console.log("🔍 DEBUG - Image proxy request received for URL:", url);
+      console.log("🔍 DEBUG - Image proxy request received for URL:", 
+                 typeof url === 'string' ? url.substring(0, 50) + '...' : url);
 
       if (!url || typeof url !== "string") {
         console.log(
@@ -196,23 +197,32 @@ Your reply should only include the final image prompt — no explanations or ext
         console.log("🔍 DEBUG - Local image requested, redirecting to static path:", url);
         return res.redirect(url);
       }
-      // For external URLs, only proxy images from trusted domains (OpenAI)
+      // For external URLs, allow trusted domains (OpenAI, Firebase, and storage services)
       else if (
+        // OpenAI image domains
         !url.startsWith("https://oaidalleapiprodscus") &&
         !url.startsWith("https://dalleclient.blob.core.windows.net") &&
         !url.startsWith("https://gptimageprodsus") &&
         !url.startsWith("https://gptimageprod") &&
-        !url.startsWith("https://openai-api")
+        !url.startsWith("https://openai-api") &&
+        // Firebase Storage domains
+        !url.startsWith("https://firebasestorage.googleapis.com") &&
+        !url.startsWith("https://storage.googleapis.com") &&
+        // General cloud storage domains that might be used by Firebase
+        !url.includes(".googleusercontent.com")
       ) {
         console.log(
           "🔍 DEBUG - Image proxy error: URL domain not allowed:",
-          url,
+          url.substring(0, 50) + '...',
         );
         return res
           .status(403)
-          .json({ error: "Only local or OpenAI image URLs are supported" });
+          .json({ 
+            error: "Only local, OpenAI, or Firebase Storage image URLs are supported",
+            url: url.substring(0, 30) + '...' 
+          });
       }
-      console.log("🔍 DEBUG - Image proxy URL validation passed for:", url);
+      console.log("🔍 DEBUG - Image proxy URL validation passed for:", url.substring(0, 50) + '...');
 
       // Use the axios instance imported at the top
       const response = await axios({
@@ -221,18 +231,68 @@ Your reply should only include the final image prompt — no explanations or ext
         responseType: "stream",
       });
 
+      // Log successful response headers
+      console.log(`🔍 DEBUG - Image proxy successful response:`, {
+        contentType: response.headers["content-type"],
+        contentLength: response.headers["content-length"],
+        url: typeof url === 'string' ? url.substring(0, 30) + '...' : url
+      });
+      
       // Set appropriate headers
-      res.setHeader("Content-Type", response.headers["content-type"]);
+      res.setHeader("Content-Type", response.headers["content-type"] || 'image/png');
       res.setHeader(
         "Content-Disposition",
         'inline; filename="ai-generated-image.png"',
       );
+      
+      // Add caching headers to improve performance
+      res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
+      // Check if it's a local or external URL and set a custom header
+      const imageSource = typeof url === 'string' && url.startsWith('/generated-images/') ? 'local' : 'external';
+      res.setHeader("X-Image-Source", imageSource);
+      
+      // Add a custom header for debugging
+      res.setHeader("X-Image-Proxy-Status", "success");
 
       // Stream the image data to the client
       response.data.pipe(res);
     } catch (error) {
+      console.error("🔍 DEBUG - Image proxy error:", error);
+      
+      // Get the URL from the request query for error reporting
+      const requestUrl = typeof req.query.url === 'string' ? req.query.url : 'unknown';
+      
+      // Check for specific error types to provide better error messages
+      if (axios.isAxiosError(error)) {
+        console.log(`🔍 DEBUG - Axios error details:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: requestUrl.substring(0, 30) + '...'
+        });
+        
+        // Handle 404 errors specifically - image not found
+        if (error.response?.status === 404) {
+          return res.status(404).json({ 
+            error: "Image not found", 
+            details: "The requested image URL could not be found on the server"
+          });
+        }
+        
+        // Handle other specific status codes if needed
+        if (error.response?.status === 403) {
+          return res.status(403).json({ 
+            error: "Access forbidden", 
+            details: "The image server denied access to this resource"
+          });
+        }
+      }
+      
+      // General error logging and response
       logError("image_proxy", error instanceof Error ? error : "Unknown error");
-      res.status(500).json({ error: "Failed to proxy image" });
+      res.status(500).json({ 
+        error: "Failed to proxy image",
+        message: error instanceof Error ? error.message : "Unknown error occurred" 
+      });
     }
   });
 
