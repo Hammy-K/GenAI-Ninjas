@@ -314,7 +314,9 @@ export function SimpleGalleryStage({
                   >
                     <div className="aspect-square relative overflow-hidden">
                       <img
-                        src={image.imageUrl}
+                        src={image.imageUrl.startsWith('/generated-images/') 
+                          ? `/api/ai/image-proxy?url=${encodeURIComponent(image.imageUrl)}` 
+                          : image.imageUrl}
                         alt={`صورة بواسطة ${image.studentName}`}
                         className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
                         onError={(e) => {

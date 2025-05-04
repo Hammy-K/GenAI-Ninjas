@@ -57,6 +57,7 @@ interface ImageGenerationState {
   isChatOpen: boolean;
   sharingStatus: "idle" | "sharing" | "shared"; // Track the sharing process state
   sharedImageId?: number; // Store the ID of the shared image
+  generationCount: number; // Track the number of images generated
 }
 
 export function ImageGenerationStage({
