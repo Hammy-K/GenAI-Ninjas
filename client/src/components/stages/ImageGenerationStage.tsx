@@ -579,13 +579,22 @@ export function ImageGenerationStage({
                 شارك ابداعك.
               </p>
               
-              {/* Image generation counter */}
-              <div className="flex items-center justify-center mt-3">
-                <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full">
+              {/* Image generation counter with visual indicator */}
+              <div className="flex flex-col items-center justify-center mt-3">
+                <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full mb-2">
                   <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
                   <span>
-                    الصور المتبقية: <span className="font-bold">{Math.max(0, MAX_GENERATIONS - (state.generationCount || 0))}</span> من <span>{MAX_GENERATIONS}</span>
+                    الصور المتبقية: <span className="font-bold">{Math.max(0, MAX_GENERATIONS - state.generationCount)}</span> من <span>{MAX_GENERATIONS}</span>
                   </span>
+                </div>
+                {/* Visual progress bar for generations */}
+                <div className="w-full max-w-xs bg-muted rounded-full h-2.5 mb-1">
+                  <div 
+                    className="bg-primary h-2.5 rounded-full transition-all duration-500" 
+                    style={{
+                      width: `${Math.max(0, (MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS * 100)}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
