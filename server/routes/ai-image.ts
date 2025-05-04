@@ -71,44 +71,56 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image using the OpenAI SDK
-        console.log("🔍 DEBUG - Generating image with OpenAI SDK using model: gpt-image-1");
+        // Generate image with GPT Image using direct API call to handle base64 response
+        console.log("🔍 DEBUG - Making direct API call to OpenAI with model: gpt-image-1");
         
-        // Use the OpenAI images API
-        const imageResponse = await openai.images.generate({
-          model: "gpt-image-1",
-          prompt: enhancedPrompt,
-          n: 1,
-          size: "1024x1024",
-          quality: "standard",
-          response_format: "b64_json"
+        // Make direct API call to OpenAI
+        const openaiApiResponse = await axios({
+          method: "POST",
+          url: "https://api.openai.com/v1/images/generations",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          data: {
+            model: "gpt-image-1",
+            prompt: enhancedPrompt,
+            n: 1,
+            size: "1024x1024",
+            quality: "auto"  // Use auto quality as specified in docs
+          }
         });
         
-        // Get base64 image data from response
-        const b64Image = imageResponse.data[0].b64_json;
-        
+        // gpt-image-1 always returns base64-encoded images
+        const b64Image = openaiApiResponse.data.data[0].b64_json;
+
         if (!b64Image) {
           console.log("🔍 DEBUG - No base64 image data received from OpenAI");
           throw new Error("No image data received from OpenAI");
         }
-        
+
         console.log("🔍 DEBUG - Received base64 image from OpenAI");
-        
+
         // Generate a unique filename
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 10);
         const filename = `gpt-image-${timestamp}-${randomId}.png`;
-        const imagePath = path.join("server", "public", "generated-images", filename);
-        
+        const imagePath = path.join(
+          "server",
+          "public",
+          "generated-images",
+          filename,
+        );
+
         // Write the image to disk
         const imageBuffer = Buffer.from(b64Image, "base64");
         await writeFileAsync(imagePath, imageBuffer);
-        
+
         console.log(`🔍 DEBUG - Saved image to: ${imagePath}`);
-        
+
         // Create a URL for the image
         const imageUrl = `/generated-images/${filename}`;
-        
+
         // Log successful image generation with detailed information
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
@@ -118,7 +130,7 @@ Your reply should only include the final image prompt — no explanations or ext
           conversation_turns: messageHistory.length,
           image_storage: "local",
           filename: filename,
-          format: "base64_to_png"
+          format: "base64_to_png",
         });
 
         return res.json({ url: imageUrl });
@@ -196,7 +208,7 @@ Your reply should only include the final image prompt — no explanations or ext
           .json({ error: "Only OpenAI image URLs are supported" });
       }
       console.log("🔍 DEBUG - Image proxy URL validation passed for:", url);
-      
+
       // Use the axios instance imported at the top
       const response = await axios({
         method: "GET",
