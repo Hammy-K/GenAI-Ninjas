@@ -136,6 +136,30 @@ export const insertProjectIdeaSchema = createInsertSchema(projectIdeas).omit({
   id: true,
 });
 
+export const insertAppBuilderStepSchema = createInsertSchema(appBuilderSteps).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAppBuilderProgressSchema = createInsertSchema(appBuilderProgress).omit({
+  id: true,
+  completedAt: true,
+  startedAt: true,
+  updatedAt: true,
+});
+
+export const insertAppBuilderSubmissionSchema = createInsertSchema(appBuilderSubmissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAppBuilderChatHistorySchema = createInsertSchema(appBuilderChatHistory).omit({
+  id: true,
+  timestamp: true,
+});
+
 export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
   id: true,
   createdAt: true,
@@ -156,6 +180,10 @@ export const insertAssistantLogSchema = createInsertSchema(assistantLogs).omit({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
+export type InsertAppBuilderStep = z.infer<typeof insertAppBuilderStepSchema>;
+export type InsertAppBuilderProgress = z.infer<typeof insertAppBuilderProgressSchema>;
+export type InsertAppBuilderSubmission = z.infer<typeof insertAppBuilderSubmissionSchema>;
+export type InsertAppBuilderChatHistory = z.infer<typeof insertAppBuilderChatHistorySchema>;
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type InsertGalleryLike = z.infer<typeof insertGalleryLikeSchema>;
 export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
@@ -163,6 +191,10 @@ export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
 export type ProjectIdea = typeof projectIdeas.$inferSelect;
+export type AppBuilderStep = typeof appBuilderSteps.$inferSelect;
+export type AppBuilderProgress = typeof appBuilderProgress.$inferSelect;
+export type AppBuilderSubmission = typeof appBuilderSubmissions.$inferSelect;
+export type AppBuilderChatHistory = typeof appBuilderChatHistory.$inferSelect;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GalleryLike = typeof galleryLikes.$inferSelect;
 export type AssistantLog = typeof assistantLogs.$inferSelect;

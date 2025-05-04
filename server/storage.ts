@@ -4,6 +4,10 @@ import {
   projectIdeas,
   galleryImages,
   galleryLikes,
+  appBuilderSteps,
+  appBuilderProgress,
+  appBuilderSubmissions,
+  appBuilderChatHistory,
   type User, 
   type InsertUser, 
   type Quest, 
@@ -13,10 +17,18 @@ import {
   type GalleryImage,
   type InsertGalleryImage,
   type GalleryLike,
-  type InsertGalleryLike
+  type InsertGalleryLike,
+  type AppBuilderStep,
+  type InsertAppBuilderStep,
+  type AppBuilderProgress,
+  type InsertAppBuilderProgress,
+  type AppBuilderSubmission,
+  type InsertAppBuilderSubmission,
+  type AppBuilderChatHistory,
+  type InsertAppBuilderChatHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, lt, gt } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -44,6 +56,28 @@ export interface IStorage {
   incrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined>;
   decrementLike(imageId: number, sessionId: string, firebaseUid?: string): Promise<GalleryImage | undefined>;
   hasLiked(imageId: number, sessionId: string, firebaseUid?: string): Promise<boolean>;
+  
+  // App Builder Stream - Steps methods
+  getAppBuilderStep(stepNumber: number): Promise<AppBuilderStep | undefined>;
+  getAllAppBuilderSteps(): Promise<AppBuilderStep[]>;
+  createAppBuilderStep(step: InsertAppBuilderStep): Promise<AppBuilderStep>;
+  updateAppBuilderStep(stepNumber: number, data: Partial<InsertAppBuilderStep>): Promise<AppBuilderStep | undefined>;
+  
+  // App Builder Stream - Progress methods
+  getAppBuilderProgressByFirebaseUid(firebaseUid: string): Promise<AppBuilderProgress | undefined>;
+  createAppBuilderProgress(progress: InsertAppBuilderProgress): Promise<AppBuilderProgress>;
+  updateAppBuilderProgress(id: number, data: Partial<InsertAppBuilderProgress>): Promise<AppBuilderProgress | undefined>;
+  
+  // App Builder Stream - Submissions methods
+  getAppBuilderSubmissionsByProgressId(progressId: number): Promise<AppBuilderSubmission[]>;
+  getAppBuilderSubmissionByStepNumber(progressId: number, stepNumber: number): Promise<AppBuilderSubmission | undefined>;
+  createAppBuilderSubmission(submission: InsertAppBuilderSubmission): Promise<AppBuilderSubmission>;
+  updateAppBuilderSubmission(id: number, data: Partial<InsertAppBuilderSubmission>): Promise<AppBuilderSubmission | undefined>;
+  
+  // App Builder Stream - Chat History methods
+  getAppBuilderChatHistoryByProgressId(progressId: number): Promise<AppBuilderChatHistory[]>;
+  getAppBuilderChatHistoryByStep(progressId: number, stepNumber: number): Promise<AppBuilderChatHistory[]>;
+  createAppBuilderChatMessage(message: InsertAppBuilderChatHistory): Promise<AppBuilderChatHistory>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -209,6 +243,165 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions));
 
     return !!like;
+  }
+  
+  // App Builder Stream - Steps methods
+  async getAppBuilderStep(stepNumber: number): Promise<AppBuilderStep | undefined> {
+    const [step] = await db
+      .select()
+      .from(appBuilderSteps)
+      .where(eq(appBuilderSteps.stepNumber, stepNumber));
+    return step || undefined;
+  }
+  
+  async getAllAppBuilderSteps(): Promise<AppBuilderStep[]> {
+    return db
+      .select()
+      .from(appBuilderSteps)
+      .orderBy(appBuilderSteps.stepNumber);
+  }
+  
+  async createAppBuilderStep(step: InsertAppBuilderStep): Promise<AppBuilderStep> {
+    const [newStep] = await db
+      .insert(appBuilderSteps)
+      .values(step)
+      .returning();
+    return newStep;
+  }
+  
+  async updateAppBuilderStep(stepNumber: number, data: Partial<InsertAppBuilderStep>): Promise<AppBuilderStep | undefined> {
+    const [updatedStep] = await db
+      .update(appBuilderSteps)
+      .set({
+        ...data,
+        updatedAt: new Date() // Always update the timestamp
+      })
+      .where(eq(appBuilderSteps.stepNumber, stepNumber))
+      .returning();
+    return updatedStep || undefined;
+  }
+  
+  // App Builder Stream - Progress methods
+  async getAppBuilderProgressByFirebaseUid(firebaseUid: string): Promise<AppBuilderProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(appBuilderProgress)
+      .where(eq(appBuilderProgress.firebaseUid, firebaseUid));
+    return progress || undefined;
+  }
+  
+  async createAppBuilderProgress(progress: InsertAppBuilderProgress): Promise<AppBuilderProgress> {
+    const [newProgress] = await db
+      .insert(appBuilderProgress)
+      .values(progress)
+      .returning();
+    return newProgress;
+  }
+  
+  async updateAppBuilderProgress(id: number, data: Partial<InsertAppBuilderProgress>): Promise<AppBuilderProgress | undefined> {
+    const [updatedProgress] = await db
+      .update(appBuilderProgress)
+      .set({
+        ...data,
+        updatedAt: new Date() // Always update the timestamp
+      })
+      .where(eq(appBuilderProgress.id, id))
+      .returning();
+    return updatedProgress || undefined;
+  }
+  
+  // App Builder Stream - Submissions methods
+  async getAppBuilderSubmissionsByProgressId(progressId: number): Promise<AppBuilderSubmission[]> {
+    return db
+      .select()
+      .from(appBuilderSubmissions)
+      .where(eq(appBuilderSubmissions.progressId, progressId))
+      .orderBy(appBuilderSubmissions.stepNumber, appBuilderSubmissions.version);
+  }
+  
+  async getAppBuilderSubmissionByStepNumber(progressId: number, stepNumber: number): Promise<AppBuilderSubmission | undefined> {
+    // Get the most recent version of the submission for this step
+    const [submission] = await db
+      .select()
+      .from(appBuilderSubmissions)
+      .where(
+        and(
+          eq(appBuilderSubmissions.progressId, progressId),
+          eq(appBuilderSubmissions.stepNumber, stepNumber)
+        )
+      )
+      .orderBy(desc(appBuilderSubmissions.version))
+      .limit(1);
+    
+    return submission || undefined;
+  }
+  
+  async createAppBuilderSubmission(submission: InsertAppBuilderSubmission): Promise<AppBuilderSubmission> {
+    // First check if there are existing submissions for this step and progress
+    const existingSubmission = await this.getAppBuilderSubmissionByStepNumber(
+      submission.progressId,
+      submission.stepNumber
+    );
+    
+    let version = 1;
+    if (existingSubmission) {
+      // Increment the version if submission exists
+      version = existingSubmission.version + 1;
+    }
+    
+    const [newSubmission] = await db
+      .insert(appBuilderSubmissions)
+      .values({
+        ...submission,
+        version
+      })
+      .returning();
+    
+    return newSubmission;
+  }
+  
+  async updateAppBuilderSubmission(id: number, data: Partial<InsertAppBuilderSubmission>): Promise<AppBuilderSubmission | undefined> {
+    const [updatedSubmission] = await db
+      .update(appBuilderSubmissions)
+      .set({
+        ...data,
+        updatedAt: new Date() // Always update the timestamp
+      })
+      .where(eq(appBuilderSubmissions.id, id))
+      .returning();
+    
+    return updatedSubmission || undefined;
+  }
+  
+  // App Builder Stream - Chat History methods
+  async getAppBuilderChatHistoryByProgressId(progressId: number): Promise<AppBuilderChatHistory[]> {
+    return db
+      .select()
+      .from(appBuilderChatHistory)
+      .where(eq(appBuilderChatHistory.progressId, progressId))
+      .orderBy(appBuilderChatHistory.timestamp);
+  }
+  
+  async getAppBuilderChatHistoryByStep(progressId: number, stepNumber: number): Promise<AppBuilderChatHistory[]> {
+    return db
+      .select()
+      .from(appBuilderChatHistory)
+      .where(
+        and(
+          eq(appBuilderChatHistory.progressId, progressId),
+          eq(appBuilderChatHistory.stepNumber, stepNumber)
+        )
+      )
+      .orderBy(appBuilderChatHistory.timestamp);
+  }
+  
+  async createAppBuilderChatMessage(message: InsertAppBuilderChatHistory): Promise<AppBuilderChatHistory> {
+    const [newMessage] = await db
+      .insert(appBuilderChatHistory)
+      .values(message)
+      .returning();
+    
+    return newMessage;
   }
 }
 
