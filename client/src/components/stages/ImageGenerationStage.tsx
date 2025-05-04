@@ -119,6 +119,14 @@ export function ImageGenerationStage({
 
     return () => clearTimeout(timer);
   }, [state.messages]);
+  
+  // Debug logging for image URLs
+  useEffect(() => {
+    if (state.generatedImageUrl) {
+      console.log("🔍 CLIENT DEBUG - Image URL:", state.generatedImageUrl);
+      console.log("🔍 CLIENT DEBUG - Proxy URL:", `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`);
+    }
+  }, [state.generatedImageUrl]);
 
   // Toggle chat open/closed
   const toggleChat = () => {
@@ -596,11 +604,9 @@ export function ImageGenerationStage({
                       </Button>
                     </div>
                   </div>
-                  {/* Log the URL being used */}
-                  {console.log("🔍 CLIENT DEBUG - Image URL:", state.generatedImageUrl)}
-                  {console.log("🔍 CLIENT DEBUG - Proxy URL:", `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`)}
+{/* Client debug logging is in a useEffect outside the render function */}
                   <img
-                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`}
+                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl || '')}`}
                     alt="AI Generated Image"
                     className="max-w-full h-auto rounded"
                     onError={(e) => console.error("🔍 CLIENT DEBUG - Image load error:", e)}
