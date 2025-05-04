@@ -137,10 +137,12 @@ Your reply should only include the final image prompt — no explanations or ext
       }
 
       // Only proxy images from trusted domains (OpenAI)
-      // Support both DALL-E and GPT Image URL formats
+      // Support URLs from all OpenAI image models (DALL-E 3, GPT Image, etc.)
       if (!url.startsWith("https://oaidalleapiprodscus") && 
           !url.startsWith("https://dalleclient.blob.core.windows.net") && 
-          !url.startsWith("https://gptimageprodsus")) {
+          !url.startsWith("https://gptimageprodsus") &&
+          !url.startsWith("https://gptimageprod") &&
+          !url.startsWith("https://openai-api")) {
         return res
           .status(403)
           .json({ error: "Only OpenAI image URLs are supported" });
