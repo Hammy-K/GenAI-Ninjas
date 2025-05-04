@@ -96,6 +96,11 @@ export function ImageGenerationStage({
     "image_generation",
     initialState,
   );
+  
+  // Effect to log the current generation count whenever it changes
+  useEffect(() => {
+    console.log(`🔍 CLIENT DEBUG - Current generation count: ${state.generationCount}`);
+  }, [state.generationCount]);
 
   // Effect to ensure chat is open on mount with a 5-second delay
   useEffect(() => {

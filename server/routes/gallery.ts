@@ -7,7 +7,8 @@ import { storage } from '../storage';
 import { logEvent, logError } from '../services/logging';
 import { uploadImageFromUrl, listGalleryImages } from '../services/firebase';
 import { z } from 'zod';
-import { insertGalleryImageSchema } from '@shared/schema';
+import { insertGalleryImageSchema, galleryImages, galleryLikes } from '@shared/schema';
+import { db } from '../db';
 import { SessionData } from 'express-session';
 
 // Extended request type with gallery session
@@ -364,6 +365,29 @@ export function registerGalleryRoutes(router: Router) {
     } catch (error) {
       logError('gallery_unlike', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: 'Failed to unlike image' });
+    }
+  });
+
+  // Admin endpoint to delete all gallery data (DEVELOPMENT ONLY)
+  galleryRoutes.delete("/all", async (_req: Request, res: Response) => {
+    try {
+      // Delete all gallery likes first (due to foreign key constraints)
+      await db.delete(galleryLikes);
+      
+      // Then delete all gallery images
+      await db.delete(galleryImages);
+      
+      logEvent('gallery_data_deleted', 'All gallery data has been deleted', {
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'All gallery data has been deleted successfully' 
+      });
+    } catch (error) {
+      logError('gallery_data_delete', error instanceof Error ? error : 'Unknown error');
+      return res.status(500).json({ error: 'Failed to delete gallery data' });
     }
   });
 
