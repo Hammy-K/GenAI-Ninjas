@@ -4,6 +4,10 @@
  */
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
+import axios from "axios";
+import * as fs from "fs";
+import * as path from "path";
+import { promisify } from "util";
 import { logEvent, logError } from "../services";
 import {
   validateChatHistory,
@@ -11,6 +15,9 @@ import {
   moderateContentMiddleware,
 } from "../middleware/validation";
 import { moderateContent } from "../moderation";
+
+// Prepare file system utilities
+const writeFileAsync = promisify(fs.writeFile);
 
 export function registerAIImageRoutes(router: Router, openai: OpenAI) {
   // Apply common middleware to all routes
@@ -64,35 +71,21 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image with GPT Image using direct API call to handle base64 response
-        console.log("🔍 DEBUG - Making direct API call to OpenAI with model: gpt-image-1");
+        // Generate image using the OpenAI SDK
+        console.log("🔍 DEBUG - Generating image with OpenAI SDK using model: gpt-image-1");
         
-        // Import modules for HTTP requests and file system operations
-        const axios = require("axios");
-        const fs = require("fs");
-        const path = require("path");
-        const { promisify } = require("util");
-        const writeFileAsync = promisify(fs.writeFile);
-        
-        // Make direct API call to OpenAI
-        const openaiApiResponse = await axios({
-          method: "POST",
-          url: "https://api.openai.com/v1/images/generations",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-          },
-          data: {
-            model: "gpt-image-1",
-            prompt: enhancedPrompt,
-            n: 1,
-            size: "1024x1024",
-            quality: "medium"  // Keep this parameter as requested
-          }
+        // Use the OpenAI images API
+        const imageResponse = await openai.images.generate({
+          model: "gpt-image-1",
+          prompt: enhancedPrompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "medium",
+          response_format: "b64_json"
         });
         
         // Get base64 image data from response
-        const b64Image = openaiApiResponse.data.data[0].b64_json;
+        const b64Image = imageResponse.data[0].b64_json;
         
         if (!b64Image) {
           console.log("🔍 DEBUG - No base64 image data received from OpenAI");
@@ -203,10 +196,8 @@ Your reply should only include the final image prompt — no explanations or ext
           .json({ error: "Only OpenAI image URLs are supported" });
       }
       console.log("🔍 DEBUG - Image proxy URL validation passed for:", url);
-
-      // Import axios if not at the top
-      const axios = require("axios");
-
+      
+      // Use the axios instance imported at the top
       const response = await axios({
         method: "GET",
         url: url,
