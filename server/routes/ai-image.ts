@@ -65,6 +65,7 @@ Your reply should only include the final image prompt — no explanations or ext
         });
 
         // Generate image with GPT Image using the enhanced prompt
+        console.log("🔍 DEBUG - Calling OpenAI with model: gpt-image-1");
         const response = await openai.images.generate({
           model: "gpt-image-1",
           prompt: enhancedPrompt,
@@ -73,6 +74,7 @@ Your reply should only include the final image prompt — no explanations or ext
           quality: "medium" as any // Cast to any to avoid TypeScript error
           // Note: style parameter is not supported by gpt-image-1
         });
+        console.log("🔍 DEBUG - OpenAI response URL:", response.data[0].url);
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
@@ -131,8 +133,10 @@ Your reply should only include the final image prompt — no explanations or ext
   imageRoutes.get("/image-proxy", async (req: Request, res: Response) => {
     try {
       const { url } = req.query;
+      console.log("🔍 DEBUG - Image proxy request received for URL:", url);
 
       if (!url || typeof url !== "string") {
+        console.log("🔍 DEBUG - Image proxy error: URL parameter is missing or not a string");
         return res.status(400).json({ error: "URL parameter is required" });
       }
 
@@ -143,10 +147,12 @@ Your reply should only include the final image prompt — no explanations or ext
           !url.startsWith("https://gptimageprodsus") &&
           !url.startsWith("https://gptimageprod") &&
           !url.startsWith("https://openai-api")) {
+        console.log("🔍 DEBUG - Image proxy error: URL domain not allowed:", url);
         return res
           .status(403)
           .json({ error: "Only OpenAI image URLs are supported" });
       }
+      console.log("🔍 DEBUG - Image proxy URL validation passed for:", url);
 
       // Import axios if not at the top
       const axios = require("axios");

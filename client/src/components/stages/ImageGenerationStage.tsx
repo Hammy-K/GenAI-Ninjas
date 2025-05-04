@@ -596,10 +596,15 @@ export function ImageGenerationStage({
                       </Button>
                     </div>
                   </div>
+                  {/* Log the URL being used */}
+                  {console.log("🔍 CLIENT DEBUG - Image URL:", state.generatedImageUrl)}
+                  {console.log("🔍 CLIENT DEBUG - Proxy URL:", `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`)}
                   <img
                     src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`}
                     alt="AI Generated Image"
                     className="max-w-full h-auto rounded"
+                    onError={(e) => console.error("🔍 CLIENT DEBUG - Image load error:", e)}
+                    onLoad={() => console.log("🔍 CLIENT DEBUG - Image loaded successfully")}
                   />
                 </div>
               ) : (
