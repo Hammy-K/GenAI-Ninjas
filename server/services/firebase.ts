@@ -61,13 +61,45 @@ export const uploadImageFromUrl = async (
     // Initialize Firebase if needed
     initializeFirebase();
     
-    // Download the image from the URL
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-    });
+    let imageData;
+    let contentType = 'image/jpeg';
     
-    // Get the content type from the response headers
-    const contentType = response.headers['content-type'] || 'image/jpeg';
+    // Check if the URL is a local path or an external URL
+    if (imageUrl.startsWith('/generated-images/')) {
+      // It's a local path, read the file from disk
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Convert relative path to absolute path
+      const fullPath = path.join(process.cwd(), 'server/public', imageUrl);
+      
+      try {
+        // Read the file directly from the filesystem
+        imageData = await fs.promises.readFile(fullPath);
+        
+        // Determine contentType based on file extension
+        const ext = path.extname(fullPath).toLowerCase();
+        if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        else if (ext === '.gif') contentType = 'image/gif';
+        else if (ext === '.webp') contentType = 'image/webp';
+        
+        console.log(`🔍 DEBUG - Firebase: Reading local file from ${fullPath} with type ${contentType}`);
+      } catch (error) {
+        const fileError = error as Error;
+        console.error(`🔍 DEBUG - Firebase: Error reading local file: ${fileError.message}`);
+        throw new Error(`Failed to read local image file: ${fileError.message}`);
+      }
+    } else {
+      // It's an external URL, download it
+      const response = await axios.get(imageUrl, {
+        responseType: 'arraybuffer',
+      });
+      
+      // Get the content type from the response headers
+      contentType = response.headers['content-type'] || 'image/jpeg';
+      imageData = Buffer.from(response.data);
+    }
     
     // Generate a unique filename
     const sanitizedName = (metadata.studentName || 'student').replace(/\s+/g, '_');
@@ -78,8 +110,8 @@ export const uploadImageFromUrl = async (
     const bucket = getStorage().bucket();
     const file = bucket.file(fileName);
     
-    // Upload the image with metadata
-    await file.save(Buffer.from(response.data), {
+    // Upload the image with metadata (imageData already contains the file content)
+    await file.save(imageData, {
       metadata: {
         contentType,
         metadata: {

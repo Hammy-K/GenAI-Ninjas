@@ -24,7 +24,7 @@ interface RequestWithGallery extends Request {
 
 // Validation schema for gallery image sharing
 const shareImageSchema = z.object({
-  imageUrl: z.string().url(),
+  imageUrl: z.string(), // Accept any string for image URL, including local paths
   studentName: z.string().optional(),
   prompt: z.string().optional(),
   missionNumber: z.number().int().positive().default(1)
