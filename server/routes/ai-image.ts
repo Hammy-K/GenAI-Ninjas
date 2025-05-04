@@ -190,9 +190,14 @@ Your reply should only include the final image prompt — no explanations or ext
         return res.status(400).json({ error: "URL parameter is required" });
       }
 
-      // Only proxy images from trusted domains (OpenAI)
-      // Support URLs from all OpenAI image models (DALL-E 3, GPT Image, etc.)
-      if (
+      // Handle local image paths or external OpenAI URLs
+      if (url.startsWith('/generated-images/')) {
+        // This is a local image path, serve the file directly
+        console.log("🔍 DEBUG - Local image requested, redirecting to static path:", url);
+        return res.redirect(url);
+      }
+      // For external URLs, only proxy images from trusted domains (OpenAI)
+      else if (
         !url.startsWith("https://oaidalleapiprodscus") &&
         !url.startsWith("https://dalleclient.blob.core.windows.net") &&
         !url.startsWith("https://gptimageprodsus") &&
@@ -205,7 +210,7 @@ Your reply should only include the final image prompt — no explanations or ext
         );
         return res
           .status(403)
-          .json({ error: "Only OpenAI image URLs are supported" });
+          .json({ error: "Only local or OpenAI image URLs are supported" });
       }
       console.log("🔍 DEBUG - Image proxy URL validation passed for:", url);
 
