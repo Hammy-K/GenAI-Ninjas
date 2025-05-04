@@ -64,30 +64,67 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image with GPT Image using the enhanced prompt and explicitly requesting URL format
-        console.log("🔍 DEBUG - Calling OpenAI with model: gpt-image-1");
-        const response = await openai.images.generate({
-          model: "gpt-image-1",
-          prompt: enhancedPrompt,
-          response_format: "url",
-          n: 1,
-          size: "1024x1024",
-          quality: "medium" as any, // Cast to any to avoid TypeScript error
-          response_format: "url", // Explicitly request URL format
+        // Generate image with GPT Image using direct API call to handle base64 response
+        console.log("🔍 DEBUG - Making direct API call to OpenAI with model: gpt-image-1");
+        
+        // Import modules for HTTP requests and file system operations
+        const axios = require("axios");
+        const fs = require("fs");
+        const path = require("path");
+        const { promisify } = require("util");
+        const writeFileAsync = promisify(fs.writeFile);
+        
+        // Make direct API call to OpenAI
+        const openaiApiResponse = await axios({
+          method: "POST",
+          url: "https://api.openai.com/v1/images/generations",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          data: {
+            model: "gpt-image-1",
+            prompt: enhancedPrompt,
+            n: 1,
+            size: "1024x1024"
+          }
         });
-        console.log("🔍 DEBUG - OpenAI response URL:", response.data[0].url);
-
+        
+        // Get base64 image data from response
+        const b64Image = openaiApiResponse.data.data[0].b64_json;
+        
+        if (!b64Image) {
+          console.log("🔍 DEBUG - No base64 image data received from OpenAI");
+          throw new Error("No image data received from OpenAI");
+        }
+        
+        console.log("🔍 DEBUG - Received base64 image from OpenAI");
+        
+        // Generate a unique filename
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 10);
+        const filename = `gpt-image-${timestamp}-${randomId}.png`;
+        const imagePath = path.join("server", "public", "generated-images", filename);
+        
+        // Write the image to disk
+        const imageBuffer = Buffer.from(b64Image, "base64");
+        await writeFileAsync(imagePath, imageBuffer);
+        
+        console.log(`🔍 DEBUG - Saved image to: ${imagePath}`);
+        
+        // Create a URL for the image
+        const imageUrl = `/generated-images/${filename}`;
+        
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
-          quality: "medium",
-          response_format: "url",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
+          image_storage: "local"
         });
 
-        return res.json({ url: response.data[0].url });
+        return res.json({ url: imageUrl });
       } catch (error) {
         logError(
           "image_generation",
