@@ -64,21 +64,20 @@ Your reply should only include the final image prompt — no explanations or ext
           model: "gpt-4.1-mini",
         });
 
-        // Generate image with DALL-E 3 using the enhanced prompt
+        // Generate image with GPT Image using the enhanced prompt
         const response = await openai.images.generate({
-          model: "dall-e-3",
+          model: "gpt-image-1",
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
-          quality: "standard",
-          style: "vivid" // Re-add style parameter for DALL-E 3
+          quality: "medium" // Using medium quality for gpt-image-1
+          // Note: style parameter is not supported by gpt-image-1
         });
 
         // Log successful image generation
         logEvent("image_generation_success", prompt, {
-          model: "dall-e-3",
-          quality: "standard",
-          style: "vivid",
+          model: "gpt-image-1",
+          quality: "medium",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
