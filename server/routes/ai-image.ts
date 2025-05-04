@@ -198,29 +198,31 @@ Your reply should only include the final image prompt — no explanations or ext
         return res.redirect(url);
       }
       // For external URLs, allow trusted domains (OpenAI, Firebase, and storage services)
-      else if (
+      // But also allow other domains, with a warning
+      const isTrustedDomain = (
         // OpenAI image domains
-        !url.startsWith("https://oaidalleapiprodscus") &&
-        !url.startsWith("https://dalleclient.blob.core.windows.net") &&
-        !url.startsWith("https://gptimageprodsus") &&
-        !url.startsWith("https://gptimageprod") &&
-        !url.startsWith("https://openai-api") &&
+        url.startsWith("https://oaidalleapiprodscus") ||
+        url.startsWith("https://dalleclient.blob.core.windows.net") ||
+        url.startsWith("https://gptimageprodsus") ||
+        url.startsWith("https://gptimageprod") ||
+        url.startsWith("https://openai-api") ||
         // Firebase Storage domains
-        !url.startsWith("https://firebasestorage.googleapis.com") &&
-        !url.startsWith("https://storage.googleapis.com") &&
+        url.startsWith("https://firebasestorage.googleapis.com") ||
+        url.startsWith("https://storage.googleapis.com") ||
         // General cloud storage domains that might be used by Firebase
-        !url.includes(".googleusercontent.com")
-      ) {
+        url.includes(".googleusercontent.com") ||
+        // Common image hosting sites for testing
+        url.startsWith("https://placekitten.com") ||
+        url.startsWith("https://picsum.photos") ||
+        url.startsWith("https://images.unsplash.com")
+      );
+      
+      if (!isTrustedDomain) {
         console.log(
-          "🔍 DEBUG - Image proxy error: URL domain not allowed:",
+          "🔍 DEBUG - Image proxy warning: URL domain not in trusted list:",
           url.substring(0, 50) + '...',
         );
-        return res
-          .status(403)
-          .json({ 
-            error: "Only local, OpenAI, or Firebase Storage image URLs are supported",
-            url: url.substring(0, 30) + '...' 
-          });
+        // Continue and try to proxy anyway, but log a warning
       }
       console.log("🔍 DEBUG - Image proxy URL validation passed for:", url.substring(0, 50) + '...');
 
