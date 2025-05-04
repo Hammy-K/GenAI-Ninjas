@@ -197,6 +197,8 @@ export function ImageGenerationStage({
       console.log(
         `Sending image generation request with ${relevantHistory.length} context messages`,
       );
+      
+      console.log(`🔍 CLIENT DEBUG - Current generation count before API call: ${state.generationCount}`);
 
       const response = await fetch("/api/ai/image", {
         method: "POST",
