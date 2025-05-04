@@ -80,7 +80,7 @@ Your reply should only include the final image prompt — no explanations or ext
           prompt: enhancedPrompt,
           n: 1,
           size: "1024x1024",
-          quality: "medium",
+          quality: "standard",
           response_format: "b64_json"
         });
         
@@ -112,7 +112,7 @@ Your reply should only include the final image prompt — no explanations or ext
         // Log successful image generation with detailed information
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
-          quality: "medium",
+          quality: "standard",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
