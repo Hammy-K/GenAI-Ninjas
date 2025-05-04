@@ -88,6 +88,7 @@ export function ImageGenerationStage({
     isChatOpen: false, // Start with chat closed, will open after delay
     sharingStatus: "idle", // Start in idle state for sharing
     sharedImageId: undefined,
+    generationCount: 0, // Initialize counter for image generations
   };
 
   // Initialize state with localStorage values or defaults
@@ -381,11 +382,25 @@ export function ImageGenerationStage({
 
   // No longer needed - removing the getMentoringResponse function
 
+  // Maximum number of allowed image generations per user
+  const MAX_GENERATIONS = 3;
+
   // Handle prompt submission - simplified without prompt analysis
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (state.isLoading) return;
+    
+    // Check if the user has reached the generation limit
+    if (state.generationCount >= MAX_GENERATIONS) {
+      toast({
+        title: "تم الوصول للحد الأقصى",
+        description: `يمكنك إنشاء ${MAX_GENERATIONS} صور فقط. يرجى مشاركة صورة في المعرض للمتابعة.`,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
 
     // Validate input using the utility function
     const validation = validateInput(state.prompt);
@@ -497,6 +512,7 @@ export function ImageGenerationStage({
           isChatOpen: false, // Collapse the chat to focus on the generated image
           sharingStatus: "idle", // Reset sharing status for the new image
           sharedImageId: undefined, // Clear any previously shared image ID
+          generationCount: prev.generationCount + 1, // Increment the generation counter
         };
       });
 
@@ -557,6 +573,16 @@ export function ImageGenerationStage({
                 تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
                 شارك ابداعك.
               </p>
+              
+              {/* Image generation counter */}
+              <div className="flex items-center justify-center mt-3">
+                <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full">
+                  <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                  <span>
+                    الصور المتبقية: <span className="font-bold">{Math.max(0, MAX_GENERATIONS - (state.generationCount || 0))}</span> من <span>{MAX_GENERATIONS}</span>
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Image Display Area */}
@@ -743,7 +769,9 @@ export function ImageGenerationStage({
 
                     <form onSubmit={handleSubmit} className="flex gap-2">
                       <Textarea
-                        placeholder="صف الصورة التي تريد إنشاءها..."
+                        placeholder={state.generationCount >= MAX_GENERATIONS 
+                          ? "لقد وصلت للحد الأقصى للصور المسموح بها." 
+                          : "صف الصورة التي تريد إنشاءها..."}
                         value={state.prompt}
                         onChange={(e) =>
                           setState((prev) => ({
@@ -753,11 +781,12 @@ export function ImageGenerationStage({
                         }
                         className="min-h-[80px] text-sm flex-grow resize-none"
                         dir="auto" // Auto-detect text direction for RTL support
+                        disabled={state.generationCount >= MAX_GENERATIONS}
                       />
                       <Button
                         type="submit"
                         size="icon"
-                        disabled={state.isLoading || !state.prompt.trim()}
+                        disabled={state.isLoading || !state.prompt.trim() || state.generationCount >= MAX_GENERATIONS}
                         className="self-end h-10 w-10"
                       >
                         {state.isLoading ? (
