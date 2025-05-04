@@ -69,10 +69,11 @@ Your reply should only include the final image prompt — no explanations or ext
         const response = await openai.images.generate({
           model: "gpt-image-1",
           prompt: enhancedPrompt,
+          response_format: "url",
           n: 1,
           size: "1024x1024",
           quality: "medium" as any, // Cast to any to avoid TypeScript error
-          response_format: "url" // Explicitly request URL format
+          response_format: "url", // Explicitly request URL format
         });
         console.log("🔍 DEBUG - OpenAI response URL:", response.data[0].url);
 
@@ -137,18 +138,25 @@ Your reply should only include the final image prompt — no explanations or ext
       console.log("🔍 DEBUG - Image proxy request received for URL:", url);
 
       if (!url || typeof url !== "string") {
-        console.log("🔍 DEBUG - Image proxy error: URL parameter is missing or not a string");
+        console.log(
+          "🔍 DEBUG - Image proxy error: URL parameter is missing or not a string",
+        );
         return res.status(400).json({ error: "URL parameter is required" });
       }
 
       // Only proxy images from trusted domains (OpenAI)
       // Support URLs from all OpenAI image models (DALL-E 3, GPT Image, etc.)
-      if (!url.startsWith("https://oaidalleapiprodscus") && 
-          !url.startsWith("https://dalleclient.blob.core.windows.net") && 
-          !url.startsWith("https://gptimageprodsus") &&
-          !url.startsWith("https://gptimageprod") &&
-          !url.startsWith("https://openai-api")) {
-        console.log("🔍 DEBUG - Image proxy error: URL domain not allowed:", url);
+      if (
+        !url.startsWith("https://oaidalleapiprodscus") &&
+        !url.startsWith("https://dalleclient.blob.core.windows.net") &&
+        !url.startsWith("https://gptimageprodsus") &&
+        !url.startsWith("https://gptimageprod") &&
+        !url.startsWith("https://openai-api")
+      ) {
+        console.log(
+          "🔍 DEBUG - Image proxy error: URL domain not allowed:",
+          url,
+        );
         return res
           .status(403)
           .json({ error: "Only OpenAI image URLs are supported" });
