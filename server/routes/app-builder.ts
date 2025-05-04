@@ -1,499 +1,327 @@
 /**
  * App Builder Stream Routes
- * 
- * Handles all operations related to the App Builder Stream journey including:
- * - Step retrieval
- * - Progress tracking
- * - Submission storage and retrieval
- * - Chat history management
+ * Handles the 11-step sequential journey with gating logic
  */
-import { Router, type Request, type Response } from "express";
-import OpenAI from "openai";
+import { Router, Request, Response } from "express";
 import { storage } from "../storage";
-import { 
-  insertAppBuilderProgressSchema,
-  insertAppBuilderSubmissionSchema,
-  insertAppBuilderChatHistorySchema
-} from "@shared/schema";
-import { logEvent, logError } from "../services";
-import { z } from "zod";
-
-// Type for requests with firebase UID
-interface RequestWithFirebase extends Request {
-  body: {
-    firebaseUid: string;
-    [key: string]: any;
-  }
-}
+import { OpenAI } from "openai";
 
 export function registerAppBuilderRoutes(router: Router, openai: OpenAI) {
   const appBuilderRoutes = Router();
+  router.use("/app-builder", appBuilderRoutes);
 
-  /**
-   * Get all App Builder steps
-   */
-  appBuilderRoutes.get("/steps", async (req: Request, res: Response) => {
-    try {
-      const steps = await storage.getAllAppBuilderSteps();
-      return res.json({ steps });
-    } catch (error) {
-      logError("app_builder_get_steps", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to fetch App Builder steps" });
-    }
-  });
-
-  /**
-   * Get a specific App Builder step by number
-   */
-  appBuilderRoutes.get("/steps/:stepNumber", async (req: Request, res: Response) => {
-    try {
-      const stepNumber = parseInt(req.params.stepNumber);
-      if (isNaN(stepNumber)) {
-        return res.status(400).json({ error: "Invalid step number" });
-      }
-
-      const step = await storage.getAppBuilderStep(stepNumber);
-      if (!step) {
-        return res.status(404).json({ error: "Step not found" });
-      }
-
-      return res.json({ step });
-    } catch (error) {
-      logError("app_builder_get_step", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to fetch App Builder step" });
-    }
-  });
-
-  /**
-   * Get user's App Builder progress
-   * Requires Firebase UID in the request body
-   */
-  appBuilderRoutes.post("/progress", async (req: RequestWithFirebase, res: Response) => {
+  // Start or resume the App Builder journey
+  appBuilderRoutes.post("/start", async (req: Request, res: Response) => {
     try {
       const { firebaseUid } = req.body;
-      
-      if (!firebaseUid) {
-        return res.status(400).json({ error: "Firebase UID is required" });
-      }
 
-      const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress) {
-        // User has not started the App Builder journey yet
-        return res.json({ 
-          exists: false,
-          currentStep: 1,
-          isCompleted: false
+      if (!firebaseUid) {
+        return res.status(400).json({
+          success: false,
+          message: "Firebase UID is required"
         });
       }
 
-      return res.json({ 
-        exists: true,
-        ...progress
-      });
-    } catch (error) {
-      logError("app_builder_get_progress", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to fetch App Builder progress" });
-    }
-  });
-
-  /**
-   * Start or resume App Builder journey
-   * Creates a new progress record if one doesn't exist
-   * Requires Firebase UID in the request body
-   */
-  appBuilderRoutes.post("/start", async (req: RequestWithFirebase, res: Response) => {
-    try {
-      const { firebaseUid } = req.body;
-      
-      if (!firebaseUid) {
-        return res.status(400).json({ error: "Firebase UID is required" });
-      }
-
-      // Check if user already has progress
+      // Check if the user has existing progress
       let progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
+
+      // If no progress exists, create a new progress record
       if (!progress) {
-        // Create new progress record
-        const progressData = {
-          userId: 0, // Will be set if user exists
+        progress = await storage.createAppBuilderProgress({
           firebaseUid,
+          userId: 1, // Default user ID (we will have to handle this better in production)
           currentStep: 1,
           isCompleted: false
-        };
-
-        // Check if user exists
-        const user = await storage.getUserByFirebaseUid(firebaseUid);
-        if (user) {
-          progressData.userId = user.id;
-        }
-
-        // Validate with schema
-        const validatedData = insertAppBuilderProgressSchema.parse(progressData);
-        
-        // Create progress record
-        progress = await storage.createAppBuilderProgress(validatedData);
-        
-        logEvent("app_builder_journey_started", "New journey started", {
-          firebaseUid,
-          userId: user?.id
-        });
-      } else {
-        logEvent("app_builder_journey_resumed", "Existing journey resumed", {
-          firebaseUid,
-          progressId: progress.id,
-          currentStep: progress.currentStep
         });
       }
 
-      return res.json({ 
+      return res.json({
         success: true,
         progress
       });
     } catch (error) {
-      logError("app_builder_start", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to start App Builder journey" });
+      console.error("Error starting App Builder journey:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to start App Builder journey"
+      });
     }
   });
 
-  /**
-   * Submit work for a specific step
-   * Requires Firebase UID and progress ID in the request body
-   */
-  appBuilderRoutes.post("/submit", async (req: RequestWithFirebase, res: Response) => {
+  // Submit a step in the App Builder journey
+  appBuilderRoutes.post("/submit-step", async (req: Request, res: Response) => {
     try {
-      const { 
-        firebaseUid, 
-        progressId, 
-        stepNumber, 
-        submissionContent,
-        submissionData 
-      } = req.body;
-      
-      // Validate required fields
-      if (!firebaseUid || !progressId || !stepNumber || !submissionContent) {
-        return res.status(400).json({ 
-          error: "Missing required fields",
-          requiredFields: ["firebaseUid", "progressId", "stepNumber", "submissionContent"]
+      const { firebaseUid, progressId, stepNumber, submission } = req.body;
+
+      if (!firebaseUid || !progressId || !stepNumber || !submission) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields"
         });
       }
 
-      // Verify that the progress record belongs to this user
+      // Get the user's progress
       const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress || progress.id !== progressId) {
-        return res.status(403).json({ error: "Unauthorized access to progress record" });
+
+      if (!progress) {
+        return res.status(404).json({
+          success: false,
+          message: "Progress not found"
+        });
       }
 
-      // Validate that the step exists
+      if (progress.id !== progressId) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid progress ID"
+        });
+      }
+
+      // Check if the step exists
       const step = await storage.getAppBuilderStep(stepNumber);
       if (!step) {
-        return res.status(404).json({ error: "Step not found" });
-      }
-
-      // Ensure the step is accessible to the user (not ahead of their current step)
-      if (stepNumber > progress.currentStep) {
-        return res.status(403).json({ error: "Cannot submit for a step that is not yet unlocked" });
-      }
-
-      // Create the submission
-      const submissionPayload = {
-        progressId,
-        stepNumber,
-        submissionContent,
-        submissionData: submissionData || {}
-      };
-
-      // Validate with schema
-      const validatedData = insertAppBuilderSubmissionSchema.parse(submissionPayload);
-      
-      // Create submission record
-      const submission = await storage.createAppBuilderSubmission(validatedData);
-
-      // If this is the user's current step, update progress to unlock the next step
-      if (stepNumber === progress.currentStep && step.requiredForProgress) {
-        const nextStep = stepNumber + 1;
-        
-        // Update progress
-        await storage.updateAppBuilderProgress(progress.id, {
-          currentStep: nextStep,
-          isCompleted: nextStep > 11 // If we've completed all 11 steps
+        return res.status(404).json({
+          success: false,
+          message: "Step not found"
         });
-        
-        logEvent("app_builder_step_completed", `Step ${stepNumber} completed`, {
-          firebaseUid,
+      }
+
+      // Check if the user is eligible to submit this step (gating logic)
+      if (stepNumber > progress.currentStep) {
+        return res.status(403).json({
+          success: false,
+          message: "You must complete previous steps first"
+        });
+      }
+
+      // Check if a submission already exists for this step
+      let existingSubmission = await storage.getAppBuilderSubmissionByStepNumber(
+        progressId,
+        stepNumber
+      );
+
+      if (existingSubmission) {
+        // Update the existing submission
+        existingSubmission = await storage.updateAppBuilderSubmission(
+          existingSubmission.id,
+          {
+            submissionContent: submission
+          }
+        );
+      } else {
+        // Create a new submission
+        existingSubmission = await storage.createAppBuilderSubmission({
           progressId,
           stepNumber,
-          nextStep
+          submissionContent: submission
         });
       }
 
-      return res.json({ 
-        success: true,
-        submission,
-        nextStep: stepNumber === progress.currentStep ? stepNumber + 1 : null
-      });
-    } catch (error) {
-      logError("app_builder_submit", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to submit work" });
-    }
-  });
-
-  /**
-   * Get all submissions for a user's App Builder journey
-   * Requires Firebase UID and progress ID in the request body
-   */
-  appBuilderRoutes.post("/submissions", async (req: RequestWithFirebase, res: Response) => {
-    try {
-      const { firebaseUid, progressId } = req.body;
-      
-      if (!firebaseUid || !progressId) {
-        return res.status(400).json({ error: "Firebase UID and progress ID are required" });
-      }
-
-      // Verify that the progress record belongs to this user
-      const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress || progress.id !== progressId) {
-        return res.status(403).json({ error: "Unauthorized access to progress record" });
-      }
-
-      // Get all submissions
-      const submissions = await storage.getAppBuilderSubmissionsByProgressId(progressId);
-
-      return res.json({ 
-        success: true,
-        submissions
-      });
-    } catch (error) {
-      logError("app_builder_get_submissions", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to fetch submissions" });
-    }
-  });
-
-  /**
-   * Add a chat message to the App Builder journey
-   * Requires Firebase UID and progress ID in the request body
-   */
-  appBuilderRoutes.post("/chat", async (req: RequestWithFirebase, res: Response) => {
-    try {
-      const { 
-        firebaseUid, 
-        progressId, 
-        stepNumber, 
-        role, 
-        content 
-      } = req.body;
-      
-      // Validate required fields
-      if (!firebaseUid || !progressId || !stepNumber || !role || !content) {
-        return res.status(400).json({ 
-          error: "Missing required fields",
-          requiredFields: ["firebaseUid", "progressId", "stepNumber", "role", "content"]
+      // If this was the current step, update progress to the next step
+      if (stepNumber === progress.currentStep && stepNumber < 11) {
+        await storage.updateAppBuilderProgress(progressId, {
+          currentStep: stepNumber + 1
+        });
+      } else if (stepNumber === 11) {
+        // If the final step is submitted, mark the journey as complete
+        await storage.updateAppBuilderProgress(progressId, {
+          isCompleted: true
         });
       }
 
-      // Validate role
-      if (role !== "user" && role !== "assistant") {
-        return res.status(400).json({ error: "Role must be 'user' or 'assistant'" });
-      }
-
-      // Verify that the progress record belongs to this user
-      const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress || progress.id !== progressId) {
-        return res.status(403).json({ error: "Unauthorized access to progress record" });
-      }
-
-      // Create the chat message
-      const messageData = {
-        progressId,
-        stepNumber,
-        role,
-        content
-      };
-
-      // Validate with schema
-      const validatedData = insertAppBuilderChatHistorySchema.parse(messageData);
-      
-      // Create chat message record
-      const message = await storage.createAppBuilderChatMessage(validatedData);
-
-      return res.json({ 
+      return res.json({
         success: true,
-        message
+        submission: existingSubmission,
+        progress: await storage.getAppBuilderProgressByFirebaseUid(firebaseUid)
       });
     } catch (error) {
-      logError("app_builder_add_chat", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to add chat message" });
+      console.error("Error submitting App Builder step:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to submit step"
+      });
     }
   });
 
-  /**
-   * Get chat history for a specific step
-   * Requires Firebase UID and progress ID in the request body
-   */
-  appBuilderRoutes.post("/chat-history", async (req: RequestWithFirebase, res: Response) => {
+  // Get a specific step in the App Builder journey
+  appBuilderRoutes.get("/step/:stepNumber", async (req: Request, res: Response) => {
     try {
-      const { firebaseUid, progressId, stepNumber } = req.body;
-      
-      if (!firebaseUid || !progressId) {
-        return res.status(400).json({ error: "Firebase UID and progress ID are required" });
+      const stepNumber = parseInt(req.params.stepNumber);
+
+      if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 11) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid step number"
+        });
       }
 
-      // Verify that the progress record belongs to this user
-      const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress || progress.id !== progressId) {
-        return res.status(403).json({ error: "Unauthorized access to progress record" });
+      const step = await storage.getAppBuilderStep(stepNumber);
+
+      if (!step) {
+        return res.status(404).json({
+          success: false,
+          message: "Step not found"
+        });
       }
 
-      // Get chat history
-      let messages;
-      if (stepNumber) {
-        // Get messages for a specific step
-        messages = await storage.getAppBuilderChatHistoryByStep(progressId, stepNumber);
-      } else {
-        // Get all messages for this progress
-        messages = await storage.getAppBuilderChatHistoryByProgressId(progressId);
-      }
-
-      return res.json({ 
+      return res.json({
         success: true,
-        messages
+        step
       });
     } catch (error) {
-      logError("app_builder_get_chat", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to fetch chat history" });
+      console.error("Error getting App Builder step:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get step"
+      });
     }
   });
 
-  /**
-   * Chat with Dr. Pengy in the context of the App Builder
-   * Requires Firebase UID and progress ID in the request body
-   */
-  appBuilderRoutes.post("/chat-with-dr-pengy", async (req: RequestWithFirebase, res: Response) => {
+  // Chat with Dr. Pengy in the context of the current step
+  appBuilderRoutes.post("/chat-with-dr-pengy", async (req: Request, res: Response) => {
     try {
-      const { 
-        firebaseUid, 
-        progressId, 
-        stepNumber, 
-        message,
-        messageHistory = [] 
-      } = req.body;
-      
-      // Validate required fields
+      const { firebaseUid, progressId, stepNumber, message } = req.body;
+
       if (!firebaseUid || !progressId || !stepNumber || !message) {
-        return res.status(400).json({ 
-          error: "Missing required fields",
-          requiredFields: ["firebaseUid", "progressId", "stepNumber", "message"]
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields"
         });
       }
 
-      // Verify that the progress record belongs to this user
+      // Get the user's progress to validate access
       const progress = await storage.getAppBuilderProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress || progress.id !== progressId) {
-        return res.status(403).json({ error: "Unauthorized access to progress record" });
+
+      if (!progress) {
+        return res.status(404).json({
+          success: false,
+          message: "Progress not found"
+        });
       }
 
-      // Get step information
+      if (progress.id !== progressId) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid progress ID"
+        });
+      }
+
+      // Check if the user is eligible to access this step
+      if (stepNumber > progress.currentStep) {
+        return res.status(403).json({
+          success: false,
+          message: "You must complete previous steps first"
+        });
+      }
+
+      // Get the current step details
       const step = await storage.getAppBuilderStep(stepNumber);
       if (!step) {
-        return res.status(404).json({ error: "Step not found" });
+        return res.status(404).json({
+          success: false,
+          message: "Step not found"
+        });
       }
 
-      // Get user's previous submissions for all steps up to the current one
-      const allSubmissions = await storage.getAppBuilderSubmissionsByProgressId(progressId);
-      const userSubmissions = allSubmissions.filter(sub => sub.stepNumber <= stepNumber);
-      
-      // Prepare submission context for Dr. Pengy
-      const submissionContext = userSubmissions.map(sub => 
-        `Step ${sub.stepNumber} submission: ${sub.submissionContent}`
-      ).join('\n\n');
+      // Get all previous chat history for context
+      const chatHistory = await storage.getAppBuilderChatHistoryByStep(progressId, stepNumber);
 
-      // Create the user message
-      const userMessageData = {
+      // Get any past submissions for this step for context
+      const submission = await storage.getAppBuilderSubmissionByStepNumber(progressId, stepNumber);
+
+      // Store the user's message in the chat history
+      await storage.createAppBuilderChatMessage({
         progressId,
         stepNumber,
         role: "user",
         content: message
-      };
-
-      // Validate with schema
-      const validatedUserMessage = insertAppBuilderChatHistorySchema.parse(userMessageData);
-      
-      // Save user message to chat history
-      await storage.createAppBuilderChatMessage(validatedUserMessage);
-
-      // Log the chat event
-      logEvent("app_builder_chat", message, {
-        firebaseUid,
-        progressId,
-        stepNumber,
-        message_history_length: messageHistory.length
       });
 
-      // Create system prompt with context
-      const systemPrompt = {
-        role: "system",
-        content: `أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم تطوير التطبيقات والذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. 
+      // Build the prompt for Dr. Pengy
+      const systemPrompt = `You are د. بنجي (Dr. Pengy), an AI tutor for the App Builder Stream, a guided journey to build web applications. 
+You are currently assisting with Step ${stepNumber} of 11: "${step?.title}".
 
-ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع صديق قريب — خلك خفيف دم، وطبيعي.
+Instructions for this step: ${step?.content}
 
-أنت الآن تساعد طالب في خطوة رقم ${stepNumber} من مسار بناء التطبيق الخاص به، وعنوان هذه الخطوة هو: "${step.title}"
+Keep these guidelines in mind:
+1. Respond in Arabic with right-to-left (RTL) text
+2. Be concise and helpful
+3. Focus on guiding rather than giving direct solutions
+4. If the student is stuck, offer a hint before a complete solution
+5. Use gentle encouragement and positive reinforcement
+6. Remember cultural context - you're supporting Saudi Arabian students`;
 
-معلومات مهمة عن الطالب وتقدمه:
-${submissionContext}
+      // Add previous submissions context if available
+      const submissionContext = submission 
+        ? `\n\nThe student has made a previous submission for this step:\n${submission.submissionContent}`
+        : "";
 
-إرشادات مهمة:
-1. اجعل إجاباتك موجزة ومفيدة، وتفاعل مع الأسئلة المحددة للطالب.
-2. لا تعطيه إجابات كاملة ولكن وجهه بأسئلة وتلميحات تساعده على التفكير بنفسه.
-3. شجعه على التجربة والاستكشاف في كل خطوة.
-4. كن على دراية بسياق الخطوة الحالية التي هو فيها.
+      // Create Dr. Pengy's response using OpenAI
+      const chatMessages = [
+        { role: "system", content: systemPrompt + submissionContext },
+      ];
 
-تذكر: هدفك ليس حل المهام نيابة عنه، بل مساعدته على التعلم واكتساب مهارات تطوير التطبيقات من خلال الإرشاد المناسب.`
-      };
+      // Add the previous chat history (up to 10 messages) for context
+      chatHistory.slice(-10).forEach(chatMsg => {
+        chatMessages.push({
+          role: chatMsg.role as "system" | "user" | "assistant",
+          content: chatMsg.content
+        });
+      });
 
-      // Make OpenAI chat completion call
-      const response = await openai.chat.completions.create({
+      // Add the current user message
+      chatMessages.push({ role: "user", content: message });
+
+      const aiResponse = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          systemPrompt,
-          ...messageHistory,
-          { role: "user", content: message }
-        ],
+        messages: chatMessages.map(msg => ({
+          role: msg.role as "system" | "user" | "assistant",
+          content: msg.content
+        })),
         temperature: 0.7,
         max_tokens: 1000
       });
 
-      // Extract response
-      const aiResponse = response.choices[0].message.content || "عذرًا، لم أستطع فهم سؤالك. هل يمكنك توضيحه أكثر؟";
+      const drPengyResponse = aiResponse.choices[0].message.content;
 
-      // Save assistant message to chat history
-      const assistantMessageData = {
+      // Store Dr. Pengy's response in the chat history
+      const savedResponse = await storage.createAppBuilderChatMessage({
         progressId,
         stepNumber,
         role: "assistant",
-        content: aiResponse
-      };
+        content: drPengyResponse || "I apologize, I couldn't generate a response at this time."
+      });
 
-      // Validate with schema
-      const validatedAssistantMessage = insertAppBuilderChatHistorySchema.parse(assistantMessageData);
-      
-      // Save assistant message to chat history
-      const savedMessage = await storage.createAppBuilderChatMessage(validatedAssistantMessage);
-
-      return res.json({ 
+      return res.json({
         success: true,
-        message: savedMessage
+        message: savedResponse
       });
     } catch (error) {
-      logError("app_builder_chat_with_dr_pengy", error instanceof Error ? error : "Unknown error");
-      return res.status(500).json({ error: "Failed to chat with Dr. Pengy" });
+      console.error("Error chatting with Dr. Pengy:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get a response from Dr. Pengy"
+      });
     }
   });
 
-  // Register the routes
-  router.use("/app-builder", appBuilderRoutes);
+  // Get all steps in the App Builder journey
+  appBuilderRoutes.get("/steps", async (req: Request, res: Response) => {
+    try {
+      const steps = await storage.getAllAppBuilderSteps();
+
+      return res.json({
+        success: true,
+        steps
+      });
+    } catch (error) {
+      console.error("Error getting App Builder steps:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get steps"
+      });
+    }
+  });
+
+  return appBuilderRoutes;
 }

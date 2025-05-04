@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedAppBuilderSteps } from "./scripts/seed-app-builder-steps";
 
 const app = express();
 app.use(express.json());
@@ -46,6 +47,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Seed the App Builder steps
+  try {
+    await seedAppBuilderSteps();
+    log("Successfully seeded App Builder steps");
+  } catch (error) {
+    console.error("Failed to seed App Builder steps:", error);
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
