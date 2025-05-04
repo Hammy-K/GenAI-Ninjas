@@ -598,6 +598,22 @@ export function ImageGenerationStage({
                     }}
                   ></div>
                 </div>
+                
+                {/* Debug button to reset counter - visible for testing */}
+                <button 
+                  className="text-xs bg-gray-100 border border-gray-300 rounded px-2 py-0.5 mt-1 hover:bg-gray-200 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setState(prev => ({...prev, generationCount: 0}));
+                    console.log('🔍 CLIENT DEBUG - Reset generation counter to 0');
+                    toast({
+                      title: "تم إعادة ضبط العداد",
+                      description: "تم إعادة ضبط عداد إنشاء الصور إلى 0 للاختبار",
+                      duration: 3000,
+                    });
+                  }}
+                >
+                  إعادة ضبط العداد (للاختبار)
+                </button>
               </div>
             </div>
 

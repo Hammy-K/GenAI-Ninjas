@@ -132,9 +132,18 @@ export function registerGalleryRoutes(router: Router) {
   // Share an image to the gallery from the image generator
   galleryRoutes.post("/share", async (req: RequestWithGallery, res: Response) => {
     try {
+      // Debug the incoming request
+      console.log(`🔍 DEBUG - Gallery Image Share Request received:`, {
+        body_keys: Object.keys(req.body),
+        has_image_url: !!req.body.imageUrl,
+        image_url_length: req.body.imageUrl ? req.body.imageUrl.length : 0,
+        session_id: req.session.gallerySessionId || 'none'
+      });
+      
       // Validate request with Zod
       const validation = shareImageSchema.safeParse(req.body);
       if (!validation.success) {
+        console.log('🔍 DEBUG - Gallery Share: Validation failed', validation.error.format());
         return res.status(400).json({ 
           error: 'Invalid request data',
           details: validation.error.format()
@@ -151,6 +160,16 @@ export function registerGalleryRoutes(router: Router) {
       
       const sessionId = req.session.gallerySessionId || `anonymous_${Date.now()}`;
       
+      // Verify that the imageUrl is valid
+      if (!imageUrl || imageUrl.trim() === '') {
+        console.log('🔍 DEBUG - Gallery Share: Empty image URL provided');
+        return res.status(400).json({ error: 'Empty image URL provided' });
+      }
+      
+      console.log(`🔍 DEBUG - Gallery Share: Image URL validation passed, starting upload process`);
+      
+      let galleryImage;
+      
       // Step 1: Upload the image to Firebase Storage first to get a permanent URL
       try {
         // Upload to Firebase Storage
@@ -159,6 +178,8 @@ export function registerGalleryRoutes(router: Router) {
           student_name: finalStudentName,
         });
         
+        console.log(`🔍 DEBUG - Gallery Share: Calling uploadImageFromUrl with imageUrl length=${imageUrl.length}`);
+        
         const permanentImageUrl = await uploadImageFromUrl(imageUrl, {
           studentName: finalStudentName,
           missionNumber: missionNumber || 1,
@@ -166,14 +187,18 @@ export function registerGalleryRoutes(router: Router) {
           prompt
         });
         
+        console.log(`🔍 DEBUG - Gallery Share: Firebase upload successful, got permanentImageUrl=${permanentImageUrl.substring(0, 50)}...`);
+        
         // Step 2: Create a gallery image record with the permanent Firebase URL
-        const galleryImage = await storage.createGalleryImage({
+        galleryImage = await storage.createGalleryImage({
           imageUrl: permanentImageUrl, // Use the permanent Firebase URL
           studentName: finalStudentName,
           missionNumber: missionNumber || 1,
           sessionId,
           firebaseUid: firebaseUid || null // Include Firebase UID if available
         });
+
+        console.log(`🔍 DEBUG - Gallery Share: Gallery record created successfully with ID=${galleryImage.id}`);
 
         // Log successful sharing
         logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
@@ -184,14 +209,15 @@ export function registerGalleryRoutes(router: Router) {
           permanent_url: true,
           firebase_uid: firebaseUid || null
         });
-        
-        return res.status(201).json(galleryImage);
       } catch (firebaseError) {
         // If Firebase upload fails, fall back to the original URL
+        console.error(`🔍 DEBUG - Gallery Share: Firebase upload failed`, firebaseError);
         logError('firebase_upload', firebaseError instanceof Error ? firebaseError : 'Unknown error');
         
+        console.log(`🔍 DEBUG - Gallery Share: Falling back to storing original URL in database`);
+        
         // Just create gallery image with original URL as fallback
-        const galleryImage = await storage.createGalleryImage({
+        galleryImage = await storage.createGalleryImage({
           imageUrl, // Use the original URL as fallback
           studentName: finalStudentName,
           missionNumber: missionNumber || 1,
@@ -199,32 +225,58 @@ export function registerGalleryRoutes(router: Router) {
           firebaseUid: firebaseUid || null // Include Firebase UID if available
         });
         
+        console.log(`🔍 DEBUG - Gallery Share: Fallback gallery record created with ID=${galleryImage.id}`);
+        
         logEvent('gallery_image_shared', 'Image shared to gallery with original URL (Firebase failed)', {
           student_name: finalStudentName,
           session_id: sessionId,
           permanent_url: false
         });
-        
-        return res.status(201).json(galleryImage);
       }
+      
+      // Verify we have a valid gallery image to return
+      if (!galleryImage || !galleryImage.id) {
+        console.error(`🔍 DEBUG - Gallery Share: Failed to create gallery record`);
+        throw new Error('Failed to create gallery image record');
+      }
+      
+      // Return the created gallery image
+      console.log(`🔍 DEBUG - Gallery Share: Returning gallery image with ID=${galleryImage.id}`);
+      return res.status(201).json(galleryImage);
     } catch (error) {
+      console.error('🔍 DEBUG - Gallery Share: Unhandled error', error);
       logError('gallery_share', error instanceof Error ? error : 'Unknown error');
-      return res.status(500).json({ error: 'Failed to share image to gallery' });
+      return res.status(500).json({ 
+        error: 'Failed to share image to gallery',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
     }
   });
 
   // Get all images from the gallery with pagination and filtering
   galleryRoutes.get("/all", async (req: Request, res: Response) => {
     try {
+      console.log(`🔍 DEBUG - Gallery All: Request received`, {
+        query_params: req.query,
+        has_session: !!req.session?.gallerySessionId
+      });
+      
       // Parse query parameters for pagination and filtering
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const nameFilter = req.query.name as string || '';
       const pageToken = req.query.pageToken as string || undefined;
       
+      console.log(`🔍 DEBUG - Gallery All: Parsed parameters`, {
+        limit, page, nameFilter: nameFilter || 'none', pageToken: pageToken || 'none'
+      });
+      
       // First, try to get images from Firebase Storage
       try {
+        console.log(`🔍 DEBUG - Gallery All: Attempting to fetch from Firebase Storage`);
         const firebaseImages = await listGalleryImages(limit, pageToken);
+        
+        console.log(`🔍 DEBUG - Gallery All: Firebase returned ${firebaseImages.files.length} images`);
         
         // Filter images by student name if filter is provided
         const filteredImages = nameFilter 
@@ -233,6 +285,8 @@ export function registerGalleryRoutes(router: Router) {
               return studentName.includes(nameFilter.toLowerCase());
             })
           : firebaseImages.files;
+        
+        console.log(`🔍 DEBUG - Gallery All: After filtering, ${filteredImages.length} images remain`);
             
         // Log the successful Firebase fetch
         logEvent('gallery_images_fetch_firebase', 'Fetched gallery images from Firebase', {
@@ -252,10 +306,14 @@ export function registerGalleryRoutes(router: Router) {
         });
       } catch (firebaseError) {
         // If Firebase fetch fails, fall back to database
+        console.error(`🔍 DEBUG - Gallery All: Firebase fetch failed, falling back to database`, firebaseError);
         logError('gallery_fetch_firebase', firebaseError instanceof Error ? firebaseError : 'Unknown error');
         
         // Fetch images from the database as fallback
+        console.log(`🔍 DEBUG - Gallery All: Fetching from database as fallback`);
         const dbImages = await storage.getAllGalleryImages();
+        
+        console.log(`🔍 DEBUG - Gallery All: Database returned ${dbImages.length} images`);
         
         // Apply filtering
         const filteredImages = nameFilter
@@ -263,10 +321,14 @@ export function registerGalleryRoutes(router: Router) {
               return (img.studentName || '').toLowerCase().includes(nameFilter.toLowerCase());
             })
           : dbImages;
+        
+        console.log(`🔍 DEBUG - Gallery All: After filtering, ${filteredImages.length} images remain`);
           
         // Apply pagination manually (simple offset-based pagination)
         const startIndex = (page - 1) * limit;
         const paginatedImages = filteredImages.slice(startIndex, startIndex + limit);
+        
+        console.log(`🔍 DEBUG - Gallery All: After pagination, returning ${paginatedImages.length} images`);
         
         // Log the database fallback fetch
         logEvent('gallery_images_fetch_db', 'Fetched gallery images from database (fallback)', {
@@ -287,8 +349,21 @@ export function registerGalleryRoutes(router: Router) {
         });
       }
     } catch (error) {
+      console.error('🔍 DEBUG - Gallery All: Unhandled error', error);
       logError('gallery_fetch', error instanceof Error ? error : 'Unknown error');
-      return res.status(500).json({ error: 'Failed to fetch gallery images' });
+      
+      // Always return some sort of response, even if empty, to avoid client-side errors
+      return res.status(500).json({ 
+        error: 'Failed to fetch gallery images',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        images: [],
+        pagination: {
+          totalCount: 0,
+          currentPage: 1,
+          totalPages: 0,
+          limit: 20
+        }
+      });
     }
   });
   
