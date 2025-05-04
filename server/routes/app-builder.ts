@@ -3,8 +3,16 @@
  * Handles the 11-step sequential journey with gating logic
  */
 import { Router, Request, Response } from "express";
+import { Session } from "express-session";
 import { storage } from "../storage";
 import { OpenAI } from "openai";
+
+// Extend the Request type to include the drPengyThreadId in session
+interface RequestWithDrPengyThread extends Request {
+  session: Session & {
+    drPengyThreadId?: string;
+  };
+}
 
 export function registerAppBuilderRoutes(router: Router, openai: OpenAI) {
   const appBuilderRoutes = Router();
@@ -256,33 +264,60 @@ Keep these guidelines in mind:
         ? `\n\nThe student has made a previous submission for this step:\n${submission.submissionContent}`
         : "";
 
-      // Create Dr. Pengy's response using OpenAI
-      const chatMessages = [
-        { role: "system", content: systemPrompt + submissionContext },
-      ];
-
-      // Add the previous chat history (up to 10 messages) for context
-      chatHistory.slice(-10).forEach(chatMsg => {
-        chatMessages.push({
-          role: chatMsg.role as "system" | "user" | "assistant",
-          content: chatMsg.content
-        });
+      // Prepare the context for Dr. Pengy
+      const contextPrompt = systemPrompt + submissionContext;
+      
+      // Create a thread if one doesn't exist or use existing thread ID
+      let threadId = req.session.drPengyThreadId;
+      
+      if (!threadId) {
+        // Create a new thread for this conversation
+        const thread = await openai.beta.threads.create();
+        threadId = thread.id;
+        req.session.drPengyThreadId = threadId;
+      }
+      
+      // Add the user's message to the thread
+      await openai.beta.threads.messages.create(threadId, {
+        role: "user",
+        content: `${contextPrompt}\n\nUser message: ${message}`
       });
-
-      // Add the current user message
-      chatMessages.push({ role: "user", content: message });
-
-      const aiResponse = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: chatMessages.map(msg => ({
-          role: msg.role as "system" | "user" | "assistant",
-          content: msg.content
-        })),
-        temperature: 0.7,
-        max_tokens: 1000
+      
+      // Run the assistant on the thread
+      const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: "asst_iXsVdnLiN6ehBk8E0FtegJd8"
       });
-
-      const drPengyResponse = aiResponse.choices[0].message.content;
+      
+      // Poll for the completion of the run
+      let runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      
+      while (runStatus.status !== "completed" && runStatus.status !== "failed") {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      }
+      
+      if (runStatus.status === "failed") {
+        throw new Error("Assistant run failed: " + runStatus.last_error?.message);
+      }
+      
+      // Get the latest message from the assistant
+      const messages = await openai.beta.threads.messages.list(threadId);
+      const assistantMessages = messages.data.filter(msg => msg.role === "assistant");
+      
+      if (assistantMessages.length === 0) {
+        throw new Error("No assistant response received");
+      }
+      
+      // Get the content of the latest assistant message
+      const latestMessage = assistantMessages[0];
+      const messageContent = latestMessage.content[0];
+      
+      let drPengyResponse = "";
+      if (messageContent.type === "text") {
+        drPengyResponse = messageContent.text.value;
+      } else {
+        drPengyResponse = "أعتذر، لم أتمكن من توليد استجابة في هذا الوقت.";
+      }
 
       // Store Dr. Pengy's response in the chat history
       const savedResponse = await storage.createAppBuilderChatMessage({
