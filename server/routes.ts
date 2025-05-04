@@ -45,6 +45,9 @@ function logServerPrompt(
  * @returns HTTP server instance
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve generated images from the server
+  app.use('/generated-images', express.static('server/public/generated-images'));
+  
   // Add a utility endpoint to clear session data (temporary, for debugging)
   app.get('/api/debug/clear-session', (req: Request, res: Response) => {
     if (req.session) {

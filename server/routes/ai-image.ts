@@ -86,7 +86,8 @@ Your reply should only include the final image prompt — no explanations or ext
             model: "gpt-image-1",
             prompt: enhancedPrompt,
             n: 1,
-            size: "1024x1024"
+            size: "1024x1024",
+            quality: "medium"  // Keep this parameter as requested
           }
         });
         
@@ -115,13 +116,16 @@ Your reply should only include the final image prompt — no explanations or ext
         // Create a URL for the image
         const imageUrl = `/generated-images/${filename}`;
         
-        // Log successful image generation
+        // Log successful image generation with detailed information
         logEvent("image_generation_success", prompt, {
           model: "gpt-image-1",
+          quality: "medium",
           enhanced: true,
           enhanced_by: "gpt-4.1-mini",
           conversation_turns: messageHistory.length,
-          image_storage: "local"
+          image_storage: "local",
+          filename: filename,
+          format: "base64_to_png"
         });
 
         return res.json({ url: imageUrl });
