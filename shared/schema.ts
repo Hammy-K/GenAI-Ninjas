@@ -34,6 +34,53 @@ export const projectIdeas = pgTable("project_ideas", {
   createdAt: text("created_at").notNull(),
 });
 
+// App Builder Stream Steps - Stores the 11 steps of the App Builder journey
+export const appBuilderSteps = pgTable("app_builder_steps", {
+  id: serial("id").primaryKey(),
+  stepNumber: integer("step_number").notNull().unique(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  content: text("content").notNull(),
+  submissionType: text("submission_type").notNull(), // text, link, file, etc.
+  requiredForProgress: boolean("required_for_progress").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// App Builder User Progress - Tracks user progression through the App Builder Stream
+export const appBuilderProgress = pgTable("app_builder_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  firebaseUid: text("firebase_uid").notNull(),
+  currentStep: integer("current_step").notNull().default(1),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// App Builder Submissions - Stores all student work for each step
+export const appBuilderSubmissions = pgTable("app_builder_submissions", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").references(() => appBuilderProgress.id).notNull(),
+  stepNumber: integer("step_number").notNull(),
+  submissionContent: text("submission_content").notNull(),
+  submissionData: jsonb("submission_data"), // For structured data like links, files, etc.
+  version: integer("version").notNull().default(1), // For tracking submission versions
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// App Builder Chat History - Stores all interactions with Dr. Pengy in the context of App Builder
+export const appBuilderChatHistory = pgTable("app_builder_chat_history", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").references(() => appBuilderProgress.id).notNull(),
+  stepNumber: integer("step_number").notNull(),
+  role: text("role").notNull(), // user or assistant
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Gallery image schema to store shared AI-generated images
 export const galleryImages = pgTable("gallery_images", {
   id: serial("id").primaryKey(),
