@@ -289,7 +289,29 @@ Your reply should only include the final image prompt — no explanations or ext
         }
       }
       
-      // General error logging and response
+      // If an error occurs, serve a fallback placeholder image from the public directory
+      console.log("🔍 DEBUG - Image proxy error, serving fallback image");
+      try {
+        // Attempt to serve a local fallback image
+        const fallbackPath = path.join(__dirname, '../public/images/placeholder-image.svg');
+        
+        // Check if the fallback image exists
+        if (fs.existsSync(fallbackPath)) {
+          console.log("🔍 DEBUG - Serving fallback image from:", fallbackPath);
+          res.setHeader("Content-Type", "image/svg+xml");
+          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
+          res.setHeader("X-Image-Proxy-Status", "fallback");
+          
+          // Stream the fallback image
+          return fs.createReadStream(fallbackPath).pipe(res);
+        } else {
+          console.log("🔍 DEBUG - Fallback image not found at:", fallbackPath);
+        }
+      } catch (fallbackError) {
+        console.error("🔍 DEBUG - Failed to serve fallback image:", fallbackError);
+      }
+      
+      // If we reach here, both original request and fallback failed
       logError("image_proxy", error instanceof Error ? error : "Unknown error");
       res.status(500).json({ 
         error: "Failed to proxy image",
