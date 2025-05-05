@@ -640,7 +640,7 @@ export default function Dashboard() {
                               {/* Row 1 */}
                               <div className="relative">
                                 <Link
-                                  href="/game/mission1"
+                                  href="/missions/game-dev"
                                   className="block transform hover:scale-105 transition-transform"
                                 >
                                   <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-green-400 h-36 flex flex-col items-center justify-center text-center">
