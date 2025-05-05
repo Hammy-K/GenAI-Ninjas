@@ -1,0 +1,123 @@
+## Build Your First Playable Game
+
+**Goal:** By the end, students will have a playable 2D game that they customized and published—all inside our platform.
+
+---
+
+### ✅ Step-by-Step Mission Flow (AI-Powered, Code Rendered In-App)
+
+---
+
+### **Step 1: Why Do We Love Games? (Hook)**
+
+🎯 *Spark emotional connection to gaming*
+
+- Students play an embedded game (e.g. Flappy Bird, Dodge Ball)
+- Prompt: “Why is this fun? What keeps you playing?”
+- Submit: 2–3 bullet points
+
+🧠 Dr. Pengy: Reflects back design patterns (goal, rules, loops)
+
+---
+
+### **Step 2: Imagine Your Game Idea**
+
+🎯 *Activate creativity with guidance*
+
+- Prompt: “If you could invent a simple game, what would it be about?”
+- Describe theme, setting, and goal in one sentence
+- Submit: Game idea title + short description
+
+🧠 Dr. Pengy: Helps refine idea suitable for HTML5 games, adds fun twists or titles
+
+---
+
+### **Step 3: Generate Your Starter Game**
+
+🎯 *Go from words → working code with GenAI*
+
+- AI (via Pengy or API) generates HTML5 game scaffold:
+    - Canvas element
+    - Keyboard input
+    - Score logic
+    - Win condition
+- Code is injected into sandboxed `iframe`
+
+📥 Student sees their game in preview pane
+
+✅ Stored under their UID with timestamp + idea metadata
+
+---
+
+### **Step 4: Customize Gameplay Behavior**
+
+🎯 *Make it feel personal*
+
+- Prompt: “Want your character to jump faster? Add an enemy? Double score?”
+- Students choose from pre-written actions or ask Pengy
+- Dr. Pengy injects changes to code and reloads preview
+
+📥 Student hits “Run” to test changes
+
+✅ System stores all versions incrementally
+
+---
+
+### **Step 5: Swap in Game Art & Assets**
+
+🎯 *Visual identity upgrade*
+
+- Student describes visual style (cartoony, neon, desert, etc.)
+- Dr. Pengy generates sprites, background, and UI using DALL·E or preset assets
+- Game reloads with updated visuals
+
+📥 Preview pane shows new look
+
+✅ Assets linked to student profile
+
+---
+
+### **Step 6: Playtest with a Friend**
+
+🎯 *Get outside feedback*
+
+- Student shares game preview link (in-app) or shows on screen
+- Friend plays for 1 minute
+- Student records: “What they liked / what confused them”
+
+📥 Submit 2 feedback points
+
+---
+
+### **Step 7: Final Polish & Game Launch**
+
+🎯 *Ready for the world*
+
+- Prompt: “Want to add music, sound effects, or a win screen?”
+- Dr. Pengy helps generate final touches
+- Game is saved, link generated, and preview hosted on student public gallery
+
+📥 Submit final game + 1-line description + optional cover image
+
+---
+
+### **Step 8: Reflection & Bragging Rights**
+
+🎯 *Lock in the learning*
+
+- “What did you create that you’re proud of?”
+- “What would you add if you had more time?”
+- “What surprised you?”
+
+📥 Save to learning journey doc
+
+### **Behind the scenes**
+
+| Feature | Implementation |
+| --- | --- |
+| Game code storage | Stored per step under student UID (Firestore or Postgres) |
+| Preview rendering | Injected into sandboxed `iframe` |
+| GenAI support | Assistant API with full context of all steps |
+| Assets | Either stored URLs or inline base64 if generated |
+| Version control | Save each major change as a snapshot |
+| Reflection capture | Tied to mission completion, displayed on profile |
