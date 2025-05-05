@@ -10,12 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  ArrowRight, ArrowLeft, Send, 
-  CheckCircle2, Circle, Play, Sparkles, 
-  LucideIcon, Code, ImageIcon, UserSquare, 
-  Share2, Wand2, MessageSquare
-} from "lucide-react";
+import { ArrowRight, Send } from "lucide-react";
 import { Confetti } from "@/components/ui/confetti";
 import penguinAvatar from "@/assets/JourneyAvatar.png";
 
@@ -231,27 +226,36 @@ const FLAPPY_BIRD_GAME_CODE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Game mission steps interface
-interface GameMissionStep {
-  id: number;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  isCompleted: boolean;
-  isActive: boolean;
-}
-
 // Chat message interface
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  hasAction?: boolean;
+  action?: {
+    type: "play-game" | "submit-reflection" | "submit-idea" | "submit-code" | "next-step";
+    data?: any;
+  };
+}
+
+// Mission progression stages
+enum MissionStage {
+  INTRODUCTION = 0,
+  PLAY_GAME = 1,
+  REFLECTION = 2,
+  GAME_IDEA = 3,
+  PROTOTYPE = 4,
+  GAME_BEHAVIOR = 5,
+  VISUALS = 6,
+  TESTING = 7,
+  COMPLETION = 8
 }
 
 /**
  * GameDevMission Component
  * 
  * This component implements the "Why Do We Love Games?" mission
- * with a continuous, single-screen experience featuring a progressive checklist.
+ * with a continuous, single-screen experience with Dr. Pengy guiding
+ * students through each step.
  */
 export default function GameDevMission() {
   const { t } = useTranslation();
@@ -261,91 +265,99 @@ export default function GameDevMission() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Current mission stage
+  const [stage, setStage] = useState<MissionStage>(MissionStage.INTRODUCTION);
+  
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "مرحبًا بك في مهمة 'لماذا نحب الألعاب؟' 🎮 أنا د. بنجي وسأكون مرشدك خلال هذه المهمة. هيا نبدأ باللعب أولاً لفهم ما يجعل الألعاب ممتعة!"
+      content: "مرحبًا بك في مهمة 'لماذا نحب الألعاب؟' 🎮 أنا د. بنجي وسأكون مرشدك خلال هذه المهمة. هيا نبدأ رحلتنا!\n\nأول خطوة هي أن نلعب لعبة بسيطة ونفكر في ما يجعلها ممتعة. انقر على الزر أدناه للبدء.",
+      hasAction: true,
+      action: {
+        type: "play-game"
+      }
     }
   ]);
+  
   const [userMessage, setUserMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mission state
-  const [missionsSteps, setMissionSteps] = useState<GameMissionStep[]>([
-    {
-      id: 1,
-      title: "لماذا نحب الألعاب؟",
-      description: "ألعب والتفكير في ما يجعل اللعبة ممتعة",
-      icon: Play,
-      isCompleted: false,
-      isActive: true
-    },
-    {
-      id: 2,
-      title: "تخيل فكرة لعبتك",
-      description: "وصف فكرة اللعبة والهدف منها",
-      icon: Sparkles,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 3,
-      title: "إنشاء النموذج الأولي",
-      description: "توليد شفرة اللعبة الأساسية",
-      icon: Code,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 4,
-      title: "تخصيص سلوك اللعبة",
-      description: "تعديل طريقة عمل اللعبة",
-      icon: Wand2,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 5,
-      title: "إضافة العناصر المرئية",
-      description: "تصميم مظهر اللعبة",
-      icon: ImageIcon,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 6,
-      title: "اختبار اللعبة",
-      description: "جمع الملاحظات والتحسين",
-      icon: UserSquare,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 7,
-      title: "التعديلات النهائية",
-      description: "إضافة اللمسات الأخيرة ونشر اللعبة",
-      icon: Share2,
-      isCompleted: false,
-      isActive: false
-    },
-    {
-      id: 8,
-      title: "التفكير والإنجازات",
-      description: "التأمل في ما تعلمته وما أنجزته",
-      icon: MessageSquare,
-      isCompleted: false,
-      isActive: false
-    }
-  ]);
-
-  // Current active step and game code state
-  const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [gameCode, setGameCode] = useState(FLAPPY_BIRD_GAME_CODE);
   const [gameIdea, setGameIdea] = useState("");
-  const [reflections, setReflections] = useState<string[]>([]);
+  const [reflection, setReflection] = useState("");
+  const [showGamePreview, setShowGamePreview] = useState(false);
   
-  // Handle chat submission
+  // Progress tracking
+  const totalStages = 8;
+  const stagesCompleted = stage > MissionStage.INTRODUCTION ? stage - 1 : 0;
+  
+  // Advance to the next stage in the mission
+  const advanceStage = () => {
+    setStage(prevStage => {
+      const nextStage = prevStage + 1;
+      
+      // Add appropriate chat message from Dr. Pengy based on the next stage
+      let message: ChatMessage = {
+        role: "assistant",
+        content: "",
+        hasAction: true
+      };
+      
+      switch (nextStage) {
+        case MissionStage.PLAY_GAME:
+          message.content = "رائع! الآن يمكنك لعب لعبة 'الطائر المرفرف'. جرّب اللعبة وفكر في ما يجعلها ممتعة.\n\nاضغط على زر 'ابدأ اللعبة' ثم استخدم المسافة (أو النقر) للقفز. حاول تجنب الأنابيب وتحقيق أعلى نقاط!";
+          setShowGamePreview(true);
+          break;
+          
+        case MissionStage.REFLECTION:
+          message.content = "أحسنت! الآن بعد أن لعبت اللعبة، فكر في ما الذي جعلها ممتعة برأيك. ما هي العناصر التي تجعلك ترغب في الاستمرار باللعب؟\n\nاكتب ملاحظاتك في مربع النص أدناه (2-3 نقاط على الأقل).";
+          message.action = { type: "submit-reflection" };
+          break;
+          
+        case MissionStage.GAME_IDEA:
+          message.content = "ملاحظات رائعة! العناصر التي ذكرتها هي بالفعل ما يجعل الألعاب ممتعة.\n\nحان الوقت الآن لتبدأ تخيل لعبتك الخاصة. ما هي فكرة اللعبة التي تود إنشاؤها؟ صف فكرة اللعبة، والموضوع، والهدف منها في جملة أو جملتين.";
+          message.action = { type: "submit-idea" };
+          setShowGamePreview(false);
+          break;
+          
+        case MissionStage.PROTOTYPE:
+          message.content = `فكرة رائعة! "${gameIdea}"\n\nالآن بعد أن لديك فكرة واضحة، سنبدأ في إنشاء نموذج أولي بسيط. في الخطوات القادمة، سنعمل على تطوير لعبتك خطوة بخطوة.\n\nهل أنت مستعد للبدء في إنشاء نموذج أولي للعبتك؟`;
+          message.action = { type: "next-step" };
+          break;
+          
+        case MissionStage.GAME_BEHAVIOR:
+          message.content = "ممتاز! لقد بدأنا بإنشاء نموذج أولي للعبة. الآن سنركز على تخصيص سلوك اللعبة.\n\nسنتعلم كيف يمكننا تعديل كيفية تفاعل اللاعب مع اللعبة وكيف تتصرف العناصر داخل اللعبة.\n\nهل أنت مستعد للخطوة التالية؟";
+          message.action = { type: "next-step" };
+          break;
+          
+        case MissionStage.VISUALS:
+          message.content = "أحسنت! الآن سنعمل على تحسين المظهر المرئي للعبة. سنتعلم كيف نضيف الرسومات والألوان لجعل اللعبة أكثر جاذبية.\n\nهل أنت مستعد للعمل على تصميم لعبتك؟";
+          message.action = { type: "next-step" };
+          break;
+          
+        case MissionStage.TESTING:
+          message.content = "رائع! لقد أضفنا عناصر مرئية للعبة. الآن حان وقت اختبار اللعبة وجمع الملاحظات.\n\nفي عالم تطوير الألعاب الحقيقي، هذه خطوة مهمة حيث نجمع آراء اللاعبين ونحسن اللعبة بناءً على تجربتهم.\n\nهل أنت مستعد لتجربة لعبتك وتحسينها؟";
+          message.action = { type: "next-step" };
+          break;
+          
+        case MissionStage.COMPLETION:
+          message.content = "تهانينا! 🎉 لقد أكملت مهمة 'لماذا نحب الألعاب' بنجاح!\n\nلقد تعلمت أساسيات تصميم الألعاب، وفكرت في ما يجعل الألعاب ممتعة، وبدأت في تطوير فكرة لعبة خاصة بك.\n\nيمكنك الآن العودة إلى لوحة المهام لاستكشاف المزيد من المهمات أو مواصلة تطوير مهاراتك في تصميم الألعاب!";
+          // Show confetti for completion
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 3000);
+          break;
+          
+        default:
+          message.content = "هذه الخطوة قيد التطوير حالياً وستكون متاحة قريباً. هل ترغب في العودة إلى لوحة المهام؟";
+          break;
+      }
+      
+      setMessages(prev => [...prev, message]);
+      return nextStage;
+    });
+  };
+  
+  // Handle chat submission from user
   const handleSendMessage = async () => {
     if (!userMessage.trim() || isLoading) return;
     
@@ -360,12 +372,19 @@ export default function GameDevMission() {
     
     try {
       // In a real implementation, this would call the Assistant API
-      // For now, we'll simulate a response
+      // For now, we'll simulate a response based on the current stage
       setTimeout(() => {
-        const assistantResponse: ChatMessage = {
+        let assistantResponse: ChatMessage = {
           role: "assistant",
-          content: "هذا رد مؤقت من د. بنجي. في التطبيق الكامل، سيتم توصيل هذا بواجهة برمجة التطبيقات المساعدة."
+          content: "أفهم ما تقول. في التطبيق الكامل، سأكون قادراً على التفاعل بذكاء مع استفساراتك المحددة."
         };
+        
+        // Add suggestions based on the current stage
+        if (stage === MissionStage.REFLECTION) {
+          assistantResponse.content += "\n\nلم تنسَ أن تشارك ملاحظاتك عن اللعبة في مربع النص أدناه.";
+        } else if (stage === MissionStage.GAME_IDEA) {
+          assistantResponse.content += "\n\nلا تنسَ أن تشارك فكرة لعبتك في مربع النص أدناه.";
+        }
         
         setMessages(prev => [...prev, assistantResponse]);
         setIsLoading(false);
@@ -382,30 +401,63 @@ export default function GameDevMission() {
     }
   };
 
-  // Handle step completion
-  const completeCurrentStep = (response: string = "") => {
-    // Update the current step to completed
-    const updatedSteps = [...missionsSteps];
-    updatedSteps[activeStepIndex].isCompleted = true;
+  // Handle reflection submission
+  const handleReflectionSubmit = () => {
+    if (!reflection || reflection.length < 10) return;
     
-    // If there's a next step, make it active
-    if (activeStepIndex < updatedSteps.length - 1) {
-      updatedSteps[activeStepIndex + 1].isActive = true;
-      setActiveStepIndex(activeStepIndex + 1);
-    }
+    // Add the user's reflection to the chat
+    const userReflection: ChatMessage = {
+      role: "user",
+      content: reflection
+    };
     
-    setMissionSteps(updatedSteps);
+    setMessages(prev => [...prev, userReflection]);
     
-    // Store reflection if provided
-    if (response) {
-      const newReflections = [...reflections];
-      newReflections[activeStepIndex] = response;
-      setReflections(newReflections);
-    }
-    
-    // Show confetti animation
+    // Show confetti and advance to next stage
     setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3000);
+    setTimeout(() => {
+      setShowConfetti(false);
+      advanceStage();
+    }, 1500);
+  };
+  
+  // Handle game idea submission
+  const handleGameIdeaSubmit = () => {
+    if (!gameIdea || gameIdea.length < 10) return;
+    
+    // Add the user's game idea to the chat
+    const userGameIdea: ChatMessage = {
+      role: "user",
+      content: gameIdea
+    };
+    
+    setMessages(prev => [...prev, userGameIdea]);
+    
+    // Show confetti and advance to next stage
+    setShowConfetti(true);
+    setTimeout(() => {
+      setShowConfetti(false);
+      advanceStage();
+    }, 1500);
+  };
+  
+  // Handle button actions from Dr. Pengy's messages
+  const handleAction = (action: any) => {
+    switch (action.type) {
+      case "play-game":
+        // Start the game experience
+        advanceStage();
+        break;
+        
+      case "next-step":
+        // Advance to the next step in the mission
+        advanceStage();
+        break;
+        
+      default:
+        console.log("Unknown action type:", action.type);
+        break;
+    }
   };
 
   // Scroll to bottom of chat when new messages are added
@@ -440,8 +492,8 @@ export default function GameDevMission() {
       
       {/* Progress Bar - Shows overall mission progress */}
       <ProgressBar 
-        currentStage={missionsSteps.filter(step => step.isCompleted).length + 1} 
-        totalStages={missionsSteps.length} 
+        currentStage={stagesCompleted + 1} 
+        totalStages={totalStages} 
       />
       
       {/* Main Content Area with 30/70 Split */}
@@ -473,6 +525,31 @@ export default function GameDevMission() {
                             </div>
                           )}
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          
+                          {/* Action buttons for Dr. Pengy's messages */}
+                          {message.role === "assistant" && message.hasAction && (
+                            <div className="mt-2 flex justify-end">
+                              {message.action?.type === "play-game" && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleAction(message.action)}
+                                  className="text-xs"
+                                >
+                                  ابدأ
+                                </Button>
+                              )}
+                              
+                              {message.action?.type === "next-step" && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleAction(message.action)}
+                                  className="text-xs"
+                                >
+                                  التالي
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                       <div ref={chatEndRef} />
@@ -513,91 +590,48 @@ export default function GameDevMission() {
             <div className="w-full md:w-[70%] order-1 md:order-2">
               <Card className="h-full">
                 <CardContent className="p-4 h-[calc(100vh-220px)] flex flex-col">
-                  {/* Mission Steps Checklist */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                    {missionsSteps.map((step) => (
-                      <Button
-                        key={step.id}
-                        variant={step.isActive ? "default" : step.isCompleted ? "outline" : "ghost"}
-                        className={`h-auto py-2 justify-start text-right ${
-                          !step.isActive && !step.isCompleted ? "opacity-50 cursor-not-allowed" : ""
-                        } ${step.isCompleted ? "border-green-500 text-green-600" : ""}`}
-                        disabled={!step.isActive && !step.isCompleted}
-                        onClick={() => {
-                          if (step.isCompleted || step.isActive) {
-                            setActiveStepIndex(step.id - 1);
-                          }
-                        }}
-                      >
-                        <div className="flex flex-col items-start w-full">
-                          <div className="flex items-center w-full mb-1">
-                            {step.isCompleted ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500 ml-2" />
-                            ) : (
-                              <Circle className="h-4 w-4 ml-2" />
-                            )}
-                            <span className="font-medium">{step.title}</span>
-                          </div>
-                          <span className="text-xs opacity-70">{step.description}</span>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
+                  <h2 className="text-xl font-bold mb-4 text-right">
+                    لماذا نحب الألعاب؟
+                  </h2>
                   
-                  {/* Active Step Content */}
-                  <div className="flex-grow flex flex-col overflow-hidden">
-                    <h2 className="text-xl font-bold mb-2 text-right">
-                      {missionsSteps[activeStepIndex].title}
-                    </h2>
+                  {/* Dynamic Content Based on Current Stage */}
+                  <div className="flex-grow flex flex-col">
+                    {/* Game Preview - Shown in Play Game and Reflection stages */}
+                    {showGamePreview && (
+                      <div className="flex-grow border rounded-md overflow-hidden mb-4">
+                        <iframe
+                          title="Flappy Bird"
+                          className="w-full h-full border-0"
+                          srcDoc={gameCode}
+                          sandbox="allow-scripts allow-same-origin"
+                        />
+                      </div>
+                    )}
                     
-                    {/* Step 1: Why We Love Games */}
-                    {activeStepIndex === 0 && (
-                      <div className="flex flex-col h-full">
-                        <p className="text-right mb-3">
-                          ألعب اللعبة أدناه وفكر في ما يجعلها ممتعة. ما هي العناصر التي تجعلك ترغب في الاستمرار باللعب؟
-                        </p>
-                        
-                        {/* Game Preview */}
-                        <div className="flex-grow border rounded-md overflow-hidden mb-4">
-                          <iframe
-                            title="Flappy Bird"
-                            className="w-full h-full border-0"
-                            srcDoc={gameCode}
-                            sandbox="allow-scripts allow-same-origin"
-                          />
-                        </div>
-                        
-                        {/* Reflection Input */}
+                    {/* Reflection Input Form - Shown in Reflection stage */}
+                    {stage === MissionStage.REFLECTION && (
+                      <div className="mt-auto">
                         <div className="flex flex-col gap-2">
                           <Textarea
                             placeholder="اكتب هنا ما يجعل هذه اللعبة ممتعة برأيك (2-3 نقاط)..."
                             className="resize-none h-20 text-right"
-                            value={reflections[0] || ""}
-                            onChange={(e) => {
-                              const newReflections = [...reflections];
-                              newReflections[0] = e.target.value;
-                              setReflections(newReflections);
-                            }}
+                            value={reflection}
+                            onChange={(e) => setReflection(e.target.value)}
                           />
                           <Button 
-                            onClick={() => completeCurrentStep(reflections[0])}
-                            disabled={!reflections[0] || reflections[0].length < 10}
+                            onClick={handleReflectionSubmit}
+                            disabled={!reflection || reflection.length < 10}
                             className="self-start"
                           >
-                            تم
+                            إرسال ملاحظاتي
                           </Button>
                         </div>
                       </div>
                     )}
                     
-                    {/* Step 2: Imagine Your Game Idea */}
-                    {activeStepIndex === 1 && (
-                      <div className="flex flex-col h-full">
-                        <p className="text-right mb-3">
-                          تخيل لعبة بسيطة تود إنشاؤها. صف فكرة اللعبة، والموضوع، والهدف منها في جملة أو جملتين.
-                        </p>
-                        
-                        {/* Game Idea Input */}
+                    {/* Game Idea Input Form - Shown in Game Idea stage */}
+                    {stage === MissionStage.GAME_IDEA && (
+                      <div className="mt-auto">
                         <div className="flex flex-col gap-2">
                           <Textarea
                             placeholder="اكتب هنا فكرة لعبتك..."
@@ -606,34 +640,41 @@ export default function GameDevMission() {
                             onChange={(e) => setGameIdea(e.target.value)}
                           />
                           <Button 
-                            onClick={() => completeCurrentStep(gameIdea)}
+                            onClick={handleGameIdeaSubmit}
                             disabled={!gameIdea || gameIdea.length < 10}
                             className="self-start"
                           >
-                            تم
+                            إرسال فكرة اللعبة
                           </Button>
-                        </div>
-                        
-                        {/* Placeholders for future steps */}
-                        <div className="flex-grow border border-dashed rounded-md mt-4 flex items-center justify-center">
-                          <p className="text-muted-foreground">
-                            سيظهر هنا معاينة للعبتك عندما نصل للخطوة التالية
-                          </p>
                         </div>
                       </div>
                     )}
                     
-                    {/* Placeholder for remaining steps */}
-                    {activeStepIndex > 1 && (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <p className="text-muted-foreground mb-4">
-                          هذه الخطوة قيد التطوير، وستكون متاحة قريبًا
+                    {/* Placeholder for future implementation */}
+                    {(stage >= MissionStage.PROTOTYPE && stage < MissionStage.COMPLETION) && (
+                      <div className="flex-grow border border-dashed rounded-md flex items-center justify-center">
+                        <p className="text-muted-foreground text-center">
+                          هذه المرحلة من تطوير اللعبة قيد التنفيذ وستكون متاحة قريبًا.
+                          <br /><br />
+                          يمكنك متابعة المحادثة مع د. بنجي للانتقال للخطوة التالية.
                         </p>
-                        
-                        {/* For the demo, let's add a button to complete the step anyway */}
-                        <Button onClick={() => completeCurrentStep()}>
-                          اكمل الخطوة (للعرض التوضيحي)
-                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Completion Message */}
+                    {stage === MissionStage.COMPLETION && (
+                      <div className="flex-grow flex flex-col items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-6xl mb-4">🎮</div>
+                          <h3 className="text-2xl font-bold mb-2">تهانينا!</h3>
+                          <p className="mb-4">لقد أكملت مهمة "لماذا نحب الألعاب؟" بنجاح</p>
+                          <Button 
+                            onClick={handleBackToDashboard}
+                            className="mt-4"
+                          >
+                            العودة إلى لوحة المهام
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -644,7 +685,7 @@ export default function GameDevMission() {
         </div>
       </main>
       
-      {/* Confetti effect when completing a step */}
+      {/* Confetti effect when completing a stage */}
       {showConfetti && <Confetti />}
     </div>
   );
