@@ -96,10 +96,12 @@ export function ImageGenerationStage({
     "image_generation",
     initialState,
   );
-  
+
   // Effect to log the current generation count whenever it changes
   useEffect(() => {
-    console.log(`🔍 CLIENT DEBUG - Current generation count: ${state.generationCount}`);
+    console.log(
+      `🔍 CLIENT DEBUG - Current generation count: ${state.generationCount}`,
+    );
   }, [state.generationCount]);
 
   // Effect to ensure chat is open on mount with a 5-second delay
@@ -126,12 +128,15 @@ export function ImageGenerationStage({
 
     return () => clearTimeout(timer);
   }, [state.messages]);
-  
+
   // Debug logging for image URLs
   useEffect(() => {
     if (state.generatedImageUrl) {
       console.log("🔍 CLIENT DEBUG - Image URL:", state.generatedImageUrl);
-      console.log("🔍 CLIENT DEBUG - Proxy URL:", `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`);
+      console.log(
+        "🔍 CLIENT DEBUG - Proxy URL:",
+        `/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`,
+      );
     }
   }, [state.generatedImageUrl]);
 
@@ -197,8 +202,10 @@ export function ImageGenerationStage({
       console.log(
         `Sending image generation request with ${relevantHistory.length} context messages`,
       );
-      
-      console.log(`🔍 CLIENT DEBUG - Current generation count before API call: ${state.generationCount}`);
+
+      console.log(
+        `🔍 CLIENT DEBUG - Current generation count before API call: ${state.generationCount}`,
+      );
 
       const response = await fetch("/api/ai/image", {
         method: "POST",
@@ -259,7 +266,7 @@ export function ImageGenerationStage({
       });
       return;
     }
-    
+
     // If sharing is in progress, don't allow multiple requests
     if (state.sharingStatus === "sharing") {
       return;
@@ -276,9 +283,9 @@ export function ImageGenerationStage({
     }
 
     // Set sharing status to "sharing" to show loading state
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      sharingStatus: "sharing"
+      sharingStatus: "sharing",
     }));
 
     // Validate the image URL first
@@ -294,11 +301,11 @@ export function ImageGenerationStage({
     // Check if image is valid before proceeding
     const isValid = await validateImage(state.generatedImageUrl);
     if (!isValid) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        sharingStatus: "idle" // Reset sharing status on error
+        sharingStatus: "idle", // Reset sharing status on error
       }));
-      
+
       toast({
         title: "خطأ في الصورة",
         description:
@@ -345,10 +352,10 @@ export function ImageGenerationStage({
       const result = await response.json();
 
       // Update state to indicate sharing is complete and store the image ID
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         sharingStatus: "shared",
-        sharedImageId: result.id
+        sharedImageId: result.id,
       }));
 
       // Award the Image Artist Badge when an image is successfully shared
@@ -360,24 +367,25 @@ export function ImageGenerationStage({
       // Show success toast and track the event
       toast({
         title: "تم مشاركة الصورة!",
-        description: "يمكنك الآن رؤية صورتك في معرض الصور وتم منحك شارة (فنان الصور) 🏆",
+        description:
+          "يمكنك الآن رؤية صورتك في معرض الصور وتم منحك شارة (فنان الصور) 🏆",
         duration: 5000,
       });
 
       trackStageProgress("image_generation", "image_shared_to_gallery", {
         gallery_image_id: result.id,
         student_name: studentName,
-        badge_awarded: "image_artist_badge"
+        badge_awarded: "image_artist_badge",
       });
     } catch (error) {
       console.error("Error sharing image to gallery:", error);
-      
+
       // Reset sharing status on error
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        sharingStatus: "idle"
+        sharingStatus: "idle",
       }));
-      
+
       toast({
         title: "خطأ في المشاركة",
         description: "حدث خطأ أثناء مشاركة الصورة. يرجى المحاولة مرة أخرى.",
@@ -397,7 +405,7 @@ export function ImageGenerationStage({
     e.preventDefault();
 
     if (state.isLoading) return;
-    
+
     // Check if the user has reached the generation limit
     if (state.generationCount >= MAX_GENERATIONS) {
       toast({
@@ -431,13 +439,13 @@ export function ImageGenerationStage({
 
     // Store current prompt before clearing
     const currentPrompt = state.prompt;
-    
+
     // Add user message immediately
     const userMessage: ChatMessage = {
       role: "user",
       content: currentPrompt,
     };
-    
+
     // Add a thinking message from Dr. Pengy immediately
     const thinkingMessage: ChatMessage = {
       role: "assistant",
@@ -468,7 +476,7 @@ export function ImageGenerationStage({
         setState((prev) => {
           // Get messages without the thinking message
           const messagesWithoutThinking = prev.messages.slice(0, -1);
-          
+
           return {
             ...prev,
             messages: [...messagesWithoutThinking, moderationWarning],
@@ -510,7 +518,7 @@ export function ImageGenerationStage({
       setState((prev) => {
         // Get messages without the thinking message
         const messagesWithoutThinking = prev.messages.slice(0, -1);
-        
+
         return {
           ...prev,
           messages: [...messagesWithoutThinking, successMessage],
@@ -556,7 +564,7 @@ export function ImageGenerationStage({
       setState((prev) => {
         // Get messages without the thinking message
         const messagesWithoutThinking = prev.messages.slice(0, -1);
-        
+
         return {
           ...prev,
           messages: [...messagesWithoutThinking, aiErrorMessage],
@@ -580,27 +588,31 @@ export function ImageGenerationStage({
                 تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
                 شارك ابداعك.
               </p>
-              
+
               {/* Image generation counter with visual indicator */}
               <div className="flex flex-col items-center justify-center mt-3">
                 <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full mb-2">
                   <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
                   <span>
-                    الصور المتبقية: <span className="font-bold">{Math.max(0, MAX_GENERATIONS - state.generationCount)}</span> من <span>{MAX_GENERATIONS}</span>
+                    الصور المتبقية:{" "}
+                    <span className="font-bold">
+                      {Math.max(0, MAX_GENERATIONS - state.generationCount)}
+                    </span>{" "}
+                    من <span>{MAX_GENERATIONS}</span>
                   </span>
                 </div>
                 {/* Visual progress bar for generations */}
                 <div className="w-full max-w-xs bg-muted rounded-full h-2.5 mb-1">
-                  <div 
-                    className="bg-primary h-2.5 rounded-full transition-all duration-500" 
+                  <div
+                    className="bg-primary h-2.5 rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.max(0, (MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS * 100)}%`
+                      width: `${Math.max(0, ((MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS) * 100)}%`,
                     }}
                   ></div>
                 </div>
-                
-                {/* Debug button to reset counter - visible for testing */}
-                <button 
+
+                {/* Debug button to reset counter - visible for testing 
+                 <button 
                   className="text-xs bg-gray-100 border border-gray-300 rounded px-2 py-0.5 mt-1 hover:bg-gray-200 cursor-pointer transition-colors"
                   onClick={() => {
                     setState(prev => ({...prev, generationCount: 0}));
@@ -614,6 +626,7 @@ export function ImageGenerationStage({
                 >
                   إعادة ضبط العداد (للاختبار)
                 </button>
+                */}
               </div>
             </div>
 
@@ -626,14 +639,19 @@ export function ImageGenerationStage({
                     <div className="flex gap-2">
                       <Button
                         onClick={handleShareToGallery}
-                        variant={state.sharingStatus === "idle" ? "default" : "outline"}
+                        variant={
+                          state.sharingStatus === "idle" ? "default" : "outline"
+                        }
                         size="sm"
                         className={`flex items-center gap-1 text-xs ${
-                          state.sharingStatus === "idle" 
-                            ? "animate-pulse bg-amber-500 hover:bg-amber-600 shadow-md" 
+                          state.sharingStatus === "idle"
+                            ? "animate-pulse bg-amber-500 hover:bg-amber-600 shadow-md"
                             : ""
                         }`}
-                        disabled={state.sharingStatus === "sharing" || state.sharingStatus === "shared"}
+                        disabled={
+                          state.sharingStatus === "sharing" ||
+                          state.sharingStatus === "shared"
+                        }
                       >
                         {state.sharingStatus === "sharing" ? (
                           <>
@@ -663,13 +681,17 @@ export function ImageGenerationStage({
                       </Button>
                     </div>
                   </div>
-{/* Client debug logging is in a useEffect outside the render function */}
+                  {/* Client debug logging is in a useEffect outside the render function */}
                   <img
-                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl || '')}`}
+                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl || "")}`}
                     alt="AI Generated Image"
                     className="max-w-full h-auto rounded"
-                    onError={(e) => console.error("🔍 CLIENT DEBUG - Image load error:", e)}
-                    onLoad={() => console.log("🔍 CLIENT DEBUG - Image loaded successfully")}
+                    onError={(e) =>
+                      console.error("🔍 CLIENT DEBUG - Image load error:", e)
+                    }
+                    onLoad={() =>
+                      console.log("🔍 CLIENT DEBUG - Image loaded successfully")
+                    }
                   />
                 </div>
               ) : (
@@ -801,9 +823,11 @@ export function ImageGenerationStage({
 
                     <form onSubmit={handleSubmit} className="flex gap-2">
                       <Textarea
-                        placeholder={state.generationCount >= MAX_GENERATIONS 
-                          ? "لقد وصلت للحد الأقصى للصور المسموح بها." 
-                          : "صف الصورة التي تريد إنشاءها..."}
+                        placeholder={
+                          state.generationCount >= MAX_GENERATIONS
+                            ? "لقد وصلت للحد الأقصى للصور المسموح بها."
+                            : "صف الصورة التي تريد إنشاءها..."
+                        }
                         value={state.prompt}
                         onChange={(e) =>
                           setState((prev) => ({
@@ -818,7 +842,11 @@ export function ImageGenerationStage({
                       <Button
                         type="submit"
                         size="icon"
-                        disabled={state.isLoading || !state.prompt.trim() || state.generationCount >= MAX_GENERATIONS}
+                        disabled={
+                          state.isLoading ||
+                          !state.prompt.trim() ||
+                          state.generationCount >= MAX_GENERATIONS
+                        }
                         className="self-end h-10 w-10"
                       >
                         {state.isLoading ? (
@@ -841,8 +869,14 @@ export function ImageGenerationStage({
             <Button
               onClick={onComplete}
               size="lg"
-              disabled={!state.generatedImageUrl || state.sharingStatus !== "shared"}
-              className={state.sharingStatus === "shared" ? "bg-green-600 hover:bg-green-700" : ""}
+              disabled={
+                !state.generatedImageUrl || state.sharingStatus !== "shared"
+              }
+              className={
+                state.sharingStatus === "shared"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : ""
+              }
             >
               <span>المتابعة</span>
               <ArrowLeft className="mr-2 h-4 w-4" />
