@@ -31,6 +31,7 @@ interface AssistantResponse {
   html: string;
   message: AssistantMessage;
   isGeneratingHTML: boolean;
+  additionalFeatures?: string[];
   error?: string;
 }
 

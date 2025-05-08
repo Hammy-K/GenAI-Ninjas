@@ -583,6 +583,7 @@ export function HTMLGeneratorStage({
       hasSharedLink: false, // Reset the shared link flag
       showShareDialog: false,
       showResetDialog: false,
+      additionalFeatures: [], // Clear additional features when starting a new project
     }));
     
     // Track this for analytics
@@ -816,6 +817,20 @@ export function HTMLGeneratorStage({
 
               {/* Chat Messages Area */}
               <div className="flex-grow border-x overflow-hidden relative">
+                {/* Additional Features Box */}
+                {state.additionalFeatures && state.additionalFeatures.length > 0 && (
+                  <div className="p-4 pb-0">
+                    <div className="bg-blue-50 border border-blue-100 rounded-md p-3">
+                      <h3 className="text-sm font-medium text-blue-800 mb-2">ميزات إضافية يمكن إضافتها:</h3>
+                      <ul className="list-disc list-inside text-xs text-blue-700 space-y-1 mr-1">
+                        {state.additionalFeatures.map((feature, index) => (
+                          <li key={index}>{feature}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                
                 <ScrollArea className="h-[calc(100vh-400px)]">
                   <div className="p-4 space-y-4">
                     {state.messages.map((msg, i) => (
