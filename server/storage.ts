@@ -8,6 +8,7 @@ import {
   appBuilderProgress,
   appBuilderSubmissions,
   appBuilderChatHistory,
+  htmlProjects,
   type User, 
   type InsertUser, 
   type Quest, 
@@ -25,7 +26,9 @@ import {
   type AppBuilderSubmission,
   type InsertAppBuilderSubmission,
   type AppBuilderChatHistory,
-  type InsertAppBuilderChatHistory
+  type InsertAppBuilderChatHistory,
+  type HtmlProject,
+  type InsertHtmlProject
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, lt, gt } from "drizzle-orm";
@@ -78,6 +81,11 @@ export interface IStorage {
   getAppBuilderChatHistoryByProgressId(progressId: number): Promise<AppBuilderChatHistory[]>;
   getAppBuilderChatHistoryByStep(progressId: number, stepNumber: number): Promise<AppBuilderChatHistory[]>;
   createAppBuilderChatMessage(message: InsertAppBuilderChatHistory): Promise<AppBuilderChatHistory>;
+  
+  // HTML Project methods
+  getHtmlProjectByProjectId(projectId: string): Promise<HtmlProject | undefined>;
+  createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject>;
+  updateHtmlProject(projectId: string, html: string): Promise<HtmlProject | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -402,6 +410,38 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return newMessage;
+  }
+
+  // HTML Project methods
+  async getHtmlProjectByProjectId(projectId: string): Promise<HtmlProject | undefined> {
+    const [project] = await db
+      .select()
+      .from(htmlProjects)
+      .where(eq(htmlProjects.projectId, projectId));
+    
+    return project || undefined;
+  }
+  
+  async createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject> {
+    const [newProject] = await db
+      .insert(htmlProjects)
+      .values(project)
+      .returning();
+    
+    return newProject;
+  }
+  
+  async updateHtmlProject(projectId: string, html: string): Promise<HtmlProject | undefined> {
+    const [updatedProject] = await db
+      .update(htmlProjects)
+      .set({
+        html,
+        updatedAt: new Date()
+      })
+      .where(eq(htmlProjects.projectId, projectId))
+      .returning();
+    
+    return updatedProject || undefined;
   }
 }
 

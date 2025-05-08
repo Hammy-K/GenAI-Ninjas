@@ -1,11 +1,13 @@
 /**
- * Firebase Routes
- * Handles all Firebase-related operations including project saving and loading
+ * Project Routes
+ * Handles all project operations including HTML storage in Neon DB
+ * (formerly Firebase Firestore operations)
  */
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import { logEvent, logError } from '../services/logging';
 import { z } from 'zod';
+import { storage } from '../storage';
 
 // Validation schemas
 const saveProjectSchema = z.object({
@@ -17,15 +19,16 @@ const loadProjectSchema = z.object({
 });
 
 export function registerFirebaseRoutes(router: Router) {
-  const firebaseRoutes = Router();
+  // Keep function name for backward compatibility, but update the routes
+  const projectRoutes = Router();
 
   // Firebase test routes endpoint
-  firebaseRoutes.get("/firebase-test", (req: Request, res: Response) => {
+  projectRoutes.get("/firebase-test", (req: Request, res: Response) => {
     res.sendFile("firebase-web-test.html", { root: path.resolve() });
   });
 
-  // Save project to Firebase
-  firebaseRoutes.post("/save-project", async (req: Request, res: Response) => {
+  // Save project to database
+  projectRoutes.post("/save-project", async (req: Request, res: Response) => {
     try {
       // Validate request with Zod
       const validation = saveProjectSchema.safeParse(req.body);
@@ -58,8 +61,8 @@ export function registerFirebaseRoutes(router: Router) {
     }
   });
 
-  // Load project from Firebase
-  firebaseRoutes.get("/load-project/:projectId", async (req: Request, res: Response) => {
+  // Load project from database
+  projectRoutes.get("/load-project/:projectId", async (req: Request, res: Response) => {
     try {
       const { projectId } = req.params;
       
@@ -99,6 +102,6 @@ export function registerFirebaseRoutes(router: Router) {
     }
   });
 
-  // Mount firebase routes
-  router.use('/', firebaseRoutes);
+  // Mount project routes
+  router.use('/', projectRoutes);
 }
