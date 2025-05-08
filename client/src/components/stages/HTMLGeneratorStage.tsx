@@ -118,7 +118,7 @@ export function HTMLGeneratorStage({
     hasEarnedXp: false,
     hasUnlockedBadge: false,
     viewMode: "preview",
-    isChatOpen: false, // Start with chat closed, will open after delay
+    isChatOpen: true, // Chat is always visible in the new layout
     projectId: null,
     isSaving: false,
     shareUrl: null,
@@ -138,7 +138,6 @@ export function HTMLGeneratorStage({
         const parsedState = JSON.parse(savedState);
 
         // Force reset isSaving to false and any error messages on component mount
-        // And ensure the chat is always open on first visit, even if previously closed
         console.log(
           "Ensuring clean state on mount - previous isSaving:",
           parsedState.isSaving,
@@ -148,15 +147,10 @@ export function HTMLGeneratorStage({
           ...parsedState,
           isSaving: false,
           error: "",
-          isChatOpen: false, // Start with chat closed, will open after delay
+          isChatOpen: true, // Chat is always visible in new layout
         };
 
         localStorage.setItem(storageKey, JSON.stringify(cleanState));
-
-        // Force chat open regardless of saved state with a 5-second delay
-        setTimeout(() => {
-          setState((prev) => ({ ...prev, isChatOpen: true }));
-        }, 5000);
       }
     } catch (e) {
       console.error("Error checking saved state:", e);
@@ -173,17 +167,6 @@ export function HTMLGeneratorStage({
 
   // Initialize toast hook for notifications
   const { toast } = useToast();
-
-  // Effect to ensure chat is open on mount with a 5-second delay
-  useEffect(() => {
-    // Force the chat to be open on component mount after a 5-second delay
-    const timer = setTimeout(() => {
-      setState((prev) => ({ ...prev, isChatOpen: true }));
-    }, 5000);
-
-    // Clean up the timer if component unmounts before the delay completes
-    return () => clearTimeout(timer);
-  }, []);
 
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -289,13 +272,11 @@ export function HTMLGeneratorStage({
       };
 
       // Update state with the AI response and HTML
-      // Only collapse the chat UI when generating HTML (not when asking clarifying questions)
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
         currentHTML: response.html,
         isLoading: false,
-        isChatOpen: !response.isGeneratingHTML, // Only close chat when we're showing HTML, not when asking questions
       }));
 
       // Award XP for receiving a response if not already awarded
@@ -361,11 +342,6 @@ export function HTMLGeneratorStage({
         has_shared_link: state.hasSharedLink
       });
     }
-  };
-
-  // Handle toggling the chat widget
-  const toggleChat = () => {
-    setState((prev) => ({ ...prev, isChatOpen: !prev.isChatOpen }));
   };
 
   // Check if project ID is in URL (for shared projects)
@@ -496,11 +472,11 @@ export function HTMLGeneratorStage({
 
       console.log("Project saved with ID:", projectId);
 
-      // Create share URL
+      // Create a shareable URL using the current hostname
       const shareUrl = `${window.location.origin}/project/${projectId}`;
-      console.log("Share URL created:", shareUrl);
+      console.log("Share URL:", shareUrl);
 
-      // Update state with project info
+      // Update state with project ID and share URL
       setState((prev) => ({
         ...prev,
         projectId,
@@ -509,80 +485,70 @@ export function HTMLGeneratorStage({
         showShareDialog: true,
       }));
 
-      // Award XP and badge for saving project if not already awarded
+      // Award badge for saving project if not already awarded
       if (
-        awardIfNotAlreadyAwarded(onEarnXp, 15, "html_generator_save_project")
+        !isAlreadyAwarded("project_saved", "ai_coder_badge") &&
+        !state.hasUnlockedBadge
       ) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-      }
-
-      // Award the AI-Coder badge when project is saved
-      if (
-        !state.hasUnlockedBadge &&
-        !isAlreadyAwarded("project_saving", "ai_coder_badge")
-      ) {
-        onUnlockBadge("ai_coder_badge", "project_saving");
-        markAsAwarded("project_saving", "ai_coder_badge");
-        setState((prev) => ({
-          ...prev,
-          hasUnlockedBadge: true,
-        }));
-      }
-    } catch (error: any) {
-      console.error("Unexpected error in saveAndShareProject:", error);
-
-      // Ensure loading state is always cleared
-      setState((prev) => ({
-        ...prev,
-        error:
-          error instanceof Error ? error.message : "Failed to save project",
-        isSaving: false,
-      }));
-    } finally {
-      // Double-ensure the saving state is cleared in case of any errors
-      setTimeout(() => {
-        setState((prev) => {
-          if (prev.isSaving) {
-            console.log("Clearing stuck saving state via setTimeout");
-            return { ...prev, isSaving: false };
-          }
-          return prev;
+        onEarnXp(50, "project_saved");
+        
+        // Track the project saving event
+        trackStageProgress("html_generator", "project_saved", {
+          project_id: projectId,
+          has_html: Boolean(state.currentHTML),
         });
-      }, 15000); // 15 second backup timeout
+      }
+    } catch (error) {
+      console.error("Error saving project:", error);
+
+      // Attempt to save to localStorage as backup on error
+      try {
+        const backupKey = `html_backup_${Date.now()}`;
+        localStorage.setItem(backupKey, state.currentHTML);
+        console.log("HTML content backed up to localStorage with key:", backupKey);
+      } catch (backupError) {
+        console.error("Failed to backup HTML to localStorage:", backupError);
+      }
+
+      // Reset saving state but don't clear any existing project info
+      setState((prev) => {
+        if (error instanceof Error) {
+          return { 
+            ...prev, 
+            error: error.message, 
+            isSaving: false 
+          };
+        }
+        return { ...prev, isSaving: false };
+      });
     }
   };
 
-  // Removed utility function that was causing errors
-
-  // Copy share URL to clipboard
+  // Copy the share URL to clipboard
   const copyShareUrl = () => {
     if (!state.shareUrl) return;
 
     navigator.clipboard
       .writeText(state.shareUrl)
       .then(() => {
-        // Set hasSharedLink to true to enable progression
         setState((prev) => ({
           ...prev,
-          hasSharedLink: true
+          hasSharedLink: true,
         }));
-        
-        // Track this action
-        trackStageProgress("html_generator", "project_link_copied", {
-          project_id: state.projectId
-        });
-        
-        // Show minimalist toast notification
+
         toast({
-          description: "Copied to clipboard",
-          duration: 2000,
-          className: "bg-green-50 text-green-800 border-green-200",
+          title: "تم نسخ الرابط",
+          description: "يمكنك الآن مشاركة المشروع مع الآخرين!",
+          duration: 3000,
         });
 
-        // Award the AI-Coder badge when the user copies the share URL
+        // Track this event
+        trackStageProgress("html_generator", "link_copied", {
+          project_id: state.projectId,
+        });
+
+        // Award badge if not already awarded
         if (
-          !state.hasUnlockedBadge &&
           !isAlreadyAwarded("project_sharing", "ai_coder_badge")
         ) {
           onUnlockBadge("ai_coder_badge", "project_sharing");
@@ -688,21 +654,24 @@ export function HTMLGeneratorStage({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>بدء مشروع جديد؟</DialogTitle>
+            <DialogTitle>بدء مشروع جديد</DialogTitle>
             <DialogDescription>
-              سيؤدي هذا إلى حذف مشروعك الحالي وسجل المحادثة. تأكد من حفظ عملك
-              إذا كنت ترغب في الاحتفاظ به.
+              هل أنت متأكد من أنك تريد البدء من جديد؟ سيؤدي هذا إلى حذف الكود الحالي.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-center gap-2 mt-4">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            <p className="text-sm text-muted-foreground">
-              لا يمكن التراجع عن هذا الإجراء.
-            </p>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+          <DialogFooter className="sm:justify-start mt-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                startNewProject();
+                setState((prev) => ({ ...prev, showResetDialog: false }));
+              }}
+            >
+              <Plus className="ml-2 h-4 w-4" />
+              <span>بدء مشروع جديد</span>
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -712,21 +681,10 @@ export function HTMLGeneratorStage({
             >
               إلغاء
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                startNewProject();
-                setState((prev) => ({ ...prev, showResetDialog: false }));
-              }}
-            >
-              بدء مشروع جديد
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Header */}
       <div className="py-6 border-b bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
@@ -750,70 +708,70 @@ export function HTMLGeneratorStage({
                   {state.viewMode === "preview" ? "معاينة مباشرة" : "كود HTML"}
                 </span>
 
-            {state.currentHTML && (
-              <div className="flex items-center gap-2">
-                <div className="flex border rounded overflow-hidden">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={
-                      state.viewMode === "preview" ? "default" : "outline"
-                    }
-                    className="rounded-none px-3 py-1 h-8 text-xs"
-                    onClick={() =>
-                      setState((prev) => ({ ...prev, viewMode: "preview" }))
-                    }
-                  >
-                    معاينة
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={state.viewMode === "code" ? "default" : "outline"}
-                    className="rounded-none px-3 py-1 h-8 text-xs"
-                    onClick={() =>
-                      setState((prev) => ({ ...prev, viewMode: "code" }))
-                    }
-                  >
-                    الكود
-                  </Button>
-                </div>
+                {state.currentHTML && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex border rounded overflow-hidden">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={
+                          state.viewMode === "preview" ? "default" : "outline"
+                        }
+                        className="rounded-none px-3 py-1 h-8 text-xs"
+                        onClick={() =>
+                          setState((prev) => ({ ...prev, viewMode: "preview" }))
+                        }
+                      >
+                        معاينة
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={state.viewMode === "code" ? "default" : "outline"}
+                        className="rounded-none px-3 py-1 h-8 text-xs"
+                        onClick={() =>
+                          setState((prev) => ({ ...prev, viewMode: "code" }))
+                        }
+                      >
+                        الكود
+                      </Button>
+                    </div>
 
-                {/* Project Actions */}
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant={state.currentHTML && !state.projectId ? "default" : "outline"}
-                    className={`h-8 flex items-center gap-1 text-xs ${state.currentHTML && !state.projectId ? "animate-pulse" : ""}`}
-                    onClick={saveAndShareProject}
-                    disabled={state.isSaving}
-                  >
-                    {state.isSaving ? (
-                      <>
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        جاري الحفظ...
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="h-3 w-3" />
-                        حفظ ومشاركة
-                      </>
-                    )}
-                  </Button>
+                    {/* Project Actions */}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant={state.currentHTML && !state.projectId ? "default" : "outline"}
+                        className={`h-8 flex items-center gap-1 text-xs ${state.currentHTML && !state.projectId ? "animate-pulse" : ""}`}
+                        onClick={saveAndShareProject}
+                        disabled={state.isSaving}
+                      >
+                        {state.isSaving ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            جاري الحفظ...
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="h-3 w-3" />
+                            حفظ ومشاركة
+                          </>
+                        )}
+                      </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 flex items-center gap-1 text-xs"
-                    onClick={confirmReset}
-                  >
-                    <Plus className="h-3 w-3" />
-                    مشروع جديد
-                  </Button>
-                </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 flex items-center gap-1 text-xs"
+                        onClick={confirmReset}
+                      >
+                        <Plus className="h-3 w-3" />
+                        مشروع جديد
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
               <div className="flex-grow bg-white h-full border-x border-b rounded-b">
                 {!state.currentHTML ? (
@@ -914,7 +872,7 @@ export function HTMLGeneratorStage({
               </div>
 
               {/* Input Area */}
-              <div className="border rounded-b p-3">
+              <div className="border-x border-b rounded-b p-3">
                 {state.error && (
                   <Alert variant="destructive" className="mb-3 py-2">
                     <AlertCircle className="h-3 w-3" />

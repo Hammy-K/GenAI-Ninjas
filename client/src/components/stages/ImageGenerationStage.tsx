@@ -28,9 +28,6 @@ import { validateInput } from "@/lib/inputFilter";
 import { trackStageProgress } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-// Import the OpenAI utilities
-import OpenAI from "openai";
-
 // Define the component props
 interface ImageGenerationStageProps {
   onComplete: () => void;
@@ -85,7 +82,7 @@ export function ImageGenerationStage({
     error: "",
     hasEarnedXp: false,
     hasUnlockedBadge: false,
-    isChatOpen: false, // Start with chat closed, will open after delay
+    isChatOpen: true, // Always open in the side-by-side layout
     sharingStatus: "idle", // Start in idle state for sharing
     sharedImageId: undefined,
     generationCount: 0, // Initialize counter for image generations
@@ -103,17 +100,6 @@ export function ImageGenerationStage({
       `🔍 CLIENT DEBUG - Current generation count: ${state.generationCount}`,
     );
   }, [state.generationCount]);
-
-  // Effect to ensure chat is open on mount with a 5-second delay
-  useEffect(() => {
-    // Force the chat to be open on component mount after a 5-second delay
-    const timer = setTimeout(() => {
-      setState((prev) => ({ ...prev, isChatOpen: true }));
-    }, 5000);
-
-    // Clean up the timer if component unmounts before the delay completes
-    return () => clearTimeout(timer);
-  }, []);
 
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -139,11 +125,6 @@ export function ImageGenerationStage({
       );
     }
   }, [state.generatedImageUrl]);
-
-  // Toggle chat open/closed
-  const toggleChat = () => {
-    setState((prev) => ({ ...prev, isChatOpen: !prev.isChatOpen }));
-  };
 
   // Check if the content is appropriate using moderation API
   const checkContentModeration = async (text: string): Promise<boolean> => {
@@ -395,8 +376,6 @@ export function ImageGenerationStage({
     }
   };
 
-  // No longer needed - removing the getMentoringResponse function
-
   // Maximum number of allowed image generations per user
   const MAX_GENERATIONS = 3;
 
@@ -513,38 +492,46 @@ export function ImageGenerationStage({
         content: successMessageContent,
       };
 
-      // Update state with the image and message, and reset sharing status since this is a new image
-      // Also collapse the chat UI to focus on the generated image
+      // Update state with the image and message, and remove the thinking message
       setState((prev) => {
         // Get messages without the thinking message
         const messagesWithoutThinking = prev.messages.slice(0, -1);
+
+        // Increment the generation count
+        const newGenerationCount = prev.generationCount + 1;
 
         return {
           ...prev,
           messages: [...messagesWithoutThinking, successMessage],
           generatedImageUrl: imageUrl,
           isLoading: false,
-          isChatOpen: false, // Collapse the chat to focus on the generated image
+          generationCount: newGenerationCount,
           sharingStatus: "idle", // Reset sharing status for the new image
-          sharedImageId: undefined, // Clear any previously shared image ID
-          generationCount: prev.generationCount + 1, // Increment the generation counter
         };
       });
 
-      // Award XP when an image is successfully generated, but don't award a badge yet
-      // The badge will be awarded when the student shares the image
-      onEarnXp(30, "image_generation_complete");
+      // Award XP and track the image generation event
+      if (state.generationCount === 0) {
+        // This is the first image generation, so award XP
+        onEarnXp(30, "first_image_generated");
+        
+        // Track this specific event
+        trackStageProgress("image_generation", "first_image_generated", {
+          image_url_length: imageUrl.length,
+        });
+      }
 
-      // Mark as awarded in this session's state
-      setState((prev) => ({
-        ...prev,
-        hasEarnedXp: true,
-        hasUnlockedBadge: true,
-      }));
+      // Track all image generations
+      trackStageProgress("image_generation", "image_generated", {
+        generation_count: state.generationCount + 1,
+        image_url_length: imageUrl.length,
+      });
+
     } catch (error) {
-      // Handle errors
-      const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
+      console.error("Error generating image:", error);
+
+      // Create an error message
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
 
       // First update to clear loading state
       setState((prev) => ({
@@ -560,7 +547,7 @@ export function ImageGenerationStage({
           "عفواً، واجهنا مشكلة أثناء إنشاء الصورة. يرجى المحاولة مرة أخرى بوصف مختلف.",
       };
 
-      // Then replace the thinking message with the error message
+      // Then replace the thinking message with an error message
       setState((prev) => {
         // Get messages without the thinking message
         const messagesWithoutThinking = prev.messages.slice(0, -1);
@@ -574,69 +561,73 @@ export function ImageGenerationStage({
   };
 
   return (
-    <div className="image-generation-stage">
-      <div className="max-w-6xl mx-auto">
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl text-center">
-              صمم صور باستخدام الذكاء الاصطناعي
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center mb-6">
-              <p>
-                تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
-                شارك ابداعك.
-              </p>
-
-              {/* Image generation counter with visual indicator */}
-              <div className="flex flex-col items-center justify-center mt-3">
-                <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full mb-2">
-                  <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                  <span>
-                    الصور المتبقية:{" "}
-                    <span className="font-bold">
-                      {Math.max(0, MAX_GENERATIONS - state.generationCount)}
-                    </span>{" "}
-                    من <span>{MAX_GENERATIONS}</span>
-                  </span>
-                </div>
-                {/* Visual progress bar for generations */}
-                <div className="w-full max-w-xs bg-muted rounded-full h-2.5 mb-1">
-                  <div
-                    className="bg-primary h-2.5 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.max(0, ((MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS) * 100)}%`,
-                    }}
-                  ></div>
-                </div>
-
-                {/* Debug button to reset counter - visible for testing 
-                 <button 
-                  className="text-xs bg-gray-100 border border-gray-300 rounded px-2 py-0.5 mt-1 hover:bg-gray-200 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setState(prev => ({...prev, generationCount: 0}));
-                    console.log('🔍 CLIENT DEBUG - Reset generation counter to 0');
-                    toast({
-                      title: "تم إعادة ضبط العداد",
-                      description: "تم إعادة ضبط عداد إنشاء الصور إلى 0 للاختبار",
-                      duration: 3000,
-                    });
-                  }}
-                >
-                  إعادة ضبط العداد (للاختبار)
-                </button>
-                */}
-              </div>
+    <div className="image-generation-stage min-h-screen flex flex-col">
+      <div className="py-6 border-b bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
+            <Wand2 className="h-6 w-6 text-purple-500" />
+            صمم صور باستخدام الذكاء الاصطناعي
+          </h1>
+          <p className="text-center text-muted-foreground mt-2">
+            تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
+            شارك ابداعك.
+          </p>
+          
+          {/* Image generation counter with visual indicator */}
+          <div className="flex flex-col items-center justify-center mt-3">
+            <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full mb-2">
+              <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+              <span>
+                الصور المتبقية:{" "}
+                <span className="font-bold">
+                  {Math.max(0, MAX_GENERATIONS - state.generationCount)}
+                </span>{" "}
+                من <span>{MAX_GENERATIONS}</span>
+              </span>
             </div>
+            {/* Visual progress bar for generations */}
+            <div className="w-full max-w-xs bg-muted rounded-full h-2.5 mb-1">
+              <div
+                className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.max(0, ((MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS) * 100)}%`,
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Image Display Area */}
-            <div className="mb-6 flex justify-center">
-              {state.generatedImageUrl ? (
-                <div className="border rounded p-4 max-w-2xl">
-                  <div className="mb-4 text-center font-medium flex items-center justify-between">
-                    <span>الصورة التي تم إنشاؤها</span>
-                    <div className="flex gap-2">
+      {/* Main Content Area - Two Columns Layout */}
+      <div className="flex-grow p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row h-[calc(100vh-250px)]">
+            {/* Left Column: Image Preview - 70% width */}
+            <div className="w-full md:w-[70%] h-full mb-4 md:mb-0 md:pr-2">
+              <div className="bg-gray-100 border rounded-t px-4 py-2 flex items-center">
+                <span className="font-medium text-sm">معاينة الصورة</span>
+              </div>
+
+              <div className="flex-grow bg-white h-full border-x border-b rounded-b p-4 flex flex-col items-center justify-center">
+                {state.generatedImageUrl ? (
+                  <div className="flex flex-col items-center">
+                    <div className="mb-4 overflow-hidden rounded border shadow-sm">
+                      <img
+                        src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`}
+                        alt="صورة منشأة بالذكاء الاصطناعي"
+                        className="max-w-full max-h-[500px] object-contain"
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        onClick={handleDownloadImage}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <Download className="h-3 w-3" />
+                        تنزيل الصورة
+                      </Button>
                       <Button
                         onClick={handleShareToGallery}
                         variant={
@@ -648,241 +639,178 @@ export function ImageGenerationStage({
                             ? "animate-pulse bg-amber-500 hover:bg-amber-600 shadow-md"
                             : ""
                         }`}
-                        disabled={
-                          state.sharingStatus === "sharing" ||
-                          state.sharingStatus === "shared"
-                        }
+                        disabled={state.sharingStatus !== "idle"}
                       >
                         {state.sharingStatus === "sharing" ? (
                           <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin ml-1" />
                             جاري المشاركة...
                           </>
                         ) : state.sharingStatus === "shared" ? (
                           <>
-                            <div className="text-green-500 h-3 w-3">✓</div>
-                            تمت المشاركة
+                            <Share2 className="h-3 w-3 ml-1" />
+                            تمت المشاركة! ✓
                           </>
                         ) : (
                           <>
-                            <Share2 className="h-3 w-3" />
-                            مشاركة في المعرض
+                            <Share2 className="h-3 w-3 ml-1" />
+                            مشاركة إلى المعرض
                           </>
                         )}
                       </Button>
-                      <Button
-                        onClick={handleDownloadImage}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1 text-xs"
-                      >
-                        <Download className="h-3 w-3" />
-                        حفظ الصورة
-                      </Button>
                     </div>
                   </div>
-                  {/* Client debug logging is in a useEffect outside the render function */}
-                  <img
-                    src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl || "")}`}
-                    alt="AI Generated Image"
-                    className="max-w-full h-auto rounded"
-                    onError={(e) =>
-                      console.error("🔍 CLIENT DEBUG - Image load error:", e)
-                    }
-                    onLoad={() =>
-                      console.log("🔍 CLIENT DEBUG - Image loaded successfully")
-                    }
-                  />
-                </div>
-              ) : (
-                <div className="border rounded p-8 max-w-2xl w-full flex items-center justify-center min-h-[300px] bg-gray-50">
-                  <div className="text-center text-gray-400">
-                    <Image className="h-16 w-16 mx-auto opacity-20 mb-4" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
+                    <Image className="w-16 h-16 mb-2 text-gray-300" />
                     <p>ستظهر الصورة التي أنشأها الذكاء الاصطناعي هنا</p>
                     <p className="text-xs mt-2">دردش مع د. بنجي لإنشاء صورة</p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            {/* Floating Chat Widget */}
-            <div
-              className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out 
-                         ${state.isChatOpen ? "w-80 sm:w-96 h-[500px] scale-100 opacity-100" : "w-16 h-16 scale-95 opacity-95"}`}
-            >
-              {/* Chat Widget Button (When Closed) */}
-              {!state.isChatOpen && (
-                <Button
-                  onClick={toggleChat}
-                  size="icon"
-                  className="w-16 h-16 flex items-center justify-center p-0 overflow-hidden bg-transparent"
-                >
+            {/* Right Column: Chat Thread - 30% width */}
+            <div className="w-full md:w-[30%] h-full md:pl-2 flex flex-col">
+              <div className="rounded-t bg-gray-100 border-t border-r border-l px-4 py-3 flex items-center">
+                <div className="flex items-center">
                   <img
                     src={penguinAvatar}
                     alt="د. بنجي"
-                    className="w-16 h-16 object-contain"
+                    className="h-6 w-6 ml-2"
                   />
-                </Button>
-              )}
+                  <span className="font-medium text-sm">دردشة مع د. بنجي</span>
+                </div>
+              </div>
 
-              {/* Chat Widget Panel (When Open) */}
-              {state.isChatOpen && (
-                <div className="flex flex-col h-full overflow-hidden bg-white border rounded-md shadow-xl">
-                  {/* Chat Header */}
-                  <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <img
-                        src={penguinAvatar}
-                        alt="د. بنجي"
-                        className="h-6 w-6 mr-2"
-                      />
-                      <span className="font-medium text-sm">
-                        دردش مع د. بنجي
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={toggleChat}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Chat Messages */}
-                  <ScrollArea className="flex-grow p-4">
-                    <div className="space-y-4">
-                      {state.messages.map((msg, i) => (
-                        <div
-                          key={i}
-                          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`p-3 rounded-lg ${
-                              msg.role === "user"
-                                ? "bg-primary text-primary-foreground ml-6"
-                                : "bg-amber-50 border border-amber-100 mr-6"
-                            }`}
-                          >
-                            <div className="flex items-center mb-2">
-                              {msg.role === "user" ? (
-                                <div className="font-medium text-xs">أنت</div>
-                              ) : (
-                                <div className="flex items-center">
-                                  <img
-                                    src={penguinAvatar}
-                                    alt="د. بنجي"
-                                    className="h-5 w-5 mr-1.5"
-                                  />
-                                  <div className="font-medium text-xs">
-                                    د. بنجي
-                                  </div>
-                                </div>
-                              )}
+              {/* Chat Messages Area */}
+              <div className="flex-grow border-x overflow-hidden relative">
+                <ScrollArea className="h-[calc(100vh-400px)]">
+                  <div className="p-4 space-y-4">
+                    {state.messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded-lg ${
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground ml-6"
+                            : "bg-amber-50 border border-amber-100 mr-6"
+                        }`}
+                      >
+                        <div className="flex items-center mb-2">
+                          {msg.role === "user" ? (
+                            <div className="font-medium text-xs">أنت</div>
+                          ) : (
+                            <div className="flex items-center">
+                              <img
+                                src={penguinAvatar}
+                                alt="د. بنجي"
+                                className="h-5 w-5 ml-1.5"
+                              />
+                              <div className="font-medium text-xs">د. بنجي</div>
                             </div>
-                            <div className="whitespace-pre-wrap text-xs">
-                              {msg.content}
-                            </div>
-                          </div>
+                          )}
                         </div>
-                      ))}
-
-                      {state.isLoading && (
-                        <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
-                          <div className="flex items-center mb-2">
-                            <img
-                              src={penguinAvatar}
-                              alt="د. بنجي"
-                              className="h-5 w-5 mr-1.5"
-                            />
-                            <div className="font-medium text-xs">د. بنجي</div>
-                          </div>
-                          <div className="flex items-center text-xs">
-                            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                            جاري الإنشاء...
-                          </div>
+                        <div className="whitespace-pre-wrap text-xs">
+                          {msg.content}
                         </div>
-                      )}
+                      </div>
+                    ))}
 
-                      <div ref={chatEndRef} />
-                    </div>
-                  </ScrollArea>
-
-                  {/* Input Area */}
-                  <div className="border-t p-3">
-                    {state.error && (
-                      <Alert variant="destructive" className="mb-3 py-2">
-                        <AlertCircle className="h-3 w-3" />
-                        <AlertTitle className="text-xs">خطأ</AlertTitle>
-                        <AlertDescription className="text-xs">
-                          {state.error}
-                        </AlertDescription>
-                      </Alert>
+                    {state.isLoading && (
+                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
+                        <div className="flex items-center mb-2">
+                          <img
+                            src={penguinAvatar}
+                            alt="د. بنجي"
+                            className="h-5 w-5 ml-1.5"
+                          />
+                          <div className="font-medium text-xs">د. بنجي</div>
+                        </div>
+                        <div className="flex items-center text-xs">
+                          <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                          جاري التفكير...
+                        </div>
+                      </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="flex gap-2">
-                      <Textarea
-                        placeholder={
-                          state.generationCount >= MAX_GENERATIONS
-                            ? "لقد وصلت للحد الأقصى للصور المسموح بها."
-                            : "صف الصورة التي تريد إنشاءها..."
-                        }
-                        value={state.prompt}
-                        onChange={(e) =>
-                          setState((prev) => ({
-                            ...prev,
-                            prompt: e.target.value,
-                          }))
-                        }
-                        className="min-h-[80px] text-sm flex-grow resize-none"
-                        dir="auto" // Auto-detect text direction for RTL support
-                        disabled={state.generationCount >= MAX_GENERATIONS}
-                      />
-                      <Button
-                        type="submit"
-                        size="icon"
-                        disabled={
-                          state.isLoading ||
-                          !state.prompt.trim() ||
-                          state.generationCount >= MAX_GENERATIONS
-                        }
-                        className="self-end h-10 w-10"
-                      >
-                        {state.isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </form>
+                    <div ref={chatEndRef} />
                   </div>
-                </div>
-              )}
+                </ScrollArea>
+              </div>
+
+              {/* Input Area */}
+              <div className="border-x border-b rounded-b p-3">
+                {state.error && (
+                  <Alert variant="destructive" className="mb-3 py-2">
+                    <AlertCircle className="h-3 w-3" />
+                    <AlertTitle className="text-xs">خطأ</AlertTitle>
+                    <AlertDescription className="text-xs">
+                      {state.error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                  <Textarea
+                    value={state.prompt}
+                    onChange={(e) =>
+                      setState((prev) => ({ ...prev, prompt: e.target.value }))
+                    }
+                    placeholder="صف الصورة التي تريد إنشاءها بالتفصيل..."
+                    disabled={state.isLoading}
+                    className="text-sm resize-none"
+                    rows={3}
+                    dir="auto"
+                  />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!state.prompt.trim() || state.isLoading}
+                  >
+                    {state.isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        جاري إنشاء الصورة...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        إنشاء الصورة
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
             </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
+          </div>
+        </div>
+      </div>
+
+      {/* Footer with Navigation */}
+      <div className="bg-white border-t py-4 mt-6">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between">
             <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowRight className="mr-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
               <span>للخلف</span>
             </Button>
-            <Button
-              onClick={onComplete}
+            <Button 
+              onClick={onComplete} 
               size="lg"
-              disabled={
-                !state.generatedImageUrl || state.sharingStatus !== "shared"
-              }
-              className={
-                state.sharingStatus === "shared"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : ""
-              }
+              disabled={state.generationCount === 0 || state.sharingStatus !== "shared"}
+              className={state.generationCount === 0 || state.sharingStatus !== "shared" ? "relative" : ""}
+              variant={state.generationCount > 0 && state.sharingStatus === "shared" ? "default" : "outline"}
             >
+              {state.generationCount === 0 || state.sharingStatus !== "shared" ? (
+                <div className="absolute -top-8 right-0 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
+                  {state.generationCount === 0 ? "قم بإنشاء صورة أولاً" : "شارك صورتك في المعرض"}
+                </div>
+              ) : null}
               <span>المتابعة</span>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
