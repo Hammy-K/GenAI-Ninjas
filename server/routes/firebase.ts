@@ -4,10 +4,18 @@
  * (formerly Firebase Firestore operations)
  */
 import { Router, Request, Response } from 'express';
+import { Session } from 'express-session';
 import path from 'path';
 import { logEvent, logError } from '../services/logging';
 import { z } from 'zod';
 import { storage } from '../storage';
+
+// Extended session interface to include firebaseUid
+interface RequestWithFirebaseSession extends Request {
+  session: Session & {
+    firebaseUid?: string;
+  };
+}
 
 // Validation schemas
 const saveProjectSchema = z.object({
@@ -41,22 +49,28 @@ export function registerFirebaseRoutes(router: Router) {
       
       const { html } = validation.data;
       
-      // In the real implementation, we would call an actual Firebase function
-      // But for now, we'll stub it with a mock function
-      const saveProject = async (html: string) => `project_${Date.now()}`;
+      // Generate a unique project ID with the same format for URL compatibility
+      const projectId = `project_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       
-      // Save the project
-      const projectId = await saveProject(html);
+      // Get Firebase UID from body if available (optional)
+      const firebaseUid = req.body.firebaseUid;
+      
+      // Save project to PostgreSQL
+      await storage.createHtmlProject({
+        projectId,
+        html,
+        firebaseUid
+      });
       
       // Log the success
-      logEvent('firebase_project_save', 'Project saved', {
+      logEvent('project_save', 'Project saved to Neon DB', {
         project_id: projectId,
         html_length: html.length
       });
       
       return res.json({ projectId });
     } catch (error) {
-      logError('firebase_project_save', error instanceof Error ? error : 'Unknown error');
+      logError('project_save', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: "Failed to save project" });
     }
   });
@@ -75,29 +89,28 @@ export function registerFirebaseRoutes(router: Router) {
         });
       }
       
-      // In the real implementation, we would call an actual Firebase function
-      // But for now, we'll stub it with a mock function
-      const loadProject = async (projectId: string) => ({
-        id: projectId,
-        html: '<!DOCTYPE html><html><body><h1>Project ' + projectId + '</h1></body></html>',
-        createdAt: new Date().toISOString()
-      });
-      
-      // Load the project
-      const project = await loadProject(projectId);
+      // Load the project from PostgreSQL
+      const project = await storage.getHtmlProjectByProjectId(projectId);
       
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
       
+      // Return in the same format as the previous API for backward compatibility
+      const response = {
+        id: project.projectId,
+        html: project.html,
+        createdAt: project.createdAt.toISOString()
+      };
+      
       // Log the success
-      logEvent('firebase_project_load', 'Project loaded', {
+      logEvent('project_load', 'Project loaded from Neon DB', {
         project_id: projectId
       });
       
-      return res.json(project);
+      return res.json(response);
     } catch (error) {
-      logError('firebase_project_load', error instanceof Error ? error : 'Unknown error');
+      logError('project_load', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: "Failed to load project" });
     }
   });
