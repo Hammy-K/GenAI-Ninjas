@@ -128,7 +128,6 @@ export type GenerateHTMLResponse = {
   message: HTMLMessage;
   error?: string;
   isGeneratingHTML?: boolean; // Flag to indicate if we're generating HTML (close chat) or asking questions (keep chat open)
-  additionalFeatures?: string[]; // Array of additional features or suggestions
 };
 
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
@@ -152,7 +151,6 @@ export async function generateHTML(messageHistory: HTMLMessage[]): Promise<Gener
           role: 'assistant',
           content: 'عذرًا، حدث خطأ في عملية توليد HTML. هل يمكنك إعادة المحاولة؟'
         },
-        additionalFeatures: [],
         error: error instanceof Error ? error.message : "Unknown error occurred"
       };
     }

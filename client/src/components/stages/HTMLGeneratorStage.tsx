@@ -72,7 +72,6 @@ interface HTMLGeneratorState {
   hasSharedLink: boolean; // Track if the user has copied the share link
   showShareDialog: boolean;
   showResetDialog: boolean;
-  additionalFeatures: string[]; // Array of additional features or suggestions from the AI
 }
 
 export function HTMLGeneratorStage({
@@ -126,7 +125,6 @@ export function HTMLGeneratorStage({
     hasSharedLink: false, // Initialize as false, will be set to true when the user copies the link
     showShareDialog: false,
     showResetDialog: false,
-    additionalFeatures: [], // Initialize as empty array
   };
 
   // Clear stale state if needed
@@ -273,13 +271,12 @@ export function HTMLGeneratorStage({
           "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
       };
 
-      // Update state with the AI response, HTML, and additional features
+      // Update state with the AI response and HTML
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
         currentHTML: response.html,
         isLoading: false,
-        additionalFeatures: response.additionalFeatures || [], // Store additional features from response
       }));
 
       // Award XP for receiving a response if not already awarded
@@ -583,7 +580,6 @@ export function HTMLGeneratorStage({
       hasSharedLink: false, // Reset the shared link flag
       showShareDialog: false,
       showResetDialog: false,
-      additionalFeatures: [], // Clear additional features when starting a new project
     }));
     
     // Track this for analytics
@@ -817,20 +813,6 @@ export function HTMLGeneratorStage({
 
               {/* Chat Messages Area */}
               <div className="flex-grow border-x overflow-hidden relative">
-                {/* Additional Features Box */}
-                {state.additionalFeatures && state.additionalFeatures.length > 0 && (
-                  <div className="p-4 pb-0">
-                    <div className="bg-blue-50 border border-blue-100 rounded-md p-3">
-                      <h3 className="text-sm font-medium text-blue-800 mb-2">ميزات إضافية يمكن إضافتها:</h3>
-                      <ul className="list-disc list-inside text-xs text-blue-700 space-y-1 mr-1">
-                        {state.additionalFeatures.map((feature, index) => (
-                          <li key={index}>{feature}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-                
                 <ScrollArea className="h-[calc(100vh-400px)]">
                   <div className="p-4 space-y-4">
                     {state.messages.map((msg, i) => (
@@ -857,13 +839,12 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" && typeof msg.content === 'string' &&
+                          {msg.role === "assistant" &&
                           (msg.content.includes("<!DOCTYPE html") ||
                             msg.content.includes("<html"))
                             ? "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈"
-                            : typeof msg.content === 'string' && msg.content.includes("<!DOCTYPE html")
-                              ? msg.content.split("<!DOCTYPE html")[0]
-                              : msg.content}
+                            : msg.content.split("<!DOCTYPE html")[0] ||
+                              msg.content}
                         </div>
                       </div>
                     ))}

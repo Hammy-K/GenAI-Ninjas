@@ -31,7 +31,6 @@ interface AssistantResponse {
   html: string;
   message: AssistantMessage;
   isGeneratingHTML: boolean;
-  additionalFeatures?: string[];
   error?: string;
 }
 
@@ -313,89 +312,10 @@ export class AssistantService {
   private processAssistantResponse(responseContent: string): AssistantResponse {
     let generatedHTML = "";
     let explanatoryMessage = "";
-    let additionalFeatures: string[] = [];
     let isGeneratingHTMLPhase = false;
-
-    // Try to parse response as JSON first (new format)
-    try {
-      // Check if the response appears to be JSON by looking for basic JSON structure
-      // This helps avoid parsing non-JSON strings that would throw errors
-      if (responseContent.trim().startsWith('{') && responseContent.includes('"html"')) {
-        // Extract the JSON object from the response
-        // This handles cases where there might be text before/after the JSON
-        const jsonStartIndex = responseContent.indexOf('{');
-        const jsonEndIndex = responseContent.lastIndexOf('}') + 1;
-        const jsonContent = responseContent.substring(jsonStartIndex, jsonEndIndex);
-        
-        const parsedResponse = JSON.parse(jsonContent);
-        
-        // Check if this is a questioning phase based on the model's response format
-        if (parsedResponse.questions === true || !parsedResponse.html) {
-          // In questioning phase, use the suggestions as the chat message
-          explanatoryMessage = parsedResponse.suggestions || "عندي بعض الأسئلة عن طلبك...";
-          isGeneratingHTMLPhase = false;
-          
-          // Pass through a minimal HTML structure for UI flow
-          generatedHTML = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>استكشاف الفكرة</title>
-</head>
-<body style="font-family:system-ui;background-color:#f5f5f5;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
-  <!-- Empty body - will be replaced with real HTML after questions are answered -->
-</body>
-</html>`;
-        } else {
-          // HTML generation phase
-          isGeneratingHTMLPhase = true;
-          
-          // Extract HTML from the JSON response
-          generatedHTML = parsedResponse.html || "";
-          
-          // Check if we have proper HTML content
-          if (!generatedHTML.includes("<!DOCTYPE html>")) {
-            // Add DOCTYPE if missing
-            generatedHTML = `<!DOCTYPE html>\n<html>\n<head>\n<title>Generated Page</title>\n</head>\n<body>\n${generatedHTML}\n</body>\n</html>`;
-          }
-          
-          // Fix HTML if needed (ensure it has proper structure)
-          if (!generatedHTML.includes("</body>")) {
-            generatedHTML += "\n</body>";
-          }
-          if (!generatedHTML.includes("</html>")) {
-            generatedHTML += "\n</html>";
-          }
-          
-          // Get the explanatory message
-          explanatoryMessage = parsedResponse.suggestions || "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈";
-          
-          // Extract additional features if available
-          if (parsedResponse.additionalFeatures && Array.isArray(parsedResponse.additionalFeatures)) {
-            additionalFeatures = parsedResponse.additionalFeatures;
-          }
-        }
-        
-        // Return the structured response with JSON data
-        return {
-          html: generatedHTML,
-          message: {
-            role: "assistant",
-            content: explanatoryMessage
-          },
-          isGeneratingHTML: isGeneratingHTMLPhase,
-          additionalFeatures: additionalFeatures
-        };
-      }
-    } catch (jsonError) {
-      // If JSON parsing fails, log the error and fall back to legacy parsing
-      console.warn("Error parsing assistant response as JSON:", jsonError);
-      // Continue with fallback processing
-    }
     
-    // LEGACY FALLBACK: traditional processing if not JSON or JSON parsing failed
     // Check if we're in questioning phase or generation phase
+    // If there's no DOCTYPE, it's likely a clarifying question
     const isQuestioningPhase = 
       responseContent.indexOf("<!DOCTYPE html>") === -1 &&
       (responseContent.includes("?") || 
@@ -446,7 +366,7 @@ export class AssistantService {
             explanationText = responseContent.substring(0, doctypeIndex).trim();
           }
           
-          explanatoryMessage = explanationText || "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈";
+          explanatoryMessage = explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
         } else {
           // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
           generatedHTML = htmlContent;
@@ -462,7 +382,7 @@ export class AssistantService {
           if (doctypeIndex > 0) {
             explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
           } else {
-            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈";
+            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
           }
         }
       } else {
@@ -492,8 +412,7 @@ export class AssistantService {
         role: "assistant",
         content: explanatoryMessage
       },
-      isGeneratingHTML: isGeneratingHTMLPhase,
-      additionalFeatures: []
+      isGeneratingHTML: isGeneratingHTMLPhase
     };
   }
   
@@ -513,7 +432,6 @@ export class AssistantService {
         content: "حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟"
       },
       isGeneratingHTML: false,
-      additionalFeatures: [],
       error: errorMessage
     };
   }

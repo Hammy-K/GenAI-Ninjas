@@ -230,40 +230,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION")
       };
 
-      // Update model configuration to use JSON response format
+      // Make the API request with optimized parameters
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [systemPrompt, ...messageHistory],
         temperature: 0.2,         // Keep low for consistency
         max_tokens: 4000,         // Higher to allow full HTML pages
         presence_penalty: 0.0,
-        frequency_penalty: 0.0,
-        response_format: { type: "json_object" } // Request JSON format
+        frequency_penalty: 0.0
       });
 
-      // Extract response content as JSON
-      const responseContent = response.choices[0].message.content || "{}";
-      let parsedResponse;
+      // Extract response content
+      const responseContent = response.choices[0].message.content || "";
       let generatedHTML = "";
       let explanatoryMessage = "";
-      let additionalFeatures = [];
       let isGeneratingHTMLPhase = false;
-      let isQuestioningPhase = false;
 
-      try {
-        // Parse the JSON response
-        parsedResponse = JSON.parse(responseContent);
+      // Determine if we're in questioning phase or generation phase
+      // Enhanced detection for when the model is asking clarifying questions
+      const isQuestioningPhase = 
+        responseContent.indexOf("<!DOCTYPE html>") === -1 &&
+        (responseContent.includes("?") || 
+         responseContent.includes("سؤال") || 
+         responseContent.includes("أسئلة") ||
+         responseContent.includes("ممكن توضح") ||
+         responseContent.includes("بغيت أفهم") ||
+         responseContent.includes("توصف أكثر"));
+
+      if (isQuestioningPhase) {
+        // In questioning phase, pass through the questions as a message
+        explanatoryMessage = responseContent;
+        isGeneratingHTMLPhase = false;
         
-        // Check if this is a questioning phase based on the model's response format
-        isQuestioningPhase = parsedResponse.questions === true || !parsedResponse.html;
-        
-        if (isQuestioningPhase) {
-          // In questioning phase, use the suggestions as the chat message
-          explanatoryMessage = parsedResponse.suggestions || "عندي بعض الأسئلة عن طلبك...";
-          isGeneratingHTMLPhase = false;
-          
-          // Pass through a minimal HTML structure for UI flow
-          generatedHTML = `<!DOCTYPE html>
+        // Pass through a minimal HTML structure - NOT a fallback, just to maintain the UI flow
+        // This is empty HTML with a message that Dr. Pengy is asking questions
+        generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -274,78 +275,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   <!-- Empty body - will be replaced with real HTML after questions are answered -->
 </body>
 </html>`;
-        } else {
-          // HTML generation phase
-          isGeneratingHTMLPhase = true;
-          
-          // Extract HTML from the JSON response
-          generatedHTML = parsedResponse.html || "";
-          
-          // Check if we have proper HTML content
-          if (!generatedHTML.includes("<!DOCTYPE html>")) {
-            // Add DOCTYPE if missing
-            generatedHTML = `<!DOCTYPE html>\n<html>\n<head>\n<title>Generated Page</title>\n</head>\n<body>\n${generatedHTML}\n</body>\n</html>`;
-          }
-          
-          // Fix HTML if needed (ensure it has proper structure)
-          if (!generatedHTML.includes("</body>")) {
-            generatedHTML += "\n</body>";
-          }
-          if (!generatedHTML.includes("</html>")) {
-            generatedHTML += "\n</html>";
-          }
-          
-          // Get the explanatory message
-          explanatoryMessage = parsedResponse.suggestions || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
-          
-          // Extract additional features if available
-          additionalFeatures = parsedResponse.additionalFeatures || [];
-        }
-      } catch (parseError) {
-        // If JSON parsing fails, try to extract HTML and explanation using the old method
-        console.error("Error parsing JSON response:", parseError);
-        logError("html_generation_json_parse", parseError instanceof Error ? parseError : "Unknown error");
-        
-        // Fallback to the old extraction method
+      } else {
+        // Extract HTML directly from the response
         const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
-        isQuestioningPhase = 
-          doctypeIndex === -1 &&
-          (responseContent.includes("?") || 
-           responseContent.includes("سؤال") || 
-           responseContent.includes("أسئلة"));
-
-        if (isQuestioningPhase) {
-          explanatoryMessage = responseContent;
-          isGeneratingHTMLPhase = false;
-          
-          generatedHTML = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>استكشاف الفكرة</title>
-</head>
-<body style="font-family:system-ui;background-color:#f5f5f5;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
-  <!-- Empty body - will be replaced with real HTML after questions are answered -->
-</body>
-</html>`;
-        } else if (doctypeIndex >= 0) {
+        
+        if (doctypeIndex >= 0) {
+          // We found DOCTYPE, so we're in HTML generation phase
           isGeneratingHTMLPhase = true;
+
+          // Extract just the content from doctype to </html> closing tag
           const htmlContent = responseContent.substring(doctypeIndex);
           const closingHtmlTagIndex = htmlContent.indexOf("</html>");
           
           if (closingHtmlTagIndex > 0) {
-            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7);
-            if (doctypeIndex > 0) {
-              explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
-            } else {
-              explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
-            }
-          } else {
-            generatedHTML = htmlContent;
-            if (!generatedHTML.includes("</body>")) generatedHTML += "\n</body>";
-            if (!generatedHTML.includes("</html>")) generatedHTML += "\n</html>";
+            // Found the closing tag - extract ONLY up to and including </html>
+            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7); // +7 to include the </html> tag
             
+            // All explanatory text is either before the DOCTYPE or will be moved to the chat
+            let explanationText = "";
+            
+            if (doctypeIndex > 0) {
+              // There's text before the DOCTYPE
+              explanationText = responseContent.substring(0, doctypeIndex).trim();
+            }
+            
+            explanatoryMessage = explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+          } else {
+            // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
+            generatedHTML = htmlContent;
+            
+            if (!generatedHTML.includes("</body>")) {
+              generatedHTML += "\n</body>";
+            }
+            if (!generatedHTML.includes("</html>")) {
+              generatedHTML += "\n</html>";
+            }
+            
+            // Extract any text before DOCTYPE as explanatory message
             if (doctypeIndex > 0) {
               explanatoryMessage = responseContent.substring(0, doctypeIndex).trim();
             } else {
@@ -353,9 +319,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } else {
+          // If no DOCTYPE found, send the entire response back to the user as a message
+          // This allows the model to communicate when it can't generate proper HTML
           explanatoryMessage = responseContent;
           isGeneratingHTMLPhase = false;
           
+          // Get just enough HTML to show an empty preview
           generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -374,19 +343,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       logEvent("html_generation_success", latestUserMessage.content, {
         model: "gpt-4o",
         html_size: generatedHTML.length,
-        html_type: generatedHTML.includes("<script") ? "interactive" : "static",
-        json_format: parsedResponse ? "success" : "fallback"
+        html_type: generatedHTML.includes("<script") ? "interactive" : "static"
       });
       
-      // Send response with the new format including additional features
+      // Send response with a flag indicating if we're generating HTML or asking questions
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
           content: explanatoryMessage || "تم إنشاء الصفحة"
         },
-        isGeneratingHTML: isGeneratingHTMLPhase,
-        additionalFeatures: additionalFeatures
+        isGeneratingHTML: isGeneratingHTMLPhase // Add flag to tell client whether to close chat (only when generating HTML)
       });
       
     } catch (error) {
