@@ -152,6 +152,7 @@ export async function generateHTML(messageHistory: HTMLMessage[]): Promise<Gener
           role: 'assistant',
           content: 'عذرًا، حدث خطأ في عملية توليد HTML. هل يمكنك إعادة المحاولة؟'
         },
+        additionalFeatures: [],
         error: error instanceof Error ? error.message : "Unknown error occurred"
       };
     }

@@ -74,7 +74,8 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
           role: "assistant",
           content: "حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟"
         },
-        isGeneratingHTML: false
+        isGeneratingHTML: false,
+        additionalFeatures: []
       });
     }
   });
