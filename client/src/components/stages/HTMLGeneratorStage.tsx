@@ -739,14 +739,16 @@ export function HTMLGeneratorStage({
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-grow flex flex-col relative">
-        {/* Preview Panel - Full Width */}
-        <div className="flex-grow flex flex-col">
-          <div className="bg-gray-100 border-b px-4 py-2 flex items-center justify-between">
-            <span className="font-medium text-sm">
-              {state.viewMode === "preview" ? "معاينة مباشرة" : "كود HTML"}
-            </span>
+      {/* Main Content Area - Two Columns Layout */}
+      <div className="flex-grow p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row h-[calc(100vh-250px)]">
+            {/* Left Column: Preview Panel - 70% width */}
+            <div className="w-full md:w-[70%] h-full mb-4 md:mb-0 md:pr-2">
+              <div className="bg-gray-100 border rounded-t px-4 py-2 flex items-center justify-between">
+                <span className="font-medium text-sm">
+                  {state.viewMode === "preview" ? "معاينة مباشرة" : "كود HTML"}
+                </span>
 
             {state.currentHTML && (
               <div className="flex items-center gap-2">
@@ -813,53 +815,34 @@ export function HTMLGeneratorStage({
             )}
           </div>
 
-          <div className="flex-grow bg-white h-[75vh]">
-            {!state.currentHTML ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p>سيظهر إبداعك هنا</p>
+              <div className="flex-grow bg-white h-full border-x border-b rounded-b">
+                {!state.currentHTML ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <p>سيظهر إبداعك هنا</p>
+                  </div>
+                ) : state.viewMode === "preview" ? (
+                  <div className="w-full h-full overflow-hidden">
+                    <iframe
+                      title="HTML Preview"
+                      srcDoc={state.currentHTML}
+                      className="w-full h-full border-0"
+                      sandbox="allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <ScrollArea className="w-full h-full rounded-md">
+                    <pre className="p-4 overflow-x-auto text-sm">
+                      <code className="language-html">{state.currentHTML}</code>
+                    </pre>
+                  </ScrollArea>
+                )}
               </div>
-            ) : state.viewMode === "preview" ? (
-              <iframe
-                title="HTML Preview"
-                className="w-full h-full border-0"
-                srcDoc={state.currentHTML}
-                sandbox="allow-scripts allow-same-origin"
-              />
-            ) : (
-              <ScrollArea className="h-full w-full">
-                <pre className="p-4 text-xs text-gray-800 whitespace-pre-wrap">
-                  {state.currentHTML}
-                </pre>
-              </ScrollArea>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Floating Chat Widget */}
-        <div
-          className={`fixed bottom-4 right-4 z-50 flex flex-col transition-all duration-500 ease-in-out 
-                         ${state.isChatOpen ? "w-80 sm:w-96 h-[500px] scale-100 opacity-100" : "w-16 h-16 scale-95 opacity-95"}`}
-        >
-          {/* Chat Widget Button (When Closed) */}
-          {!state.isChatOpen && (
-            <Button
-              onClick={toggleChat}
-              size="icon"
-              className="w-16 h-16 flex items-center justify-center p-0 overflow-hidden bg-transparent"
-            >
-              <img
-                src={penguinAvatar}
-                alt="د. بنجي"
-                className="w-16 h-16 object-contain"
-              />
-            </Button>
-          )}
-
-          {/* Chat Widget Panel (When Open) */}
-          {state.isChatOpen && (
-            <div className="flex flex-col h-full overflow-hidden bg-white border rounded-md shadow-xl">
-              {/* Chat Header */}
-              <div className="bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
+            {/* Right Column: Chat Thread - 30% width */}
+            <div className="w-full md:w-[30%] h-full md:pl-2 flex flex-col">
+              <div className="rounded-t bg-gray-100 border-t border-r border-l px-4 py-3 flex items-center">
                 <div className="flex items-center">
                   <img
                     src={penguinAvatar}
@@ -868,30 +851,12 @@ export function HTMLGeneratorStage({
                   />
                   <span className="font-medium text-sm">دردشة مع د. بنجي</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={toggleChat}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
 
-              {/* Chat Messages */}
-              <ScrollArea className="flex-grow p-4">
-                {state.messages.length === 0 ? (
-                  <div className="text-center text-muted-foreground p-4">
-                    <p>ماذا ترغب في بناءه؟</p>
-                    <p className="text-xs mt-2">أمثلة:</p>
-                    <ul className="text-xs mt-1 space-y-1 text-right">
-                      <li>"آلة حاسبة بمظهر داكن"</li>
-                      <li>"قائمة مهام مع تخزين محلي"</li>
-                      <li>"أداة اختيار الألوان"</li>
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
+              {/* Chat Messages Area */}
+              <div className="flex-grow border-x overflow-hidden relative">
+                <ScrollArea className="h-[calc(100vh-400px)]">
+                  <div className="p-4 space-y-4">
                     {state.messages.map((msg, i) => (
                       <div
                         key={i}
@@ -919,7 +884,7 @@ export function HTMLGeneratorStage({
                           {msg.role === "assistant" &&
                           (msg.content.includes("<!DOCTYPE html") ||
                             msg.content.includes("<html"))
-                            ? "سويت لك الصفحة! شوف النتيجة في الأسفل 👇"
+                            ? "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈"
                             : msg.content.split("<!DOCTYPE html")[0] ||
                               msg.content}
                         </div>
@@ -945,11 +910,11 @@ export function HTMLGeneratorStage({
 
                     <div ref={chatEndRef} />
                   </div>
-                )}
-              </ScrollArea>
+                </ScrollArea>
+              </div>
 
               {/* Input Area */}
-              <div className="border-t p-3">
+              <div className="border rounded-b p-3">
                 {state.error && (
                   <Alert variant="destructive" className="mb-3 py-2">
                     <AlertCircle className="h-3 w-3" />
@@ -986,7 +951,7 @@ export function HTMLGeneratorStage({
                 </form>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
