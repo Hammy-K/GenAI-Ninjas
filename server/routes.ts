@@ -10,7 +10,9 @@ import { createServer, type Server } from "http";
 import { registerAITextRoutes } from "./routes/ai-text";
 import { registerAIImageRoutes } from "./routes/ai-image";
 import { registerGalleryRoutes } from "./routes/gallery";
-import { registerFirebaseRoutes } from "./routes/firebase";
+// Use either Firebase routes (old) or Project routes (new)
+// import { registerFirebaseRoutes } from "./routes/firebase";
+import { registerProjectRoutes } from "./routes/projects";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerAppBuilderRoutes } from "./routes/app-builder";
@@ -373,7 +375,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
   registerGalleryRoutes(apiRouter);
-  registerFirebaseRoutes(apiRouter);
+  // Use the new ProjectRoutes that store HTML in PostgreSQL
+  registerProjectRoutes(apiRouter);
   registerAIAssistantRoutes(apiRouter, openai);
   registerLogsRoutes(apiRouter);
   registerAppBuilderRoutes(apiRouter, openai);
