@@ -72,6 +72,7 @@ interface HTMLGeneratorState {
   hasSharedLink: boolean; // Track if the user has copied the share link
   showShareDialog: boolean;
   showResetDialog: boolean;
+  additionalFeatures: string[]; // Array of additional features or suggestions from the AI
 }
 
 export function HTMLGeneratorStage({
@@ -125,6 +126,7 @@ export function HTMLGeneratorStage({
     hasSharedLink: false, // Initialize as false, will be set to true when the user copies the link
     showShareDialog: false,
     showResetDialog: false,
+    additionalFeatures: [], // Initialize as empty array
   };
 
   // Clear stale state if needed
@@ -271,12 +273,13 @@ export function HTMLGeneratorStage({
           "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
       };
 
-      // Update state with the AI response and HTML
+      // Update state with the AI response, HTML, and additional features
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
         currentHTML: response.html,
         isLoading: false,
+        additionalFeatures: response.additionalFeatures || [], // Store additional features from response
       }));
 
       // Award XP for receiving a response if not already awarded
