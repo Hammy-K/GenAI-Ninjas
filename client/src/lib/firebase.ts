@@ -146,7 +146,7 @@ export async function saveProject(html: string): Promise<string> {
     try {
       console.log("Saving project via API...");
       
-      // Make API call to save project
+      // Send raw HTML content with proper content type
       const response = await fetch('/api/save-project', {
         method: 'POST',
         headers: {
@@ -169,38 +169,25 @@ export async function saveProject(html: string): Promise<string> {
         throw new Error("No project ID returned from API");
       }
       
+      // Store directly in localStorage without JSON wrapping
+      try {
+        // Store raw HTML directly for faster loading next time
+        localStorage.setItem(`project_${data.projectId}`, processedHTML);
+        console.log("Also saved raw HTML to localStorage for faster loading");
+      } catch (lsError) {
+        console.warn("Could not save to localStorage:", lsError);
+      }
+      
       return data.projectId;
     } 
     catch (apiError) {
       console.error("API call to save project failed:", apiError);
       
-      // Try Firebase as a fallback
-      if (isFirebaseReady() && firestoreDb) {
-        try {
-          console.log("Trying Firebase as fallback...");
-          const projectId = `project_${Date.now()}`;
-          const projectRef = doc(firestoreDb, 'projects', projectId);
-          await setDoc(projectRef, {
-            html: processedHTML,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          console.log("Project saved to Firebase as fallback!");
-          return projectId;
-        } catch (firestoreError) {
-          console.error("Firebase fallback failed:", firestoreError);
-        }
-      }
-      
-      // Finally try localStorage as a last resort
+      // Try localStorage as a fallback - directly store HTML without JSON wrapper
       try {
         const fallbackId = `project_${Date.now()}_local`;
-        localStorage.setItem(`project_${fallbackId}`, JSON.stringify({
-          html: processedHTML,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }));
-        console.log("Project saved to localStorage as final fallback");
+        localStorage.setItem(`project_${fallbackId}`, processedHTML);
+        console.log("Saved raw HTML to localStorage as fallback");
         return fallbackId;
       } catch (storageError) {
         console.error("LocalStorage fallback failed:", storageError);
@@ -217,9 +204,9 @@ export async function saveProject(html: string): Promise<string> {
 }
 
 /**
- * Loads a project from PostgreSQL database via API
+ * Loads a project HTML directly from PostgreSQL database via API
  * @param projectId The ID of the project to load
- * @returns The project data or null if not found
+ * @returns The HTML content directly or null if not found
  */
 export async function loadProject(projectId: string): Promise<{ html: string } | null> {
   try {
@@ -230,19 +217,30 @@ export async function loadProject(projectId: string): Promise<{ html: string } |
       const localData = localStorage.getItem(`project_${projectId}`);
       if (localData) {
         console.log("Found project in localStorage");
-        const parsedData = JSON.parse(localData);
-        return parsedData;
+        try {
+          // Try to parse as JSON first (for backward compatibility)
+          const parsedData = JSON.parse(localData);
+          return parsedData;
+        } catch (parseError) {
+          // If it's not JSON, it might be raw HTML
+          console.log("Project in localStorage is not JSON, treating as raw HTML");
+          return { html: localData };
+        }
       }
     } catch (localStorageError) {
       console.warn("Error checking localStorage:", localStorageError);
     }
     
-    // Load from PostgreSQL via API
+    // Load from PostgreSQL via API endpoint
+    console.log("Fetching project from PostgreSQL via API...");
+    
     try {
-      console.log("Fetching project from PostgreSQL via API...");
-      
-      // Make API call to get project
-      const response = await fetch(`/api/load-project/${projectId}`);
+      // Get raw HTML content directly
+      const response = await fetch(`/api/load-project/${projectId}`, {
+        headers: {
+          'Accept': 'text/html, application/json'
+        }
+      });
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -252,49 +250,49 @@ export async function loadProject(projectId: string): Promise<{ html: string } |
         throw new Error(`API returned status ${response.status}`);
       }
       
+      // Check content type to determine how to process the response
+      const contentType = response.headers.get('Content-Type') || '';
+      
+      // If HTML content type, get text directly
+      if (contentType.includes('text/html')) {
+        const htmlContent = await response.text();
+        console.log("HTML content loaded directly (not wrapped in JSON)");
+        return { html: htmlContent };
+      }
+      
+      // Otherwise try JSON (for backward compatibility)
       const projectData = await response.json();
-      console.log("Project loaded successfully via API!");
+      console.log("Project loaded via JSON response");
       
       if (!projectData || !projectData.html) {
         throw new Error("Invalid project data structure from API");
       }
       
-      // Log some info about the retrieved data
-      console.log("Project data retrieved:", {
-        id: projectData.id,
-        createdAt: projectData.createdAt,
-        htmlLength: projectData.html?.length || 0
-      });
+      // Log info about the retrieved data
+      console.log("Project data retrieved with HTML length:", projectData.html?.length || 0);
       
       return { html: projectData.html };
     } 
     catch (apiError) {
       console.error("API call to load project failed:", apiError);
       
-      // Fallback to Firebase if API fails
-      if (isFirebaseReady() && firestoreDb) {
-        try {
-          console.log("Trying Firebase as fallback...");
-          const projectRef = doc(firestoreDb, 'projects', projectId);
-          const projectSnap = await getDoc(projectRef);
-          
-          if (!projectSnap.exists()) {
-            console.log("Project not found in Firestore");
-            return null;
+      // Secondary attempt with different content type
+      try {
+        console.log("Trying alternate API response format...");
+        const altResponse = await fetch(`/api/load-project/${projectId}`, {
+          headers: {
+            'Accept': 'application/json'
           }
-          
-          // Get project data from Firebase
-          const fbProjectData = projectSnap.data() as DocumentData;
-          console.log("Project found in Firestore");
-          
-          if (!fbProjectData || !fbProjectData.html) {
-            throw new Error("Invalid project data structure in Firestore");
+        });
+        
+        if (altResponse.ok) {
+          const jsonData = await altResponse.json();
+          if (jsonData && jsonData.html) {
+            return { html: jsonData.html };
           }
-          
-          return { html: fbProjectData.html };
-        } catch (firestoreError) {
-          console.error("Firebase fallback failed:", firestoreError);
         }
+      } catch (altError) {
+        console.error("Alternate API format failed:", altError);
       }
       
       // Return a minimal HTML structure in case of error
