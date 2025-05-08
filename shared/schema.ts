@@ -121,6 +121,16 @@ export const assistantLogs = pgTable("assistant_logs", {
   errorMessage: text("error_message"),
 });
 
+// Schema to store HTML projects
+export const htmlProjects = pgTable("html_projects", {
+  id: serial("id").primaryKey(),
+  projectId: text("project_id").notNull().unique(), // Preserve existing project IDs for URL compatibility
+  html: text("html").notNull(), // Store the HTML content
+  firebaseUid: text("firebase_uid"), // Optional link to user's Firebase ID
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Define insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -176,6 +186,12 @@ export const insertAssistantLogSchema = createInsertSchema(assistantLogs).omit({
   timestamp: true,
 });
 
+export const insertHtmlProjectSchema = createInsertSchema(htmlProjects).omit({
+  id: true,
+  createdAt: true, 
+  updatedAt: true,
+});
+
 // Define types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
@@ -187,6 +203,7 @@ export type InsertAppBuilderChatHistory = z.infer<typeof insertAppBuilderChatHis
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type InsertGalleryLike = z.infer<typeof insertGalleryLikeSchema>;
 export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
+export type InsertHtmlProject = z.infer<typeof insertHtmlProjectSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -198,3 +215,4 @@ export type AppBuilderChatHistory = typeof appBuilderChatHistory.$inferSelect;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GalleryLike = typeof galleryLikes.$inferSelect;
 export type AssistantLog = typeof assistantLogs.$inferSelect;
+export type HtmlProject = typeof htmlProjects.$inferSelect;
