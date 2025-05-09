@@ -38,7 +38,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { generateHTML, HTMLMessage, getClarifyingQuestion, getProjectSummary, GenerateHTMLResponse } from "@/lib/openai";
+import {
+  generateHTML,
+  HTMLMessage,
+  getClarifyingQuestion,
+  getProjectSummary,
+  GenerateHTMLResponse,
+} from "@/lib/openai";
 import {
   saveProject,
   loadProject,
@@ -72,7 +78,7 @@ interface HTMLGeneratorState {
   hasSharedLink: boolean; // Track if the user has copied the share link
   showShareDialog: boolean;
   showResetDialog: boolean;
-  
+
   // New clarify & confirm flow states
   originalIdea: string;
   clarificationAnswer: string;
@@ -132,7 +138,7 @@ export function HTMLGeneratorStage({
     hasSharedLink: false, // Initialize as false, will be set to true when the user copies the link
     showShareDialog: false,
     showResetDialog: false,
-    
+
     // Initialize new clarify & confirm flow states
     originalIdea: "",
     clarificationAnswer: "",
@@ -200,92 +206,100 @@ export function HTMLGeneratorStage({
   const handleClarificationStep = async (idea: string) => {
     try {
       const clarificationResult = await getClarifyingQuestion(idea);
-      
+
       if (clarificationResult.error) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          error: clarificationResult.error || "Failed to get clarifying question",
-          isLoading: false
+          error:
+            clarificationResult.error || "Failed to get clarifying question",
+          isLoading: false,
         }));
         return;
       }
-      
+
       // Add the clarifying question to chat
       const clarifyingMessage: HTMLMessage = {
         role: "assistant",
-        content: clarificationResult.question
+        content: clarificationResult.question,
       };
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         originalIdea: idea,
         messages: [...prev.messages, clarifyingMessage],
         flowStep: "clarify",
-        isLoading: false
+        isLoading: false,
       }));
-      
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Failed to get clarifying question",
-        isLoading: false
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to get clarifying question",
+        isLoading: false,
       }));
     }
   };
-  
+
   // Helper function to handle confirmation step
-  const handleConfirmationStep = async (idea: string, clarification: string) => {
+  const handleConfirmationStep = async (
+    idea: string,
+    clarification: string,
+  ) => {
     try {
       const summaryResult = await getProjectSummary(idea, clarification);
-      
+
       if (summaryResult.error) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           error: summaryResult.error || "Failed to get project summary",
-          isLoading: false
+          isLoading: false,
         }));
         return;
       }
-      
+
       // Add the summary to chat
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: `${summaryResult.summary}\n\ تبي نبدأ؟`
+        content: `${summaryResult.summary}\n\ تبي نبدأ؟`,
       };
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         projectSummary: summaryResult.summary,
         clarificationAnswer: clarification,
         messages: [...prev.messages, summaryMessage],
         flowStep: "confirm",
         showConfirmButtons: true,
-        isLoading: false
+        isLoading: false,
       }));
-      
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Failed to get project summary",
-        isLoading: false
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to get project summary",
+        isLoading: false,
       }));
     }
   };
-  
+
   // Helper function to handle HTML generation
   const handleGenerateHtml = async (idea: string, clarification: string) => {
     // Create a combined prompt that includes both the original idea and clarification
     const enhancedPrompt = `${idea}\nAdditional details: ${clarification}`;
-    
+
     try {
       // We don't need to add a new user message here because:
       // 1. We already added the originalIdea in the clarify step
       // 2. We already added the clarificationAnswer in the confirmation step
       // 3. The loading message "جاري الإنشاء..." was added in handleConfirmation
-      
+
       // Generate HTML with the existing message history (already contains all context)
       const htmlResponse = await generateHTML(state.messages);
-      
+
       if (htmlResponse.error) {
         setState((prev) => ({
           ...prev,
@@ -303,7 +317,8 @@ export function HTMLGeneratorStage({
       // Use the response message from the API
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+        content:
+          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
       };
 
       // Update state with the AI response and HTML
@@ -312,11 +327,12 @@ export function HTMLGeneratorStage({
         messages: [...prev.messages, aiResponse],
         currentHTML: htmlResponse.html,
         isLoading: false,
-        flowStep: "modify" // Move to modify step
+        flowStep: "modify", // Move to modify step
       }));
-      
+
       // Award XP for first response
-      if (state.messages.length <= 4) { // Adjust for our longer flow
+      if (state.messages.length <= 4) {
+        // Adjust for our longer flow
         if (
           awardIfNotAlreadyAwarded(
             onEarnXp,
@@ -329,16 +345,16 @@ export function HTMLGeneratorStage({
           setTimeout(() => setShowConfetti(false), 3000);
         }
       }
-      
     } catch (error) {
       setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Failed to generate HTML",
+        error:
+          error instanceof Error ? error.message : "Failed to generate HTML",
         isLoading: false,
       }));
     }
   };
-  
+
   // Helper function to handle changes to existing HTML
   const handleModifyHtml = async (prompt: string) => {
     // Check that we have HTML to modify
@@ -348,16 +364,16 @@ export function HTMLGeneratorStage({
       await handleClarificationStep(prompt);
       return;
     }
-    
+
     // Display what the user typed in the UI
     const userMessage: HTMLMessage = {
       role: "user",
       content: prompt,
     };
-    
+
     // Add context about the HTML for the API (not shown to user)
     const apiContent = `The user said: "${prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
-    
+
     setState((prev) => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -365,18 +381,18 @@ export function HTMLGeneratorStage({
       isLoading: true,
       error: "",
     }));
-    
+
     try {
       // Create a modified version of the messages array with the HTML context
       const apiMessages = [...state.messages];
       apiMessages.push({
         role: "user",
-        content: apiContent
+        content: apiContent,
       });
-      
+
       // Generate HTML with the context
       const htmlResponse = await generateHTML(apiMessages);
-      
+
       if (htmlResponse.error) {
         setState((prev) => ({
           ...prev,
@@ -404,7 +420,6 @@ export function HTMLGeneratorStage({
         currentHTML: htmlResponse.html,
         isLoading: false,
       }));
-      
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -418,41 +433,43 @@ export function HTMLGeneratorStage({
   const handleConfirmation = (confirmed: boolean) => {
     if (confirmed) {
       // User clicked "Yalla!" - proceed with HTML generation
+      // We add a special class name to help identify the loading message later
       const loadingMessage: HTMLMessage = {
         role: "assistant",
-        content: "جاري الإنشاء..."
+        content: "جاري الإنشاء",
+        className: "loading-animation"
       };
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         isLoading: true,
         showConfirmButtons: false,
         flowStep: "generate",
-        messages: [...prev.messages, loadingMessage]
+        messages: [...prev.messages, loadingMessage],
       }));
-      
+
       // Generate HTML with combined context
       handleGenerateHtml(state.originalIdea, state.clarificationAnswer);
     } else {
       // User clicked "No" - ask what they want to change
       const changeMessage: HTMLMessage = {
         role: "assistant",
-        content: "اوكي، وش تبي نغير؟"
+        content: "اوكي، وش تبي نغير؟",
       };
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         messages: [...prev.messages, changeMessage],
         showConfirmButtons: false,
-        flowStep: "input" // Back to input for changes
+        flowStep: "input", // Back to input for changes
       }));
     }
   };
-  
+
   // Handle prompt submission with clarify & confirm flow
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (state.isLoading) return;
 
     // Validate input
@@ -460,7 +477,8 @@ export function HTMLGeneratorStage({
     if (!validation.isValid) {
       const validationWarning: HTMLMessage = {
         role: "assistant",
-        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد إنشاءه.",
+        content:
+          validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد إنشاءه.",
       };
 
       setState((prev) => ({
@@ -470,13 +488,13 @@ export function HTMLGeneratorStage({
       }));
       return;
     }
-    
+
     // Add user message to chat
     const userMessage: HTMLMessage = {
       role: "user",
       content: state.prompt,
     };
-    
+
     setState((prev) => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -484,11 +502,13 @@ export function HTMLGeneratorStage({
       isLoading: true,
       error: "",
     }));
-    
+
     try {
       // Award XP for the first prompt if not already awarded
       if (state.messages.length === 2) {
-        if (awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")) {
+        if (
+          awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")
+        ) {
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 3000);
         }
@@ -497,15 +517,15 @@ export function HTMLGeneratorStage({
       // Track this step
       trackStageProgress("html_generator", "prompt_submitted", {
         message_count: state.messages.length + 1,
-        flow_step: state.flowStep
+        flow_step: state.flowStep,
       });
 
       // Log the prompt to Firestore
       await logPromptToFirestore("html_generation", state.prompt, {
         message_history_length: state.messages.length,
-        flow_step: state.flowStep
+        flow_step: state.flowStep,
       });
-      
+
       // Handle different steps of the flow
       switch (state.flowStep) {
         case "input":
@@ -518,41 +538,43 @@ export function HTMLGeneratorStage({
             await handleModifyHtml(state.prompt);
           }
           break;
-          
+
         case "clarify":
           // User answered clarification - go to confirmation
           await handleConfirmationStep(state.originalIdea, state.prompt);
           break;
-          
+
         case "modify":
           // User is providing feedback after HTML generation
           // Instead of just modifying, restart the full clarification flow for a better experience
           if (state.currentHTML) {
             // Store current HTML for reference
             const currentHtml = state.currentHTML;
-            
+
             // Start with clarification for improved context
             // This resets the flow but preserves the HTML until we get a new one
             await handleClarificationStep(state.prompt);
-            
+
             // Restore the HTML so it's still visible in preview
-            setState(prev => ({
+            setState((prev) => ({
               ...prev,
-              currentHTML: currentHtml
+              currentHTML: currentHtml,
             }));
           } else {
             // If somehow we're in modify state but have no HTML, revert to new project flow
-            console.log("In modify state but no HTML found, reverting to new project flow");
+            console.log(
+              "In modify state but no HTML found, reverting to new project flow",
+            );
             await handleClarificationStep(state.prompt);
           }
           break;
-          
+
         default:
           // Fallback for any other state
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             isLoading: false,
-            error: "Unexpected flow state. Please try again."
+            error: "Unexpected flow state. Please try again.",
           }));
       }
     } catch (error) {
@@ -576,31 +598,31 @@ export function HTMLGeneratorStage({
           setState((prev) => ({ ...prev, hasUnlockedBadge: true }));
         }
       }
-      
+
       // Track completion of this stage with all requirements met
       trackStageProgress("html_generator", "completed", {
         requirements_met: true,
         has_project: Boolean(state.projectId),
-        has_shared_link: state.hasSharedLink
+        has_shared_link: state.hasSharedLink,
       });
-      
+
       onComplete();
     } else {
       // Show a toast notification explaining the requirements
       toast({
         title: "متطلبات إتمام المهمة",
-        description: !state.projectId 
-          ? "يجب عليك حفظ مشروعك أولاً قبل الانتقال للمرحلة التالية" 
+        description: !state.projectId
+          ? "يجب عليك حفظ مشروعك أولاً قبل الانتقال للمرحلة التالية"
           : "يجب نسخ رابط مشروعك قبل الانتقال للمرحلة التالية",
         variant: "default",
-        className: "bg-amber-50 border-amber-200 text-amber-800"
+        className: "bg-amber-50 border-amber-200 text-amber-800",
       });
-      
+
       // Track attempt to proceed without meeting requirements
       trackStageProgress("html_generator", "continue_attempted", {
         requirements_met: false,
         has_project: Boolean(state.projectId),
-        has_shared_link: state.hasSharedLink
+        has_shared_link: state.hasSharedLink,
       });
     }
   };
@@ -752,7 +774,7 @@ export function HTMLGeneratorStage({
         !state.hasUnlockedBadge
       ) {
         onEarnXp(50, "project_saved");
-        
+
         // Track the project saving event
         trackStageProgress("html_generator", "project_saved", {
           project_id: projectId,
@@ -766,7 +788,10 @@ export function HTMLGeneratorStage({
       try {
         const backupKey = `html_backup_${Date.now()}`;
         localStorage.setItem(backupKey, state.currentHTML);
-        console.log("HTML content backed up to localStorage with key:", backupKey);
+        console.log(
+          "HTML content backed up to localStorage with key:",
+          backupKey,
+        );
       } catch (backupError) {
         console.error("Failed to backup HTML to localStorage:", backupError);
       }
@@ -774,10 +799,10 @@ export function HTMLGeneratorStage({
       // Reset saving state but don't clear any existing project info
       setState((prev) => {
         if (error instanceof Error) {
-          return { 
-            ...prev, 
-            error: error.message, 
-            isSaving: false 
+          return {
+            ...prev,
+            error: error.message,
+            isSaving: false,
           };
         }
         return { ...prev, isSaving: false };
@@ -809,9 +834,7 @@ export function HTMLGeneratorStage({
         });
 
         // Award badge if not already awarded
-        if (
-          !isAlreadyAwarded("project_sharing", "ai_coder_badge")
-        ) {
+        if (!isAlreadyAwarded("project_sharing", "ai_coder_badge")) {
           onUnlockBadge("ai_coder_badge", "project_sharing");
           markAsAwarded("project_sharing", "ai_coder_badge");
           setState((prev) => ({
@@ -842,10 +865,10 @@ export function HTMLGeneratorStage({
       showShareDialog: false,
       showResetDialog: false,
     }));
-    
+
     // Track this for analytics
     trackStageProgress("html_generator", "new_project_started", {
-      previous_messages_count: state.messages.length
+      previous_messages_count: state.messages.length,
     });
   };
 
@@ -917,7 +940,8 @@ export function HTMLGeneratorStage({
           <DialogHeader>
             <DialogTitle>بدء مشروع جديد</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من أنك تريد البدء من جديد؟ سيؤدي هذا إلى حذف الكود الحالي.
+              هل أنت متأكد من أنك تريد البدء من جديد؟ سيؤدي هذا إلى حذف الكود
+              الحالي.
             </DialogDescription>
           </DialogHeader>
 
@@ -988,7 +1012,9 @@ export function HTMLGeneratorStage({
                       <Button
                         type="button"
                         size="sm"
-                        variant={state.viewMode === "code" ? "default" : "outline"}
+                        variant={
+                          state.viewMode === "code" ? "default" : "outline"
+                        }
                         className="rounded-none px-3 py-1 h-8 text-xs"
                         onClick={() =>
                           setState((prev) => ({ ...prev, viewMode: "code" }))
@@ -1002,7 +1028,11 @@ export function HTMLGeneratorStage({
                     <div className="flex items-center gap-1">
                       <Button
                         size="sm"
-                        variant={state.currentHTML && !state.projectId ? "default" : "outline"}
+                        variant={
+                          state.currentHTML && !state.projectId
+                            ? "default"
+                            : "outline"
+                        }
                         className={`h-8 flex items-center gap-1 text-xs ${state.currentHTML && !state.projectId ? "animate-pulse" : ""}`}
                         onClick={saveAndShareProject}
                         disabled={state.isSaving}
@@ -1103,39 +1133,21 @@ export function HTMLGeneratorStage({
                           {msg.role === "assistant" &&
                           (msg.content.includes("<!DOCTYPE html") ||
                             msg.content.includes("<html"))
-                            ? "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈"
+                            ? "سويت لك الصفحة! شوف النتيجة  👈"
                             : msg.content.split("<!DOCTYPE html")[0] ||
                               msg.content}
                         </div>
                       </div>
                     ))}
 
-                    {state.isLoading && (
-                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mr-6">
-                        <div className="flex items-center mb-2">
-                          <img
-                            src={penguinAvatar}
-                            alt="د. بنجي"
-                            className="h-5 w-5 ml-1.5"
-                          />
-                          <div className="font-medium text-xs">د. بنجي</div>
-                        </div>
-                        <div className="text-xs relative pr-4">
-                          <span className="inline-block">يكتب</span>
-                          <span className="absolute left-0 top-0">
-                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
-                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0.2s" }}></span>
-                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0.4s" }}></span>
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    {/* The "يكتب" loader has been removed as requested - the loading state 
+                        is now only shown in the "جاري الإنشاء..." message that's added to the chat */}
 
                     {/* Confirmation Buttons - only show during confirmation step */}
                     {state.showConfirmButtons && (
                       <div className="flex gap-2 my-3 justify-center">
-                        <Button 
-                          onClick={() => handleConfirmation(true)} 
+                        <Button
+                          onClick={() => handleConfirmation(true)}
                           variant="outline"
                           size="sm"
                           className="px-3 py-1 h-8 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
@@ -1143,9 +1155,9 @@ export function HTMLGeneratorStage({
                         >
                           يلا!
                         </Button>
-                        <Button 
-                          onClick={() => handleConfirmation(false)} 
-                          variant="outline" 
+                        <Button
+                          onClick={() => handleConfirmation(false)}
+                          variant="outline"
                           size="sm"
                           className="px-3 py-1 h-8 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                           disabled={state.isLoading}
@@ -1179,8 +1191,8 @@ export function HTMLGeneratorStage({
                       setState((prev) => ({ ...prev, prompt: e.target.value }))
                     }
                     placeholder={
-                      state.flowStep === "clarify" 
-                        ? "أجب على سؤال د. بنجي..." 
+                      state.flowStep === "clarify"
+                        ? "أجب على سؤال د. بنجي..."
                         : "صف ما تريد بناءه..."
                     }
                     disabled={state.isLoading || state.showConfirmButtons}
@@ -1191,7 +1203,11 @@ export function HTMLGeneratorStage({
                     type="submit"
                     size="icon"
                     className="h-9 w-9"
-                    disabled={!state.prompt.trim() || state.isLoading || state.showConfirmButtons}
+                    disabled={
+                      !state.prompt.trim() ||
+                      state.isLoading ||
+                      state.showConfirmButtons
+                    }
                   >
                     {state.isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1214,11 +1230,15 @@ export function HTMLGeneratorStage({
               <ArrowRight className="ml-2 h-4 w-4" />
               <span>للخلف</span>
             </Button>
-            <Button 
-              onClick={handleContinue} 
+            <Button
+              onClick={handleContinue}
               size="lg"
-              className={!state.projectId || !state.hasSharedLink ? "relative" : ""}
-              variant={state.projectId && state.hasSharedLink ? "default" : "outline"}
+              className={
+                !state.projectId || !state.hasSharedLink ? "relative" : ""
+              }
+              variant={
+                state.projectId && state.hasSharedLink ? "default" : "outline"
+              }
             >
               {!state.projectId || !state.hasSharedLink ? (
                 <div className="absolute -top-8 right-0 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
