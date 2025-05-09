@@ -61,7 +61,7 @@ interface HTMLGeneratorState {
   prompt: string;
   currentHTML: string;
   isLoading: boolean;
-  error: string;
+  error: string | undefined;
   hasEarnedXp: boolean;
   hasUnlockedBadge: boolean;
   viewMode: "preview" | "code";
@@ -204,7 +204,7 @@ export function HTMLGeneratorStage({
       if (clarificationResult.error) {
         setState(prev => ({
           ...prev,
-          error: clarificationResult.error,
+          error: clarificationResult.error || "Failed to get clarifying question",
           isLoading: false
         }));
         return;
@@ -241,7 +241,7 @@ export function HTMLGeneratorStage({
       if (summaryResult.error) {
         setState(prev => ({
           ...prev,
-          error: summaryResult.error,
+          error: summaryResult.error || "Failed to get project summary",
           isLoading: false
         }));
         return;
@@ -1109,6 +1109,27 @@ export function HTMLGeneratorStage({
                       </div>
                     )}
 
+                    {/* Confirmation Buttons - only show during confirmation step */}
+                    {state.showConfirmButtons && (
+                      <div className="flex gap-2 my-4 justify-center">
+                        <Button 
+                          onClick={() => handleConfirmation(true)} 
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={state.isLoading}
+                        >
+                          يلا! ✔️
+                        </Button>
+                        <Button 
+                          onClick={() => handleConfirmation(false)} 
+                          variant="outline" 
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                          disabled={state.isLoading}
+                        >
+                          لا ❌
+                        </Button>
+                      </div>
+                    )}
+
                     <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
@@ -1132,8 +1153,12 @@ export function HTMLGeneratorStage({
                     onChange={(e) =>
                       setState((prev) => ({ ...prev, prompt: e.target.value }))
                     }
-                    placeholder="صف ما تريد بناءه..."
-                    disabled={state.isLoading}
+                    placeholder={
+                      state.flowStep === "clarify" 
+                        ? "أجب على سؤال د. بنجي..." 
+                        : "صف ما تريد بناءه..."
+                    }
+                    disabled={state.isLoading || state.showConfirmButtons}
                     className="flex-grow text-sm h-9"
                     dir="auto"
                   />
@@ -1141,7 +1166,7 @@ export function HTMLGeneratorStage({
                     type="submit"
                     size="icon"
                     className="h-9 w-9"
-                    disabled={!state.prompt.trim() || state.isLoading}
+                    disabled={!state.prompt.trim() || state.isLoading || state.showConfirmButtons}
                   >
                     {state.isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
