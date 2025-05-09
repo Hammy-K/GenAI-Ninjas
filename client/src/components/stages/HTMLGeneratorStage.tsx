@@ -210,20 +210,20 @@ export function HTMLGeneratorStage({
     // Check if this is a follow-up request to modify existing HTML
     const isFollowUpRequest = state.messages.length > 2 && state.currentHTML.length > 0;
     
-    // Prepare the user message content
-    let userContent = state.prompt;
-    
-    // If this is a follow-up request, include explicit instructions to modify the existing HTML
-    // and include the current HTML in the prompt to ensure the AI has the complete context
-    if (isFollowUpRequest) {
-      userContent = `الرجاء تعديل HTML الحالي (وليس إعادة إنشاء كود جديد) بناءً على طلبي التالي: ${state.prompt}\n\nالكود الحالي:\n\`\`\`html\n${state.currentHTML}\n\`\`\``;
-    }
-
-    // Add user message
+    // Display exactly what the user typed in the UI
     const userMessage: HTMLMessage = {
       role: "user",
-      content: userContent,
+      content: state.prompt,
     };
+    
+    // Prepare the content that will be sent to the API
+    // For the API, we'll include the HTML context if this is a follow-up request
+    let apiContent = state.prompt;
+    
+    // If this is a follow-up request, include the current HTML in the API message (NOT in the UI)
+    if (isFollowUpRequest) {
+      apiContent = `The user said: "${state.prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
+    }
 
     setState((prev) => ({
       ...prev,
@@ -252,7 +252,7 @@ export function HTMLGeneratorStage({
       });
 
       // Log the prompt to Firestore
-      await logPromptToFirestore("html_generation", userContent, {
+      await logPromptToFirestore("html_generation", state.prompt, {
         message_history_length: state.messages.length,
         is_follow_up: isFollowUpRequest,
       });
@@ -260,38 +260,62 @@ export function HTMLGeneratorStage({
       // First add user message to message history for persistence in localStorage
       const updatedMessages = [...state.messages, userMessage];
       
-      // Generate HTML using the complete message history including the new user message
-      // This ensures each follow-up request has the full context of previous interactions
-      const response = await generateHTML(updatedMessages);
+      // If this is a follow-up request, modify the message sent to the API only (not what's displayed to user)
+      let htmlResponse;
+      
+      try {
+        if (isFollowUpRequest) {
+          // Create a modified version of the messages array with the HTML context in the last message
+          const apiMessages = [...state.messages];
+          apiMessages.push({
+            role: "user",
+            content: apiContent // This contains the modified message with HTML context
+          });
+          
+          // Generate HTML using the API-specific message history that includes HTML context
+          htmlResponse = await generateHTML(apiMessages);
+        } else {
+          // For initial requests, use normal message history
+          htmlResponse = await generateHTML(updatedMessages);
+        }
+        
+        if (htmlResponse.error) {
+          setState((prev) => ({
+            ...prev,
+            error: htmlResponse.error || "Failed to generate HTML",
+            isLoading: false,
+          }));
+          return;
+        }
 
-      if (response.error) {
+        // Track successful generation
+        trackStageProgress("html_generator", "html_generated", {
+          html_length: htmlResponse.html.length,
+        });
+
+        // Use the actual response message from the API instead of a hardcoded message
+        const aiResponse: HTMLMessage = htmlResponse.message || {
+          role: "assistant",
+          content:
+            "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+        };
+
+        // Update state with the AI response and HTML
         setState((prev) => ({
           ...prev,
-          error: response.error || "Failed to generate HTML",
+          messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
+          currentHTML: htmlResponse.html,
+          isLoading: false,
+        }));
+      } catch (apiError) {
+        console.error("Error generating HTML:", apiError);
+        setState((prev) => ({
+          ...prev,
+          error: apiError instanceof Error ? apiError.message : "Failed to generate HTML",
           isLoading: false,
         }));
         return;
       }
-
-      // Track successful generation
-      trackStageProgress("html_generator", "html_generated", {
-        html_length: response.html.length,
-      });
-
-      // Use the actual response message from the API instead of a hardcoded message
-      const aiResponse: HTMLMessage = response.message || {
-        role: "assistant",
-        content:
-          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
-      };
-
-      // Update state with the AI response and HTML
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
-        currentHTML: response.html,
-        isLoading: false,
-      }));
 
       // Award XP for receiving a response if not already awarded
       if (state.messages.length <= 3) {
