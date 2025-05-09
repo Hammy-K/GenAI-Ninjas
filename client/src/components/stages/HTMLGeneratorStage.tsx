@@ -250,7 +250,7 @@ export function HTMLGeneratorStage({
       // Add the summary to chat
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: `${summaryResult.summary}\n\nهل تبي نبدأ؟`
+        content: `${summaryResult.summary}\n\ تبي نبدأ؟`
       };
       
       setState(prev => ({
@@ -278,17 +278,13 @@ export function HTMLGeneratorStage({
     const enhancedPrompt = `${idea}\nAdditional details: ${clarification}`;
     
     try {
-      // Display exactly what the enhanced input is in the UI
-      const userMessage: HTMLMessage = {
-        role: "user",
-        content: enhancedPrompt,
-      };
+      // We don't need to add a new user message here because:
+      // 1. We already added the originalIdea in the clarify step
+      // 2. We already added the clarificationAnswer in the confirmation step
+      // 3. The loading message "جاري الإنشاء..." was added in handleConfirmation
       
-      // Add user message to message history
-      const updatedMessages = [...state.messages, userMessage];
-      
-      // Generate HTML with the combined context
-      const htmlResponse = await generateHTML(updatedMessages);
+      // Generate HTML with the existing message history (already contains all context)
+      const htmlResponse = await generateHTML(state.messages);
       
       if (htmlResponse.error) {
         setState((prev) => ({
@@ -422,11 +418,17 @@ export function HTMLGeneratorStage({
   const handleConfirmation = (confirmed: boolean) => {
     if (confirmed) {
       // User clicked "Yalla!" - proceed with HTML generation
+      const loadingMessage: HTMLMessage = {
+        role: "assistant",
+        content: "جاري الإنشاء..."
+      };
+      
       setState(prev => ({
         ...prev,
         isLoading: true,
         showConfirmButtons: false,
-        flowStep: "generate"
+        flowStep: "generate",
+        messages: [...prev.messages, loadingMessage]
       }));
       
       // Generate HTML with combined context
@@ -523,11 +525,23 @@ export function HTMLGeneratorStage({
           break;
           
         case "modify":
-          // User is modifying existing HTML
+          // User is providing feedback after HTML generation
+          // Instead of just modifying, restart the full clarification flow for a better experience
           if (state.currentHTML) {
-            await handleModifyHtml(state.prompt);
+            // Store current HTML for reference
+            const currentHtml = state.currentHTML;
+            
+            // Start with clarification for improved context
+            // This resets the flow but preserves the HTML until we get a new one
+            await handleClarificationStep(state.prompt);
+            
+            // Restore the HTML so it's still visible in preview
+            setState(prev => ({
+              ...prev,
+              currentHTML: currentHtml
+            }));
           } else {
-            // If somehow we're in modify state but have no HTML, revert to input flow
+            // If somehow we're in modify state but have no HTML, revert to new project flow
             console.log("In modify state but no HTML found, reverting to new project flow");
             await handleClarificationStep(state.prompt);
           }
@@ -1124,19 +1138,19 @@ export function HTMLGeneratorStage({
                           onClick={() => handleConfirmation(true)} 
                           variant="outline"
                           size="sm"
-                          className="px-3 py-1 h-8"
+                          className="px-3 py-1 h-8 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
                           disabled={state.isLoading}
                         >
-                          نعم
+                          يلا!
                         </Button>
                         <Button 
                           onClick={() => handleConfirmation(false)} 
                           variant="outline" 
                           size="sm"
-                          className="px-3 py-1 h-8"
+                          className="px-3 py-1 h-8 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                           disabled={state.isLoading}
                         >
-                          لا
+                          لا لسا
                         </Button>
                       </div>
                     )}
