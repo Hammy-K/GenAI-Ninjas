@@ -201,7 +201,7 @@ export async function getProjectSummary(idea: string, clarification: string): Pr
     ];
     
     // Make the prompt more conversational in Saudi dialect
-    const prompt = `لخص مشروع الطالب بناءً على فكرته الأصلية وجوابه. تكلم مع الطالب مباشرة (ليس عنه) وابدأ بـ "إذن، تبي تبني...". خلي كلامك باللهجة السعودية، وقصير (جملتين على الأكثر) وودي.`;
+    const prompt = `بناءً على فكرة الطالب وإجابته، استجب فقط بـ "تبي نبدأ؟" بدون أي إضافات أخرى. من المهم جدًا أن تكون استجابتك هي هذه الجملة فقط: "تبي نبدأ؟".`;
     
     const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
       prompt,
@@ -239,8 +239,12 @@ export async function generateHTML(messageHistory: HTMLMessage[]): Promise<Gener
     
     // Try falling back to the original endpoint if the assistant API fails
     try {
+      // Get filtered messages same as above
+      const filtered = messageHistory.filter(msg => 
+        msg.className !== "loading-animation"
+      );
       console.log("Assistant API failed, falling back to standard endpoint");
-      const fallbackResponse = await apiRequest('POST', '/api/ai/generate-html', { messageHistory: filteredMessages });
+      const fallbackResponse = await apiRequest('POST', '/api/ai/generate-html', { messageHistory: filtered });
       return await fallbackResponse.json();
     } catch (fallbackError) {
       console.error("Both HTML generation endpoints failed:", fallbackError);

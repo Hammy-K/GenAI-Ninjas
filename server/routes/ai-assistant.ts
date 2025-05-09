@@ -35,9 +35,12 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
     try {
       const { messageHistory = [] } = req.body;
       
+      console.log("HTML Generate Request - Message history length:", messageHistory.length);
+      
       // Validate that we have messages
       const userMessages = messageHistory.filter((msg: any) => msg.role === 'user');
       if (userMessages.length === 0) {
+        console.log("ERROR: No user messages found in history");
         return res.status(400).json({
           error: "At least one user message is required in messageHistory"
         });
@@ -48,6 +51,9 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
       if (!sessionId) {
         sessionId = `${HTML_GENERATOR_SESSION_PREFIX}${uuidv4()}`;
         req.session.assistantSessionId = sessionId;
+        console.log("Created new assistant session ID:", sessionId);
+      } else {
+        console.log("Using existing assistant session ID:", sessionId);
       }
       
       // Extract user identity information

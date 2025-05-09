@@ -271,10 +271,10 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Add the summary to chat
+      // Add the summary to chat - now just "تبي نبدأ؟"
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: `${summaryResult.summary}\n\ تبي نبدأ؟`,
+        content: "تبي نبدأ؟",
       };
 
       setState((prev) => ({
