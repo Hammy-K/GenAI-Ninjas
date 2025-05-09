@@ -146,9 +146,20 @@ export type SummaryResponse = {
  */
 export async function getClarifyingQuestion(idea: string): Promise<ClarificationResponse> {
   try {
-    const prompt = `The student wants to build: ${idea} as an HTML. Ask one clarifying question to make the project richer and more impressive`;
+    // Create a message history with a user message first
+    const messageHistory = [
+      {
+        role: "user" as const,
+        content: `أنا أبي أبني: ${idea}`
+      }
+    ];
+    
+    // Make the prompt more conversational and specifically ask the AI to use Saudi dialect
+    const prompt = `أنا طالب وأبي أبني ${idea} باستخدام HTML. اسألني سؤال واحد يساعدني أوضح فكرتي بشكل أفضل. لازم تسألني بالعامية السعودية وبأسلوب ودي مثل "وش رأيك..."`;
+    
     const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
       prompt,
+      messageHistory,
       // Use the clarification assistant ID
       assistantId: 'asst_x31y8qYnTlwvs1gAxKCNG5KB'
     });
@@ -161,7 +172,7 @@ export async function getClarifyingQuestion(idea: string): Promise<Clarification
   } catch (error) {
     console.error("Error getting clarifying question:", error);
     return {
-      question: "هل يمكنك إضافة المزيد من التفاصيل عن مشروعك لجعله أكثر تميزاً؟", // Fallback question
+      question: "وش رأيك نضيف شوية تفاصيل أكثر عن المشروع؟ ممكن تعطيني أمثلة عن المحتوى اللي تبي تعرضه؟", // Fallback question in Saudi dialect
       error: error instanceof Error ? error.message : "Failed to get clarifying question"
     };
   }
@@ -172,9 +183,28 @@ export async function getClarifyingQuestion(idea: string): Promise<Clarification
  */
 export async function getProjectSummary(idea: string, clarification: string): Promise<SummaryResponse> {
   try {
-    const prompt = `Based on the student's idea: "${idea}" and their clarification: "${clarification}", write a summary that speaks directly TO the student (not ABOUT them) starting with "إذن، تبي تبني..." (So, you want to build...). Keep it under 2 sentences and make it conversational.`;
+    // Create a message history for context
+    const messageHistory = [
+      {
+        role: "user" as const,
+        content: `أنا أبي أبني: ${idea}`
+      },
+      {
+        role: "assistant" as const,
+        content: "سؤال للتوضيح: " + clarification.split(':').pop()?.trim() || clarification // Extract just the question part if possible
+      },
+      {
+        role: "user" as const,
+        content: clarification
+      }
+    ];
+    
+    // Make the prompt more conversational in Saudi dialect
+    const prompt = `لخص مشروع الطالب بناءً على فكرته الأصلية وجوابه. تكلم مع الطالب مباشرة (ليس عنه) وابدأ بـ "إذن، تبي تبني...". خلي كلامك باللهجة السعودية، وقصير (جملتين على الأكثر) وودي.`;
+    
     const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
       prompt,
+      messageHistory,
       // Use the same clarification assistant ID
       assistantId: 'asst_x31y8qYnTlwvs1gAxKCNG5KB'
     });
@@ -187,7 +217,7 @@ export async function getProjectSummary(idea: string, clarification: string): Pr
   } catch (error) {
     console.error("Error getting project summary:", error);
     return {
-      summary: `سنبني: ${idea}`,
+      summary: `إذن، تبي تبني ${idea}. يلا نبدأ!`,
       error: error instanceof Error ? error.message : "Failed to get project summary"
     };
   }
@@ -212,7 +242,7 @@ export async function generateHTML(messageHistory: HTMLMessage[]): Promise<Gener
         html: '',
         message: {
           role: 'assistant',
-          content: 'عذرًا، حدث خطأ في عملية توليد HTML. هل يمكنك إعادة المحاولة؟'
+          content: 'أوه، صار فيه مشكلة. ممكن تحاول مرة ثانية وتعطيني وصف أوضح لموقعك؟'
         },
         error: error instanceof Error ? error.message : "Unknown error occurred"
       };

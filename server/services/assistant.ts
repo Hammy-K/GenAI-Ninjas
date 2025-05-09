@@ -494,7 +494,34 @@ export class AssistantService {
         threadId = await this.createThread(sessionId);
       }
 
-      // Add message to thread
+      // Similar to HTML generation, create a new thread each time to ensure complete context
+      if (existingThreadId) {
+        try {
+          // Remove the old thread from our map - don't delete via API as that could fail
+          this.removeThreadId(sessionId);
+          
+          // Create a new thread - this ensures we're starting fresh
+          threadId = await this.createThread(sessionId);
+        } catch (error) {
+          console.log("Error refreshing thread, continuing with existing thread:", error);
+          // Continue with existing thread if unable to create a new one
+          threadId = existingThreadId;
+        }
+      }
+      
+      // Add all previous messages for context
+      if (messageHistory && messageHistory.length > 0) {
+        for (const message of messageHistory) {
+          if (message.role === "user" || message.role === "assistant") {
+            await this.openai.beta.threads.messages.create(threadId, {
+              role: message.role,
+              content: message.content,
+            });
+          }
+        }
+      }
+      
+      // Add the current prompt as the last message
       await this.openai.beta.threads.messages.create(threadId, {
         role: "user",
         content: prompt,
