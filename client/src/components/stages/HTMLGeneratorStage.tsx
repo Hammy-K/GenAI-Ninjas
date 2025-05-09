@@ -1178,7 +1178,7 @@ export function HTMLGeneratorStage({
                           onClick={() => handleConfirmation(true)}
                           variant="outline"
                           size="sm"
-                          className="px-3 py-1 h-8 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                          className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
                           disabled={state.isLoading}
                         >
                           يلا!
@@ -1187,7 +1187,7 @@ export function HTMLGeneratorStage({
                           onClick={() => handleConfirmation(false)}
                           variant="outline"
                           size="sm"
-                          className="px-3 py-1 h-8 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                          className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                           disabled={state.isLoading}
                         >
                           لا لسا
