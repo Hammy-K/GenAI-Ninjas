@@ -205,6 +205,17 @@ export function HTMLGeneratorStage({
   // Helper function to handle clarification step
   const handleClarificationStep = async (idea: string) => {
     try {
+      // When in the modify state, we're starting a new generation flow
+      // but we want to preserve the history of messages to maintain context
+      
+      // Filter out any previous loading messages for a cleaner history
+      const filteredMessages = state.messages.filter(msg => 
+        msg.className !== "loading-animation" && 
+        !msg.content.includes("<!DOCTYPE html") && 
+        !msg.content.includes("<html>")
+      );
+      
+      // Get the clarifying question but include full message history for context
       const clarificationResult = await getClarifyingQuestion(idea);
 
       if (clarificationResult.error) {
@@ -226,7 +237,8 @@ export function HTMLGeneratorStage({
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
-        messages: [...prev.messages, clarifyingMessage],
+        // Keep existing messages for thread context, just add the new one
+        messages: [...filteredMessages, clarifyingMessage],
         flowStep: "clarify",
         isLoading: false,
       }));

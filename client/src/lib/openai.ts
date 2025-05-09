@@ -226,8 +226,13 @@ export async function getProjectSummary(idea: string, clarification: string): Pr
 
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
   try {
+    // Filter out any loading messages to keep the context clean
+    const filteredMessages = messageHistory.filter(msg => 
+      msg.className !== "loading-animation"
+    );
+    
     // Use the new Assistant API endpoint for better context preservation and clarification handling
-    const response = await apiRequest('POST', '/api/assistant/generate-html', { messageHistory });
+    const response = await apiRequest('POST', '/api/assistant/generate-html', { messageHistory: filteredMessages });
     return await response.json();
   } catch (error) {
     console.error("Error generating HTML:", error);
@@ -235,7 +240,7 @@ export async function generateHTML(messageHistory: HTMLMessage[]): Promise<Gener
     // Try falling back to the original endpoint if the assistant API fails
     try {
       console.log("Assistant API failed, falling back to standard endpoint");
-      const fallbackResponse = await apiRequest('POST', '/api/ai/generate-html', { messageHistory });
+      const fallbackResponse = await apiRequest('POST', '/api/ai/generate-html', { messageHistory: filteredMessages });
       return await fallbackResponse.json();
     } catch (fallbackError) {
       console.error("Both HTML generation endpoints failed:", fallbackError);
