@@ -839,13 +839,12 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" && typeof msg.content === 'string' && 
+                          {msg.role === "assistant" &&
                           (msg.content.includes("<!DOCTYPE html") ||
                             msg.content.includes("<html"))
                             ? "سويت لك الصفحة! شوف النتيجة في الجهة اليسرى 👈"
-                            : typeof msg.content === 'string' && msg.content.includes("<!DOCTYPE html") 
-                              ? msg.content.split("<!DOCTYPE html")[0]
-                              : msg.content}
+                            : msg.content.split("<!DOCTYPE html")[0] ||
+                              msg.content}
                         </div>
                       </div>
                     ))}

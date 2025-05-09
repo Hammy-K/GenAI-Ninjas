@@ -96,22 +96,7 @@ export function registerProjectRoutes(router: Router) {
         return res.status(404).json({ error: "Project not found" });
       }
       
-      // Check the Accept header to determine response format
-      const acceptHeader = req.headers.accept || '';
-      
-      // If client accepts HTML, send raw HTML content directly
-      if (acceptHeader.includes('text/html')) {
-        // Log the success
-        logEvent('project_load', 'HTML project loaded directly', {
-          project_id: projectId
-        });
-        
-        // Set content type to HTML and send it directly
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(project.html);
-      }
-      
-      // Otherwise, return JSON for backward compatibility
+      // Return in the same format as the previous API for backward compatibility
       const response = {
         id: project.projectId,
         html: project.html,
