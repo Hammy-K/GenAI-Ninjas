@@ -207,10 +207,22 @@ export function HTMLGeneratorStage({
       return;
     }
 
+    // Check if this is a follow-up request to modify existing HTML
+    const isFollowUpRequest = state.messages.length > 2 && state.currentHTML.length > 0;
+    
+    // Prepare the user message content
+    let userContent = state.prompt;
+    
+    // If this is a follow-up request, include explicit instructions to modify the existing HTML
+    // and include the current HTML in the prompt to ensure the AI has the complete context
+    if (isFollowUpRequest) {
+      userContent = `الرجاء تعديل HTML الحالي (وليس إعادة إنشاء كود جديد) بناءً على طلبي التالي: ${state.prompt}\n\nالكود الحالي:\n\`\`\`html\n${state.currentHTML}\n\`\`\``;
+    }
+
     // Add user message
     const userMessage: HTMLMessage = {
       role: "user",
-      content: state.prompt,
+      content: userContent,
     };
 
     setState((prev) => ({
@@ -236,11 +248,13 @@ export function HTMLGeneratorStage({
       // Track this step
       trackStageProgress("html_generator", "prompt_submitted", {
         message_count: state.messages.length + 1,
+        is_follow_up: isFollowUpRequest,
       });
 
       // Log the prompt to Firestore
-      await logPromptToFirestore("html_generation", state.prompt, {
+      await logPromptToFirestore("html_generation", userContent, {
         message_history_length: state.messages.length,
+        is_follow_up: isFollowUpRequest,
       });
 
       // First add user message to message history for persistence in localStorage
