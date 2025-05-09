@@ -347,11 +347,9 @@ export function HTMLGeneratorStage({
   const handleModifyHtml = async (prompt: string) => {
     // Check that we have HTML to modify
     if (!state.currentHTML) {
-      setState(prev => ({
-        ...prev,
-        error: "لا يوجد HTML للتعديل. يرجى إنشاء HTML أولاً.",
-        isLoading: false
-      }));
+      console.log("No HTML to modify, treating this as a new project request");
+      // Instead of showing an error, handle this as a new project
+      await handleClarificationStep(prompt);
       return;
     }
     
@@ -526,7 +524,13 @@ export function HTMLGeneratorStage({
           
         case "modify":
           // User is modifying existing HTML
-          await handleModifyHtml(state.prompt);
+          if (state.currentHTML) {
+            await handleModifyHtml(state.prompt);
+          } else {
+            // If somehow we're in modify state but have no HTML, revert to input flow
+            console.log("In modify state but no HTML found, reverting to new project flow");
+            await handleClarificationStep(state.prompt);
+          }
           break;
           
         default:
