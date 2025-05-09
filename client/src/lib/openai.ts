@@ -121,6 +121,7 @@ export async function generateProjectIdea(interests: string, goal: string, tools
 export type HTMLMessage = {
   role: 'user' | 'assistant';
   content: string;
+  className?: string; // Optional class name for styling specific messages
 };
 
 export type GenerateHTMLResponse = {

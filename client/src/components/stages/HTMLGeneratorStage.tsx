@@ -1130,12 +1130,28 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" &&
-                          (msg.content.includes("<!DOCTYPE html") ||
-                            msg.content.includes("<html"))
-                            ? "سويت لك الصفحة! شوف النتيجة  👈"
-                            : msg.content.split("<!DOCTYPE html")[0] ||
-                              msg.content}
+                          {msg.role === "assistant" && msg.className === "loading-animation" ? (
+                            <div className="flex">
+                              <span>جاري الإنشاء</span>
+                              <span className="flex ml-1">
+                                <span className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
+                                <span
+                                  className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                                  style={{ animationDelay: "0.2s" }}
+                                ></span>
+                                <span
+                                  className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                                  style={{ animationDelay: "0.4s" }}
+                                ></span>
+                              </span>
+                            </div>
+                          ) : msg.role === "assistant" &&
+                            (msg.content.includes("<!DOCTYPE html") ||
+                             msg.content.includes("<html")) ? (
+                            "سويت لك الصفحة! شوف النتيجة 👈"
+                          ) : (
+                            msg.content.split("<!DOCTYPE html")[0] || msg.content
+                          )}
                         </div>
                       </div>
                     ))}
