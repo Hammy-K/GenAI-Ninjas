@@ -261,9 +261,10 @@ export function HTMLGeneratorStage({
       const updatedMessages = [...state.messages, userMessage];
       
       // If this is a follow-up request, modify the message sent to the API only (not what's displayed to user)
-      let htmlResponse;
-      
       try {
+        // Type for HTML generator response to fix type errors
+        let htmlResponse: GenerateHTMLResponse;
+        
         if (isFollowUpRequest) {
           // Create a modified version of the messages array with the HTML context in the last message
           const apiMessages = [...state.messages];
