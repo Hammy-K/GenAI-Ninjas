@@ -130,6 +130,69 @@ export type GenerateHTMLResponse = {
   isGeneratingHTML?: boolean; // Flag to indicate if we're generating HTML (close chat) or asking questions (keep chat open)
 };
 
+export type ClarificationResponse = {
+  question: string;
+  error?: string;
+};
+
+export type SummaryResponse = {
+  summary: string;
+  error?: string;
+};
+
+/**
+ * Ask a clarifying question about the HTML idea
+ * Uses a separate assistant specialized for clarification
+ */
+export async function getClarifyingQuestion(idea: string): Promise<ClarificationResponse> {
+  try {
+    const prompt = `The student wants to build: ${idea} as an HTML. Ask one clarifying question to make the project richer and more impressive`;
+    const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
+      prompt,
+      // Use the clarification assistant ID
+      assistantId: 'asst_x31y8qYnTlwvs1gAxKCNG5KB'
+    });
+    const data = await response.json();
+    
+    return { 
+      question: data.text,
+      error: data.error 
+    };
+  } catch (error) {
+    console.error("Error getting clarifying question:", error);
+    return {
+      question: "هل يمكنك إضافة المزيد من التفاصيل عن مشروعك لجعله أكثر تميزاً؟", // Fallback question
+      error: error instanceof Error ? error.message : "Failed to get clarifying question"
+    };
+  }
+}
+
+/**
+ * Generate a summary of the HTML project based on the original idea and clarification
+ */
+export async function getProjectSummary(idea: string, clarification: string): Promise<SummaryResponse> {
+  try {
+    const prompt = `Summarize this HTML project in 2 simple sentences: Original idea: "${idea}". Clarification: "${clarification}"`;
+    const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
+      prompt,
+      // Use the same clarification assistant ID
+      assistantId: 'asst_x31y8qYnTlwvs1gAxKCNG5KB'
+    });
+    const data = await response.json();
+    
+    return { 
+      summary: data.text,
+      error: data.error 
+    };
+  } catch (error) {
+    console.error("Error getting project summary:", error);
+    return {
+      summary: `سنبني: ${idea}`,
+      error: error instanceof Error ? error.message : "Failed to get project summary"
+    };
+  }
+}
+
 export async function generateHTML(messageHistory: HTMLMessage[]): Promise<GenerateHTMLResponse> {
   try {
     // Use the new Assistant API endpoint for better context preservation and clarification handling

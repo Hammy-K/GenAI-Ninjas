@@ -38,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { generateHTML, HTMLMessage } from "@/lib/openai";
+import { generateHTML, HTMLMessage, getClarifyingQuestion, getProjectSummary, GenerateHTMLResponse } from "@/lib/openai";
 import {
   saveProject,
   loadProject,
@@ -72,6 +72,13 @@ interface HTMLGeneratorState {
   hasSharedLink: boolean; // Track if the user has copied the share link
   showShareDialog: boolean;
   showResetDialog: boolean;
+  
+  // New clarify & confirm flow states
+  originalIdea: string;
+  clarificationAnswer: string;
+  projectSummary: string;
+  flowStep: "input" | "clarify" | "confirm" | "generate" | "modify";
+  showConfirmButtons: boolean;
 }
 
 export function HTMLGeneratorStage({
@@ -125,6 +132,13 @@ export function HTMLGeneratorStage({
     hasSharedLink: false, // Initialize as false, will be set to true when the user copies the link
     showShareDialog: false,
     showResetDialog: false,
+    
+    // Initialize new clarify & confirm flow states
+    originalIdea: "",
+    clarificationAnswer: "",
+    projectSummary: "",
+    flowStep: "input", // Start with input step
+    showConfirmButtons: false,
   };
 
   // Clear stale state if needed
@@ -182,145 +196,131 @@ export function HTMLGeneratorStage({
     return () => clearTimeout(timer);
   }, [state.messages]);
 
-  // Handle prompt submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (state.isLoading) return;
-
-    // Validate input using the shared utility function
-    const validation = validateInput(state.prompt);
-    if (!validation.isValid) {
-      // Add a warning message from د. بنجي about the invalid input
-      const validationWarning: HTMLMessage = {
-        role: "assistant",
-        content:
-          validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد إنشاءه.",
-      };
-
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, validationWarning],
-        error: validation.errorMessage,
-      }));
-
-      return;
-    }
-
-    // Check if this is a follow-up request to modify existing HTML
-    const isFollowUpRequest = state.messages.length > 2 && state.currentHTML.length > 0;
-    
-    // Display exactly what the user typed in the UI
-    const userMessage: HTMLMessage = {
-      role: "user",
-      content: state.prompt,
-    };
-    
-    // Prepare the content that will be sent to the API
-    // For the API, we'll include the HTML context if this is a follow-up request
-    let apiContent = state.prompt;
-    
-    // If this is a follow-up request, include the current HTML in the API message (NOT in the UI)
-    if (isFollowUpRequest) {
-      apiContent = `The user said: "${state.prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
-    }
-
-    setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      prompt: "",
-      isLoading: true,
-      error: "",
-    }));
-
+  // Helper function to handle clarification step
+  const handleClarificationStep = async (idea: string) => {
     try {
-      // Award XP for the first prompt if not already awarded
-      if (state.messages.length === 2) {
-        // Adjust length check to account for new message
-        if (
-          awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")
-        ) {
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3000);
-        }
+      const clarificationResult = await getClarifyingQuestion(idea);
+      
+      if (clarificationResult.error) {
+        setState(prev => ({
+          ...prev,
+          error: clarificationResult.error,
+          isLoading: false
+        }));
+        return;
       }
-
-      // Track this step
-      trackStageProgress("html_generator", "prompt_submitted", {
-        message_count: state.messages.length + 1,
-        is_follow_up: isFollowUpRequest,
-      });
-
-      // Log the prompt to Firestore
-      await logPromptToFirestore("html_generation", state.prompt, {
-        message_history_length: state.messages.length,
-        is_follow_up: isFollowUpRequest,
-      });
-
-      // First add user message to message history for persistence in localStorage
+      
+      // Add the clarifying question to chat
+      const clarifyingMessage: HTMLMessage = {
+        role: "assistant",
+        content: clarificationResult.question
+      };
+      
+      setState(prev => ({
+        ...prev,
+        originalIdea: idea,
+        messages: [...prev.messages, clarifyingMessage],
+        flowStep: "clarify",
+        isLoading: false
+      }));
+      
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Failed to get clarifying question",
+        isLoading: false
+      }));
+    }
+  };
+  
+  // Helper function to handle confirmation step
+  const handleConfirmationStep = async (idea: string, clarification: string) => {
+    try {
+      const summaryResult = await getProjectSummary(idea, clarification);
+      
+      if (summaryResult.error) {
+        setState(prev => ({
+          ...prev,
+          error: summaryResult.error,
+          isLoading: false
+        }));
+        return;
+      }
+      
+      // Add the summary to chat
+      const summaryMessage: HTMLMessage = {
+        role: "assistant",
+        content: `${summaryResult.summary}\n\nهل نبدأ؟`
+      };
+      
+      setState(prev => ({
+        ...prev,
+        projectSummary: summaryResult.summary,
+        clarificationAnswer: clarification,
+        messages: [...prev.messages, summaryMessage],
+        flowStep: "confirm",
+        showConfirmButtons: true,
+        isLoading: false
+      }));
+      
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Failed to get project summary",
+        isLoading: false
+      }));
+    }
+  };
+  
+  // Helper function to handle HTML generation
+  const handleGenerateHtml = async (idea: string, clarification: string) => {
+    // Create a combined prompt that includes both the original idea and clarification
+    const enhancedPrompt = `${idea}\nAdditional details: ${clarification}`;
+    
+    try {
+      // Display exactly what the enhanced input is in the UI
+      const userMessage: HTMLMessage = {
+        role: "user",
+        content: enhancedPrompt,
+      };
+      
+      // Add user message to message history
       const updatedMessages = [...state.messages, userMessage];
       
-      // If this is a follow-up request, modify the message sent to the API only (not what's displayed to user)
-      try {
-        // Type for HTML generator response to fix type errors
-        let htmlResponse: GenerateHTMLResponse;
-        
-        if (isFollowUpRequest) {
-          // Create a modified version of the messages array with the HTML context in the last message
-          const apiMessages = [...state.messages];
-          apiMessages.push({
-            role: "user",
-            content: apiContent // This contains the modified message with HTML context
-          });
-          
-          // Generate HTML using the API-specific message history that includes HTML context
-          htmlResponse = await generateHTML(apiMessages);
-        } else {
-          // For initial requests, use normal message history
-          htmlResponse = await generateHTML(updatedMessages);
-        }
-        
-        if (htmlResponse.error) {
-          setState((prev) => ({
-            ...prev,
-            error: htmlResponse.error || "Failed to generate HTML",
-            isLoading: false,
-          }));
-          return;
-        }
-
-        // Track successful generation
-        trackStageProgress("html_generator", "html_generated", {
-          html_length: htmlResponse.html.length,
-        });
-
-        // Use the actual response message from the API instead of a hardcoded message
-        const aiResponse: HTMLMessage = htmlResponse.message || {
-          role: "assistant",
-          content:
-            "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
-        };
-
-        // Update state with the AI response and HTML
+      // Generate HTML with the combined context
+      const htmlResponse = await generateHTML(updatedMessages);
+      
+      if (htmlResponse.error) {
         setState((prev) => ({
           ...prev,
-          messages: [...prev.messages, aiResponse], // Only add AI response, user message was already added
-          currentHTML: htmlResponse.html,
-          isLoading: false,
-        }));
-      } catch (apiError) {
-        console.error("Error generating HTML:", apiError);
-        setState((prev) => ({
-          ...prev,
-          error: apiError instanceof Error ? apiError.message : "Failed to generate HTML",
+          error: htmlResponse.error || "Failed to generate HTML",
           isLoading: false,
         }));
         return;
       }
 
-      // Award XP for receiving a response if not already awarded
-      if (state.messages.length <= 3) {
-        // Adjust length check to account for new message
+      // Track successful generation
+      trackStageProgress("html_generator", "html_generated", {
+        html_length: htmlResponse.html.length,
+      });
+
+      // Use the response message from the API
+      const aiResponse: HTMLMessage = htmlResponse.message || {
+        role: "assistant",
+        content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+      };
+
+      // Update state with the AI response and HTML
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, aiResponse],
+        currentHTML: htmlResponse.html,
+        isLoading: false,
+        flowStep: "modify" // Move to modify step
+      }));
+      
+      // Award XP for first response
+      if (state.messages.length <= 4) { // Adjust for our longer flow
         if (
           awardIfNotAlreadyAwarded(
             onEarnXp,
@@ -332,6 +332,210 @@ export function HTMLGeneratorStage({
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 3000);
         }
+      }
+      
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Failed to generate HTML",
+        isLoading: false,
+      }));
+    }
+  };
+  
+  // Helper function to handle changes to existing HTML
+  const handleModifyHtml = async (prompt: string) => {
+    // Check that we have HTML to modify
+    if (!state.currentHTML) {
+      setState(prev => ({
+        ...prev,
+        error: "لا يوجد HTML للتعديل. يرجى إنشاء HTML أولاً.",
+        isLoading: false
+      }));
+      return;
+    }
+    
+    // Display what the user typed in the UI
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: prompt,
+    };
+    
+    // Add context about the HTML for the API (not shown to user)
+    const apiContent = `The user said: "${prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
+    
+    setState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, userMessage],
+      prompt: "",
+      isLoading: true,
+      error: "",
+    }));
+    
+    try {
+      // Create a modified version of the messages array with the HTML context
+      const apiMessages = [...state.messages];
+      apiMessages.push({
+        role: "user",
+        content: apiContent
+      });
+      
+      // Generate HTML with the context
+      const htmlResponse = await generateHTML(apiMessages);
+      
+      if (htmlResponse.error) {
+        setState((prev) => ({
+          ...prev,
+          error: htmlResponse.error || "Failed to update HTML",
+          isLoading: false,
+        }));
+        return;
+      }
+
+      // Track the modification
+      trackStageProgress("html_generator", "html_modified", {
+        html_length: htmlResponse.html.length,
+      });
+
+      // Use the response message
+      const aiResponse: HTMLMessage = htmlResponse.message || {
+        role: "assistant",
+        content: "تم تحديث الكود! شوف النتيجة.",
+      };
+
+      // Update state with the AI response and new HTML
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, aiResponse],
+        currentHTML: htmlResponse.html,
+        isLoading: false,
+      }));
+      
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Failed to update HTML",
+        isLoading: false,
+      }));
+    }
+  };
+
+  // Handle user response to confirmation step
+  const handleConfirmation = (confirmed: boolean) => {
+    if (confirmed) {
+      // User clicked "Yalla!" - proceed with HTML generation
+      setState(prev => ({
+        ...prev,
+        isLoading: true,
+        showConfirmButtons: false,
+        flowStep: "generate"
+      }));
+      
+      // Generate HTML with combined context
+      handleGenerateHtml(state.originalIdea, state.clarificationAnswer);
+    } else {
+      // User clicked "No" - ask what they want to change
+      const changeMessage: HTMLMessage = {
+        role: "assistant",
+        content: "ماذا تريد أن تغير؟"
+      };
+      
+      setState(prev => ({
+        ...prev,
+        messages: [...prev.messages, changeMessage],
+        showConfirmButtons: false,
+        flowStep: "input" // Back to input for changes
+      }));
+    }
+  };
+  
+  // Handle prompt submission with clarify & confirm flow
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (state.isLoading) return;
+
+    // Validate input
+    const validation = validateInput(state.prompt);
+    if (!validation.isValid) {
+      const validationWarning: HTMLMessage = {
+        role: "assistant",
+        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد إنشاءه.",
+      };
+
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, validationWarning],
+        error: validation.errorMessage,
+      }));
+      return;
+    }
+    
+    // Add user message to chat
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: state.prompt,
+    };
+    
+    setState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, userMessage],
+      prompt: "",
+      isLoading: true,
+      error: "",
+    }));
+    
+    try {
+      // Award XP for the first prompt if not already awarded
+      if (state.messages.length === 2) {
+        if (awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")) {
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 3000);
+        }
+      }
+
+      // Track this step
+      trackStageProgress("html_generator", "prompt_submitted", {
+        message_count: state.messages.length + 1,
+        flow_step: state.flowStep
+      });
+
+      // Log the prompt to Firestore
+      await logPromptToFirestore("html_generation", state.prompt, {
+        message_history_length: state.messages.length,
+        flow_step: state.flowStep
+      });
+      
+      // Handle different steps of the flow
+      switch (state.flowStep) {
+        case "input":
+          // Initial input - go to clarification
+          if (state.currentHTML === "") {
+            // Only for new projects (not modifications)
+            await handleClarificationStep(state.prompt);
+          } else {
+            // We already have HTML - this is a modification
+            await handleModifyHtml(state.prompt);
+          }
+          break;
+          
+        case "clarify":
+          // User answered clarification - go to confirmation
+          await handleConfirmationStep(state.originalIdea, state.prompt);
+          break;
+          
+        case "modify":
+          // User is modifying existing HTML
+          await handleModifyHtml(state.prompt);
+          break;
+          
+        default:
+          // Fallback for any other state
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: "Unexpected flow state. Please try again."
+          }));
       }
     } catch (error) {
       setState((prev) => ({
