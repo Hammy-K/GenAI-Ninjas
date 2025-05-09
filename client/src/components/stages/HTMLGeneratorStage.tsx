@@ -250,7 +250,7 @@ export function HTMLGeneratorStage({
       // Add the summary to chat
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: `${summaryResult.summary}\n\nهل نبدأ؟`
+        content: `${summaryResult.summary}\n\nهل تبي نبدأ؟`
       };
       
       setState(prev => ({
@@ -437,7 +437,7 @@ export function HTMLGeneratorStage({
       // User clicked "No" - ask what they want to change
       const changeMessage: HTMLMessage = {
         role: "assistant",
-        content: "ماذا تريد أن تغير؟"
+        content: "اوكي، وش تبي نغير؟"
       };
       
       setState(prev => ({
@@ -1102,30 +1102,37 @@ export function HTMLGeneratorStage({
                           />
                           <div className="font-medium text-xs">د. بنجي</div>
                         </div>
-                        <div className="flex items-center text-xs">
-                          <Loader2 className="h-3 w-3 ml-2 animate-spin" />
-                          جاري الإنشاء...
+                        <div className="text-xs relative pr-4">
+                          <span className="inline-block">يكتب</span>
+                          <span className="absolute left-0 top-0">
+                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
+                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0.2s" }}></span>
+                            <span className="inline-block w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0.4s" }}></span>
+                          </span>
                         </div>
                       </div>
                     )}
 
                     {/* Confirmation Buttons - only show during confirmation step */}
                     {state.showConfirmButtons && (
-                      <div className="flex gap-2 my-4 justify-center">
+                      <div className="flex gap-2 my-3 justify-center">
                         <Button 
                           onClick={() => handleConfirmation(true)} 
-                          className="bg-green-600 hover:bg-green-700"
+                          variant="outline"
+                          size="sm"
+                          className="px-3 py-1 h-8"
                           disabled={state.isLoading}
                         >
-                          يلا! ✔️
+                          نعم
                         </Button>
                         <Button 
                           onClick={() => handleConfirmation(false)} 
                           variant="outline" 
-                          className="border-red-300 text-red-600 hover:bg-red-50"
+                          size="sm"
+                          className="px-3 py-1 h-8"
                           disabled={state.isLoading}
                         >
-                          لا ❌
+                          لا
                         </Button>
                       </div>
                     )}

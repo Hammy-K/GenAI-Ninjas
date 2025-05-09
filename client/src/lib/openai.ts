@@ -172,7 +172,7 @@ export async function getClarifyingQuestion(idea: string): Promise<Clarification
  */
 export async function getProjectSummary(idea: string, clarification: string): Promise<SummaryResponse> {
   try {
-    const prompt = `Summarize this HTML project in 2 simple sentences: Original idea: "${idea}". Clarification: "${clarification}"`;
+    const prompt = `Based on the student's idea: "${idea}" and their clarification: "${clarification}", write a summary that speaks directly TO the student (not ABOUT them) starting with "إذن، تبي تبني..." (So, you want to build...). Keep it under 2 sentences and make it conversational.`;
     const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
       prompt,
       // Use the same clarification assistant ID
