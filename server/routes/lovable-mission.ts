@@ -207,6 +207,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
       let progress = null;
       let userId = 0;
       
+      // Handle both cases: user with Firebase UID and anonymous users
       if (firebaseUid) {
         try {
           // Try to get user and progress, but don't require them
@@ -221,7 +222,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
               progress = await storage.updateLovableMissionProgress(progress.id, {
                 hasSubmitted: true,
                 projectLink,
-                studentName, // Now store student name in the database
+                studentName, // Store student name in the database
                 currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
               });
             } else {
@@ -232,12 +233,71 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                 currentStep: 6, // Set to step 6 (submission step)
                 hasSubmitted: true,
                 projectLink,
-                studentName, // Now store student name in the database
+                studentName, // Store student name in the database
               });
+            }
+          } else {
+            // User not found but we have firebaseUid, so we need to create a new user
+            try {
+              // Create a temporary username based on studentName or a generated ID
+              const username = studentName ? 
+                `${studentName.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}` : 
+                `anonymous_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+              
+              // Create a new user with the firebaseUid
+              const newUser = await storage.createUser({
+                username,
+                password: Math.random().toString(36).substring(2, 15), // Random password
+                firebaseUid
+              });
+              
+              userId = newUser.id;
+              
+              // Create new progress for this user
+              progress = await storage.createLovableMissionProgress({
+                userId: newUser.id,
+                firebaseUid,
+                currentStep: 6, // Set to step 6 (submission step)
+                hasSubmitted: true,
+                projectLink,
+                studentName, // Store student name in the database
+              });
+            } catch (userErr) {
+              console.error("Error creating new user:", userErr);
+              // Continue without throwing an error
             }
           }
         } catch (err) {
           console.error("Error updating user progress:", err);
+          // Continue without throwing an error
+        }
+      } else {
+        // For anonymous submissions (no firebaseUid), create a temporary user and associate the submission
+        try {
+          // Create a temporary username based on studentName or a generated ID
+          const username = studentName ? 
+            `${studentName.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}` : 
+            `anonymous_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          
+          // Create a temporary user without a firebaseUid
+          const tempUser = await storage.createUser({
+            username,
+            password: Math.random().toString(36).substring(2, 15), // Random password
+          });
+          
+          userId = tempUser.id;
+          
+          // Create progress record
+          progress = await storage.createLovableMissionProgress({
+            userId: tempUser.id,
+            firebaseUid: `anonymous_${tempUser.id}_${Date.now()}`, // Generate a pseudo-UID
+            currentStep: 6, // Set to step 6 (submission step)
+            hasSubmitted: true,
+            projectLink,
+            studentName, // Store student name in the database
+          });
+        } catch (anonymousErr) {
+          console.error("Error creating anonymous submission:", anonymousErr);
           // Continue without throwing an error
         }
       }
