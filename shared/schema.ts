@@ -212,8 +212,10 @@ export const lovableSubmissions = pgTable("lovable_submissions", {
   progressId: integer("progress_id").references(() => lovableMissionProgress.id),
   projectLink: text("project_link").notNull(),
   studentName: text("student_name").notNull(),
+  projectType: text("project_type").notNull(), // 'app' or 'game'
   firebaseUid: text("firebase_uid"), // May be null for anonymous submissions
   submissionDate: timestamp("submission_date").defaultNow(),
+  finalPrompt: text("final_prompt"), // The finalized prompt used to build the project
   metadata: jsonb("metadata"), // Store any additional metadata about the submission
 });
 
@@ -252,6 +254,10 @@ export const insertLovableSubmissionSchema = createInsertSchema(lovableSubmissio
   progressId: z.number().optional(),
   projectLink: z.string(),
   studentName: z.string(),
+  projectType: z.string().refine(val => ['app', 'game'].includes(val), {
+    message: "Project type must be either 'app' or 'game'"
+  }),
+  finalPrompt: z.string().optional(),
   firebaseUid: z.string().optional(),
   submissionDate: z.date().optional(),
   metadata: z.record(z.any()).optional(),
