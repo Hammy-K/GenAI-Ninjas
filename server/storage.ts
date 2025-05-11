@@ -9,6 +9,8 @@ import {
   appBuilderSubmissions,
   appBuilderChatHistory,
   htmlProjects,
+  lovableMissionProgress,
+  lovableMissionChatHistory,
   type User, 
   type InsertUser, 
   type Quest, 
@@ -28,10 +30,14 @@ import {
   type AppBuilderChatHistory,
   type InsertAppBuilderChatHistory,
   type HtmlProject,
-  type InsertHtmlProject
+  type InsertHtmlProject,
+  type LovableMissionProgress,
+  type InsertLovableMissionProgress,
+  type LovableMissionChatHistory,
+  type InsertLovableMissionChatHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, lt, gt } from "drizzle-orm";
+import { eq, desc, and, sql, lt, gt, asc } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -449,6 +455,55 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedProject || undefined;
+  }
+
+  // Lovable Mission methods
+  async getLovableMissionProgressByFirebaseUid(firebaseUid: string): Promise<LovableMissionProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(lovableMissionProgress)
+      .where(eq(lovableMissionProgress.firebaseUid, firebaseUid));
+    
+    return progress || undefined;
+  }
+
+  async createLovableMissionProgress(progress: InsertLovableMissionProgress): Promise<LovableMissionProgress> {
+    const [newProgress] = await db
+      .insert(lovableMissionProgress)
+      .values(progress)
+      .returning();
+    
+    return newProgress;
+  }
+
+  async updateLovableMissionProgress(id: number, data: Partial<InsertLovableMissionProgress>): Promise<LovableMissionProgress | undefined> {
+    const [updatedProgress] = await db
+      .update(lovableMissionProgress)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(lovableMissionProgress.id, id))
+      .returning();
+    
+    return updatedProgress || undefined;
+  }
+
+  async getLovableMissionChatHistoryByProgressId(progressId: number): Promise<LovableMissionChatHistory[]> {
+    return db
+      .select()
+      .from(lovableMissionChatHistory)
+      .where(eq(lovableMissionChatHistory.progressId, progressId))
+      .orderBy(lovableMissionChatHistory.createdAt);
+  }
+
+  async createLovableMissionChatMessage(message: InsertLovableMissionChatHistory): Promise<LovableMissionChatHistory> {
+    const [newMessage] = await db
+      .insert(lovableMissionChatHistory)
+      .values(message)
+      .returning();
+    
+    return newMessage;
   }
 }
 

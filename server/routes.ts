@@ -16,6 +16,7 @@ import { registerProjectRoutes } from "./routes/projects";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerAppBuilderRoutes } from "./routes/app-builder";
+import { registerLovableMissionRoutes } from "./routes/lovable-mission";
 import { createUnifiedThreadRouter } from "./routes/unified-thread";
 
 // Import services
@@ -384,6 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAIAssistantRoutes(apiRouter, openai);
   registerLogsRoutes(apiRouter);
   registerAppBuilderRoutes(apiRouter, openai);
+  registerLovableMissionRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
