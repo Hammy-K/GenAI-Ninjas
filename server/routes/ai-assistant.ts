@@ -13,6 +13,8 @@ import { v4 as uuidv4 } from 'uuid';
 const HTML_GENERATOR_SESSION_PREFIX = 'html_generator_';
 const LOVABLE_MISSION_SESSION_PREFIX = 'lovable_mission_';
 
+// Thread Map for session persistence (in-memory for now)
+const threadMap = new Map<string, string>();
 
 
 // Define interface for request with our session type
@@ -112,13 +114,85 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         console.log("Using existing assistant session ID for lovable mission:", sessionId);
       }
       
-      // Use the assistant service to handle the chat
-      const result = await assistantService.lovableChat(message, sessionId, systemPrompt);
+      // Get the thread ID for this session - manual implementation
+      let threadId = "";
+      const existingThreadId = threadMap.get(sessionId);
+      
+      if (existingThreadId) {
+        threadId = existingThreadId;
+        console.log(`Using existing thread for Lovable Mission: ${threadId}`);
+      } else {
+        // Create a new thread
+        const thread = await openai.beta.threads.create();
+        threadId = thread.id;
+        
+        // Store it in our local threadMap
+        threadMap.set(sessionId, threadId);
+        console.log(`Created new thread for Lovable Mission: ${threadId}`);
+      }
+      
+      // Add the user message to the thread
+      await openai.beta.threads.messages.create(threadId, {
+        role: "user",
+        content: message
+      });
+      
+      // If there's a system prompt, add it before running the assistant
+      let runParams: any = {
+        assistant_id: "asst_L23zNIrbAjmHwouCGGqRr1fA" // Lovable Mission Assistant ID
+      };
+      
+      if (systemPrompt) {
+        runParams.additional_instructions = systemPrompt;
+      }
+      
+      // Run the assistant on the thread
+      const run = await openai.beta.threads.runs.create(threadId, runParams);
+      
+      // Poll for completion
+      let runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      
+      while (runStatus.status !== "completed" && runStatus.status !== "failed") {
+        // Wait before checking again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      }
+      
+      if (runStatus.status === "failed") {
+        throw new Error(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      // Get the latest messages
+      const messages = await openai.beta.threads.messages.list(threadId);
+      
+      // Filter for assistant messages only
+      const assistantMessages = messages.data.filter(msg => msg.role === "assistant");
+      
+      if (assistantMessages.length === 0) {
+        throw new Error("No assistant response received");
+      }
+      
+      // Get the content of the latest assistant message
+      const latestMessage = assistantMessages[0];
+      const messageContent = latestMessage.content[0];
+      
+      let assistantResponse = "";
+      if (messageContent.type === "text") {
+        assistantResponse = messageContent.text.value;
+      } else {
+        assistantResponse = "أعتذر، لم أتمكن من توليد استجابة مناسبة.";
+      }
+      
+      // Log the event
+      logEvent('lovable_mission_assistant_chat', 'Assistant chat message', {
+        thread_id: threadId,
+        message_length: assistantResponse.length,
+      });
       
       return res.status(200).json({
         message: 'Chat processed successfully',
-        response: result.response,
-        threadId: result.threadId,
+        response: assistantResponse,
+        threadId,
       });
       
     } catch (error) {
