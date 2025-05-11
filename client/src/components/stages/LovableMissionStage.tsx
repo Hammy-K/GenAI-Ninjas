@@ -219,7 +219,7 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           firebaseUid,
           role: "user",
-          content: state.prompt,
+          content: currentPrompt, // Use currentPrompt instead of state.prompt
         }),
       });
       
@@ -786,7 +786,7 @@ export default function LovableMissionStage() {
                         isProjectLinkValid: false, // Reset validation on change
                       }))
                     }
-                    className="text-sm bg-green-50 mt-1"
+                    className="text-sm bg-white-50 mt-1"
                   />
                   
                   {/* URL Validation Button */}
@@ -825,7 +825,7 @@ export default function LovableMissionStage() {
                         error: ""
                       }));
                     }}
-                    className="mt-2 w-full text-sm"
+                    className="mt-2 w-full text-sm bg-green-50"
                     variant="outline"
                     disabled={state.isProjectLinkValid}
                   >
@@ -841,7 +841,7 @@ export default function LovableMissionStage() {
                     <Label htmlFor="student-name" className="text-sm font-bold">اسم الطالب</Label>
                     <Input
                       id="student-name"
-                      placeholder="اكتب اسمك هنا"
+                      placeholder="....."
                       value={state.studentName}
                       onChange={(e) =>
                         setState((prev) => ({
@@ -849,7 +849,7 @@ export default function LovableMissionStage() {
                           studentName: e.target.value,
                         }))
                       }
-                      className="text-sm mt-1"
+                      className="text-sm bg-white-50 mt-1"
                     />
                   </div>
                 )}
@@ -864,7 +864,7 @@ export default function LovableMissionStage() {
                   }
                   className="bg-green-600 hover:bg-green-700 text-white mt-2"
                 >
-                  {state.isLoading ? "جارٍ التقديم..." : "قدم المشروع"}
+                  {state.isLoading ? "جارٍ التقديم..." : "انتهيت 🎉"}
                 </Button>
               </div>
             </form>
