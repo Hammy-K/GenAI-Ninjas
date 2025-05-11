@@ -193,6 +193,46 @@ export const insertHtmlProjectSchema = createInsertSchema(htmlProjects).omit({
 });
 
 // Define types
+// Adding LovableMission types
+export const lovableMissionProgress = pgTable("lovable_mission_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  firebaseUid: text("firebase_uid").notNull(),
+  currentStep: integer("current_step").default(1),
+  hasSubmitted: boolean("has_submitted").default(false),
+  projectLink: text("project_link"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const lovableMissionChatHistory = pgTable("lovable_mission_chat_history", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").notNull().references(() => lovableMissionProgress.id),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Create insert schemas
+export const insertLovableMissionProgressSchema = createInsertSchema(lovableMissionProgress, {
+  id: z.number(),
+  userId: z.number(),
+  firebaseUid: z.string(),
+  currentStep: z.number().optional(),
+  hasSubmitted: z.boolean().optional(),
+  projectLink: z.string().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertLovableMissionChatHistorySchema = createInsertSchema(lovableMissionChatHistory, {
+  id: z.number(),
+  progressId: z.number(),
+  role: z.string(),
+  content: z.string(),
+  createdAt: z.date().optional(),
+}).omit({ id: true, createdAt: true });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
@@ -204,6 +244,8 @@ export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type InsertGalleryLike = z.infer<typeof insertGalleryLikeSchema>;
 export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
 export type InsertHtmlProject = z.infer<typeof insertHtmlProjectSchema>;
+export type InsertLovableMissionProgress = z.infer<typeof insertLovableMissionProgressSchema>;
+export type InsertLovableMissionChatHistory = z.infer<typeof insertLovableMissionChatHistorySchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -216,3 +258,5 @@ export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GalleryLike = typeof galleryLikes.$inferSelect;
 export type AssistantLog = typeof assistantLogs.$inferSelect;
 export type HtmlProject = typeof htmlProjects.$inferSelect;
+export type LovableMissionProgress = typeof lovableMissionProgress.$inferSelect;
+export type LovableMissionChatHistory = typeof lovableMissionChatHistory.$inferSelect;

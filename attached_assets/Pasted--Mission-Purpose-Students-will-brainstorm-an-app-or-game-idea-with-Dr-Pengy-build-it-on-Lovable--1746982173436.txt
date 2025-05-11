@@ -1,0 +1,86 @@
+🎯 Mission Purpose
+Students will brainstorm an app or game idea with Dr. Pengy, build it on Lovable, and submit their final project link — all inside one seamless page.
+
+The goal:
+
+Get students to practice prompt engineering
+
+Experience agentic AI building (Lovable)
+
+Work smart with limited agent interactions
+
+Submit a finished project link for team voting
+
+🖥️ Page Layout Overview
+One unified page — no page switching required.
+The layout is split into two main sections:
+
+Left Side (20–25%)	Right Side (75–80%)
+Minimal Checklist Panel	Dr. Pengy Chat Interface
+
+✏️ Step-by-Step Student Journey
+1. Chat with Dr. Pengy
+Big focus: 80–90% of the screen is a ChatGPT-style chat window.
+
+Students interact with Dr. Pengy to brainstorm and refine their app or game idea.
+
+Dr. Pengy will guide them to clearly define:
+
+The idea
+
+The goal
+
+Key features
+
+Fun elements if it’s a game
+
+2. Follow the Left-Side Checklist
+Always visible, simple checklist guiding students through:
+
+[ ] Come up with a clear prompt for your app/game idea.
+
+[ ] Copy your final prompt.
+
+[ ] Go to Lovable.dev, paste the prompt, and start building.
+
+[ ] ⚠️ Reminder: You have only 5 agent messages!
+➔ Use them smartly to refine or fix your app.
+
+[ ] Once done, copy your Lovable project link.
+
+[ ] Submit the project link in the mission page.
+
+[ ] (Team activity) Only one project submission per team.
+
+3. Submit & Celebrate
+After submitting the project link:
+
+Students can optionally explore others’ projects.
+
+Later, during the live session, we will vote for the best team idea.
+
+🔥 Key Design Guidelines
+Clean, distraction-free layout
+
+Chat and checklist are both visible at all times
+
+Progressive encouragement: gentle nudges from Dr. Pengy if students seem stuck
+
+Excitement and urgency:
+➔ Emphasize limited messages to make them think carefully.
+➔ Make submission feel like a "Mission Accomplished" moment.
+
+📋 Summary Checklist for Development
+Feature	Details
+Page Name	Lovable Mission
+Layout	One page, split view (left: checklist, right: chat)
+Chat	Dr. Pengy Chat UI (simple, friendly prompts)
+Checklist	Always visible, trackable checklist steps
+Lovable	External link with prompt students copy-paste
+Submissions	Simple form to paste Lovable project link
+Voting	Voting happens later during live session
+
+✨ Framing for Students (in app)
+"You're about to launch your first mission as an Agent Commander!
+
+🧠 Chat with Dr. Pengy ➔ 💬 Shape your app idea ➔ 🛠️ Build it on Lovable ➔ 🚀 Submit and shine!"

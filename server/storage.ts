@@ -86,6 +86,13 @@ export interface IStorage {
   getHtmlProjectByProjectId(projectId: string): Promise<HtmlProject | undefined>;
   createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject>;
   updateHtmlProject(projectId: string, html: string): Promise<HtmlProject | undefined>;
+
+  // Lovable Mission methods
+  getLovableMissionProgressByFirebaseUid(firebaseUid: string): Promise<LovableMissionProgress | undefined>;
+  createLovableMissionProgress(progress: InsertLovableMissionProgress): Promise<LovableMissionProgress>;
+  updateLovableMissionProgress(id: number, data: Partial<InsertLovableMissionProgress>): Promise<LovableMissionProgress | undefined>;
+  getLovableMissionChatHistoryByProgressId(progressId: number): Promise<LovableMissionChatHistory[]>;
+  createLovableMissionChatMessage(message: InsertLovableMissionChatHistory): Promise<LovableMissionChatHistory>;
 }
 
 export class DatabaseStorage implements IStorage {
