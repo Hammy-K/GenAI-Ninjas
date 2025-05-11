@@ -203,6 +203,21 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         submittedAt: new Date().toISOString(),
       };
       
+      // Create a record in the dedicated lovableSubmissions table
+      try {
+        await storage.createLovableSubmission({
+          projectLink,
+          studentName: studentName || "Anonymous Student",
+          firebaseUid: firebaseUid || undefined,
+          // We'll link to the progress record if we find/create one below
+          progressId: undefined,
+          metadata
+        });
+      } catch (submissionError) {
+        console.error("Error saving to lovableSubmissions table:", submissionError);
+        // Continue even if this fails, as we'll still update the progress record
+      }
+      
       // Store into progress record if firebaseUid is available
       let progress = null;
       let userId = 0;
@@ -225,6 +240,24 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                 studentName, // Store student name in the database
                 currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
               });
+              
+              // Link the submission to this progress record (creates a new submission if the earlier one failed)
+              try {
+                // This creates a second record, which is fine - we want a history of all submissions
+                await storage.createLovableSubmission({
+                  progressId: progress.id,
+                  projectLink,
+                  studentName: studentName || "Anonymous Student",
+                  firebaseUid,
+                  metadata: {
+                    ...metadata,
+                    isLinkedToProgress: true
+                  }
+                });
+              } catch (linkError) {
+                console.error("Error linking submission to progress:", linkError);
+                // This is not critical, continue with the flow
+              }
             } else {
               // Create new progress
               progress = await storage.createLovableMissionProgress({

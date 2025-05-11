@@ -11,6 +11,7 @@ import {
   htmlProjects,
   lovableMissionProgress,
   lovableMissionChatHistory,
+  lovableSubmissions,
   type User, 
   type InsertUser, 
   type Quest, 
@@ -34,7 +35,9 @@ import {
   type LovableMissionProgress,
   type InsertLovableMissionProgress,
   type LovableMissionChatHistory,
-  type InsertLovableMissionChatHistory
+  type InsertLovableMissionChatHistory,
+  type LovableSubmission,
+  type InsertLovableSubmission
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, lt, gt, asc } from "drizzle-orm";
@@ -99,6 +102,11 @@ export interface IStorage {
   updateLovableMissionProgress(id: number, data: Partial<InsertLovableMissionProgress>): Promise<LovableMissionProgress | undefined>;
   getLovableMissionChatHistoryByProgressId(progressId: number): Promise<LovableMissionChatHistory[]>;
   createLovableMissionChatMessage(message: InsertLovableMissionChatHistory): Promise<LovableMissionChatHistory>;
+  
+  // Lovable Submissions methods
+  createLovableSubmission(submission: InsertLovableSubmission): Promise<LovableSubmission>;
+  getLovableSubmissionsByFirebaseUid(firebaseUid: string): Promise<LovableSubmission[]>;
+  getLovableSubmissionById(id: number): Promise<LovableSubmission | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -504,6 +512,35 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return newMessage;
+  }
+
+  // Lovable Submissions methods implementation
+  async createLovableSubmission(submission: InsertLovableSubmission): Promise<LovableSubmission> {
+    const [newSubmission] = await db
+      .insert(lovableSubmissions)
+      .values(submission)
+      .returning();
+    
+    return newSubmission;
+  }
+
+  async getLovableSubmissionsByFirebaseUid(firebaseUid: string): Promise<LovableSubmission[]> {
+    const submissions = await db
+      .select()
+      .from(lovableSubmissions)
+      .where(eq(lovableSubmissions.firebaseUid, firebaseUid))
+      .orderBy(desc(lovableSubmissions.submissionDate));
+    
+    return submissions;
+  }
+
+  async getLovableSubmissionById(id: number): Promise<LovableSubmission | undefined> {
+    const [submission] = await db
+      .select()
+      .from(lovableSubmissions)
+      .where(eq(lovableSubmissions.id, id));
+    
+    return submission || undefined;
   }
 }
 
