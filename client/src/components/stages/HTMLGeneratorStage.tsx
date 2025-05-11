@@ -208,12 +208,34 @@ export function HTMLGeneratorStage({
       // When in the modify state, we're starting a new generation flow
       // but we want to preserve the history of messages to maintain context
       
-      // Filter out any previous loading messages for a cleaner history
+      // Filter out any previous loading/typing messages for a cleaner history
       const filteredMessages = state.messages.filter(msg => 
         msg.className !== "loading-animation" && 
+        msg.className !== "typing-animation" && 
         !msg.content.includes("<!DOCTYPE html") && 
         !msg.content.includes("<html>")
       );
+      
+      // Create user message for the idea
+      const ideaMessage: HTMLMessage = {
+        role: "user",
+        content: idea,
+      };
+      
+      // Add a typing indicator message
+      const typingMessage: HTMLMessage = {
+        role: "assistant",
+        content: "يكتب...",
+        className: "typing-animation"
+      };
+      
+      // First update state with the user message and typing indicator
+      setState((prev) => ({
+        ...prev,
+        originalIdea: idea,
+        messages: [...filteredMessages, ideaMessage, typingMessage],
+        isLoading: true
+      }));
       
       // Get the clarifying question but include full message history for context
       const clarificationResult = await getClarifyingQuestion(idea);
@@ -227,8 +249,8 @@ export function HTMLGeneratorStage({
         }));
         return;
       }
-
-      // Add the clarifying question to chat
+      
+      // Add the clarifying question to chat (replacing the typing indicator)
       const clarifyingMessage: HTMLMessage = {
         role: "assistant",
         content: clarificationResult.question,
@@ -237,8 +259,8 @@ export function HTMLGeneratorStage({
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
-        // Keep existing messages for thread context, just add the new one
-        messages: [...filteredMessages, clarifyingMessage],
+        // Replace typing indicator with the actual response
+        messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([clarifyingMessage]),
         flowStep: "clarify",
         isLoading: false,
       }));
@@ -260,6 +282,28 @@ export function HTMLGeneratorStage({
     clarification: string,
   ) => {
     try {
+      // Add clarification answer as user message
+      const clarificationMessage: HTMLMessage = {
+        role: "user",
+        content: clarification,
+      };
+      
+      // Add typing indicator
+      const typingMessage: HTMLMessage = {
+        role: "assistant",
+        content: "يكتب...",
+        className: "typing-animation"
+      };
+      
+      // First update state with typing indicator
+      setState((prev) => ({
+        ...prev,
+        clarificationAnswer: clarification,
+        messages: [...prev.messages, clarificationMessage, typingMessage],
+        isLoading: true
+      }));
+      
+      // Get project summary
       const summaryResult = await getProjectSummary(idea, clarification);
 
       if (summaryResult.error) {
@@ -281,7 +325,8 @@ export function HTMLGeneratorStage({
         ...prev,
         projectSummary: summaryResult.summary,
         clarificationAnswer: clarification,
-        messages: [...prev.messages, summaryMessage],
+        // Replace typing indicator with the actual message
+        messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([summaryMessage]),
         flowStep: "confirm",
         showConfirmButtons: true,
         isLoading: false,
@@ -464,17 +509,36 @@ export function HTMLGeneratorStage({
       handleGenerateHtml(state.originalIdea, state.clarificationAnswer);
     } else {
       // User clicked "No" - ask what they want to change
-      const changeMessage: HTMLMessage = {
+      // First, show a typing indicator
+      const typingMessage: HTMLMessage = {
         role: "assistant",
-        content: "اوكي، وش تبي نغير؟",
+        content: "يكتب...",
+        className: "typing-animation"
       };
-
+      
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, changeMessage],
+        messages: [...prev.messages, typingMessage],
         showConfirmButtons: false,
-        flowStep: "input", // Back to input for changes
+        isLoading: true
       }));
+      
+      // Simulate typing delay and then replace with the actual message
+      setTimeout(() => {
+        const changeMessage: HTMLMessage = {
+          role: "assistant",
+          content: "اوكي، وش تبي نغير؟",
+        };
+        
+        setState((prev) => ({
+          ...prev,
+          // Replace the typing indicator with the actual message
+          messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([changeMessage]),
+          isLoading: false,
+          // Restart the clarification flow but preserve context
+          flowStep: "clarify",
+        }));
+      }, 1200); // Delay for realistic typing effect
     }
   };
 
