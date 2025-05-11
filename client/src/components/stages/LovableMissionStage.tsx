@@ -229,6 +229,22 @@ export default function LovableMissionStage() {
         content: msg.content,
       }));
       
+      // Create system message with the student's favorite app/game info
+      // This will be for the first real response after initial selection and question
+      let systemPrompt = "";
+      
+      // Find if there's already a game/app selection message
+      const selectionIndex = messageHistory.findIndex(msg => 
+        msg.role === "user" && (msg.content === "لعبة" || msg.content === "تطبيق")
+      );
+      
+      // Find if this is the first response after the selection (favorite app/game)
+      if (selectionIndex >= 0 && selectionIndex === messageHistory.length - 3) {
+        // This is the user's favorite app/game response message
+        const projectType = messageHistory[selectionIndex].content === "لعبة" ? "game" : "app";
+        systemPrompt = `The student's favorite ${projectType} is "${currentPrompt}"`;
+      }
+      
       // Call the OpenAI Assistant API
       const response = await fetch("/api/lovable-mission/assistant-chat", {
         method: "POST",
@@ -239,7 +255,7 @@ export default function LovableMissionStage() {
           firebaseUid,
           message: currentPrompt,
           messageHistory,
-          // Optional system prompt can be added here if needed
+          systemPrompt: systemPrompt || undefined // Only send if it has content
         }),
       });
       
@@ -545,27 +561,21 @@ export default function LovableMissionStage() {
                             className: "justify-end" // Align to right
                           };
                           
+                          // Create immediate follow-up question
+                          const immediateFollowupMessage: ChatMessage = {
+                            role: "assistant",
+                            content: "كفو! إيش لعبتك المفضلة؟",
+                          };
+                          
                           setState(prev => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage],
+                            messages: [...prev.messages, newMessage, immediateFollowupMessage],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
-                            isLoading: true,
+                            isLoading: false,
                           }));
                           
                           try {
-                            // Add loading message
-                            const loadingMessage: ChatMessage = {
-                              role: "assistant",
-                              content: "جاري التحميل...",
-                              className: "loading",
-                            };
-                            
-                            setState(prev => ({
-                              ...prev,
-                              messages: [...prev.messages, loadingMessage],
-                            }));
-                            
                             // Save user message to the database
                             const firebaseUid = localStorage.getItem("firebaseUid") || "";
                             
@@ -581,64 +591,21 @@ export default function LovableMissionStage() {
                               }),
                             });
                             
-                            // Prepare message history for the Assistant API
-                            const messageHistory = [
-                              welcomeMessage,
-                              newMessage
-                            ].map(msg => ({
-                              role: msg.role,
-                              content: msg.content,
-                            }));
-                            
-                            // Call the OpenAI Assistant API
-                            const response = await fetch("/api/lovable-mission/assistant-chat", {
+                            // Also save Dr. Pengy's immediate follow-up question
+                            await fetch("/api/lovable-mission/chat", {
                               method: "POST",
                               headers: {
                                 "Content-Type": "application/json",
                               },
                               body: JSON.stringify({
                                 firebaseUid,
-                                message: userMessage,
-                                messageHistory
+                                role: "assistant",
+                                content: immediateFollowupMessage.content,
                               }),
                             });
-                            
-                            if (!response.ok) {
-                              throw new Error("Failed to get response from assistant");
-                            }
-                            
-                            const data = await response.json();
-                            
-                            // Remove loading message
-                            setState((prev) => ({
-                              ...prev,
-                              messages: prev.messages.filter(
-                                (msg) => !msg.className?.includes("loading"),
-                              ),
-                              isLoading: false,
-                            }));
-                            
-                            // Add assistant response
-                            const assistantMessage: ChatMessage = {
-                              role: "assistant",
-                              content: data.response,
-                            };
-                            
-                            setState((prev) => ({
-                              ...prev,
-                              messages: [...prev.messages, assistantMessage],
-                            }));
                           } catch (error) {
-                            console.error("Error in assistant chat:", error);
-                            // Remove loading message and show error
-                            setState((prev) => ({
-                              ...prev,
-                              messages: prev.messages.filter(
-                                (msg) => !msg.className?.includes("loading"),
-                              ),
-                              isLoading: false,
-                              error: "حدث خطأ أثناء التواصل مع د. بنجي. يرجى المحاولة مرة أخرى.",
-                            }));
+                            console.error("Error saving chat message:", error);
+                            // We don't need to show an error here as the messages are already displayed
                           }
                         }}
                         variant="outline"
@@ -656,27 +623,21 @@ export default function LovableMissionStage() {
                             className: "justify-end" // Align to right
                           };
                           
+                          // Create immediate follow-up question
+                          const immediateFollowupMessage: ChatMessage = {
+                            role: "assistant",
+                            content: "كفو! إيش تطبيقك المفضل؟",
+                          };
+                          
                           setState(prev => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage],
+                            messages: [...prev.messages, newMessage, immediateFollowupMessage],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
-                            isLoading: true,
+                            isLoading: false,
                           }));
                           
                           try {
-                            // Add loading message
-                            const loadingMessage: ChatMessage = {
-                              role: "assistant",
-                              content: "جاري التحميل...",
-                              className: "loading",
-                            };
-                            
-                            setState(prev => ({
-                              ...prev,
-                              messages: [...prev.messages, loadingMessage],
-                            }));
-                            
                             // Save user message to the database
                             const firebaseUid = localStorage.getItem("firebaseUid") || "";
                             
@@ -692,64 +653,21 @@ export default function LovableMissionStage() {
                               }),
                             });
                             
-                            // Prepare message history for the Assistant API
-                            const messageHistory = [
-                              welcomeMessage,
-                              newMessage
-                            ].map(msg => ({
-                              role: msg.role,
-                              content: msg.content,
-                            }));
-                            
-                            // Call the OpenAI Assistant API
-                            const response = await fetch("/api/lovable-mission/assistant-chat", {
+                            // Also save Dr. Pengy's immediate follow-up question
+                            await fetch("/api/lovable-mission/chat", {
                               method: "POST",
                               headers: {
                                 "Content-Type": "application/json",
                               },
                               body: JSON.stringify({
                                 firebaseUid,
-                                message: userMessage,
-                                messageHistory
+                                role: "assistant",
+                                content: immediateFollowupMessage.content,
                               }),
                             });
-                            
-                            if (!response.ok) {
-                              throw new Error("Failed to get response from assistant");
-                            }
-                            
-                            const data = await response.json();
-                            
-                            // Remove loading message
-                            setState((prev) => ({
-                              ...prev,
-                              messages: prev.messages.filter(
-                                (msg) => !msg.className?.includes("loading"),
-                              ),
-                              isLoading: false,
-                            }));
-                            
-                            // Add assistant response
-                            const assistantMessage: ChatMessage = {
-                              role: "assistant",
-                              content: data.response,
-                            };
-                            
-                            setState((prev) => ({
-                              ...prev,
-                              messages: [...prev.messages, assistantMessage],
-                            }));
                           } catch (error) {
-                            console.error("Error in assistant chat:", error);
-                            // Remove loading message and show error
-                            setState((prev) => ({
-                              ...prev,
-                              messages: prev.messages.filter(
-                                (msg) => !msg.className?.includes("loading"),
-                              ),
-                              isLoading: false,
-                              error: "حدث خطأ أثناء التواصل مع د. بنجي. يرجى المحاولة مرة أخرى.",
-                            }));
+                            console.error("Error saving chat message:", error);
+                            // We don't need to show an error here as the messages are already displayed
                           }
                         }}
                         variant="outline" 
