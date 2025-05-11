@@ -454,19 +454,9 @@ export default function LovableMissionStage() {
                 <div
                   key={index}
                   className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
+                    message.role === "user" ? "justify-start" : "justify-end"
                   }`}
                 >
-                  {message.role === "assistant" && (
-                    <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden mr-2">
-                      <img
-                        src={drPengyAvatar}
-                        alt="Dr. Pengy"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  )}
-
                   <div
                     className={`max-w-[80%] rounded-lg p-3 ${
                       message.role === "user"
@@ -481,6 +471,18 @@ export default function LovableMissionStage() {
                         : "ltr"
                     }
                   >
+                    {message.role === "assistant" && (
+                      <div className="flex items-center mb-2 gap-2">
+                        <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
+                          <img
+                            src={drPengyAvatar}
+                            alt="Dr. Pengy"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <span className="text-xs font-bold">د. بنجي</span>
+                      </div>
+                    )}
                     {message.content}
                   </div>
                 </div>
