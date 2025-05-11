@@ -32,7 +32,10 @@ interface RequestWithLovableMissionSession extends Request {
 
 // Define validation schemas
 const submitLinkSchema = z.object({
-  projectLink: z.string().url().includes('lovable.dev'),
+  projectLink: z.string().url().refine(
+    (url) => url.includes('lovable.dev') || url.includes('lovable.app'), 
+    { message: "URL must include lovable.dev or lovable.app" }
+  ),
   firebaseUid: z.string().min(1),
 });
 

@@ -406,7 +406,10 @@ export default function LovableMissionStage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit project link");
+        // Get detailed error information
+        const errorData = await response.json();
+        console.error("URL submission error:", errorData);
+        throw new Error(errorData.error || "Failed to submit project link");
       }
 
       // Mark as submitted
@@ -432,7 +435,9 @@ export default function LovableMissionStage() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: "حدث خطأ أثناء تقديم الرابط. يرجى المحاولة مرة أخرى.",
+        error: error instanceof Error 
+          ? `حدث خطأ: ${error.message}` 
+          : "حدث خطأ أثناء تقديم الرابط. يرجى المحاولة مرة أخرى. تأكد من أن الرابط يحتوي على lovable.dev أو lovable.app",
       }));
     }
   };
