@@ -253,24 +253,26 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
               // Link the submission to this progress record (creates a new submission if the earlier one failed)
               try {
                 // This creates a second record, which is fine - we want a history of all submissions
-                await storage.createLovableSubmission({
-                  progressId: progress.id,
-                  projectLink,
-                  studentName: studentName || "Anonymous Student",
-                  projectType: projectType || "app", // Default to "app" if not provided
-                  finalPrompt, // Include final prompt
-                  firebaseUid,
-                  metadata: {
-                    ...metadata,
-                    isLinkedToProgress: true
-                  }
-                });
+                if (progress) {
+                  await storage.createLovableSubmission({
+                    progressId: progress.id,
+                    projectLink,
+                    studentName: studentName || "Anonymous Student",
+                    projectType: projectType || "app", // Default to "app" if not provided
+                    finalPrompt, // Include final prompt
+                    firebaseUid,
+                    metadata: {
+                      ...metadata,
+                      isLinkedToProgress: true
+                    }
+                  });
+                }
               } catch (linkError) {
                 console.error("Error linking submission to progress:", linkError);
                 // This is not critical, continue with the flow
-            }
-          } else {
-              // Create new progress
+              }
+            } else {
+              // User exists but no progress record yet, create progress
               progress = await storage.createLovableMissionProgress({
                 userId: user.id,
                 firebaseUid,
