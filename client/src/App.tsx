@@ -12,6 +12,7 @@ import Gallery from "@/pages/gallery";
 import AppBuilderStream from "@/pages/app-builder";
 import EmptyMission from "@/pages/missions/empty";
 import GameDevMission from "@/pages/missions/game-dev";
+import LovableMission from "@/pages/lovable-mission";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
 import { DebugPanel } from "@/components/debug/DebugPanel";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/app-builder" component={AppBuilderStream} />
       <Route path="/missions/empty" component={EmptyMission} />
       <Route path="/missions/game-dev" component={GameDevMission} />
+      <Route path="/missions/lovable" component={LovableMission} />
       <Route path="/reset-instructions" component={ResetInstructions} />
       <Route path="/reset" component={ResetSession} />
       <Route component={NotFound} />

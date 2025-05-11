@@ -180,7 +180,7 @@ export function registerLovableMissionRoutes(router: Router) {
         progress = await storage.updateLovableMissionProgress(progress.id, {
           hasSubmitted: true,
           projectLink,
-          currentStep: Math.max(progress.currentStep, 6), // Ensure step is at least at submission level
+          currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
         });
       }
       

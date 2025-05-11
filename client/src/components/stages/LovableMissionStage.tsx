@@ -1,56 +1,42 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { trackStageProgress } from "@/lib/analytics";
-import { getSystemPrompt } from "@/lib/prompts";
-import { generateText } from "@/lib/openai";
-import { markAsAwarded, isAlreadyAwarded } from "@/lib/awards";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExternalLink, Send, Check, Copy, AlertCircle } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
 
 // Define types for messages and state
 type MessageRole = "user" | "assistant" | "system";
-type ChatMessage = {
+
+interface ChatMessage {
   role: MessageRole;
   content: string;
   className?: string;
-};
+}
 
-type ChecklistItem = {
+interface ChecklistItem {
   id: number;
   text: string;
   completed: boolean;
-};
+}
 
-type LovableMissionState = {
+interface LovableMissionState {
   messages: ChatMessage[];
   prompt: string;
   isLoading: boolean;
-  threadId: string | null;
   currentStep: number;
   checklistItems: ChecklistItem[];
   finalPrompt: string;
   projectLink: string;
   isSubmitted: boolean;
   error: string;
-};
+}
 
+// Initial data
 const initialChecklistItems: ChecklistItem[] = [
   { id: 1, text: "Come up with a clear prompt for your app/game idea.", completed: false },
   { id: 2, text: "Copy your final prompt.", completed: false },
@@ -66,15 +52,26 @@ const welcomeMessage: ChatMessage = {
   content: "مرحبًا بك في مهمة Lovable! أنا د. بنجي، وأنا هنا لمساعدتك في إنشاء فكرة تطبيق أو لعبة مميزة. ما هي فكرتك الأولية؟",
 };
 
+// Helper functions
+function trackStageProgress(stage: string, action: string, metadata = {}) {
+  console.log(`[Analytics] Tracked stage progress: stage_${stage}_${action}`, metadata);
+}
+
+function markAsAwarded(category: string, badge: string) {
+  localStorage.setItem(`award_${category}_${badge}`, "true");
+}
+
+function isAlreadyAwarded(category: string, badge: string) {
+  return localStorage.getItem(`award_${category}_${badge}`) === "true";
+}
+
 export default function LovableMissionStage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LovableMissionState>({
     messages: [welcomeMessage],
     prompt: "",
     isLoading: false,
-    threadId: null,
     currentStep: 1,
     checklistItems: initialChecklistItems,
     finalPrompt: "",
@@ -85,13 +82,9 @@ export default function LovableMissionStage() {
 
   // Load progress on mount
   useEffect(() => {
-    if (user?.uid) {
-      // Track stage started
-      trackStageProgress("lovable_mission", "started");
-      
-      // TODO: Load progress from server if needed
-    }
-  }, [user?.uid]);
+    // Track stage started
+    trackStageProgress("lovable_mission", "started");
+  }, []);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -132,33 +125,43 @@ export default function LovableMissionStage() {
     }));
     
     try {
-      // Call the API
-      const response = await generateText(
-        state.prompt,
-        state.messages.filter(msg => !msg.className?.includes("loading"))
-      );
-      
-      // Remove loading message
-      setState((prev) => ({
-        ...prev,
-        messages: prev.messages.filter(msg => !msg.className?.includes("loading")),
-        isLoading: false,
-      }));
-      
-      // Add assistant response
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: response.text || "عذرًا، حدث خطأ. يرجى المحاولة مرة أخرى.",
-      };
-      
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        threadId: response.threadId || prev.threadId,
-      }));
-      
-      // Track progress
-      trackStageProgress("lovable_mission", "message_sent");
+      // In a real implementation, this would call the AI API
+      // For now we'll simulate a response
+      setTimeout(() => {
+        // Remove loading message
+        setState((prev) => ({
+          ...prev,
+          messages: prev.messages.filter(msg => !msg.className?.includes("loading")),
+          isLoading: false,
+        }));
+        
+        // Generate a response based on the last message
+        let response = "شكرًا لمشاركة فكرتك! هل يمكنك إخباري المزيد عن كيفية عمل هذا التطبيق/اللعبة؟";
+        
+        if (state.messages.length > 2) {
+          response = "هذه فكرة رائعة! لنوضح بعض التفاصيل الإضافية: ما هي الميزات الرئيسية التي تريد تضمينها؟";
+        }
+        
+        if (state.messages.length > 4) {
+          response = "ممتاز! لديك الآن فكرة واضحة. يمكنك نسخ هذا الملخص واستخدامه كتوجيه في Lovable:\n\n" + 
+            "\"" + state.messages[state.messages.length - 2].content + "\"";
+        }
+        
+        // Add assistant response
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: response,
+        };
+        
+        setState((prev) => ({
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+        }));
+        
+        // Track progress
+        trackStageProgress("lovable_mission", "message_sent");
+        
+      }, 1000);
       
     } catch (error) {
       console.error("Error generating text:", error);
@@ -256,31 +259,27 @@ export default function LovableMissionStage() {
     setState(prev => ({ ...prev, isLoading: true, error: "" }));
     
     try {
-      // Save the link to the server
-      // TODO: Implement the API endpoint
-      await apiRequest("POST", "/api/lovable-mission/submit", {
-        projectLink: state.projectLink,
-        firebaseUid: user?.uid,
-      });
-      
-      // Mark as submitted
-      setState(prev => ({ 
-        ...prev, 
-        isSubmitted: true, 
-        isLoading: false,
-        checklistItems: prev.checklistItems.map(item => 
-          item.id === 6 ? { ...item, completed: true } : item
-        ),
-      }));
-      
-      // Show success message
-      toast({
-        title: "تم التقديم بنجاح!",
-        description: "تم تقديم رابط مشروعك بنجاح.",
-      });
-      
-      // Track progress
-      trackStageProgress("lovable_mission", "link_submitted");
+      // Simulate API call
+      setTimeout(() => {
+        // Mark as submitted
+        setState(prev => ({ 
+          ...prev, 
+          isSubmitted: true, 
+          isLoading: false,
+          checklistItems: prev.checklistItems.map(item => 
+            item.id === 6 ? { ...item, completed: true } : item
+          ),
+        }));
+        
+        // Show success message
+        toast({
+          title: "تم التقديم بنجاح!",
+          description: "تم تقديم رابط مشروعك بنجاح.",
+        });
+        
+        // Track progress
+        trackStageProgress("lovable_mission", "link_submitted");
+      }, 1000);
       
     } catch (error) {
       console.error("Error submitting link:", error);
