@@ -16,7 +16,7 @@ import { registerProjectRoutes } from "./routes/projects";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerAppBuilderRoutes } from "./routes/app-builder";
-import unifiedThreadRouter from "./routes/ai-unified-thread";
+import { createUnifiedThreadRouter } from "./routes/unified-thread";
 
 // Import services
 import { logEvent, logError } from "./services";
@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   
   // Mount the unified thread router
-  apiRouter.use("/ai", unifiedThreadRouter);
+  apiRouter.use("/ai", createUnifiedThreadRouter(openai));
 
   if (!process.env.OPENAI_API_KEY) {
     console.warn(
