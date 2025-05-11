@@ -480,6 +480,8 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           projectLink: state.projectLink,
           studentName: state.studentName,
+          projectType: state.projectType, // Include project type (app/game)
+          finalPrompt: state.finalPrompt, // Include the final prompt used
           firebaseUid: firebaseUid || undefined // Include if available
         }),
       });

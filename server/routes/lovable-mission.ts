@@ -39,6 +39,11 @@ const submitLinkSchema = z.object({
       { message: "URL must include lovable.dev or lovable.app" }
     ),
   studentName: z.string().min(1, { message: "Student name is required" }).optional(),
+  projectType: z.string().refine(
+    (val) => ['app', 'game'].includes(val),
+    { message: "Project type must be 'app' or 'game'" }
+  ).default('app'),
+  finalPrompt: z.string().optional(),
   firebaseUid: z.string().optional(),
 });
 
@@ -194,13 +199,15 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         });
       }
       
-      const { projectLink, studentName, firebaseUid } = result.data;
+      const { projectLink, studentName, firebaseUid, projectType, finalPrompt } = result.data;
       
       // Project metadata to store
       const metadata = {
         projectLink,
         studentName: studentName || "Anonymous Student",
         submittedAt: new Date().toISOString(),
+        projectType,
+        finalPrompt,
       };
       
       // Create a record in the dedicated lovableSubmissions table
@@ -208,6 +215,8 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         await storage.createLovableSubmission({
           projectLink,
           studentName: studentName || "Anonymous Student",
+          projectType: projectType || "app", // Default to "app" if not provided
+          finalPrompt, // Include the final prompt
           firebaseUid: firebaseUid || undefined,
           // We'll link to the progress record if we find/create one below
           progressId: undefined,
