@@ -38,7 +38,8 @@ const submitLinkSchema = z.object({
       (url) => url.includes('lovable.dev') || url.includes('lovable.app'), 
       { message: "URL must include lovable.dev or lovable.app" }
     ),
-  firebaseUid: z.string().min(1, { message: "Firebase UID is required" }),
+  studentName: z.string().min(1, { message: "Student name is required" }).optional(),
+  firebaseUid: z.string().optional(),
 });
 
 const updateProgressSchema = z.object({
@@ -193,41 +194,60 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         });
       }
       
-      const { projectLink, firebaseUid } = result.data;
+      const { projectLink, studentName, firebaseUid } = result.data;
       
-      // Get user ID from Firebase UID
-      const user = await storage.getUserByFirebaseUid(firebaseUid);
+      // Project metadata to store
+      const metadata = {
+        projectLink,
+        studentName: studentName || "Anonymous Student",
+        submittedAt: new Date().toISOString(),
+      };
       
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+      // Store into progress record if firebaseUid is available
+      let progress = null;
+      let userId = 0;
       
-      // Get or create progress
-      let progress = await storage.getLovableMissionProgressByFirebaseUid(firebaseUid);
-      
-      if (!progress) {
-        // Create new progress
-        progress = await storage.createLovableMissionProgress({
-          userId: user.id,
-          firebaseUid,
-          currentStep: 6, // Set to step 6 (submission step)
-          hasSubmitted: true,
-          projectLink,
-        });
-      } else {
-        // Update existing progress
-        progress = await storage.updateLovableMissionProgress(progress.id, {
-          hasSubmitted: true,
-          projectLink,
-          currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
-        });
+      if (firebaseUid) {
+        try {
+          // Try to get user and progress, but don't require them
+          const user = await storage.getUserByFirebaseUid(firebaseUid);
+          
+          if (user) {
+            userId = user.id;
+            progress = await storage.getLovableMissionProgressByFirebaseUid(firebaseUid);
+            
+            if (progress) {
+              // Update existing progress
+              progress = await storage.updateLovableMissionProgress(progress.id, {
+                hasSubmitted: true,
+                projectLink,
+                // studentName is not in the schema yet, so store it in the logs only
+                currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
+              });
+            } else {
+              // Create new progress
+              progress = await storage.createLovableMissionProgress({
+                userId: user.id,
+                firebaseUid,
+                currentStep: 6, // Set to step 6 (submission step)
+                hasSubmitted: true,
+                projectLink,
+                // studentName is not in the schema yet, so store it in the logs only
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error updating user progress:", err);
+          // Continue without throwing an error
+        }
       }
       
       // Log the event
       logEvent('lovable_mission_link_submitted', 'Project link submitted', {
-        user_id: user.id,
-        firebase_uid: firebaseUid,
+        user_id: userId || 0,
+        firebase_uid: firebaseUid || 'anonymous',
         project_link: projectLink,
+        student_name: studentName || 'Anonymous',
       });
       
       return res.status(200).json({

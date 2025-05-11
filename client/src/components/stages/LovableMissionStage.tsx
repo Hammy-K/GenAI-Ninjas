@@ -36,8 +36,10 @@ interface LovableMissionState {
   checklistItems: ChecklistItem[];
   finalPrompt: string;
   projectLink: string;
+  studentName: string;
   isSubmitted: boolean;
   error: string;
+  isProjectLinkValid: boolean;
 }
 
 // Initial data
@@ -112,8 +114,10 @@ export default function LovableMissionStage() {
     checklistItems: initialChecklistItems,
     finalPrompt: "",
     projectLink: "",
+    studentName: "",
     isSubmitted: false,
     error: "",
+    isProjectLinkValid: false,
   });
 
   // Load progress on mount
@@ -399,10 +403,11 @@ export default function LovableMissionStage() {
       return;
     }
     
-    // Update the state with formatted URL
+    // Update the state with formatted URL and set URL as valid
     setState(prev => ({
       ...prev, 
       projectLink,
+      isProjectLinkValid: true,
       error: ""
     }));
 
