@@ -61,12 +61,18 @@ async function callThreadAPI(options: ThreadBasedOptions): Promise<ThreadRespons
     );
     
     // Add the system prompt as the first message
+    // Convert HTMLMessage to API Message format
+    const apiMessages = filteredMessages.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content
+    }));
+    
     const messagesWithSystem = [
       {
         role: "system" as const,
         content: getSystemPrompt(options.mode)
       },
-      ...filteredMessages
+      ...apiMessages
     ];
     
     // Call the unified endpoint

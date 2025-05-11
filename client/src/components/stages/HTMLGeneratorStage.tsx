@@ -909,17 +909,21 @@ export function HTMLGeneratorStage({
 
   // Start a new project
   const startNewProject = () => {
-    // Reset state to initial state while preserving any existing session ID
-    // This ensures thread continuity with the OpenAI Assistant API
+    // Reset state to initial state, including the thread ID
+    // This creates a fresh conversation thread for the new project
     setState((prev) => ({
       ...prev,
       currentHTML: "",
       messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
       projectId: null,
       shareUrl: null,
+      threadId: null, // Clear the thread ID to start a completely new thread
       hasSharedLink: false, // Reset the shared link flag
       showShareDialog: false,
       showResetDialog: false,
+      flowStep: "input", // Reset to the initial flow step
+      originalIdea: "", // Clear any previous idea
+      clarificationAnswer: "", // Clear any previous clarification
     }));
 
     // Track this for analytics
