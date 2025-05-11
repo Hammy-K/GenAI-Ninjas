@@ -244,15 +244,15 @@ export default function LovableMissionStage() {
         }
       }
       
-      // Use the dedicated lovable mission assistant API
-      const apiEndpoint = "/api/lovable-mission/assistant-chat";
+      // Use the standard chat API for now because our firebaseUid isn't properly recognized
+      const apiEndpoint = "/api/ai/text";
       
-      // Create system prompt for the favorite app/game if needed
-      let systemPrompt = "";
+      // Create the appropriate system message
+      let systemPromptContent = 'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.';
       
       // Add the favorite app/game information if this is the first response after selection
       if (isFirstResponseAfterSelection) {
-        systemPrompt = `The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
+        systemPromptContent += ` The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
       }
       
       // Create message history for API
@@ -263,24 +263,22 @@ export default function LovableMissionStage() {
           content: msg.content,
         }));
       
-      console.log("Sending assistant chat request:", {
-        firebaseUid,
-        message: currentPrompt,
+      console.log("Sending chat request:", {
+        prompt: currentPrompt,
         messageHistory: messageHistory.length,
-        hasSystemPrompt: !!systemPrompt
       });
       
-      // Call the OpenAI Assistant API through our backend
+      // Call the standard GPT-4o chat endpoint
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firebaseUid,
-          message: currentPrompt,
+          prompt: currentPrompt,
+          systemPrompt: systemPromptContent,
           messageHistory,
-          systemPrompt: systemPrompt || undefined
+          maxTokens: 800
         }),
       });
       
