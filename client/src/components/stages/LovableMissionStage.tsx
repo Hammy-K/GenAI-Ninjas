@@ -244,8 +244,16 @@ export default function LovableMissionStage() {
         }
       }
       
-      // Use the assistant API with session-based approach (similar to HTMLGeneratorStage)
-      const apiEndpoint = "/api/assistant/lovable-chat";
+      // Use the standard chat API for now because our firebaseUid isn't properly recognized
+      const apiEndpoint = "/api/ai/text";
+      
+      // Create the appropriate system message
+      let systemPromptContent = 'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.';
+      
+      // Add the favorite app/game information if this is the first response after selection
+      if (isFirstResponseAfterSelection) {
+        systemPromptContent += ` The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
+      }
       
       // Create message history for API
       const messageHistory = state.messages
@@ -255,30 +263,22 @@ export default function LovableMissionStage() {
           content: msg.content,
         }));
       
-      // System prompt for the favorite app/game if needed
-      let systemPrompt = "";
-      
-      // Add the favorite app/game information if this is the first response after selection
-      if (isFirstResponseAfterSelection) {
-        systemPrompt = `The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
-      }
-      
-      console.log("Sending assistant chat request:", {
-        message: currentPrompt,
+      console.log("Sending chat request:", {
+        prompt: currentPrompt,
         messageHistory: messageHistory.length,
-        hasSystemPrompt: !!systemPrompt
       });
       
-      // Call the OpenAI Assistant API using session-based approach
+      // Call the standard GPT-4o chat endpoint
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: currentPrompt,
+          prompt: currentPrompt,
+          systemPrompt: systemPromptContent,
           messageHistory,
-          systemPrompt: systemPrompt || undefined
+          maxTokens: 800
         }),
       });
       

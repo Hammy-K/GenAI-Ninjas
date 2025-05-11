@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 import { AssistantService, createAssistantService } from '../services/assistant';
 import { logEvent, logError } from '../services';
 import { v4 as uuidv4 } from 'uuid';
+import { storage } from '../storage';
 
 // Session tracking (in a production app, use a proper session store)
 const HTML_GENERATOR_SESSION_PREFIX = 'html_generator_';
@@ -183,11 +184,46 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         assistantResponse = "أعتذر، لم أتمكن من توليد استجابة مناسبة.";
       }
       
-      // Log the event
+      // Log basic analytics event
       logEvent('lovable_mission_assistant_chat', 'Assistant chat message', {
         thread_id: threadId,
         message_length: assistantResponse.length,
       });
+      
+      // Save both the user message and assistant response to the database if user is logged in
+      try {
+        const firebaseUid = req.body.firebaseUid;
+        
+        if (firebaseUid) {
+          // Get progress record for this user
+          const progress = await storage.getLovableMissionProgressByFirebaseUid(firebaseUid);
+          
+          if (progress) {
+            // Log user message
+            await storage.createLovableMissionChatMessage({
+              progressId: progress.id,
+              role: 'user',
+              content: message
+            });
+            
+            // Log assistant response
+            await storage.createLovableMissionChatMessage({
+              progressId: progress.id,
+              role: 'assistant',
+              content: assistantResponse
+            });
+            
+            console.log(`Saved chat messages to database for user ${firebaseUid}`);
+          } else {
+            console.log(`No progress record found for Firebase UID: ${firebaseUid}`);
+          }
+        } else {
+          console.log(`No Firebase UID provided, skipping chat message database storage`);
+        }
+      } catch (dbError) {
+        // Don't fail the request if database logging fails
+        console.error('Error logging chat messages to database:', dbError);
+      }
       
       return res.status(200).json({
         message: 'Chat processed successfully',
