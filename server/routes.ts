@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAIAssistantRoutes(apiRouter, openai);
   registerLogsRoutes(apiRouter);
   registerAppBuilderRoutes(apiRouter, openai);
-  registerLovableMissionRoutes(apiRouter);
+  registerLovableMissionRoutes(apiRouter, openai);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
