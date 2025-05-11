@@ -200,8 +200,8 @@ export async function getProjectSummary(idea: string, clarification: string): Pr
       }
     ];
     
-    // Make the prompt more conversational in Saudi dialect
-    const prompt = `بناءً على فكرة الطالب وإجابته، استجب فقط بـ "تبي نبدأ؟" بدون أي إضافات أخرى. من المهم جدًا أن تكون استجابتك هي هذه الجملة فقط: "تبي نبدأ؟".`;
+    // Make the prompt more conversational in Saudi dialect - ask for summary followed by confirmation
+    const prompt = `بناءً على فكرة الطالب وإجابته، قدم ملخصًا موجزًا بما ستقوم ببنائه (3-4 جمل كحد أقصى)، ثم أضف سطرًا فارغًا متبوعًا بـ "تبي نبدأ؟". من المهم أن تبدأ بملخص واضح ثم تنتهي بسؤال "تبي نبدأ؟".`;
     
     const response = await apiRequest('POST', '/api/ai/text/try-ai-assistant', { 
       prompt,

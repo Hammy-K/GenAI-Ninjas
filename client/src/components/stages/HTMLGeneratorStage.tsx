@@ -255,6 +255,7 @@ export function HTMLGeneratorStage({
   ) => {
     try {
       // Step 5: Record the clarification and show loading state
+      // Note: The userMessage for clarification is already added in handleSubmit
       setState((prev) => ({
         ...prev,
         clarificationAnswer: clarification,
@@ -274,9 +275,10 @@ export function HTMLGeneratorStage({
       }
 
       // Step 6: Add the summary to chat followed by confirmation question
+      // The API now returns the summary followed by "تبي نبدأ؟"
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: `${summaryResult.summary}\n\nتبي نبدأ؟`,
+        content: summaryResult.summary,
       };
 
       setState((prev) => ({
