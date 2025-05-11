@@ -82,7 +82,7 @@ const initialChecklistItems: ChecklistItem[] = [
 const welcomeMessage: ChatMessage = {
   role: "assistant",
   content:
-    "مرحبًا بك في مهمة Lovable! أنا د. بنجي، وأنا هنا لمساعدتك في إنشاء فكرة تطبيق أو لعبة مميزة. ما هي فكرتك الأولية؟",
+    "مرحبًا بك في مهمة Lovable! أنا د. بنجي، وأنا هنا لمساعدتك في إنشاء فكرة مميزة. هل تريد أن نطور تطبيقًا أم لعبة؟",
 };
 
 // Helper functions
@@ -167,7 +167,7 @@ export default function LovableMissionStage() {
     }
   }, [state.messages]);
 
-  // Handle form submission
+  // Handle form submission with OpenAI Assistant API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -199,7 +199,7 @@ export default function LovableMissionStage() {
     }));
 
     try {
-      // Make API request to add user message
+      // Save user message to the database
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
 
       await fetch("/api/lovable-mission/chat", {
@@ -213,7 +213,33 @@ export default function LovableMissionStage() {
           content: state.prompt,
         }),
       });
-
+      
+      // Prepare message history for the Assistant API
+      const messageHistory = state.messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+      
+      // Call the OpenAI Assistant API
+      const response = await fetch("/api/lovable-mission/assistant-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firebaseUid,
+          message: state.prompt,
+          messageHistory,
+          // Optional system prompt can be added here if needed
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to get response from assistant");
+      }
+      
+      const data = await response.json();
+      
       // Remove loading message
       setState((prev) => ({
         ...prev,
@@ -222,27 +248,20 @@ export default function LovableMissionStage() {
         ),
         isLoading: false,
       }));
-
-      // Generate a response based on the conversation stage
-      let response =
-        "شكرًا لمشاركة فكرتك! هل يمكنك إخباري المزيد عن كيفية عمل هذا التطبيق/اللعبة؟";
-
-      if (state.messages.length > 2) {
-        response =
-          "هذه فكرة رائعة! لنوضح بعض التفاصيل الإضافية: ما هي الميزات الرئيسية التي تريد تضمينها؟";
-      }
-
-      if (state.messages.length > 4) {
-        response =
-          "ممتاز! لديك الآن فكرة واضحة. يمكنك نسخ هذا الملخص واستخدامه كتوجيه في Lovable:\n\n" +
-          '"' +
-          state.messages[state.messages.length - 2].content +
-          '"';
-
+      
+      // Process final stage if needed
+      if (data.response.includes("نسخ هذا الملخص") || 
+          data.response.includes("استخدامه كتوجيه في Lovable") ||
+          data.response.includes("تشغيل مشروعك")) {
+        
+        // Extract the final prompt from the response if available
+        const finalPromptMatch = data.response.match(/"([^"]+)"/);
+        const finalPrompt = finalPromptMatch ? finalPromptMatch[1] : state.messages[state.messages.length - 2].content;
+        
         // Set as final prompt when we reach this stage
         setState((prev) => ({
           ...prev,
-          finalPrompt: state.messages[state.messages.length - 2].content,
+          finalPrompt: finalPrompt,
           checklistItems: prev.checklistItems.map((item) =>
             item.id === 1 ? { ...item, completed: true } : item,
           ),
@@ -252,31 +271,20 @@ export default function LovableMissionStage() {
       // Add assistant response
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        content: response,
+        content: data.response,
       };
 
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, assistantMessage],
       }));
-
-      // Send assistant message to API
-      await fetch("/api/lovable-mission/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firebaseUid,
-          role: "assistant",
-          content: response,
-        }),
-      });
-
+      
       // Track progress
-      trackStageProgress("lovable_mission", "message_sent");
+      trackStageProgress("lovable_mission", "assistant_message_sent", {
+        threadId: data.threadId
+      });
     } catch (error) {
-      console.error("Error in chat:", error);
+      console.error("Error in assistant chat:", error);
 
       // Remove loading message and show error
       setState((prev) => ({
