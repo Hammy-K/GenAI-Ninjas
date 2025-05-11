@@ -11,6 +11,7 @@ import { logAssistantInteraction, extractTokenUsage } from "./assistant-logger";
 // Constants for the Assistants
 const HTML_ASSISTANT_ID = "asst_8KzUOWHXMVpF1okBkE3AmnVq"; // HTML generator assistant
 const TRYAI_ASSISTANT_ID = "asst_x31y8qYnTlwvs1gAxKCNG5KB"; // TryAI stage assistant
+const LOVABLE_MISSION_ASSISTANT_ID = "asst_L23zNIrbAjmHwouCGGqRr1fA"; // Lovable mission assistant
 
 // Thread Map for session persistence
 // Using a file-backed storage solution would be better in production
@@ -645,6 +646,7 @@ export class AssistantService {
  * @param openai OpenAI client instance
  * @returns AssistantService instance
  */
+
 export function createAssistantService(openai: OpenAI): AssistantService {
   return new AssistantService(openai);
 }

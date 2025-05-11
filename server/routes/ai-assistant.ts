@@ -112,72 +112,13 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         console.log("Using existing assistant session ID for lovable mission:", sessionId);
       }
       
-      // Get or create a thread using the assistant service
-      const threadId = await assistantService.getOrCreateThreadId(sessionId);
-      console.log(`Using thread for Lovable Mission: ${threadId}`);
-      
-      // Add the user message to the thread
-      await openai.beta.threads.messages.create(threadId, {
-        role: "user",
-        content: message
-      });
-      
-      // If there's a system prompt, add it before running the assistant
-      let runParams: any = {
-        assistant_id: "asst_L23zNIrbAjmHwouCGGqRr1fA" // Lovable Mission Assistant ID
-      };
-      
-      if (systemPrompt) {
-        runParams.additional_instructions = systemPrompt;
-      }
-      
-      // Run the assistant on the thread
-      const run = await openai.beta.threads.runs.create(threadId, runParams);
-      
-      // Poll for completion
-      let runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
-      
-      while (runStatus.status !== "completed" && runStatus.status !== "failed") {
-        // Wait before checking again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
-      }
-      
-      if (runStatus.status === "failed") {
-        throw new Error(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
-      }
-      
-      // Get the latest messages
-      const messages = await openai.beta.threads.messages.list(threadId);
-      
-      // Filter for assistant messages only
-      const assistantMessages = messages.data.filter(msg => msg.role === "assistant");
-      
-      if (assistantMessages.length === 0) {
-        throw new Error("No assistant response received");
-      }
-      
-      // Get the content of the latest assistant message
-      const latestMessage = assistantMessages[0];
-      const messageContent = latestMessage.content[0];
-      
-      let assistantResponse = "";
-      if (messageContent.type === "text") {
-        assistantResponse = messageContent.text.value;
-      } else {
-        assistantResponse = "أعتذر، لم أتمكن من توليد استجابة مناسبة.";
-      }
-      
-      // Log the event
-      logEvent('lovable_mission_assistant_chat', 'Assistant chat message', {
-        thread_id: threadId,
-        message_length: assistantResponse.length,
-      });
+      // Use the assistant service to handle the chat
+      const result = await assistantService.lovableChat(message, sessionId, systemPrompt);
       
       return res.status(200).json({
         message: 'Chat processed successfully',
-        response: assistantResponse,
-        threadId: threadId,
+        response: result.response,
+        threadId: result.threadId,
       });
       
     } catch (error) {
