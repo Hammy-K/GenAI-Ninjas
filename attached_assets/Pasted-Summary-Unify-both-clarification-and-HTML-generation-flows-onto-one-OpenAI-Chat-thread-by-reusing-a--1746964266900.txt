@@ -1,0 +1,76 @@
+Summary
+Unify both clarification and HTML-generation flows onto one OpenAI Chat thread by reusing a single threadId, driving behavior with mode-specific system prompts, and removing any code that spins up new threads or switches assistants.
+
+Steps
+
+Centralize system prompts
+
+Create prompts.ts with:
+
+ts
+Copy
+Edit
+export function getSystemPrompt(mode: 'chat' | 'html'): string {
+  if (mode === 'chat') return `…(your Arabic chat instructions)…`;
+  return `…(your Arabic HTML-builder instructions)…`;
+}
+Persist threadId & mode
+
+In ConversationManager.tsx, add state:
+
+ts
+Copy
+Edit
+const [threadId, setThreadId] = useState<string|null>(null);
+const [mode, setMode] = useState<'chat'|'html'>('chat');
+Refactor API calls
+
+In ChatFlowController.ts, replace any agent.callAssistant or multi-assistant logic with:
+
+ts
+Copy
+Edit
+const response = await openai.chat.completions.create({
+  model: 'gpt-4.1',                    // or your chosen model
+  threadId,                            // null first time
+  messages: [
+    { role: 'system', content: getSystemPrompt(mode) },
+    ...state.messages
+  ]
+});
+setThreadId(response.threadId);
+Always pass threadId on subsequent calls.
+
+Switch modes in-thread
+
+When student agrees to build, invoke before next call:
+
+ts
+Copy
+Edit
+setMode('html');
+The next API call will pull in the HTML-builder prompt automatically.
+
+Remove old assistant/thread logic
+
+Delete any code that:
+
+Uses a second assistant ID.
+
+Clears or reinitializes threadId.
+
+Calls openai.chat.completions.create without passing threadId.
+
+Ensure state integrity
+
+Append user and assistant messages once to state.messages.
+
+Guard against duplicates by checking a unique message.id or timestamp.
+
+Cleanup & tests
+
+Remove dead code around multiple assistants.
+
+Add unit test (tests/ChatFlowController.spec.ts) to simulate two sequential calls and assert the same threadId is used.
+
+Manual QA: run the full 10-step flow (chat → clarification → agree → HTML build → follow-up) and verify no context loss or duplicate messages.

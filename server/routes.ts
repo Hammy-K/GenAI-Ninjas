@@ -16,6 +16,7 @@ import { registerProjectRoutes } from "./routes/projects";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerAppBuilderRoutes } from "./routes/app-builder";
+import unifiedThreadRouter from "./routes/ai-unified-thread";
 
 // Import services
 import { logEvent, logError } from "./services";
