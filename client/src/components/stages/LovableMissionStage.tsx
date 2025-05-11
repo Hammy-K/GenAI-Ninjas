@@ -380,60 +380,47 @@ export default function LovableMissionStage() {
   const handleLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!state.projectLink) {
+    // Skip the validation since we already did it with the Validate button
+    if (!state.isProjectLinkValid) {
       setState((prev) => ({
         ...prev,
-        error: "الرجاء إدخال رابط المشروع.",
+        error: "الرجاء التحقق من صحة الرابط أولاً.",
       }));
       return;
     }
     
-    // Make sure the URL has a proper protocol prefix
-    let projectLink = state.projectLink;
-    if (!projectLink.startsWith('http://') && !projectLink.startsWith('https://')) {
-      projectLink = 'https://' + projectLink;
-    }
-    
-    // Validate that the URL contains lovable.dev or lovable.app
-    if (!projectLink.includes("lovable.dev") && !projectLink.includes("lovable.app")) {
+    // Check for student name
+    if (!state.studentName) {
       setState((prev) => ({
         ...prev,
-        error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app).",
+        error: "الرجاء إدخال اسم الطالب.",
       }));
       return;
     }
     
-    // Update the state with formatted URL and set URL as valid
-    setState(prev => ({
-      ...prev, 
-      projectLink,
-      isProjectLinkValid: true,
-      error: ""
-    }));
-
     setState((prev) => ({ ...prev, isLoading: true, error: "" }));
 
     try {
+      // Try to get Firebase UID but don't require it
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
       
-      // Debug logging to check Firebase UID
-      console.log("Firebase UID for submission:", firebaseUid);
+      // Debug logging
+      console.log("Submitting project:", { 
+        projectLink: state.projectLink, 
+        studentName: state.studentName,
+        firebaseUid: firebaseUid || "anonymous" 
+      });
       
-      if (!firebaseUid) {
-        throw new Error("لم يتم العثور على معرف المستخدم. يرجى تسجيل الدخول مرة أخرى.");
-      }
-
-      // Call API to submit link with the formatted URL
-      console.log("Submitting project:", { firebaseUid, projectLink });
-      
+      // Call API to submit link with student name
       const response = await fetch("/api/lovable-mission/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firebaseUid,
-          projectLink: projectLink, // Use the formatted URL with protocol
+          projectLink: state.projectLink,
+          studentName: state.studentName,
+          firebaseUid: firebaseUid || undefined // Include if available
         }),
       });
 
@@ -676,28 +663,100 @@ export default function LovableMissionStage() {
           {/* Project Link Submission */}
           {!state.isSubmitted ? (
             <form onSubmit={handleLinkSubmit} className="mt-4">
-              <div className="flex flex-col"></div>
-              <div className="flex flex-col gap-2 mt-1">
-                <Input
-                  id="project-link"
-                  placeholder="https://...lovable.app"
-                  value={state.projectLink}
-                  onChange={(e) =>
-                    setState((prev) => ({
-                      ...prev,
-                      projectLink: e.target.value,
-                      error: "",
-                    }))
-                  }
-                  className="text-sm bg-green-50"
-                />
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="project-link" className="text-sm font-bold">رابط المشروع</Label>
+                  <Input
+                    id="project-link"
+                    placeholder="https://...lovable.app"
+                    value={state.projectLink}
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        projectLink: e.target.value,
+                        error: "",
+                        isProjectLinkValid: false, // Reset validation on change
+                      }))
+                    }
+                    className="text-sm bg-green-50 mt-1"
+                  />
+                  
+                  {/* URL Validation Button */}
+                  <Button 
+                    type="button"
+                    onClick={() => {
+                      // Check URL validity
+                      if (!state.projectLink) {
+                        setState(prev => ({
+                          ...prev,
+                          error: "الرجاء إدخال رابط المشروع."
+                        }));
+                        return;
+                      }
+                        
+                      // Make sure the URL has a proper protocol prefix
+                      let projectLink = state.projectLink;
+                      if (!projectLink.startsWith('http://') && !projectLink.startsWith('https://')) {
+                        projectLink = 'https://' + projectLink;
+                      }
+                        
+                      // Validate that the URL contains lovable.dev or lovable.app
+                      if (!projectLink.includes("lovable.dev") && !projectLink.includes("lovable.app")) {
+                        setState(prev => ({
+                          ...prev,
+                          error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app)."
+                        }));
+                        return;
+                      }
+                        
+                      // Update state with valid URL
+                      setState(prev => ({
+                        ...prev, 
+                        projectLink,
+                        isProjectLinkValid: true,
+                        error: ""
+                      }));
+                    }}
+                    className="mt-2 w-full text-sm"
+                    variant="outline"
+                    disabled={state.isProjectLinkValid}
+                  >
+                    {state.isProjectLinkValid ? 
+                      "تم التحقق من الرابط ✓" : 
+                      "التحقق من الرابط"}
+                  </Button>
+                </div>
+                
+                {/* Student Name Field - Only show when URL is valid */}
+                {state.isProjectLinkValid && (
+                  <div className="mt-2">
+                    <Label htmlFor="student-name" className="text-sm font-bold">اسم الطالب</Label>
+                    <Input
+                      id="student-name"
+                      placeholder="اكتب اسمك هنا"
+                      value={state.studentName}
+                      onChange={(e) =>
+                        setState((prev) => ({
+                          ...prev,
+                          studentName: e.target.value,
+                        }))
+                      }
+                      className="text-sm mt-1"
+                    />
+                  </div>
+                )}
+                
+                {/* Submit Button - Only enable when URL is valid and name is entered */}
                 <Button
                   type="submit"
-                  size="sm"
-                  disabled={state.isLoading || !state.projectLink}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  disabled={
+                    state.isLoading || 
+                    !state.isProjectLinkValid || 
+                    (!state.studentName && state.isProjectLinkValid)
+                  }
+                  className="bg-green-600 hover:bg-green-700 text-white mt-2"
                 >
-                  {state.isLoading ? "جارٍ التقديم..." : "قدم الرابط"}
+                  {state.isLoading ? "جارٍ التقديم..." : "قدم المشروع"}
                 </Button>
               </div>
             </form>
