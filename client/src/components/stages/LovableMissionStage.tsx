@@ -376,24 +376,51 @@ export default function LovableMissionStage() {
   const handleLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !state.projectLink ||
-      (!state.projectLink.includes("lovable.dev") &&
-        !state.projectLink.includes("lovable.app"))
-    ) {
+    if (!state.projectLink) {
       setState((prev) => ({
         ...prev,
-        error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable.",
+        error: "الرجاء إدخال رابط المشروع.",
       }));
       return;
     }
+    
+    // Make sure the URL has a proper protocol prefix
+    let projectLink = state.projectLink;
+    if (!projectLink.startsWith('http://') && !projectLink.startsWith('https://')) {
+      projectLink = 'https://' + projectLink;
+    }
+    
+    // Validate that the URL contains lovable.dev or lovable.app
+    if (!projectLink.includes("lovable.dev") && !projectLink.includes("lovable.app")) {
+      setState((prev) => ({
+        ...prev,
+        error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app).",
+      }));
+      return;
+    }
+    
+    // Update the state with formatted URL
+    setState(prev => ({
+      ...prev, 
+      projectLink,
+      error: ""
+    }));
 
     setState((prev) => ({ ...prev, isLoading: true, error: "" }));
 
     try {
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
+      
+      // Debug logging to check Firebase UID
+      console.log("Firebase UID for submission:", firebaseUid);
+      
+      if (!firebaseUid) {
+        throw new Error("لم يتم العثور على معرف المستخدم. يرجى تسجيل الدخول مرة أخرى.");
+      }
 
-      // Call API to submit link
+      // Call API to submit link with the formatted URL
+      console.log("Submitting project:", { firebaseUid, projectLink });
+      
       const response = await fetch("/api/lovable-mission/submit", {
         method: "POST",
         headers: {
@@ -401,7 +428,7 @@ export default function LovableMissionStage() {
         },
         body: JSON.stringify({
           firebaseUid,
-          projectLink: state.projectLink,
+          projectLink: projectLink, // Use the formatted URL with protocol
         }),
       });
 

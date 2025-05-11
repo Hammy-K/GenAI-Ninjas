@@ -32,11 +32,13 @@ interface RequestWithLovableMissionSession extends Request {
 
 // Define validation schemas
 const submitLinkSchema = z.object({
-  projectLink: z.string().url().refine(
-    (url) => url.includes('lovable.dev') || url.includes('lovable.app'), 
-    { message: "URL must include lovable.dev or lovable.app" }
-  ),
-  firebaseUid: z.string().min(1),
+  projectLink: z.string()
+    .min(1, { message: "Project link is required" })
+    .refine(
+      (url) => url.includes('lovable.dev') || url.includes('lovable.app'), 
+      { message: "URL must include lovable.dev or lovable.app" }
+    ),
+  firebaseUid: z.string().min(1, { message: "Firebase UID is required" }),
 });
 
 const updateProgressSchema = z.object({
@@ -178,9 +180,13 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
   // Submit project link
   lovableMissionRouter.post('/submit', async (req: Request, res: Response) => {
     try {
+      // Debug log the request body
+      console.log('Lovable Mission submit request body:', req.body);
+      
       const result = submitLinkSchema.safeParse(req.body);
       
       if (!result.success) {
+        console.log('Validation errors:', result.error.errors);
         return res.status(400).json({ 
           error: 'Invalid request body',
           details: result.error.errors,
