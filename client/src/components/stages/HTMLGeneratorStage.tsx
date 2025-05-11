@@ -205,52 +205,40 @@ export function HTMLGeneratorStage({
   // Helper function to handle clarification step
   const handleClarificationStep = async (idea: string) => {
     try {
-      // When in the modify state, we're starting a new generation flow
-      // but we want to preserve the history of messages to maintain context
-      
-      // Filter out any previous loading/typing messages for a cleaner history
+      // Filter out any previous loading messages for a cleaner history
       const filteredMessages = state.messages.filter(msg => 
         msg.className !== "loading-animation" && 
-        msg.className !== "typing-animation" && 
         !msg.content.includes("<!DOCTYPE html") && 
         !msg.content.includes("<html>")
       );
       
-      // Create user message for the idea
-      const ideaMessage: HTMLMessage = {
+      // Add user message to chat for idea
+      const userMessage: HTMLMessage = {
         role: "user",
         content: idea,
       };
       
-      // Add a typing indicator message
-      const typingMessage: HTMLMessage = {
-        role: "assistant",
-        content: "يكتب...",
-        className: "typing-animation"
-      };
-      
-      // First update state with the user message and typing indicator
+      // Update state with the user message and loading
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
-        messages: [...filteredMessages, ideaMessage, typingMessage],
+        messages: [...filteredMessages, userMessage],
         isLoading: true
       }));
       
-      // Get the clarifying question but include full message history for context
+      // Get the clarifying question
       const clarificationResult = await getClarifyingQuestion(idea);
 
       if (clarificationResult.error) {
         setState((prev) => ({
           ...prev,
-          error:
-            clarificationResult.error || "Failed to get clarifying question",
+          error: clarificationResult.error || "Failed to get clarifying question",
           isLoading: false,
         }));
         return;
       }
-      
-      // Add the clarifying question to chat (replacing the typing indicator)
+
+      // Add the clarifying question to chat
       const clarifyingMessage: HTMLMessage = {
         role: "assistant",
         content: clarificationResult.question,
@@ -259,8 +247,7 @@ export function HTMLGeneratorStage({
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
-        // Replace typing indicator with the actual response
-        messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([clarifyingMessage]),
+        messages: [...filteredMessages, userMessage, clarifyingMessage],
         flowStep: "clarify",
         isLoading: false,
       }));
@@ -287,22 +274,15 @@ export function HTMLGeneratorStage({
         role: "user",
         content: clarification,
       };
-      
-      // Add typing indicator
-      const typingMessage: HTMLMessage = {
-        role: "assistant",
-        content: "يكتب...",
-        className: "typing-animation"
-      };
-      
-      // First update state with typing indicator
+
+      // First update state with user message
       setState((prev) => ({
         ...prev,
         clarificationAnswer: clarification,
-        messages: [...prev.messages, clarificationMessage, typingMessage],
-        isLoading: true
+        messages: [...prev.messages, clarificationMessage],
+        isLoading: true,
       }));
-      
+
       // Get project summary
       const summaryResult = await getProjectSummary(idea, clarification);
 
@@ -325,8 +305,7 @@ export function HTMLGeneratorStage({
         ...prev,
         projectSummary: summaryResult.summary,
         clarificationAnswer: clarification,
-        // Replace typing indicator with the actual message
-        messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([summaryMessage]),
+        messages: [...prev.messages, summaryMessage],
         flowStep: "confirm",
         showConfirmButtons: true,
         isLoading: false,
@@ -494,7 +473,7 @@ export function HTMLGeneratorStage({
       const loadingMessage: HTMLMessage = {
         role: "assistant",
         content: "جاري الإنشاء",
-        className: "loading-animation"
+        className: "loading-animation",
       };
 
       setState((prev) => ({
@@ -513,27 +492,29 @@ export function HTMLGeneratorStage({
       const typingMessage: HTMLMessage = {
         role: "assistant",
         content: "يكتب...",
-        className: "typing-animation"
+        className: "typing-animation",
       };
-      
+
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, typingMessage],
         showConfirmButtons: false,
-        isLoading: true
+        isLoading: true,
       }));
-      
+
       // Simulate typing delay and then replace with the actual message
       setTimeout(() => {
         const changeMessage: HTMLMessage = {
           role: "assistant",
           content: "اوكي، وش تبي نغير؟",
         };
-        
+
         setState((prev) => ({
           ...prev,
           // Replace the typing indicator with the actual message
-          messages: prev.messages.filter(msg => msg.className !== "typing-animation").concat([changeMessage]),
+          messages: prev.messages
+            .filter((msg) => msg.className !== "typing-animation")
+            .concat([changeMessage]),
           isLoading: false,
           // Restart the clarification flow but preserve context
           flowStep: "clarify",
@@ -1206,7 +1187,8 @@ export function HTMLGeneratorStage({
                           )}
                         </div>
                         <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" && msg.className === "loading-animation" ? (
+                          {msg.role === "assistant" &&
+                          msg.className === "loading-animation" ? (
                             <div className="flex">
                               <span>جاري الإنشاء</span>
                               <span className="flex ml-1">
@@ -1223,10 +1205,11 @@ export function HTMLGeneratorStage({
                             </div>
                           ) : msg.role === "assistant" &&
                             (msg.content.includes("<!DOCTYPE html") ||
-                             msg.content.includes("<html")) ? (
+                              msg.content.includes("<html")) ? (
                             "سويت لك الصفحة! شوف النتيجة 👈"
                           ) : (
-                            msg.content.split("<!DOCTYPE html")[0] || msg.content
+                            msg.content.split("<!DOCTYPE html")[0] ||
+                            msg.content
                           )}
                         </div>
                       </div>
