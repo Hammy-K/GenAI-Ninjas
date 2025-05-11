@@ -41,6 +41,7 @@ interface LovableMissionState {
   error: string;
   isProjectLinkValid: boolean;
   isChatLocked: boolean; // Added for locking chat input until selection
+  projectType: string; // 'app' or 'game'
 }
 
 // Initial data
@@ -120,6 +121,7 @@ export default function LovableMissionStage() {
     error: "",
     isProjectLinkValid: false,
     isChatLocked: true, // Lock the chat input initially
+    projectType: "app", // Default to 'app' - will be updated based on conversation
   });
 
   // Load progress on mount
@@ -241,6 +243,12 @@ export default function LovableMissionStage() {
           
           // Determine if it was game or app
           selectedType = prevMessage.content.includes("لعبتك") ? "game" : "app";
+          
+          // Store the project type in state
+          setState(prev => ({
+            ...prev,
+            projectType: selectedType
+          }));
         }
       }
       
