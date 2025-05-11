@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, Send, Check, Copy, AlertCircle } from "lucide-react";
+import { Send, Check, AlertCircle, Copy, ExternalLink } from "lucide-react";
+import drPengyAvatar from "@assets/Penguin.png";
 
 // Define types for messages and state
 type MessageRole = "user" | "assistant" | "system";
@@ -22,6 +23,8 @@ interface ChecklistItem {
   id: number;
   text: string;
   completed: boolean;
+  type?: "button" | "normal";
+  action?: () => void;
 }
 
 interface LovableMissionState {
@@ -39,9 +42,8 @@ interface LovableMissionState {
 // Initial data
 const initialChecklistItems: ChecklistItem[] = [
   { id: 1, text: "Come up with a clear prompt for your app/game idea.", completed: false },
-  { id: 2, text: "Copy your final prompt.", completed: false },
-  { id: 3, text: "Go to Lovable.dev, paste the prompt, and start building.", completed: false },
-  { id: 4, text: "⚠️ Reminder: You have only 5 agent messages! Use them smartly to refine or fix your app.", completed: false },
+  { id: 2, text: "Copy your final prompt.", completed: false, type: "button", action: () => {} },
+  { id: 3, text: "Go to Lovable.dev, paste the prompt, and start building.", completed: false, type: "button", action: () => {} },
   { id: 5, text: "Once done, copy your Lovable project link.", completed: false },
   { id: 6, text: "Submit the project link in the mission page.", completed: false },
   { id: 7, text: "(Team activity) Only one project submission per team.", completed: false },
@@ -374,18 +376,27 @@ export default function LovableMissionStage() {
     }
   };
 
+  // Initialize action functions
+  useEffect(() => {
+    // Update checklist items with action functions
+    setState(prev => ({
+      ...prev,
+      checklistItems: prev.checklistItems.map(item => {
+        if (item.id === 2) {
+          return { ...item, action: copyFinalPrompt };
+        } else if (item.id === 3) {
+          return { ...item, action: openLovable };
+        }
+        return item;
+      })
+    }));
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-primary/5 px-4 py-2 rounded-lg mb-4">
-        <h1 className="text-2xl font-bold text-center">مهمة Lovable</h1>
-        <p className="text-center text-muted-foreground">
-          ابتكر فكرة تطبيق أو لعبة مع د. بنجي، وابنيها على Lovable، ثم قدم رابط مشروعك النهائي!
-        </p>
-      </div>
-      
       <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Chat Panel - 85% width */}
-        <div className="w-[85%] flex flex-col bg-card rounded-lg shadow-sm border">
+        {/* Chat Panel - 75% width */}
+        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border">
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-4">
@@ -396,11 +407,17 @@ export default function LovableMissionStage() {
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
+                  {message.role === "assistant" && (
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden mr-2">
+                      <img src={drPengyAvatar} alt="Dr. Pengy" className="h-full w-full object-cover" />
+                    </div>
+                  )}
+                  
                   <div
                     className={`max-w-[80%] rounded-lg p-3 ${
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        : "bg-white border"
                     } ${message.className || ""}`}
                   >
                     {message.content}
@@ -434,57 +451,47 @@ export default function LovableMissionStage() {
           </div>
         </div>
         
-        {/* Checklist Panel - 15% width */}
-        <div className="w-[15%] bg-card rounded-lg shadow-sm p-3 overflow-y-auto border">
+        {/* Checklist Panel - 25% width */}
+        <div className="w-[25%] bg-card rounded-lg shadow-sm p-4 overflow-y-auto border">
           <h3 className="font-semibold mb-2 text-center">قائمة المهام</h3>
           <Separator className="my-2" />
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             {state.checklistItems.map((item) => (
-              <div key={item.id} className="flex items-start gap-2">
-                <Checkbox 
-                  id={`checklist-${item.id}`} 
-                  checked={item.completed}
-                  onCheckedChange={() => toggleChecklistItem(item.id)}
-                  className="mt-1"
-                />
-                <Label 
-                  htmlFor={`checklist-${item.id}`}
-                  className={`text-xs ${item.completed ? 'line-through text-muted-foreground' : ''}`}
-                >
-                  {item.text}
-                </Label>
+              <div key={item.id} className="flex flex-col">
+                <div className="flex items-start gap-2">
+                  <Checkbox 
+                    id={`checklist-${item.id}`} 
+                    checked={item.completed}
+                    onCheckedChange={() => toggleChecklistItem(item.id)}
+                    className="mt-1"
+                  />
+                  <Label 
+                    htmlFor={`checklist-${item.id}`}
+                    className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : ''}`}
+                  >
+                    {item.text}
+                  </Label>
+                </div>
+                
+                {item.type === "button" && (
+                  <Button 
+                    onClick={item.action}
+                    className="mt-1 ml-6 text-xs"
+                    size="sm"
+                    variant="outline"
+                  >
+                    {item.id === 2 ? "انسخ الفكرة النهائية" : "افتح Lovable.dev"}
+                  </Button>
+                )}
               </div>
             ))}
           </div>
           
-          <Separator className="my-3" />
-          
-          {/* Copy Prompt Button */}
-          <Button 
-            onClick={copyFinalPrompt} 
-            className="w-full mb-2 text-xs"
-            size="sm"
-            variant="outline"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            انسخ الفكرة النهائية
-          </Button>
-          
-          {/* Go to Lovable Button */}
-          <Button 
-            onClick={openLovable} 
-            className="w-full mb-2 text-xs"
-            size="sm"
-          >
-            <ExternalLink className="h-3 w-3 mr-1" />
-            افتح Lovable.dev
-          </Button>
-          
           {/* Project Link Submission */}
           {!state.isSubmitted ? (
             <form onSubmit={handleLinkSubmit} className="mt-4">
-              <Label htmlFor="project-link" className="text-xs">
+              <Label htmlFor="project-link" className="text-sm">
                 رابط مشروع Lovable:
               </Label>
               <div className="flex flex-col gap-2 mt-1">
@@ -493,13 +500,12 @@ export default function LovableMissionStage() {
                   placeholder="https://lovable.dev/..."
                   value={state.projectLink}
                   onChange={(e) => setState(prev => ({ ...prev, projectLink: e.target.value, error: "" }))}
-                  className="text-xs h-8"
+                  className="text-sm"
                 />
                 <Button 
                   type="submit" 
                   size="sm" 
                   disabled={state.isLoading || !state.projectLink}
-                  className="text-xs"
                 >
                   {state.isLoading ? "جارٍ التقديم..." : "قدم الرابط"}
                 </Button>
@@ -508,8 +514,8 @@ export default function LovableMissionStage() {
           ) : (
             <Alert variant="default" className="bg-primary/20 mt-4">
               <Check className="h-4 w-4" />
-              <AlertTitle className="text-xs">تم التقديم!</AlertTitle>
-              <AlertDescription className="text-xs">
+              <AlertTitle className="text-sm">تم التقديم!</AlertTitle>
+              <AlertDescription className="text-sm">
                 تم تقديم رابط مشروعك بنجاح.
               </AlertDescription>
             </Alert>
@@ -518,7 +524,7 @@ export default function LovableMissionStage() {
           {state.error && (
             <Alert variant="destructive" className="mt-2">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-sm">
                 {state.error}
               </AlertDescription>
             </Alert>
