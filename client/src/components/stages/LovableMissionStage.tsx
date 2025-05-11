@@ -84,6 +84,42 @@ export default function LovableMissionStage() {
   useEffect(() => {
     // Track stage started
     trackStageProgress("lovable_mission", "started");
+    
+    // Try to load existing progress from API
+    const loadProgress = async () => {
+      try {
+        const firebaseUid = localStorage.getItem('firebaseUid');
+        if (!firebaseUid) return;
+        
+        const response = await fetch(`/api/lovable-mission/progress?firebaseUid=${firebaseUid}`);
+        const data = await response.json();
+        
+        if (data.progress && data.chatHistory?.length) {
+          // Transform chat history into messages
+          const messages = data.chatHistory.map((msg: any) => ({
+            role: msg.role as MessageRole,
+            content: msg.content
+          }));
+          
+          // If there are no messages, add the welcome message
+          if (messages.length === 0) {
+            messages.push(welcomeMessage);
+          }
+          
+          setState(prev => ({
+            ...prev,
+            messages,
+            currentStep: data.progress.currentStep || 1,
+            projectLink: data.progress.projectLink || '',
+            isSubmitted: data.progress.hasSubmitted || false,
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to load progress:", error);
+      }
+    };
+    
+    loadProgress();
   }, []);
 
   // Auto-scroll to bottom of messages
@@ -125,46 +161,78 @@ export default function LovableMissionStage() {
     }));
     
     try {
-      // In a real implementation, this would call the AI API
-      // For now we'll simulate a response
-      setTimeout(() => {
-        // Remove loading message
-        setState((prev) => ({
+      // Make API request to add user message
+      const firebaseUid = localStorage.getItem('firebaseUid') || '';
+      
+      await fetch('/api/lovable-mission/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid,
+          role: 'user',
+          content: state.prompt,
+        }),
+      });
+      
+      // Remove loading message
+      setState((prev) => ({
+        ...prev,
+        messages: prev.messages.filter(msg => !msg.className?.includes("loading")),
+        isLoading: false,
+      }));
+      
+      // Generate a response based on the conversation stage
+      let response = "شكرًا لمشاركة فكرتك! هل يمكنك إخباري المزيد عن كيفية عمل هذا التطبيق/اللعبة؟";
+      
+      if (state.messages.length > 2) {
+        response = "هذه فكرة رائعة! لنوضح بعض التفاصيل الإضافية: ما هي الميزات الرئيسية التي تريد تضمينها؟";
+      }
+      
+      if (state.messages.length > 4) {
+        response = "ممتاز! لديك الآن فكرة واضحة. يمكنك نسخ هذا الملخص واستخدامه كتوجيه في Lovable:\n\n" + 
+          "\"" + state.messages[state.messages.length - 2].content + "\"";
+        
+        // Set as final prompt when we reach this stage
+        setState(prev => ({
           ...prev,
-          messages: prev.messages.filter(msg => !msg.className?.includes("loading")),
-          isLoading: false,
+          finalPrompt: state.messages[state.messages.length - 2].content,
+          checklistItems: prev.checklistItems.map(item => 
+            item.id === 1 ? { ...item, completed: true } : item
+          ),
         }));
-        
-        // Generate a response based on the last message
-        let response = "شكرًا لمشاركة فكرتك! هل يمكنك إخباري المزيد عن كيفية عمل هذا التطبيق/اللعبة؟";
-        
-        if (state.messages.length > 2) {
-          response = "هذه فكرة رائعة! لنوضح بعض التفاصيل الإضافية: ما هي الميزات الرئيسية التي تريد تضمينها؟";
-        }
-        
-        if (state.messages.length > 4) {
-          response = "ممتاز! لديك الآن فكرة واضحة. يمكنك نسخ هذا الملخص واستخدامه كتوجيه في Lovable:\n\n" + 
-            "\"" + state.messages[state.messages.length - 2].content + "\"";
-        }
-        
-        // Add assistant response
-        const assistantMessage: ChatMessage = {
-          role: "assistant",
+      }
+      
+      // Add assistant response
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: response,
+      };
+      
+      setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, assistantMessage],
+      }));
+      
+      // Send assistant message to API
+      await fetch('/api/lovable-mission/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid,
+          role: 'assistant',
           content: response,
-        };
-        
-        setState((prev) => ({
-          ...prev,
-          messages: [...prev.messages, assistantMessage],
-        }));
-        
-        // Track progress
-        trackStageProgress("lovable_mission", "message_sent");
-        
-      }, 1000);
+        }),
+      });
+      
+      // Track progress
+      trackStageProgress("lovable_mission", "message_sent");
       
     } catch (error) {
-      console.error("Error generating text:", error);
+      console.error("Error in chat:", error);
       
       // Remove loading message and show error
       setState((prev) => ({
@@ -259,27 +327,42 @@ export default function LovableMissionStage() {
     setState(prev => ({ ...prev, isLoading: true, error: "" }));
     
     try {
-      // Simulate API call
-      setTimeout(() => {
-        // Mark as submitted
-        setState(prev => ({ 
-          ...prev, 
-          isSubmitted: true, 
-          isLoading: false,
-          checklistItems: prev.checklistItems.map(item => 
-            item.id === 6 ? { ...item, completed: true } : item
-          ),
-        }));
-        
-        // Show success message
-        toast({
-          title: "تم التقديم بنجاح!",
-          description: "تم تقديم رابط مشروعك بنجاح.",
-        });
-        
-        // Track progress
-        trackStageProgress("lovable_mission", "link_submitted");
-      }, 1000);
+      const firebaseUid = localStorage.getItem('firebaseUid') || '';
+      
+      // Call API to submit link
+      const response = await fetch('/api/lovable-mission/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid,
+          projectLink: state.projectLink,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to submit project link');
+      }
+      
+      // Mark as submitted
+      setState(prev => ({ 
+        ...prev, 
+        isSubmitted: true, 
+        isLoading: false,
+        checklistItems: prev.checklistItems.map(item => 
+          item.id === 6 ? { ...item, completed: true } : item
+        ),
+      }));
+      
+      // Show success message
+      toast({
+        title: "تم التقديم بنجاح!",
+        description: "تم تقديم رابط مشروعك بنجاح.",
+      });
+      
+      // Track progress
+      trackStageProgress("lovable_mission", "link_submitted");
       
     } catch (error) {
       console.error("Error submitting link:", error);
@@ -301,6 +384,56 @@ export default function LovableMissionStage() {
       </div>
       
       <div className="flex flex-1 gap-4 overflow-hidden">
+        {/* Chat Panel - 85% width */}
+        <div className="w-[85%] flex flex-col bg-card rounded-lg shadow-sm border">
+          {/* Messages Container */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              {state.messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    } ${message.className || ""}`}
+                  >
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+          
+          {/* Input Form */}
+          <div className="p-4 border-t">
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <Textarea
+                value={state.prompt}
+                onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value, error: "" }))}
+                placeholder="اكتب رسالتك هنا..."
+                className="flex-1 resize-none"
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+              />
+              <Button type="submit" disabled={state.isLoading || !state.prompt.trim()}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
+        
         {/* Checklist Panel - 15% width */}
         <div className="w-[15%] bg-card rounded-lg shadow-sm p-3 overflow-y-auto border">
           <h3 className="font-semibold mb-2 text-center">قائمة المهام</h3>
@@ -390,56 +523,6 @@ export default function LovableMissionStage() {
               </AlertDescription>
             </Alert>
           )}
-        </div>
-        
-        {/* Chat Panel - 85% width */}
-        <div className="w-[85%] flex flex-col bg-card rounded-lg shadow-sm border">
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-4">
-              {state.messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    } ${message.className || ""}`}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-          
-          {/* Input Form */}
-          <div className="p-4 border-t">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Textarea
-                value={state.prompt}
-                onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value, error: "" }))}
-                placeholder="اكتب رسالتك هنا..."
-                className="flex-1 resize-none"
-                rows={1}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-              />
-              <Button type="submit" disabled={state.isLoading || !state.prompt.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
         </div>
       </div>
     </div>
