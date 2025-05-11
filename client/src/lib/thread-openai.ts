@@ -10,7 +10,12 @@ export type Message = {
   className?: string; // Optional class for styling
 };
 
-export type HTMLMessage = Message;
+// Use system role for API calls but not in UI messages
+export type HTMLMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  className?: string; // Optional class for styling
+};
 
 type ThreadBasedOptions = {
   mode: 'chat' | 'html';
@@ -207,6 +212,7 @@ export async function generateHTML(
         role: "assistant",
         content: messageText
       },
+      threadId: response.threadId,
       error: response.error
     };
   } catch (error) {

@@ -330,7 +330,8 @@ export function HTMLGeneratorStage({
       // 3. The loading message "جاري الإنشاء..." was added in handleConfirmation
 
       // Generate HTML with the existing message history (already contains all context)
-      const htmlResponse = await generateHTML(state.messages);
+      // Pass the thread ID to maintain conversation context
+      const htmlResponse = await generateHTML(state.messages, state.threadId);
 
       if (htmlResponse.error) {
         setState((prev) => ({
@@ -340,6 +341,9 @@ export function HTMLGeneratorStage({
         }));
         return;
       }
+
+      // Save the thread ID for future interactions
+      const threadId = htmlResponse.threadId || state.threadId;
 
       // Track successful generation
       trackStageProgress("html_generator", "html_generated", {
@@ -352,13 +356,14 @@ export function HTMLGeneratorStage({
         content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
-      // Update state with the AI response and HTML
+      // Update state with the AI response, HTML, and thread ID
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse],
         currentHTML: htmlResponse.html,
         isLoading: false,
         flowStep: "modify", // Move to modify step
+        threadId, // Store the thread ID for future interactions
       }));
 
       // Award XP for first response
@@ -416,8 +421,8 @@ export function HTMLGeneratorStage({
         content: apiContent,
       });
 
-      // Generate HTML with the context
-      const htmlResponse = await generateHTML(apiMessages);
+      // Generate HTML with the context, passing thread ID
+      const htmlResponse = await generateHTML(apiMessages, state.threadId);
 
       if (htmlResponse.error) {
         setState((prev) => ({
@@ -427,6 +432,9 @@ export function HTMLGeneratorStage({
         }));
         return;
       }
+      
+      // Save the thread ID for future interactions
+      const threadId = htmlResponse.threadId || state.threadId;
 
       // Track the modification
       trackStageProgress("html_generator", "html_modified", {
@@ -439,12 +447,13 @@ export function HTMLGeneratorStage({
         content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
-      // Update state with the AI response and new HTML
+      // Update state with the AI response, new HTML, and thread ID
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, aiResponse],
         currentHTML: htmlResponse.html,
         isLoading: false,
+        threadId, // Store the thread ID for future interactions
       }));
     } catch (error) {
       setState((prev) => ({
