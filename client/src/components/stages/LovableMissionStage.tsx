@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Send, Check, AlertCircle, Copy, ExternalLink } from "lucide-react";
-import drPengyAvatar from "@assets/Penguin.png";
+import drPengyAvatar from "@assets/Pengy_chat.png";
 
 // Define types for messages and state
 type MessageRole = "user" | "assistant" | "system";
@@ -44,36 +44,36 @@ interface LovableMissionState {
 const initialChecklistItems: ChecklistItem[] = [
   {
     id: 1,
-    text: "✨ فكّر في فكرة تطبيق أو لعبة.",
-    description: "شارك أفكارك مع الدكتور بنجي للحصول على ملاحظات",
+    text: "✨ فكّر في فكرة تطبيق أو لعبة مع Pengy ",
+    description: "",
     completed: false,
   },
   {
     id: 2,
-    text: "📋 انسخ فكرتك النهائية.",
-    description: "بعد الانتهاء من تنقيح فكرتك، انسخها للاستخدام في Lovable",
+    text: "📋 لما توصل لفكرتك النهائية، انسخها",
+    description: "",
     completed: false,
     type: "button",
     action: () => {},
   },
   {
     id: 3,
-    text: "🌐 ادخل على Lovable.",
-    description: "الصق الفكرة وابدأ تبني تطبيقك. ⚠️ انتبه! عندك بس ٥ محادثات مع Lovable، استخدمها بحكمة.",
+    text: "🌐 ادخل على Lovable.الصق الفكرة وابدأ بناء فكرتك.",
+    description: "انتبه! ⚠️ عندك بس ٥ محادثات مع Lovable، استخدمها بحكمة.",
     completed: false,
     type: "button",
     action: () => {},
   },
   {
     id: 5,
-    text: "🔗 انسخ رابط مشروعك.",
-    description: "بعد الانتهاء من بناء مشروعك، انسخ الرابط من Lovable",
+    text: "🔗 لما تنتهي، انسخ رابط مشروعك.",
+    description: "",
     completed: false,
   },
   {
     id: 6,
     text: "📩 ارسل الرابط تحت هنا:",
-    description: "الصق رابط مشروعك في الحقل أدناه",
+    description: "",
     completed: false,
   },
   //{ id: 7, text: "(Team activity) Only one project submission per team.", completed: false },
@@ -365,8 +365,11 @@ export default function LovableMissionStage() {
   const handleLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!state.projectLink || 
-        (!state.projectLink.includes("lovable.dev") && !state.projectLink.includes("lovable.app"))) {
+    if (
+      !state.projectLink ||
+      (!state.projectLink.includes("lovable.dev") &&
+        !state.projectLink.includes("lovable.app"))
+    ) {
       setState((prev) => ({
         ...prev,
         error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable.",
@@ -470,7 +473,13 @@ export default function LovableMissionStage() {
                         ? "bg-primary text-primary-foreground"
                         : "bg-white border"
                     } ${message.className || ""}`}
-                    dir={message.content.trim().match(/^[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/) ? "rtl" : "ltr"}
+                    dir={
+                      message.content
+                        .trim()
+                        .match(/^[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/)
+                        ? "rtl"
+                        : "ltr"
+                    }
                   >
                     {message.content}
                   </div>
@@ -535,7 +544,9 @@ export default function LovableMissionStage() {
                       {item.text}
                     </Label>
                     {item.description && (
-                      <span className={`text-xs text-muted-foreground ${item.completed ? "line-through" : ""}`}>
+                      <span
+                        className={`text-xs text-muted-foreground ${item.completed ? "line-through" : ""}`}
+                      >
                         {item.description}
                       </span>
                     )}
@@ -561,14 +572,7 @@ export default function LovableMissionStage() {
           {/* Project Link Submission */}
           {!state.isSubmitted ? (
             <form onSubmit={handleLinkSubmit} className="mt-4">
-              <div className="flex flex-col">
-                <Label htmlFor="project-link" className="text-sm font-bold">
-                  رابط ابداعك:
-                </Label>
-                <span className="text-xs text-muted-foreground mb-2">
-                  ألصق رابط مشروعك من Lovable هنا
-                </span>
-              </div>
+              <div className="flex flex-col"></div>
               <div className="flex flex-col gap-2 mt-1">
                 <Input
                   id="project-link"
