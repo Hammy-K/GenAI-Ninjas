@@ -279,10 +279,14 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
             `${studentName.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}` : 
             `anonymous_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           
-          // Create a temporary user without a firebaseUid
+          // Create an anonymous UID
+          const anonymousUID = `anonymous_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          
+          // Create a temporary user with the anonymous UID
           const tempUser = await storage.createUser({
             username,
             password: Math.random().toString(36).substring(2, 15), // Random password
+            firebaseUid: anonymousUID
           });
           
           userId = tempUser.id;
@@ -290,7 +294,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
           // Create progress record
           progress = await storage.createLovableMissionProgress({
             userId: tempUser.id,
-            firebaseUid: `anonymous_${tempUser.id}_${Date.now()}`, // Generate a pseudo-UID
+            firebaseUid: anonymousUID, // Use the same anonymous UID
             currentStep: 6, // Set to step 6 (submission step)
             hasSubmitted: true,
             projectLink,
