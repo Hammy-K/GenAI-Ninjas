@@ -288,10 +288,10 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Add the summary to chat - now just "تبي نبدأ؟"
+      // Add the summary to chat followed by confirmation question
       const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: "تبي نبدأ؟",
+        content: `${summaryResult.summary}\n\nتبي نبدأ؟`,
       };
 
       setState((prev) => ({
@@ -346,7 +346,7 @@ export function HTMLGeneratorStage({
       // Use the response message from the API or a consistent success message
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content: "سويت لك الصفحة! شوف النتيجة 👈",
+        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
       // Update state with the AI response and HTML
@@ -438,7 +438,7 @@ export function HTMLGeneratorStage({
       // Use the response message
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content: "سويت لك الصفحة! شوف النتيجة 👈",
+        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
       // Update state with the AI response and new HTML
