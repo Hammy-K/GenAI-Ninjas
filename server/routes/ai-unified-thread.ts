@@ -57,11 +57,13 @@ router.post('/unified-thread', async (req: Request, res: Response) => {
     const systemMessage = messages.find(m => m.role === 'system');
     const isHtmlMode = systemMessage?.content.includes('HTML') || false;
     
-    trackAnalytics(isHtmlMode ? 'html_thread' : 'chat_thread', {
-      message_count: messages.length,
-      prompt_length: userMessages.reduce((total, m) => total + m.content.length, 0),
-      has_thread_id: !!threadId
-    });
+    logEvent(isHtmlMode ? 'html_thread' : 'chat_thread', 
+      userMessages.length > 0 ? userMessages[userMessages.length - 1].content : '', 
+      {
+        message_count: messages.length,
+        prompt_length: userMessages.reduce((total, m) => total + m.content.length, 0),
+        has_thread_id: !!threadId
+      });
     
     // Create completion with the messages
     const completion = await openai.chat.completions.create({
@@ -83,11 +85,13 @@ router.post('/unified-thread', async (req: Request, res: Response) => {
     });
     
     // Track successful completion
-    trackAnalytics(isHtmlMode ? 'html_thread_success' : 'chat_thread_success', {
-      response_length: completion.choices[0].message.content?.length || 0,
-      token_usage: completion.usage?.total_tokens || 0,
-      has_thread_id: !!threadId
-    });
+    logEvent(isHtmlMode ? 'html_thread_success' : 'chat_thread_success',
+      completion.choices[0].message.content || '',
+      {
+        response_length: completion.choices[0].message.content?.length || 0,
+        token_usage: completion.usage?.total_tokens || 0,
+        has_thread_id: !!threadId
+      });
   } catch (error) {
     console.error('Error in unified thread API:', error);
     res.status(500).json({ 

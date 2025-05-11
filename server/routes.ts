@@ -77,6 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+  // Mount the unified thread router
+  apiRouter.use("/ai", unifiedThreadRouter);
 
   if (!process.env.OPENAI_API_KEY) {
     console.warn(
