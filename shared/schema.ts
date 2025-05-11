@@ -206,6 +206,17 @@ export const lovableMissionProgress = pgTable("lovable_mission_progress", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Add dedicated table for Lovable submissions to track projects
+export const lovableSubmissions = pgTable("lovable_submissions", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").references(() => lovableMissionProgress.id),
+  projectLink: text("project_link").notNull(),
+  studentName: text("student_name").notNull(),
+  firebaseUid: text("firebase_uid"), // May be null for anonymous submissions
+  submissionDate: timestamp("submission_date").defaultNow(),
+  metadata: jsonb("metadata"), // Store any additional metadata about the submission
+});
+
 export const lovableMissionChatHistory = pgTable("lovable_mission_chat_history", {
   id: serial("id").primaryKey(),
   progressId: integer("progress_id").notNull().references(() => lovableMissionProgress.id),
@@ -235,6 +246,17 @@ export const insertLovableMissionChatHistorySchema = createInsertSchema(lovableM
   createdAt: z.date().optional(),
 }).omit({ id: true, createdAt: true });
 
+// Insert schema for LovableSubmissions
+export const insertLovableSubmissionSchema = createInsertSchema(lovableSubmissions, {
+  id: z.number(),
+  progressId: z.number().optional(),
+  projectLink: z.string(),
+  studentName: z.string(),
+  firebaseUid: z.string().optional(),
+  submissionDate: z.date().optional(),
+  metadata: z.record(z.any()).optional(),
+}).omit({ id: true, submissionDate: true });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
@@ -248,6 +270,7 @@ export type InsertAssistantLog = z.infer<typeof insertAssistantLogSchema>;
 export type InsertHtmlProject = z.infer<typeof insertHtmlProjectSchema>;
 export type InsertLovableMissionProgress = z.infer<typeof insertLovableMissionProgressSchema>;
 export type InsertLovableMissionChatHistory = z.infer<typeof insertLovableMissionChatHistorySchema>;
+export type InsertLovableSubmission = z.infer<typeof insertLovableSubmissionSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -262,3 +285,4 @@ export type AssistantLog = typeof assistantLogs.$inferSelect;
 export type HtmlProject = typeof htmlProjects.$inferSelect;
 export type LovableMissionProgress = typeof lovableMissionProgress.$inferSelect;
 export type LovableMissionChatHistory = typeof lovableMissionChatHistory.$inferSelect;
+export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
