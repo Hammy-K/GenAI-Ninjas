@@ -186,6 +186,7 @@ export default function LovableMissionStage() {
     const userMessage: ChatMessage = {
       role: "user",
       content: currentPrompt,
+      className: "justify-end" // Align to right
     };
 
     setState((prev) => ({
@@ -198,7 +199,7 @@ export default function LovableMissionStage() {
     // Add loading message
     const loadingMessage: ChatMessage = {
       role: "assistant",
-      content: "...",
+      content: "جاري التحميل...",
       className: "loading",
     };
 
@@ -219,48 +220,65 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           firebaseUid,
           role: "user",
-          content: currentPrompt, // Use currentPrompt instead of state.prompt
+          content: currentPrompt,
         }),
       });
       
-      // Prepare message history for the Assistant API
-      const messageHistory = state.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      // Determine if this is the first message after selection (responding to "what's your favorite game/app?")
+      const messages = state.messages;
+      let isFirstResponseAfterSelection = false;
+      let selectedType = "";
       
-      // Create system message with the student's favorite app/game info
-      // This will be for the first real response after initial selection and question
-      let systemPrompt = "";
-      
-      // Find if there's already a game/app selection message
-      const selectionIndex = messageHistory.findIndex(msg => 
-        msg.role === "user" && (msg.content === "لعبة" || msg.content === "تطبيق")
-      );
-      
-      // Find if this is the first response after the selection (favorite app/game)
-      if (selectionIndex >= 0 && selectionIndex === messageHistory.length - 3) {
-        // This is the user's favorite app/game response message
-        const projectType = messageHistory[selectionIndex].content === "لعبة" ? "game" : "app";
-        systemPrompt = `The student's favorite ${projectType} is "${currentPrompt}"`;
+      // Check the last two messages
+      if (messages.length >= 2) {
+        // Check if the second-to-last message was from the assistant asking about favorite app/game
+        const prevMessage = messages[messages.length - 2];
+        if (
+          prevMessage.role === "assistant" && 
+          (prevMessage.content.includes("لعبتك المفضلة") || prevMessage.content.includes("تطبيقك المفضل"))
+        ) {
+          isFirstResponseAfterSelection = true;
+          
+          // Determine if it was game or app
+          selectedType = prevMessage.content.includes("لعبتك") ? "game" : "app";
+        }
       }
       
-      // Call the OpenAI Assistant API
-      const response = await fetch("/api/lovable-mission/assistant-chat", {
+      // Use the regular chat API endpoint for simplicity
+      const apiEndpoint = "/api/ai/text";
+      
+      // Create the appropriate system message
+      let systemPromptContent = 'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.';
+      
+      // Add the favorite app/game information if this is the first response after selection
+      if (isFirstResponseAfterSelection) {
+        systemPromptContent += ` The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
+      }
+      
+      // Create message history for API
+      const messageHistory = state.messages
+        .filter(msg => !msg.className?.includes("loading")) // Remove loading messages
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+      
+      // Call the standard ChatGPT API
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firebaseUid,
-          message: currentPrompt,
+          prompt: currentPrompt,
+          systemPrompt: systemPromptContent,
           messageHistory,
-          systemPrompt: systemPrompt || undefined // Only send if it has content
+          maxTokens: 800
         }),
       });
       
       if (!response.ok) {
-        throw new Error("Failed to get response from assistant");
+        throw new Error("Failed to get response from Dr. Pengy");
       }
       
       const data = await response.json();
@@ -305,11 +323,22 @@ export default function LovableMissionStage() {
       }));
       
       // Track progress
-      trackStageProgress("lovable_mission", "assistant_message_sent", {
-        threadId: data.threadId
+      trackStageProgress("lovable_mission", "chat_response_sent");
+      
+      // Save assistant message to the database
+      await fetch("/api/lovable-mission/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firebaseUid,
+          role: "assistant",
+          content: data.response,
+        }),
       });
     } catch (error) {
-      console.error("Error in assistant chat:", error);
+      console.error("Error in chat response:", error);
 
       // Remove loading message and show error
       setState((prev) => ({
