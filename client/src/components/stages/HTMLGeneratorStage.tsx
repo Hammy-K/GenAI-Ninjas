@@ -202,25 +202,17 @@ export function HTMLGeneratorStage({
     return () => clearTimeout(timer);
   }, [state.messages]);
 
-  // Helper function to handle clarification step
+  // STEP 3-4: Handle clarification step (Process idea & get clarifying question)
   const handleClarificationStep = async (idea: string) => {
     try {
-      // Filter out any previous loading messages for a cleaner history
-      const filteredMessages = state.messages.filter(msg => 
-        msg.className !== "loading-animation" && 
-        !msg.content.includes("<!DOCTYPE html") && 
-        !msg.content.includes("<html>")
-      );
-      
-      // We don't need to add the user message again since it's already added in handleSubmit
-      // Just record the original idea and update loading state
+      // Step 3: Process the idea - show loading state
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
         isLoading: true
       }));
       
-      // Get the clarifying question
+      // Get the clarifying question from assistant
       const clarificationResult = await getClarifyingQuestion(idea);
 
       if (clarificationResult.error) {
@@ -232,7 +224,7 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Add the clarifying question to chat
+      // Step 4: Add the clarifying question to chat
       const clarifyingMessage: HTMLMessage = {
         role: "assistant",
         content: clarificationResult.question,
@@ -256,23 +248,16 @@ export function HTMLGeneratorStage({
     }
   };
 
-  // Helper function to handle confirmation step
+  // STEP 5-6: Handle confirmation step (Process clarification & get summary)
   const handleConfirmationStep = async (
     idea: string,
     clarification: string,
   ) => {
     try {
-      // Add clarification answer as user message
-      const clarificationMessage: HTMLMessage = {
-        role: "user",
-        content: clarification,
-      };
-
-      // First update state with user message
+      // Step 5: Record the clarification and show loading state
       setState((prev) => ({
         ...prev,
         clarificationAnswer: clarification,
-        messages: [...prev.messages, clarificationMessage],
         isLoading: true,
       }));
 
@@ -288,7 +273,7 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Add the summary to chat followed by confirmation question
+      // Step 6: Add the summary to chat followed by confirmation question
       const summaryMessage: HTMLMessage = {
         role: "assistant",
         content: `${summaryResult.summary}\n\nتبي نبدأ؟`,
@@ -297,7 +282,6 @@ export function HTMLGeneratorStage({
       setState((prev) => ({
         ...prev,
         projectSummary: summaryResult.summary,
-        clarificationAnswer: clarification,
         messages: [...prev.messages, summaryMessage],
         flowStep: "confirm",
         showConfirmButtons: true,
@@ -315,12 +299,13 @@ export function HTMLGeneratorStage({
     }
   };
 
-  // Helper function to handle HTML generation
+  // STEP 8-9: Handle HTML generation (Generate HTML & show success message)
   const handleGenerateHtml = async (idea: string, clarification: string) => {
     // Create a combined prompt that includes both the original idea and clarification
     const enhancedPrompt = `${idea}\nAdditional details: ${clarification}`;
 
     try {
+      // Step 8: Generate HTML
       // We don't need to add a new user message here because:
       // 1. We already added the originalIdea in the clarify step
       // 2. We already added the clarificationAnswer in the confirmation step
@@ -343,8 +328,8 @@ export function HTMLGeneratorStage({
         html_length: htmlResponse.html.length,
       });
 
-      // Use the response message from the API or a consistent success message
-      const aiResponse: HTMLMessage = htmlResponse.message || {
+      // Step 9: Show success message with "ايش رأيك؟" question
+      const aiResponse: HTMLMessage = {
         role: "assistant",
         content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
@@ -457,10 +442,10 @@ export function HTMLGeneratorStage({
     }
   };
 
-  // Handle user response to confirmation step
+  // STEP 7-8: Handle user response to confirmation (Agree or Disagree flow)
   const handleConfirmation = (confirmed: boolean) => {
     if (confirmed) {
-      // User clicked "Yalla!" - proceed with HTML generation
+      // STEP 8: User clicked "Agree" - proceed with HTML generation
       // We add a special class name to help identify the loading message later
       const loadingMessage: HTMLMessage = {
         role: "assistant",
@@ -479,7 +464,7 @@ export function HTMLGeneratorStage({
       // Generate HTML with combined context
       handleGenerateHtml(state.originalIdea, state.clarificationAnswer);
     } else {
-      // User clicked "No" - ask what they want to change
+      // STEP 7: User clicked "Disagree" - ask what they want to change
       // First, show a typing indicator
       const typingMessage: HTMLMessage = {
         role: "assistant",
@@ -515,7 +500,7 @@ export function HTMLGeneratorStage({
     }
   };
 
-  // Handle prompt submission with clarify & confirm flow
+  // STEP 1-2: Handle prompt submission (Welcome message & student input)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -538,7 +523,7 @@ export function HTMLGeneratorStage({
       return;
     }
 
-    // Add user message to chat
+    // Step 2: Add user message to chat
     const userMessage: HTMLMessage = {
       role: "user",
       content: state.prompt,
