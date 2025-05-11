@@ -343,11 +343,10 @@ export function HTMLGeneratorStage({
         html_length: htmlResponse.html.length,
       });
 
-      // Use the response message from the API
+      // Use the response message from the API or a consistent success message
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content:
-          "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+        content: "سويت لك الصفحة! شوف النتيجة 👈",
       };
 
       // Update state with the AI response and HTML
@@ -439,7 +438,7 @@ export function HTMLGeneratorStage({
       // Use the response message
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content: "تم تحديث الكود! شوف النتيجة.",
+        content: "سويت لك الصفحة! شوف النتيجة 👈",
       };
 
       // Update state with the AI response and new HTML
