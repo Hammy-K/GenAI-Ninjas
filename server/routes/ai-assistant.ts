@@ -11,6 +11,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Session tracking (in a production app, use a proper session store)
 const HTML_GENERATOR_SESSION_PREFIX = 'html_generator_';
+const LOVABLE_MISSION_SESSION_PREFIX = 'lovable_mission_';
+
+
 
 // Define interface for request with our session type
 interface RequestWithAssistantSession extends Request {
@@ -109,19 +112,9 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         console.log("Using existing assistant session ID for lovable mission:", sessionId);
       }
       
-      // Get the current thread ID
-      let threadId = threadMap.get(sessionId);
-      
-      if (!threadId) {
-        // Create a new thread
-        const thread = await openai.beta.threads.create();
-        threadId = thread.id;
-        
-        // Store the thread ID
-        threadMap.set(sessionId, threadId);
-        
-        console.log(`Created new thread for Lovable Mission: ${threadId}`);
-      }
+      // Get or create a thread using the assistant service
+      const threadId = await assistantService.getOrCreateThreadId(sessionId);
+      console.log(`Using thread for Lovable Mission: ${threadId}`);
       
       // Add the user message to the thread
       await openai.beta.threads.messages.create(threadId, {
