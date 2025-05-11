@@ -212,17 +212,11 @@ export function HTMLGeneratorStage({
         !msg.content.includes("<html>")
       );
       
-      // Add user message to chat for idea
-      const userMessage: HTMLMessage = {
-        role: "user",
-        content: idea,
-      };
-      
-      // Update state with the user message and loading
+      // We don't need to add the user message again since it's already added in handleSubmit
+      // Just record the original idea and update loading state
       setState((prev) => ({
         ...prev,
         originalIdea: idea,
-        messages: [...filteredMessages, userMessage],
         isLoading: true
       }));
       
@@ -246,8 +240,7 @@ export function HTMLGeneratorStage({
 
       setState((prev) => ({
         ...prev,
-        originalIdea: idea,
-        messages: [...filteredMessages, userMessage, clarifyingMessage],
+        messages: [...prev.messages, clarifyingMessage],
         flowStep: "clarify",
         isLoading: false,
       }));
