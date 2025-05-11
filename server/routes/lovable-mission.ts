@@ -221,7 +221,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
               progress = await storage.updateLovableMissionProgress(progress.id, {
                 hasSubmitted: true,
                 projectLink,
-                // studentName is not in the schema yet, so store it in the logs only
+                studentName, // Now store student name in the database
                 currentStep: Math.max(progress.currentStep || 1, 6), // Ensure step is at least at submission level
               });
             } else {

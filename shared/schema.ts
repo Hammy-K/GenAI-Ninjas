@@ -201,6 +201,7 @@ export const lovableMissionProgress = pgTable("lovable_mission_progress", {
   currentStep: integer("current_step").default(1),
   hasSubmitted: boolean("has_submitted").default(false),
   projectLink: text("project_link"),
+  studentName: text("student_name"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -221,6 +222,7 @@ export const insertLovableMissionProgressSchema = createInsertSchema(lovableMiss
   currentStep: z.number().optional(),
   hasSubmitted: z.boolean().optional(),
   projectLink: z.string().optional(),
+  studentName: z.string().optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
