@@ -171,12 +171,15 @@ export default function LovableMissionStage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!state.prompt.trim()) return;
+    // Store the prompt before clearing it
+    const currentPrompt = state.prompt.trim();
+    
+    if (!currentPrompt) return;
 
     // Add user message to chat
     const userMessage: ChatMessage = {
       role: "user",
-      content: state.prompt,
+      content: currentPrompt,
     };
 
     setState((prev) => ({
@@ -228,7 +231,7 @@ export default function LovableMissionStage() {
         },
         body: JSON.stringify({
           firebaseUid,
-          message: state.prompt,
+          message: currentPrompt,
           messageHistory,
           // Optional system prompt can be added here if needed
         }),
@@ -491,7 +494,61 @@ export default function LovableMissionStage() {
                         <span className="text-xs font-bold">د. بنجي</span>
                       </div>
                     )}
-                    {message.content}
+                    {message.role === "assistant" && message.content === welcomeMessage.content ? (
+                      <>
+                        {message.content}
+                        <div className="flex gap-2 mt-4">
+                          <Button 
+                            onClick={() => {
+                              const userMessage = "تطبيق";
+                              // Add as user message
+                              const newMessage: ChatMessage = {
+                                role: "user",
+                                content: userMessage,
+                              };
+                              setState(prev => ({
+                                ...prev,
+                                messages: [...prev.messages, newMessage],
+                                prompt: "",
+                              }));
+                              // Send the message
+                              setTimeout(() => {
+                                handleSubmit(new Event('submit') as unknown as React.FormEvent);
+                              }, 100);
+                            }}
+                            variant="outline" 
+                            className="border-primary text-primary hover:bg-primary/10"
+                          >
+                            تطبيق 📱
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              const userMessage = "لعبة";
+                              // Add as user message
+                              const newMessage: ChatMessage = {
+                                role: "user",
+                                content: userMessage,
+                              };
+                              setState(prev => ({
+                                ...prev,
+                                messages: [...prev.messages, newMessage],
+                                prompt: "",
+                              }));
+                              // Send the message
+                              setTimeout(() => {
+                                handleSubmit(new Event('submit') as unknown as React.FormEvent);
+                              }, 100);
+                            }}
+                            variant="outline"
+                            className="border-primary text-primary hover:bg-primary/10"
+                          >
+                            لعبة 🎮
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      message.content
+                    )}
                   </div>
                 </div>
               ))}
