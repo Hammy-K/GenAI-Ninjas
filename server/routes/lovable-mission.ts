@@ -257,6 +257,8 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                   progressId: progress.id,
                   projectLink,
                   studentName: studentName || "Anonymous Student",
+                  projectType: projectType || "app", // Default to "app" if not provided
+                  finalPrompt, // Include final prompt
                   firebaseUid,
                   metadata: {
                     ...metadata,
@@ -266,8 +268,8 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
               } catch (linkError) {
                 console.error("Error linking submission to progress:", linkError);
                 // This is not critical, continue with the flow
-              }
-            } else {
+            }
+          } else {
               // Create new progress
               progress = await storage.createLovableMissionProgress({
                 userId: user.id,
