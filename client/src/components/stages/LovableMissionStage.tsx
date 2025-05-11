@@ -536,7 +536,7 @@ export default function LovableMissionStage() {
                     <p className="text-xs text-gray-500 mb-1">اختر نوع المشروع:</p>
                     <div className="flex gap-2">
                       <Button 
-                        onClick={() => {
+                        onClick={async () => {
                           const userMessage = "لعبة";
                           // Add as user message with right alignment
                           const newMessage: ChatMessage = {
@@ -545,23 +545,101 @@ export default function LovableMissionStage() {
                             className: "justify-end" // Align to right
                           };
                           
-                          // Prepare AI response
-                          const loadingMessage: ChatMessage = {
-                            role: "assistant",
-                            content: "جاري التحميل...",
-                          };
-                          
                           setState(prev => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage, loadingMessage],
+                            messages: [...prev.messages, newMessage],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
+                            isLoading: true,
                           }));
                           
-                          // Send the message
-                          setTimeout(() => {
-                            handleSubmit(new Event('submit') as unknown as React.FormEvent);
-                          }, 100);
+                          try {
+                            // Add loading message
+                            const loadingMessage: ChatMessage = {
+                              role: "assistant",
+                              content: "جاري التحميل...",
+                              className: "loading",
+                            };
+                            
+                            setState(prev => ({
+                              ...prev,
+                              messages: [...prev.messages, loadingMessage],
+                            }));
+                            
+                            // Save user message to the database
+                            const firebaseUid = localStorage.getItem("firebaseUid") || "";
+                            
+                            await fetch("/api/lovable-mission/chat", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                firebaseUid,
+                                role: "user",
+                                content: userMessage,
+                              }),
+                            });
+                            
+                            // Prepare message history for the Assistant API
+                            const messageHistory = [
+                              welcomeMessage,
+                              newMessage
+                            ].map(msg => ({
+                              role: msg.role,
+                              content: msg.content,
+                            }));
+                            
+                            // Call the OpenAI Assistant API
+                            const response = await fetch("/api/lovable-mission/assistant-chat", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                firebaseUid,
+                                message: userMessage,
+                                messageHistory
+                              }),
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error("Failed to get response from assistant");
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Remove loading message
+                            setState((prev) => ({
+                              ...prev,
+                              messages: prev.messages.filter(
+                                (msg) => !msg.className?.includes("loading"),
+                              ),
+                              isLoading: false,
+                            }));
+                            
+                            // Add assistant response
+                            const assistantMessage: ChatMessage = {
+                              role: "assistant",
+                              content: data.response,
+                            };
+                            
+                            setState((prev) => ({
+                              ...prev,
+                              messages: [...prev.messages, assistantMessage],
+                            }));
+                          } catch (error) {
+                            console.error("Error in assistant chat:", error);
+                            // Remove loading message and show error
+                            setState((prev) => ({
+                              ...prev,
+                              messages: prev.messages.filter(
+                                (msg) => !msg.className?.includes("loading"),
+                              ),
+                              isLoading: false,
+                              error: "حدث خطأ أثناء التواصل مع د. بنجي. يرجى المحاولة مرة أخرى.",
+                            }));
+                          }
                         }}
                         variant="outline"
                         className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
@@ -569,7 +647,7 @@ export default function LovableMissionStage() {
                         لعبة 🎮
                       </Button>
                       <Button 
-                        onClick={() => {
+                        onClick={async () => {
                           const userMessage = "تطبيق";
                           // Add as user message with right alignment
                           const newMessage: ChatMessage = {
@@ -578,23 +656,101 @@ export default function LovableMissionStage() {
                             className: "justify-end" // Align to right
                           };
                           
-                          // Prepare AI response
-                          const loadingMessage: ChatMessage = {
-                            role: "assistant",
-                            content: "جاري التحميل...",
-                          };
-                          
                           setState(prev => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage, loadingMessage],
+                            messages: [...prev.messages, newMessage],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
+                            isLoading: true,
                           }));
                           
-                          // Send the message
-                          setTimeout(() => {
-                            handleSubmit(new Event('submit') as unknown as React.FormEvent);
-                          }, 100);
+                          try {
+                            // Add loading message
+                            const loadingMessage: ChatMessage = {
+                              role: "assistant",
+                              content: "جاري التحميل...",
+                              className: "loading",
+                            };
+                            
+                            setState(prev => ({
+                              ...prev,
+                              messages: [...prev.messages, loadingMessage],
+                            }));
+                            
+                            // Save user message to the database
+                            const firebaseUid = localStorage.getItem("firebaseUid") || "";
+                            
+                            await fetch("/api/lovable-mission/chat", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                firebaseUid,
+                                role: "user",
+                                content: userMessage,
+                              }),
+                            });
+                            
+                            // Prepare message history for the Assistant API
+                            const messageHistory = [
+                              welcomeMessage,
+                              newMessage
+                            ].map(msg => ({
+                              role: msg.role,
+                              content: msg.content,
+                            }));
+                            
+                            // Call the OpenAI Assistant API
+                            const response = await fetch("/api/lovable-mission/assistant-chat", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                firebaseUid,
+                                message: userMessage,
+                                messageHistory
+                              }),
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error("Failed to get response from assistant");
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Remove loading message
+                            setState((prev) => ({
+                              ...prev,
+                              messages: prev.messages.filter(
+                                (msg) => !msg.className?.includes("loading"),
+                              ),
+                              isLoading: false,
+                            }));
+                            
+                            // Add assistant response
+                            const assistantMessage: ChatMessage = {
+                              role: "assistant",
+                              content: data.response,
+                            };
+                            
+                            setState((prev) => ({
+                              ...prev,
+                              messages: [...prev.messages, assistantMessage],
+                            }));
+                          } catch (error) {
+                            console.error("Error in assistant chat:", error);
+                            // Remove loading message and show error
+                            setState((prev) => ({
+                              ...prev,
+                              messages: prev.messages.filter(
+                                (msg) => !msg.className?.includes("loading"),
+                              ),
+                              isLoading: false,
+                              error: "حدث خطأ أثناء التواصل مع د. بنجي. يرجى المحاولة مرة أخرى.",
+                            }));
+                          }
                         }}
                         variant="outline" 
                         className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
