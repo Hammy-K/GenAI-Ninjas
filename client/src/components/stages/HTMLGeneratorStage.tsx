@@ -38,13 +38,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+// Import the HTMLMessage type from the original file
+import { HTMLMessage } from "@/lib/openai";
+// Import the new unified thread functions
 import {
   generateHTML,
-  HTMLMessage,
   getClarifyingQuestion,
   getProjectSummary,
-  GenerateHTMLResponse,
-} from "@/lib/openai";
+  type GenerateHTMLResponse,
+} from "@/lib/thread-openai";
 import {
   saveProject,
   loadProject,
@@ -85,6 +87,9 @@ interface HTMLGeneratorState {
   projectSummary: string;
   flowStep: "input" | "clarify" | "confirm" | "generate" | "modify";
   showConfirmButtons: boolean;
+  
+  // Unified thread ID for maintaining context across interactions
+  threadId: string | null;
 }
 
 export function HTMLGeneratorStage({
@@ -145,6 +150,9 @@ export function HTMLGeneratorStage({
     projectSummary: "",
     flowStep: "input", // Start with input step
     showConfirmButtons: false,
+    
+    // Initialize the thread ID
+    threadId: null,
   };
 
   // Clear stale state if needed
@@ -212,8 +220,8 @@ export function HTMLGeneratorStage({
         isLoading: true
       }));
       
-      // Get the clarifying question from assistant
-      const clarificationResult = await getClarifyingQuestion(idea);
+      // Get the clarifying question from assistant, using the current threadId
+      const clarificationResult = await getClarifyingQuestion(idea, state.threadId);
 
       if (clarificationResult.error) {
         setState((prev) => ({
@@ -230,11 +238,15 @@ export function HTMLGeneratorStage({
         content: clarificationResult.question,
       };
 
+      // Update thread ID if this is the first interaction
+      const threadId = clarificationResult.threadId || state.threadId;
+      
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, clarifyingMessage],
         flowStep: "clarify",
         isLoading: false,
+        threadId, // Save the thread ID for future interactions
       }));
     } catch (error) {
       setState((prev) => ({
@@ -262,8 +274,8 @@ export function HTMLGeneratorStage({
         isLoading: true,
       }));
 
-      // Get project summary
-      const summaryResult = await getProjectSummary(idea, clarification);
+      // Get project summary, passing the current thread ID to maintain context
+      const summaryResult = await getProjectSummary(idea, clarification, state.threadId);
 
       if (summaryResult.error) {
         setState((prev) => ({
@@ -281,12 +293,16 @@ export function HTMLGeneratorStage({
         content: summaryResult.summary,
       };
 
+      // Make sure we update the thread ID if necessary
+      const threadId = summaryResult.threadId || state.threadId;
+
       setState((prev) => ({
         ...prev,
         projectSummary: summaryResult.summary,
         messages: [...prev.messages, summaryMessage],
         flowStep: "confirm",
         showConfirmButtons: true,
+        threadId, // Store the thread ID for future interactions
         isLoading: false,
       }));
     } catch (error) {

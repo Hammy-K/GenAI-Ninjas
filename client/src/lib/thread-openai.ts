@@ -27,16 +27,19 @@ type ThreadResponse = {
 export type GenerateHTMLResponse = {
   html: string;
   message?: HTMLMessage;
+  threadId?: string;
   error?: string;
 };
 
 type ClarificationResponse = {
   question: string;
+  threadId?: string;
   error?: string;
 };
 
 type SummaryResponse = {
   summary: string;
+  threadId?: string;
   error?: string;
 };
 
@@ -111,6 +114,7 @@ export async function getClarifyingQuestion(
     
     return {
       question: response.text,
+      threadId: response.threadId,
       error: response.error
     };
   } catch (error) {
@@ -157,6 +161,7 @@ export async function getProjectSummary(
     
     return {
       summary: response.text,
+      threadId: response.threadId,
       error: response.error
     };
   } catch (error) {
