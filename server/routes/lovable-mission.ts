@@ -8,10 +8,27 @@ import { db } from '../db';
 import { storage } from '../storage';
 import { logEvent } from '../services';
 import { eq } from 'drizzle-orm';
+import { Session } from 'express-session';
+import OpenAI from 'openai';
+import { v4 as uuidv4 } from 'uuid';
 import { 
   lovableMissionProgress, 
   lovableMissionChatHistory 
 } from '@shared/schema';
+
+// Lovable Mission Assistant ID
+const LOVABLE_MISSION_ASSISTANT_ID = "asst_L23zNIrbAjmHwouCGGqRr1fA";
+const LOVABLE_MISSION_SESSION_PREFIX = 'lovable_mission_';
+
+// Thread Map for session persistence (in-memory for now)
+const threadMap = new Map<string, string>();
+
+// Extended request type with session
+interface RequestWithLovableMissionSession extends Request {
+  session: Session & {
+    lovableMissionThreadId?: string;
+  };
+}
 
 // Define validation schemas
 const submitLinkSchema = z.object({
@@ -36,8 +53,21 @@ const addChatMessageSchema = z.object({
   content: z.string().min(1),
 });
 
+const assistantChatSchema = z.object({
+  firebaseUid: z.string().min(1),
+  message: z.string().min(1),
+  messageHistory: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string(),
+    })
+  ).optional(),
+  systemPrompt: z.string().optional(),
+  threadId: z.string().nullable().optional(),
+});
+
 // Register Lovable Mission routes
-export function registerLovableMissionRoutes(router: Router) {
+export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
   const lovableMissionRouter = Router();
 
   // Get user progress
@@ -253,6 +283,148 @@ export function registerLovableMissionRoutes(router: Router) {
     }
   });
   
+  // Assistant chat endpoint using OpenAI Assistant API 
+  if (openai) {
+    lovableMissionRouter.post('/assistant-chat', async (req: RequestWithLovableMissionSession, res: Response) => {
+      try {
+        const result = assistantChatSchema.safeParse(req.body);
+        
+        if (!result.success) {
+          return res.status(400).json({ 
+            error: 'Invalid request body',
+            details: result.error.errors,
+          });
+        }
+        
+        const { firebaseUid, message, messageHistory = [], systemPrompt } = result.data;
+        
+        // Get user ID from Firebase UID
+        const user = await storage.getUserByFirebaseUid(firebaseUid);
+        
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Get or create progress
+        let progress = await storage.getLovableMissionProgressByFirebaseUid(firebaseUid);
+        
+        if (!progress) {
+          // Create new progress
+          progress = await storage.createLovableMissionProgress({
+            userId: user.id,
+            firebaseUid,
+            currentStep: 1,
+          });
+        }
+        
+        // Get or create session ID for this user to maintain thread history
+        let sessionId = `${LOVABLE_MISSION_SESSION_PREFIX}${firebaseUid}`;
+        
+        // Get or create thread ID
+        let threadId = req.session.lovableMissionThreadId || threadMap.get(sessionId);
+        
+        if (!threadId) {
+          // Create a new thread
+          const thread = await openai.beta.threads.create();
+          threadId = thread.id;
+          
+          // Store the thread ID
+          req.session.lovableMissionThreadId = threadId;
+          threadMap.set(sessionId, threadId);
+          
+          console.log(`Created new thread for Lovable Mission: ${threadId}`);
+        }
+        
+        // Add the user message to the thread
+        await openai.beta.threads.messages.create(threadId, {
+          role: "user",
+          content: message
+        });
+        
+        // If there's a system prompt, add it before running the assistant
+        let runParams: any = {
+          assistant_id: LOVABLE_MISSION_ASSISTANT_ID
+        };
+        
+        if (systemPrompt) {
+          runParams.additional_instructions = systemPrompt;
+        }
+        
+        // Run the assistant on the thread
+        const run = await openai.beta.threads.runs.create(threadId, runParams);
+        
+        // Poll for completion
+        let runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+        
+        while (runStatus.status !== "completed" && runStatus.status !== "failed") {
+          // Wait before checking again
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+        }
+        
+        if (runStatus.status === "failed") {
+          throw new Error(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+        }
+        
+        // Get the latest messages
+        const messages = await openai.beta.threads.messages.list(threadId);
+        
+        // Filter for assistant messages only
+        const assistantMessages = messages.data.filter(msg => msg.role === "assistant");
+        
+        if (assistantMessages.length === 0) {
+          throw new Error("No assistant response received");
+        }
+        
+        // Get the content of the latest assistant message
+        const latestMessage = assistantMessages[0];
+        const messageContent = latestMessage.content[0];
+        
+        let assistantResponse = "";
+        if (messageContent.type === "text") {
+          assistantResponse = messageContent.text.value;
+        } else {
+          assistantResponse = "أعتذر، لم أتمكن من توليد استجابة مناسبة.";
+        }
+        
+        // Save the message to the database
+        const chatMessage = await storage.createLovableMissionChatMessage({
+          progressId: progress.id,
+          role: 'assistant',
+          content: assistantResponse,
+        });
+        
+        // Also save the user message for completeness
+        await storage.createLovableMissionChatMessage({
+          progressId: progress.id,
+          role: 'user',
+          content: message,
+        });
+        
+        // Log the event
+        logEvent('lovable_mission_assistant_chat', 'Assistant chat message', {
+          user_id: user.id,
+          firebase_uid: firebaseUid,
+          thread_id: threadId,
+          message_length: assistantResponse.length,
+        });
+        
+        return res.status(200).json({
+          message: 'Chat processed successfully',
+          response: assistantResponse,
+          threadId: threadId,
+        });
+        
+      } catch (error) {
+        console.error('Error in Lovable Mission assistant chat:', error);
+        return res.status(500).json({ 
+          error: 'Failed to process chat message',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
+  }
+
   // Mount Lovable Mission routes
   router.use('/lovable-mission', lovableMissionRouter);
 }
