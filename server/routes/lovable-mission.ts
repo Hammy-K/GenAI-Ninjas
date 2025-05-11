@@ -232,7 +232,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                 currentStep: 6, // Set to step 6 (submission step)
                 hasSubmitted: true,
                 projectLink,
-                // studentName is not in the schema yet, so store it in the logs only
+                studentName, // Now store student name in the database
               });
             }
           }
