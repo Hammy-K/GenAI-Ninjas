@@ -380,18 +380,13 @@ export function HTMLGeneratorStage({
       return;
     }
 
-    // Display what the user typed in the UI
-    const userMessage: HTMLMessage = {
-      role: "user",
-      content: prompt,
-    };
-
+    // No need to create a user message here - it was already added in handleSubmit
+    
     // Add context about the HTML for the API (not shown to user)
     const apiContent = `The user said: "${prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
 
     setState((prev) => ({
       ...prev,
-      messages: [...prev.messages, userMessage],
       prompt: "",
       isLoading: true,
       error: "",
