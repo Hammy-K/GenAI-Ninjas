@@ -244,15 +244,15 @@ export default function LovableMissionStage() {
         }
       }
       
-      // Use the regular chat API endpoint for simplicity
-      const apiEndpoint = "/api/ai/text";
+      // Use the dedicated lovable mission assistant API
+      const apiEndpoint = "/api/lovable-mission/assistant-chat";
       
-      // Create the appropriate system message
-      let systemPromptContent = 'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.';
+      // Create system prompt for the favorite app/game if needed
+      let systemPrompt = "";
       
       // Add the favorite app/game information if this is the first response after selection
       if (isFirstResponseAfterSelection) {
-        systemPromptContent += ` The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
+        systemPrompt = `The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
       }
       
       // Create message history for API
@@ -263,17 +263,24 @@ export default function LovableMissionStage() {
           content: msg.content,
         }));
       
-      // Call the standard ChatGPT API
+      console.log("Sending assistant chat request:", {
+        firebaseUid,
+        message: currentPrompt,
+        messageHistory: messageHistory.length,
+        hasSystemPrompt: !!systemPrompt
+      });
+      
+      // Call the OpenAI Assistant API through our backend
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: currentPrompt,
-          systemPrompt: systemPromptContent,
+          firebaseUid,
+          message: currentPrompt,
           messageHistory,
-          maxTokens: 800
+          systemPrompt: systemPrompt || undefined
         }),
       });
       
