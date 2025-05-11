@@ -40,6 +40,7 @@ interface LovableMissionState {
   isSubmitted: boolean;
   error: string;
   isProjectLinkValid: boolean;
+  isChatLocked: boolean; // Added for locking chat input until selection
 }
 
 // Initial data
@@ -118,6 +119,7 @@ export default function LovableMissionStage() {
     isSubmitted: false,
     error: "",
     isProjectLinkValid: false,
+    isChatLocked: true, // Lock the chat input initially
   });
 
   // Load progress on mount
@@ -519,63 +521,91 @@ export default function LovableMissionStage() {
                       </div>
                     )}
                     {message.role === "assistant" && message.content === welcomeMessage.content ? (
-                      <>
-                        {message.content}
-                        <div className="flex gap-2 mt-4">
-                          <Button 
-                            onClick={() => {
-                              const userMessage = "تطبيق";
-                              // Add as user message
-                              const newMessage: ChatMessage = {
-                                role: "user",
-                                content: userMessage,
-                              };
-                              setState(prev => ({
-                                ...prev,
-                                messages: [...prev.messages, newMessage],
-                                prompt: "",
-                              }));
-                              // Send the message
-                              setTimeout(() => {
-                                handleSubmit(new Event('submit') as unknown as React.FormEvent);
-                              }, 100);
-                            }}
-                            variant="outline" 
-                            className="border-primary text-primary hover:bg-primary/10"
-                          >
-                            تطبيق 📱
-                          </Button>
-                          <Button 
-                            onClick={() => {
-                              const userMessage = "لعبة";
-                              // Add as user message
-                              const newMessage: ChatMessage = {
-                                role: "user",
-                                content: userMessage,
-                              };
-                              setState(prev => ({
-                                ...prev,
-                                messages: [...prev.messages, newMessage],
-                                prompt: "",
-                              }));
-                              // Send the message
-                              setTimeout(() => {
-                                handleSubmit(new Event('submit') as unknown as React.FormEvent);
-                              }, 100);
-                            }}
-                            variant="outline"
-                            className="border-primary text-primary hover:bg-primary/10"
-                          >
-                            لعبة 🎮
-                          </Button>
-                        </div>
-                      </>
+                      message.content
                     ) : (
                       message.content
                     )}
                   </div>
                 </div>
               ))}
+              
+              {/* Option buttons shown outside chat bubbles, aligned to the right */}
+              {state.messages.length === 1 && state.isChatLocked && (
+                <div className="flex justify-end mb-4 mr-4 mt-4">
+                  <div className="flex flex-col gap-2 items-end">
+                    <p className="text-xs text-gray-500 mb-1">اختر نوع المشروع:</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => {
+                          const userMessage = "لعبة";
+                          // Add as user message with right alignment
+                          const newMessage: ChatMessage = {
+                            role: "user",
+                            content: userMessage,
+                            className: "justify-end" // Align to right
+                          };
+                          
+                          // Prepare AI response
+                          const loadingMessage: ChatMessage = {
+                            role: "assistant",
+                            content: "جاري التحميل...",
+                          };
+                          
+                          setState(prev => ({
+                            ...prev,
+                            messages: [...prev.messages, newMessage, loadingMessage],
+                            prompt: "",
+                            isChatLocked: false, // Unlock chat after selection
+                          }));
+                          
+                          // Send the message
+                          setTimeout(() => {
+                            handleSubmit(new Event('submit') as unknown as React.FormEvent);
+                          }, 100);
+                        }}
+                        variant="outline"
+                        className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
+                      >
+                        لعبة 🎮
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          const userMessage = "تطبيق";
+                          // Add as user message with right alignment
+                          const newMessage: ChatMessage = {
+                            role: "user",
+                            content: userMessage,
+                            className: "justify-end" // Align to right
+                          };
+                          
+                          // Prepare AI response
+                          const loadingMessage: ChatMessage = {
+                            role: "assistant",
+                            content: "جاري التحميل...",
+                          };
+                          
+                          setState(prev => ({
+                            ...prev,
+                            messages: [...prev.messages, newMessage, loadingMessage],
+                            prompt: "",
+                            isChatLocked: false, // Unlock chat after selection
+                          }));
+                          
+                          // Send the message
+                          setTimeout(() => {
+                            handleSubmit(new Event('submit') as unknown as React.FormEvent);
+                          }, 100);
+                        }}
+                        variant="outline" 
+                        className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
+                      >
+                        تطبيق 📱
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
             </div>
           </div>
@@ -592,9 +622,10 @@ export default function LovableMissionStage() {
                     error: "",
                   }))
                 }
-                placeholder="اكتب رسالتك هنا..."
+                placeholder={state.isChatLocked ? "الرجاء اختيار نوع المشروع أولاً..." : "اكتب رسالتك هنا..."}
                 className="flex-1 resize-none"
                 rows={1}
+                disabled={state.isChatLocked} // Disable when chat is locked
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -604,11 +635,14 @@ export default function LovableMissionStage() {
               />
               <Button
                 type="submit"
-                disabled={state.isLoading || !state.prompt.trim()}
+                disabled={state.isLoading || !state.prompt.trim() || state.isChatLocked}
               >
                 <Send className="h-4 w-4" />
               </Button>
             </form>
+            {state.isChatLocked && (
+              <p className="text-xs text-gray-500 mt-2 text-center">⬆️ اختر تطبيق أو لعبة للبدء في المحادثة</p>
+            )}
           </div>
         </div>
 
