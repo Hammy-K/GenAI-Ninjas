@@ -125,9 +125,10 @@ export function isFirebaseReady(): boolean {
 /**
  * Saves a project to PostgreSQL database using the backend API
  * @param html The HTML content to save
+ * @param screenshotUrl Optional URL to the project screenshot in Firebase Storage
  * @returns A unique project ID that can be used to retrieve the project later
  */
-export async function saveProject(html: string): Promise<string> {
+export async function saveProject(html: string, screenshotUrl?: string): Promise<string> {
   try {
     console.log("Starting to save project to database...");
     
@@ -154,7 +155,8 @@ export async function saveProject(html: string): Promise<string> {
         },
         body: JSON.stringify({ 
           html: processedHTML,
-          firebaseUid // Include Firebase UID if available
+          firebaseUid, // Include Firebase UID if available
+          screenshotUrl // Include screenshot URL if available
         })
       });
       

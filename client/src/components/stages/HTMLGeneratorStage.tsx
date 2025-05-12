@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useXpTracker } from "@/hooks/useXpTracker";
 import { useStageState } from "@/hooks/useStageState";
+import html2canvas from "html2canvas";
+import { uploadProjectScreenshot } from "@/lib/firebase-storage";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,

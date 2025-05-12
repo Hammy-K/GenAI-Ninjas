@@ -19,7 +19,8 @@ interface RequestWithFirebaseSession extends Request {
 
 // Validation schemas
 const saveProjectSchema = z.object({
-  html: z.string().min(1)
+  html: z.string().min(1),
+  screenshotUrl: z.string().optional()
 });
 
 const loadProjectSchema = z.object({
@@ -47,7 +48,7 @@ export function registerProjectRoutes(router: Router) {
         });
       }
       
-      const { html } = validation.data;
+      const { html, screenshotUrl } = validation.data;
       
       // Generate a unique project ID with the same format for URL compatibility
       const projectId = `project_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
@@ -59,7 +60,8 @@ export function registerProjectRoutes(router: Router) {
       await storage.createHtmlProject({
         projectId,
         html,
-        firebaseUid
+        firebaseUid,
+        screenshotUrl
       });
       
       // Log the success
