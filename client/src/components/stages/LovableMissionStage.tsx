@@ -555,7 +555,7 @@ export default function LovableMissionStage() {
                           <Copy className="h-4 w-4 text-gray-500" />
                         </div>
                         
-                        <div className="flex items-center mb-2 gap-2">
+                        <div className="flex flex-row-reverse items-center mb-2 gap-2">
                           <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
                             <img
                               src={drPengyAvatar}
