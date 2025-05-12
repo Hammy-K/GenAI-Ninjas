@@ -500,7 +500,7 @@ export default function LovableMissionStage() {
   };
 
   return (
-    <div className="flex flex-col h-full p-4">
+    <div className="flex flex-col h-screen p-4">
       {/* Student Info Modal - only shown if not completed */}
       {!state.isStudentInfoCompleted && (
         <StudentInfoModal onComplete={handleStudentInfoComplete} />
@@ -511,11 +511,11 @@ export default function LovableMissionStage() {
         isVisible={state.showCelebration}
         onComplete={handleCelebrationComplete}
       />
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Chat Panel - 75% width */}
-        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border overflow-hidden max-h-full">
+      <div className="flex gap-4 h-[calc(100vh-2rem)] overflow-hidden">
+        {/* Chat Panel - 75% width with fixed height */}
+        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border overflow-hidden">
           {/* Messages Container - fixed scrolling */}
-          <div className="flex-1 overflow-y-auto p-4 h-0 min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             <div className="space-y-4">
               {state.messages.map((message, index) => (
                 <div
@@ -738,13 +738,13 @@ export default function LovableMissionStage() {
         </div>
 
         {/* Checklist Panel - 25% width with fixed height */}
-        <div className="w-[25%] flex flex-col bg-card rounded-lg shadow-sm border overflow-hidden max-h-full">
+        <div className="w-[25%] flex flex-col bg-card rounded-lg shadow-sm border overflow-hidden">
           <div className="p-4 border-b flex-shrink-0">
             <h3 className="font-semibold text-center">قائمة المهام</h3>
           </div>
           
-          {/* Scrollable checklist items */}
-          <div className="flex-1 overflow-y-auto p-4 h-0 min-h-0">
+          {/* Fixed height checklist items (no scrolling) */}
+          <div className="flex-1 p-4 overflow-hidden">
             <div className="space-y-3">
               {state.checklistItems.map((item) => (
                 <div key={item.id} className="flex flex-col">
