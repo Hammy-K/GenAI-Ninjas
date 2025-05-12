@@ -230,6 +230,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
       const metadata = {
         projectLink,
         studentName: studentName || "Anonymous Student",
+        projectName,
         submittedAt: new Date().toISOString(),
         projectType,
         finalPrompt,
@@ -240,6 +241,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         await storage.createLovableSubmission({
           projectLink,
           studentName: studentName || "Anonymous Student",
+          projectName, // Include project name
           projectType: projectType || "app", // Default to "app" if not provided
           finalPrompt, // Include the final prompt
           firebaseUid: firebaseUid || undefined,
@@ -283,6 +285,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                     progressId: progress.id,
                     projectLink,
                     studentName: studentName || "Anonymous Student",
+                    projectName, // Include project name
                     projectType: projectType || "app", // Default to "app" if not provided
                     finalPrompt, // Include final prompt
                     firebaseUid,
