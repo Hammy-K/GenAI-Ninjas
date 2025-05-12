@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Player } from '@lottiefiles/react-lottie-player';
 
 // Use a static path to the animation file - this is more reliable
-const celebrationAnimationPath = '/animations/celebration.json';
+const celebrationAnimationPath = '/animations/celebration-full.json';
 
 interface CelebrationAnimationProps {
   isVisible: boolean;
@@ -40,7 +40,7 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
           ref={playerRef}
           autoplay={true}
           keepLastFrame={false}
-          src={celebrationAnimation}
+          src={celebrationAnimationPath}
           style={{ width: '120%', height: '120%', position: 'absolute', top: '-10%', left: '-10%' }}
           loop={false}
           speed={1.2}
