@@ -106,6 +106,36 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         });
       }
       
+      // Perform content moderation on user input
+      try {
+        const moderationResult = await moderateContent(message, openai);
+        
+        if (moderationResult.flagged) {
+          console.log("Content moderation flagged message:", 
+            message.substring(0, 20) + "...", 
+            "Issues:", moderationResult.categories
+          );
+          
+          // Log the moderation event
+          logEvent('content_moderation_flagged', 'Lovable mission chat content flagged', {
+            issues: moderationResult.categories,
+          });
+          
+          return res.status(400).json({
+            error: "محتوى غير مناسب",
+            moderationResult,
+            message: {
+              role: "assistant",
+              content: "عذراً، لا يمكنني معالجة هذا المحتوى. الرجاء مراعاة أن المحادثة مخصصة للمحتوى التعليمي المناسب فقط."
+            }
+          });
+        }
+      } catch (modError) {
+        // Log moderation error but continue (fail open for UX reasons)
+        console.error("Moderation error:", modError);
+        logError('content_moderation', modError instanceof Error ? modError.message : 'Unknown error');
+      }
+      
       // Get or create session ID for this user to maintain thread history
       let sessionId = req.session.assistantSessionId;
       if (!sessionId) {
