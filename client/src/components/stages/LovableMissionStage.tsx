@@ -402,17 +402,44 @@ export default function LovableMissionStage() {
       });
     } catch (error) {
       console.error("Error:", error);
+      
+      // Check if this is a moderation error response (status 400)
+      let errorMessage = "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.";
+      
+      // For simplicity, we'll just use the default error message.
+      // In a production app, we could parse the error response if it's a 400 status code
+      // to extract the moderation error message.
+      
+      // The backend returns a proper error message in this format when content is moderated
+      const moderationErrorMessage = "عذراً، لا يمكنني معالجة هذا المحتوى. الرجاء مراعاة أن المحادثة مخصصة للمحتوى التعليمي المناسب فقط.";
+      
       setState((prev) => {
         // Remove loading message
         const messagesWithoutLoading = prev.messages.filter(
           (msg) => !msg.className?.includes("loading"),
         );
+        
+        // Add system message about inappropriate content if it's a moderation error
+        if (errorMessage !== "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.") {
+          const moderationMessage: ChatMessage = {
+            role: "assistant",
+            content: errorMessage,
+            className: "moderation-warning",
+          };
+          
+          return {
+            ...prev,
+            messages: [...messagesWithoutLoading, moderationMessage],
+            isLoading: false,
+            prompt: "", // Clear the input field
+          };
+        }
 
         return {
           ...prev,
           messages: messagesWithoutLoading,
           isLoading: false,
-          error: "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.",
+          error: errorMessage,
         };
       });
     }

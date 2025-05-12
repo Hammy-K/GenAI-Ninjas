@@ -10,6 +10,7 @@ import { logEvent, logError } from '../services';
 import { logAssistantInteraction } from '../services/assistant-logger';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage';
+import { moderateContent } from '../moderation';
 
 // Session tracking (in a production app, use a proper session store)
 const HTML_GENERATOR_SESSION_PREFIX = 'html_generator_';
