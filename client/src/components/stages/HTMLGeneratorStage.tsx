@@ -726,6 +726,9 @@ export function HTMLGeneratorStage({
     }
   };
 
+  // Reference to the preview iframe
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
+
   // Save the current project to Firebase
   const saveAndShareProject = async () => {
     // Don't proceed if no HTML content or already saving
@@ -740,13 +743,51 @@ export function HTMLGeneratorStage({
     setState((prev) => ({ ...prev, isSaving: true, error: "" }));
 
     try {
+      // Capture screenshot of the preview if in preview mode
+      let screenshotUrl: string | undefined;
+      
+      if (state.viewMode === "preview") {
+        try {
+          // Ensure we're in preview mode when taking the screenshot
+          const previewContainer = document.querySelector('.w-full.h-full.overflow-hidden');
+          
+          if (previewContainer) {
+            console.log("Capturing screenshot of project preview...");
+            const canvas = await html2canvas(previewContainer as HTMLElement, {
+              allowTaint: true,
+              useCORS: true,
+              logging: false,
+              scale: 1
+            });
+            
+            // Convert canvas to blob
+            const blob = await new Promise<Blob>((resolve) => {
+              canvas.toBlob((blob) => {
+                resolve(blob!);
+              }, 'image/png');
+            });
+            
+            // We'll use a temporary ID first, then update it with the actual project ID
+            const tempId = `temp_${Date.now()}`;
+            
+            // Upload to Firebase Storage
+            console.log("Uploading screenshot to Firebase Storage...");
+            screenshotUrl = await uploadProjectScreenshot(blob, tempId);
+            console.log("Screenshot uploaded successfully:", screenshotUrl);
+          }
+        } catch (screenshotError) {
+          console.error("Error capturing screenshot:", screenshotError);
+          // Continue without screenshot if there's an error
+        }
+      }
+      
       // Save the project to Firebase with timeout protection
       console.log("Calling saveProject function...");
       let projectId: string;
 
       try {
         // Add a safety timeout to prevent indefinite hanging
-        const savePromise = saveProject(state.currentHTML);
+        const savePromise = saveProject(state.currentHTML, screenshotUrl);
 
         // Extend timeout to 30 seconds for Firebase operations in Replit
         const timeoutPromise = new Promise<string>((resolve) => {
@@ -816,6 +857,40 @@ export function HTMLGeneratorStage({
       // Create a shareable URL using the current hostname
       const shareUrl = `${window.location.origin}/project/${projectId}`;
       console.log("Share URL:", shareUrl);
+      
+      // If we have a screenshot with a temporary ID, update it with the real project ID
+      if (screenshotUrl && screenshotUrl.includes('temp_')) {
+        try {
+          // Get the blob from the iframe again for a fresh capture with the final ID
+          if (state.viewMode === "preview" && previewIframeRef.current) {
+            const previewContainer = document.querySelector('.w-full.h-full.overflow-hidden');
+            
+            if (previewContainer) {
+              const canvas = await html2canvas(previewContainer as HTMLElement, {
+                allowTaint: true,
+                useCORS: true,
+                logging: false,
+                scale: 1
+              });
+              
+              // Convert canvas to blob
+              const blob = await new Promise<Blob>((resolve) => {
+                canvas.toBlob((blob) => {
+                  resolve(blob!);
+                }, 'image/png');
+              });
+              
+              // Upload with the final project ID
+              console.log("Re-uploading screenshot with final project ID...");
+              screenshotUrl = await uploadProjectScreenshot(blob, projectId);
+              console.log("Screenshot updated with final project ID:", screenshotUrl);
+            }
+          }
+        } catch (error) {
+          console.error("Error updating screenshot with final project ID:", error);
+          // Continue with temporary screenshot URL
+        }
+      }
 
       // Update state with project ID and share URL
       setState((prev) => ({
@@ -1134,6 +1209,7 @@ export function HTMLGeneratorStage({
                 ) : state.viewMode === "preview" ? (
                   <div className="w-full h-full overflow-hidden">
                     <iframe
+                      ref={previewIframeRef}
                       title="HTML Preview"
                       srcDoc={state.currentHTML}
                       className="w-full h-full border-0"
