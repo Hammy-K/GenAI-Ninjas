@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Send, Check, AlertCircle, Copy, ExternalLink } from "lucide-react";
 import drPengyAvatar from "@assets/Pengy_chat.png";
 import CelebrationAnimation from "@/components/animations/CelebrationAnimation";
+import StudentInfoModal from "@/components/modals/StudentInfoModal";
 
 // Define types for messages and state
 type MessageRole = "user" | "assistant" | "system";
@@ -44,6 +45,7 @@ interface LovableMissionState {
   isChatLocked: boolean; // Added for locking chat input until selection
   projectType: string; // 'app' or 'game'
   showCelebration: boolean; // For controlling the celebration animation
+  isStudentInfoCompleted: boolean; // For tracking student info modal completion
 }
 
 // Initial data
@@ -118,6 +120,12 @@ export default function LovableMissionStage() {
       showCelebration: false
     }));
   };
+  // Check if student info is already in localStorage
+  const hasStudentInfo = Boolean(
+    localStorage.getItem('lovable_student_name') && 
+    localStorage.getItem('lovable_noon_code')
+  );
+
   const [state, setState] = useState<LovableMissionState>({
     messages: [welcomeMessage],
     prompt: "",
@@ -126,14 +134,24 @@ export default function LovableMissionStage() {
     checklistItems: initialChecklistItems,
     finalPrompt: "",
     projectLink: "",
-    studentName: "",
+    studentName: localStorage.getItem('lovable_student_name') || "",
     isSubmitted: false,
     error: "",
     isProjectLinkValid: false,
     isChatLocked: true, // Lock the chat input initially
     projectType: "app", // Default to 'app' - will be updated based on conversation
     showCelebration: false, // Don't show celebration initially
+    isStudentInfoCompleted: hasStudentInfo, // Track if student info is completed
   });
+  
+  // Handle student info modal completion
+  const handleStudentInfoComplete = () => {
+    setState(prev => ({
+      ...prev,
+      isStudentInfoCompleted: true,
+      studentName: localStorage.getItem('lovable_student_name') || "",
+    }));
+  };
 
   // Load progress on mount
   useEffect(() => {
@@ -553,6 +571,11 @@ export default function LovableMissionStage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Student Info Modal - only shown if not completed */}
+      {!state.isStudentInfoCompleted && (
+        <StudentInfoModal onComplete={handleStudentInfoComplete} />
+      )}
+      
       {/* Celebration Animation */}
       <CelebrationAnimation 
         isVisible={state.showCelebration} 
