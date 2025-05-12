@@ -17,6 +17,7 @@ import { ar } from "date-fns/locale";
 interface LovableSubmission {
   id: number;
   studentName: string;
+  studentId?: string; // Student ID (noon code)
   projectName?: string; // May not exist in older submissions
   projectLink: string;
   projectType: string;
@@ -65,7 +66,9 @@ export default function LovableSubmissionsPage() {
 
     const query = searchQuery.toLowerCase();
     const filtered = submissions.filter((submission) =>
-      submission.studentName.toLowerCase().includes(query),
+      // Search by student name or student ID (noon code)
+      submission.studentName.toLowerCase().includes(query) || 
+      (submission.studentId && submission.studentId.toLowerCase().includes(query))
     );
 
     setFilteredSubmissions(filtered);
@@ -90,7 +93,7 @@ export default function LovableSubmissionsPage() {
         <div className="relative max-w-md mx-auto mb-4">
           <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="البحث باسم الطالب..."
+            placeholder="البحث باسم الطالب أو رقم الكود..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pr-8 bg-white"

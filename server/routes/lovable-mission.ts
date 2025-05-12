@@ -92,6 +92,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         .select({
           id: lovableSubmissions.id,
           studentName: lovableSubmissions.studentName,
+          studentId: lovableSubmissions.studentId, // Add student ID (noon code) to the response
           projectName: lovableSubmissions.projectName,
           projectLink: lovableSubmissions.projectLink,
           projectType: lovableSubmissions.projectType,

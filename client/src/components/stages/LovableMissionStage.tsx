@@ -493,7 +493,8 @@ export default function LovableMissionStage() {
           projectLink: state.projectLink,
           studentName,
           projectName: state.projectName,
-          noonCode,
+          studentId: noonCode, // Use studentId field name to match backend schema
+          noonCode, // Keep for backward compatibility
           projectType: state.projectType,
           finalPrompt,
           firebaseUid, // Pass this even if using anonymous mode
