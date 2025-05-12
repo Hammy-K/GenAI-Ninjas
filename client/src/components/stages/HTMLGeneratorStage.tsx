@@ -1,10 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { useXpTracker } from "@/hooks/useXpTracker";
-import { useStageState } from "@/hooks/useStageState";
-import html2canvas from "html2canvas";
-import { uploadProjectScreenshot } from "@/lib/firebase-storage";
-import { useToast } from "@/hooks/use-toast";
+import penguinAvatar from "@/assets/Group 26087843.png";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,26 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Code,
-  Loader2,
-  Send,
-  Wand2,
-  X,
-  Share2,
-  Save,
-  Plus,
-  AlertTriangle,
-} from "lucide-react";
 import { Confetti } from "@/components/ui/confetti";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -40,24 +17,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-// Import the HTMLMessage type from the original file
-import { HTMLMessage } from "@/lib/openai";
-// Import the new unified thread functions
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useStageState } from "@/hooks/useStageState";
+import { useXpTracker } from "@/hooks/useXpTracker";
 import {
-  generateHTML,
-  getClarifyingQuestion,
-  getProjectSummary,
-  type GenerateHTMLResponse,
-} from "@/lib/thread-openai";
-import {
-  saveProject,
   loadProject,
   logPromptToFirestore,
+  saveProject,
   trackStageProgress,
 } from "@/lib/firebase";
-import { useLocation } from "wouter";
-import penguinAvatar from "@/assets/Group 26087843.png";
 import { validateInput } from "@/lib/inputFilter";
+import {
+  generateHTML,
+  GenerateHTMLResponse,
+  getClarifyingQuestion,
+  getFullProjectSummary,
+  getProjectSummary,
+  HTMLMessage,
+} from "@/lib/openai";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Code,
+  Loader2,
+  Plus,
+  Save,
+  Send,
+  Share2,
+  Wand2,
+  X,
+} from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "wouter";
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
@@ -87,11 +84,17 @@ interface HTMLGeneratorState {
   originalIdea: string;
   clarificationAnswer: string;
   projectSummary: string;
-  flowStep: "input" | "clarify" | "confirm" | "generate" | "modify";
+  flowStep:
+    | "input"
+    | "clarify"
+    | "confirm"
+    | "generate"
+    | "modify"
+    | "satisfied";
   showConfirmButtons: boolean;
-  
-  // Unified thread ID for maintaining context across interactions
-  threadId: string | null;
+
+  isSatisfied: boolean;
+  showSatisfactionButtons: boolean;
 }
 
 export function HTMLGeneratorStage({
@@ -152,9 +155,9 @@ export function HTMLGeneratorStage({
     projectSummary: "",
     flowStep: "input", // Start with input step
     showConfirmButtons: false,
-    
-    // Initialize the thread ID
-    threadId: null,
+
+    isSatisfied: false,
+    showSatisfactionButtons: false,
   };
 
   // Clear stale state if needed
@@ -212,44 +215,56 @@ export function HTMLGeneratorStage({
     return () => clearTimeout(timer);
   }, [state.messages]);
 
-  // STEP 3-4: Handle clarification step (Process idea & get clarifying question)
+  // Helper function to handle clarification step
   const handleClarificationStep = async (idea: string) => {
+    console.log(
+      "########################################## Handle Clarification Step ##################################################",
+    );
     try {
-      // Step 3: Process the idea - show loading state
-      setState((prev) => ({
-        ...prev,
-        originalIdea: idea,
-        isLoading: true
-      }));
-      
-      // Get the clarifying question from assistant, using the current threadId
-      const clarificationResult = await getClarifyingQuestion(idea, state.threadId);
+      // When in the modify state, we're starting a new generation flow
+      // but we want to preserve the history of messages to maintain context
+
+      // Filter out any previous loading messages for a cleaner history
+
+      // const filteredMessages = state.messages.filter(
+      //   (msg) =>
+      //     msg.className !== "loading-animation" &&
+      //     !msg.content.includes("<!DOCTYPE html") &&
+      //     !msg.content.includes("<html>")
+      // );
+
+      // Get the clarifying question but include full message history for context
+      const clarificationResult = await getClarifyingQuestion(idea);
 
       if (clarificationResult.error) {
         setState((prev) => ({
           ...prev,
-          error: clarificationResult.error || "Failed to get clarifying question",
+          error:
+            clarificationResult.error || "Failed to get clarifying question",
           isLoading: false,
         }));
         return;
       }
 
-      // Step 4: Add the clarifying question to chat
+      // Add the clarifying question to chat
       const clarifyingMessage: HTMLMessage = {
         role: "assistant",
         content: clarificationResult.question,
       };
 
-      // Update thread ID if this is the first interaction
-      const threadId = clarificationResult.threadId || state.threadId;
-      
+      console.log("State Messages before: ", state.messages);
+
       setState((prev) => ({
         ...prev,
+        originalIdea: idea,
+        // Keep existing messages for thread context, just add the new one
+        // messages: [...filteredMessages, clarifyingMessage],
         messages: [...prev.messages, clarifyingMessage],
         flowStep: "clarify",
         isLoading: false,
-        threadId, // Save the thread ID for future interactions
       }));
+
+      console.log("State Messages after: ", state.messages);
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -260,24 +275,34 @@ export function HTMLGeneratorStage({
         isLoading: false,
       }));
     }
+
+    console.log(
+      "########################################## Handle Clarification Step ##################################################",
+    );
   };
 
-  // STEP 5-6: Handle confirmation step (Process clarification & get summary)
+  // Helper function to handle confirmation step
   const handleConfirmationStep = async (
     idea: string,
     clarification: string,
   ) => {
+    console.log(
+      "########################################## Handle Confirmation Step ##################################################",
+    );
+
     try {
-      // Step 5: Record the clarification and show loading state
-      // Note: The userMessage for clarification is already added in handleSubmit
+      // TODO add assistant message to indicate that we're getting the project summary
+      const gettingSummaryMessage: HTMLMessage = {
+        role: "assistant",
+        content: "لحظة بس، راح ألخص لك الفكرة بشكل واضح! 🎯",
+      };
+
       setState((prev) => ({
         ...prev,
-        clarificationAnswer: clarification,
-        isLoading: true,
+        messages: [...prev.messages, gettingSummaryMessage],
       }));
 
-      // Get project summary, passing the current thread ID to maintain context
-      const summaryResult = await getProjectSummary(idea, clarification, state.threadId);
+      const summaryResult = await getFullProjectSummary(idea, clarification);
 
       if (summaryResult.error) {
         setState((prev) => ({
@@ -288,23 +313,18 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Step 6: Add the summary to chat followed by confirmation question
-      // The API now returns the summary followed by "تبي نبدأ؟"
       const summaryMessage: HTMLMessage = {
         role: "assistant",
         content: summaryResult.summary,
       };
 
-      // Make sure we update the thread ID if necessary
-      const threadId = summaryResult.threadId || state.threadId;
-
       setState((prev) => ({
         ...prev,
         projectSummary: summaryResult.summary,
+        clarificationAnswer: clarification,
         messages: [...prev.messages, summaryMessage],
         flowStep: "confirm",
         showConfirmButtons: true,
-        threadId, // Store the thread ID for future interactions
         isLoading: false,
       }));
     } catch (error) {
@@ -317,23 +337,29 @@ export function HTMLGeneratorStage({
         isLoading: false,
       }));
     }
+
+    console.log(
+      "########################################## Handle Confirmation Step ##################################################",
+    );
   };
 
-  // STEP 8-9: Handle HTML generation (Generate HTML & show success message)
+  // Helper function to handle HTML generation
   const handleGenerateHtml = async (idea: string, clarification: string) => {
+    console.log(
+      "########################################## Handle Generate HTML ##################################################",
+    );
+
     // Create a combined prompt that includes both the original idea and clarification
     const enhancedPrompt = `${idea}\nAdditional details: ${clarification}`;
 
     try {
-      // Step 8: Generate HTML
       // We don't need to add a new user message here because:
       // 1. We already added the originalIdea in the clarify step
       // 2. We already added the clarificationAnswer in the confirmation step
       // 3. The loading message "جاري الإنشاء..." was added in handleConfirmation
 
       // Generate HTML with the existing message history (already contains all context)
-      // Pass the thread ID to maintain conversation context
-      const htmlResponse = await generateHTML(state.messages, state.threadId);
+      const htmlResponse = await generateHTML(state.messages);
 
       if (htmlResponse.error) {
         setState((prev) => ({
@@ -344,28 +370,35 @@ export function HTMLGeneratorStage({
         return;
       }
 
-      // Save the thread ID for future interactions
-      const threadId = htmlResponse.threadId || state.threadId;
-
       // Track successful generation
       trackStageProgress("html_generator", "html_generated", {
         html_length: htmlResponse.html.length,
       });
 
-      // Step 9: Show success message with "ايش رأيك؟" question
-      const aiResponse: HTMLMessage = {
+      // Use the response message from the API
+      const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
+        content:
+          "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟\n\nهل أنت راضٍ عن النتيجة؟",
       };
 
-      // Update state with the AI response, HTML, and thread ID
+      // Update state with the AI response and HTML
+      // setState((prev) => ({
+      //   ...prev,
+      //   messages: [...prev.messages, aiResponse],
+      //   currentHTML: htmlResponse.html,
+      //   isLoading: false,
+      //   flowStep: "modify", // Move to modify step
+      // }));
+
       setState((prev) => ({
         ...prev,
+        flowStep: "satisfied",
+        showSatisfactionButtons: true,
+        isSatisfied: false,
         messages: [...prev.messages, aiResponse],
         currentHTML: htmlResponse.html,
         isLoading: false,
-        flowStep: "modify", // Move to modify step
-        threadId, // Store the thread ID for future interactions
       }));
 
       // Award XP for first response
@@ -391,10 +424,17 @@ export function HTMLGeneratorStage({
         isLoading: false,
       }));
     }
+
+    console.log(
+      "########################################## Handle Submit ##################################################",
+    );
   };
 
   // Helper function to handle changes to existing HTML
   const handleModifyHtml = async (prompt: string) => {
+    console.log(
+      "########################################## Handle Modify HTML ##################################################",
+    );
     // Check that we have HTML to modify
     if (!state.currentHTML) {
       console.log("No HTML to modify, treating this as a new project request");
@@ -403,13 +443,18 @@ export function HTMLGeneratorStage({
       return;
     }
 
-    // No need to create a user message here - it was already added in handleSubmit
-    
+    // Display what the user typed in the UI
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: prompt,
+    };
+
     // Add context about the HTML for the API (not shown to user)
     const apiContent = `The user said: "${prompt}" about the code: \n\`\`\`html\n${state.currentHTML}\n\`\`\``;
 
     setState((prev) => ({
       ...prev,
+      messages: [...prev.messages, userMessage],
       prompt: "",
       isLoading: true,
       error: "",
@@ -417,46 +462,39 @@ export function HTMLGeneratorStage({
 
     try {
       // Create a modified version of the messages array with the HTML context
-      const apiMessages = [...state.messages];
-      apiMessages.push({
-        role: "user",
-        content: apiContent,
-      });
+      const summaryResult = await getFullProjectSummary(
+        state.originalIdea,
+        prompt,
+      );
 
-      // Generate HTML with the context, passing thread ID
-      const htmlResponse = await generateHTML(apiMessages, state.threadId);
-
-      if (htmlResponse.error) {
+      if (summaryResult.error) {
         setState((prev) => ({
           ...prev,
-          error: htmlResponse.error || "Failed to update HTML",
+          error: summaryResult.error || "Failed to get project summary",
           isLoading: false,
         }));
         return;
       }
-      
-      // Save the thread ID for future interactions
-      const threadId = htmlResponse.threadId || state.threadId;
 
-      // Track the modification
-      trackStageProgress("html_generator", "html_modified", {
-        html_length: htmlResponse.html.length,
-      });
-
-      // Use the response message
-      const aiResponse: HTMLMessage = htmlResponse.message || {
+      // Add the summary to chat with confirmation buttons
+      const summaryMessage: HTMLMessage = {
         role: "assistant",
-        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
+        content: "تبي نبدأ؟",
       };
 
-      // Update state with the AI response, new HTML, and thread ID
+      console.log("State Messages before: ", state.messages);
+
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, aiResponse],
-        currentHTML: htmlResponse.html,
+        projectSummary: summaryResult.summary,
+        clarificationAnswer: prompt,
+        messages: [...prev.messages, summaryMessage],
+        flowStep: "confirm",
+        showConfirmButtons: true,
         isLoading: false,
-        threadId, // Store the thread ID for future interactions
       }));
+
+      console.log("State Messages after: ", state.messages);
     } catch (error) {
       setState((prev) => ({
         ...prev,
@@ -464,13 +502,29 @@ export function HTMLGeneratorStage({
         isLoading: false,
       }));
     }
+
+    console.log(
+      "########################################## Handle Modify HTML ##################################################",
+    );
   };
 
-  // STEP 7-8: Handle user response to confirmation (Agree or Disagree flow)
+  // Handle user response to confirmation step
   const handleConfirmation = (confirmed: boolean) => {
+    console.log(
+      "########################################## Handle Confirmation ##################################################",
+    );
+
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: confirmed ? "يلا!" : "لا لسا!",
+    };
+
+    console.log("State Messages before: ", state.messages);
+
     if (confirmed) {
-      // STEP 8: User clicked "Agree" - proceed with HTML generation
+      // User clicked "Yalla!" - proceed with HTML generation
       // We add a special class name to help identify the loading message later
+
       const loadingMessage: HTMLMessage = {
         role: "assistant",
         content: "جاري الإنشاء",
@@ -482,56 +536,85 @@ export function HTMLGeneratorStage({
         isLoading: true,
         showConfirmButtons: false,
         flowStep: "generate",
-        messages: [...prev.messages, loadingMessage],
+        messages: [...prev.messages, userMessage, loadingMessage],
       }));
 
       // Generate HTML with combined context
       handleGenerateHtml(state.originalIdea, state.clarificationAnswer);
     } else {
-      // STEP 7: User clicked "Disagree" - ask what they want to change
-      // First, show a typing indicator
-      const typingMessage: HTMLMessage = {
+      // User clicked "No" - ask what they want to change
+      const changeMessage: HTMLMessage = {
         role: "assistant",
-        content: "يكتب...",
-        className: "typing-animation",
+        content: "اوكي، وش تبي نغير؟",
       };
 
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, typingMessage],
+        messages: [...prev.messages, changeMessage],
         showConfirmButtons: false,
-        isLoading: true,
+        flowStep: "input", // Back to input for changes
+      }));
+    }
+
+    console.log(
+      "########################################## Handle Submit ##################################################",
+    );
+  };
+
+  const handleSatisfaction = (satisfied: boolean) => {
+    if (satisfied) {
+      setState((prev) => ({
+        ...prev,
+        messages: [
+          ...prev.messages,
+          {
+            role: "user",
+            content: "نعم، أريد المتابعة",
+          },
+        ],
+        isSatisfied: true,
+        showSatisfactionButtons: false,
+        flowStep: "satisfied",
       }));
 
-      // Simulate typing delay and then replace with the actual message
-      setTimeout(() => {
-        const changeMessage: HTMLMessage = {
-          role: "assistant",
-          content: "اوكي، وش تبي نغير؟",
-        };
-
-        setState((prev) => ({
-          ...prev,
-          // Replace the typing indicator with the actual message
-          messages: prev.messages
-            .filter((msg) => msg.className !== "typing-animation")
-            .concat([changeMessage]),
-          isLoading: false,
-          // Restart the clarification flow but preserve context
-          flowStep: "clarify",
-        }));
-      }, 1200); // Delay for realistic typing effect
+      // Show save options
+      saveAndShareProject();
+    } else {
+      setState((prev) => ({
+        ...prev,
+        messages: [
+          ...prev.messages,
+          {
+            role: "user",
+            content: "لا، أريد التعديل",
+          },
+          {
+            role: "assistant",
+            content: "اوكي، وش تبي نغير؟",
+          },
+        ],
+        isSatisfied: false,
+        showSatisfactionButtons: false,
+        flowStep: "modify",
+      }));
     }
   };
 
-  // STEP 1-2: Handle prompt submission (Welcome message & student input)
+  // Handle prompt submission with clarify & confirm flow
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log(
+      "########################################## Handle Submit ##################################################",
+    );
+
+    console.log("### Flow step: ", state.flowStep, " ###");
 
     if (state.isLoading) return;
 
     // Validate input
     const validation = validateInput(state.prompt);
+
     if (!validation.isValid) {
       const validationWarning: HTMLMessage = {
         role: "assistant",
@@ -546,12 +629,14 @@ export function HTMLGeneratorStage({
       }));
       return;
     }
-
-    // Step 2: Add user message to chat
+    console.log("state.prompt: ", state.prompt);
+    // Add user message to chat
     const userMessage: HTMLMessage = {
       role: "user",
       content: state.prompt,
     };
+
+    console.log("### Messages before: ", state.messages);
 
     setState((prev) => ({
       ...prev,
@@ -560,6 +645,8 @@ export function HTMLGeneratorStage({
       isLoading: true,
       error: "",
     }));
+
+    console.log("### Messages after: ", state.messages);
 
     try {
       // Award XP for the first prompt if not already awarded
@@ -627,6 +714,21 @@ export function HTMLGeneratorStage({
           }
           break;
 
+        case "satisfied":
+          // Clear input and show message about saving
+          setState((prev) => ({
+            ...prev,
+            prompt: "",
+            messages: [
+              ...prev.messages,
+              {
+                role: "assistant",
+                content: "احفظ مشروعك أولاً قبل المتابعة",
+              },
+            ],
+          }));
+          break;
+
         default:
           // Fallback for any other state
           setState((prev) => ({
@@ -642,10 +744,17 @@ export function HTMLGeneratorStage({
         isLoading: false,
       }));
     }
+
+    console.log(
+      "########################################## Handle Submit ##################################################",
+    );
   };
 
   // Award badge when user continues to next stage
   const handleContinue = () => {
+    console.log(
+      "########################################## Handle Continue ##################################################",
+    );
     // Only proceed if the user has satisfied all requirements (saved project and copied link)
     if (state.projectId && state.hasSharedLink) {
       // Award AI-Coder badge if not already awarded
@@ -683,6 +792,10 @@ export function HTMLGeneratorStage({
         has_shared_link: state.hasSharedLink,
       });
     }
+
+    console.log(
+      "########################################## Handle Continue End ##################################################",
+    );
   };
 
   // Check if project ID is in URL (for shared projects)
@@ -726,9 +839,6 @@ export function HTMLGeneratorStage({
     }
   };
 
-  // Reference to the preview iframe
-  const previewIframeRef = useRef<HTMLIFrameElement>(null);
-
   // Save the current project to Firebase
   const saveAndShareProject = async () => {
     // Don't proceed if no HTML content or already saving
@@ -743,51 +853,13 @@ export function HTMLGeneratorStage({
     setState((prev) => ({ ...prev, isSaving: true, error: "" }));
 
     try {
-      // Capture screenshot of the preview if in preview mode
-      let screenshotUrl: string | undefined;
-      
-      if (state.viewMode === "preview") {
-        try {
-          // Ensure we're in preview mode when taking the screenshot
-          const previewContainer = document.querySelector('.w-full.h-full.overflow-hidden');
-          
-          if (previewContainer) {
-            console.log("Capturing screenshot of project preview...");
-            const canvas = await html2canvas(previewContainer as HTMLElement, {
-              allowTaint: true,
-              useCORS: true,
-              logging: false,
-              scale: 1
-            });
-            
-            // Convert canvas to blob
-            const blob = await new Promise<Blob>((resolve) => {
-              canvas.toBlob((blob) => {
-                resolve(blob!);
-              }, 'image/png');
-            });
-            
-            // We'll use a temporary ID first, then update it with the actual project ID
-            const tempId = `temp_${Date.now()}`;
-            
-            // Upload to Firebase Storage
-            console.log("Uploading screenshot to Firebase Storage...");
-            screenshotUrl = await uploadProjectScreenshot(blob, tempId);
-            console.log("Screenshot uploaded successfully:", screenshotUrl);
-          }
-        } catch (screenshotError) {
-          console.error("Error capturing screenshot:", screenshotError);
-          // Continue without screenshot if there's an error
-        }
-      }
-      
       // Save the project to Firebase with timeout protection
       console.log("Calling saveProject function...");
       let projectId: string;
 
       try {
         // Add a safety timeout to prevent indefinite hanging
-        const savePromise = saveProject(state.currentHTML, screenshotUrl);
+        const savePromise = saveProject(state.currentHTML);
 
         // Extend timeout to 30 seconds for Firebase operations in Replit
         const timeoutPromise = new Promise<string>((resolve) => {
@@ -857,40 +929,6 @@ export function HTMLGeneratorStage({
       // Create a shareable URL using the current hostname
       const shareUrl = `${window.location.origin}/project/${projectId}`;
       console.log("Share URL:", shareUrl);
-      
-      // If we have a screenshot with a temporary ID, update it with the real project ID
-      if (screenshotUrl && screenshotUrl.includes('temp_')) {
-        try {
-          // Get the blob from the iframe again for a fresh capture with the final ID
-          if (state.viewMode === "preview" && previewIframeRef.current) {
-            const previewContainer = document.querySelector('.w-full.h-full.overflow-hidden');
-            
-            if (previewContainer) {
-              const canvas = await html2canvas(previewContainer as HTMLElement, {
-                allowTaint: true,
-                useCORS: true,
-                logging: false,
-                scale: 1
-              });
-              
-              // Convert canvas to blob
-              const blob = await new Promise<Blob>((resolve) => {
-                canvas.toBlob((blob) => {
-                  resolve(blob!);
-                }, 'image/png');
-              });
-              
-              // Upload with the final project ID
-              console.log("Re-uploading screenshot with final project ID...");
-              screenshotUrl = await uploadProjectScreenshot(blob, projectId);
-              console.log("Screenshot updated with final project ID:", screenshotUrl);
-            }
-          }
-        } catch (error) {
-          console.error("Error updating screenshot with final project ID:", error);
-          // Continue with temporary screenshot URL
-        }
-      }
 
       // Update state with project ID and share URL
       setState((prev) => ({
@@ -986,21 +1024,17 @@ export function HTMLGeneratorStage({
 
   // Start a new project
   const startNewProject = () => {
-    // Reset state to initial state, including the thread ID
-    // This creates a fresh conversation thread for the new project
+    // Reset state to initial state while preserving any existing session ID
+    // This ensures thread continuity with the OpenAI Assistant API
     setState((prev) => ({
       ...prev,
       currentHTML: "",
       messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
       projectId: null,
       shareUrl: null,
-      threadId: null, // Clear the thread ID to start a completely new thread
       hasSharedLink: false, // Reset the shared link flag
       showShareDialog: false,
       showResetDialog: false,
-      flowStep: "input", // Reset to the initial flow step
-      originalIdea: "", // Clear any previous idea
-      clarificationAnswer: "", // Clear any previous clarification
     }));
 
     // Track this for analytics
@@ -1013,6 +1047,15 @@ export function HTMLGeneratorStage({
   const confirmReset = () => {
     setState((prev) => ({ ...prev, showResetDialog: true }));
   };
+
+  // print all data in the state
+  console.log(
+    "########################################## Component Rendered ##################################################",
+  );
+  console.log("State: ", state);
+  console.log(
+    "########################################## Component Rendered ##################################################",
+  );
 
   return (
     <div className="html-generator-stage min-h-screen flex flex-col">
@@ -1044,7 +1087,11 @@ export function HTMLGeneratorStage({
             <Button
               type="button"
               size="sm"
-              className={`px-3 ${state.projectId && !state.hasSharedLink ? "animate-pulse bg-green-100 hover:bg-green-200 text-green-800" : ""}`}
+              className={`px-3 ${
+                state.projectId && !state.hasSharedLink
+                  ? "animate-pulse bg-green-100 hover:bg-green-200 text-green-800"
+                  : ""
+              }`}
               onClick={copyShareUrl}
             >
               <span className="sr-only">نسخ</span>
@@ -1170,7 +1217,11 @@ export function HTMLGeneratorStage({
                             ? "default"
                             : "outline"
                         }
-                        className={`h-8 flex items-center gap-1 text-xs ${state.currentHTML && !state.projectId ? "animate-pulse" : ""}`}
+                        className={`h-8 flex items-center gap-1 text-xs ${
+                          state.currentHTML && !state.projectId
+                            ? "animate-pulse"
+                            : ""
+                        }`}
                         onClick={saveAndShareProject}
                         disabled={state.isSaving}
                       >
@@ -1209,7 +1260,6 @@ export function HTMLGeneratorStage({
                 ) : state.viewMode === "preview" ? (
                   <div className="w-full h-full overflow-hidden">
                     <iframe
-                      ref={previewIframeRef}
                       title="HTML Preview"
                       srcDoc={state.currentHTML}
                       className="w-full h-full border-0"
@@ -1246,7 +1296,7 @@ export function HTMLGeneratorStage({
                   <div className="p-4 space-y-4">
                     {state.messages.map((msg, i) => (
                       <div
-                        key={i}
+                        key={i + 1}
                         className={`p-3 rounded-lg ${
                           msg.role === "user"
                             ? "bg-primary text-primary-foreground ml-6"
@@ -1323,6 +1373,28 @@ export function HTMLGeneratorStage({
                       </div>
                     )}
 
+                    {/* Satisfaction Buttons - only show during satisfaction step */}
+                    {state.showSatisfactionButtons && (
+                      <div className="flex gap-2 my-3 justify-center">
+                        <Button
+                          onClick={() => handleSatisfaction(true)}
+                          variant="outline"
+                          size="sm"
+                          className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                        >
+                          نعم، أريد المتابعة
+                        </Button>
+                        <Button
+                          onClick={() => handleSatisfaction(false)}
+                          variant="outline"
+                          size="sm"
+                          className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                        >
+                          لا، أريد تعديلات
+                        </Button>
+                      </div>
+                    )}
+
                     <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
@@ -1376,6 +1448,15 @@ export function HTMLGeneratorStage({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="p-4 pt-2 text-center border-t flex-shrink-0">
+        <Link
+          href="/missions/html-projects/submissions"
+          className="text-primary text-sm hover:underline"
+        >
+          عرض جميع المشاريع
+        </Link>
       </div>
 
       {/* Footer with Navigation */}
