@@ -119,6 +119,9 @@ export const assistantLogs = pgTable("assistant_logs", {
   responseContent: jsonb("response_content").notNull(),
   tokens: jsonb("tokens"),
   errorMessage: text("error_message"),
+  // Added fields for student information tracking
+  studentName: text("student_name"),
+  studentId: text("student_id"), // For noon code or any unique student identifier
 });
 
 // Schema to store HTML projects
