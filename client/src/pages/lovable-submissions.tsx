@@ -142,7 +142,12 @@ export default function LovableSubmissionsPage() {
                       {submission.projectName || "مشروع"}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      <span className="block mb-2">{submission.studentName || "طالب"}</span>
+                      <span className="block mb-1">{submission.studentName || "طالب"}</span>
+                      {submission.studentId && (
+                        <span className="block mb-1 text-xs text-gray-500">
+                          كود: {submission.studentId}
+                        </span>
+                      )}
                       <span className="flex items-center justify-center text-xs text-gray-500 mt-1">
                         <CalendarIcon className="h-3 w-3 inline ml-1" />
                         <span>{formatDate(submission.submissionDate)}</span>
