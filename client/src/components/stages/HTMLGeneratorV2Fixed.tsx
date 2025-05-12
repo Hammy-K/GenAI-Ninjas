@@ -258,9 +258,7 @@ export function HTMLGeneratorV2({
       }));
 
       // Track sharing for analytics
-      trackStageProgress("html_generator", "share_link_copied", {
-        project_id: state.projectId,
-      });
+      trackStageProgress("html_generator", "share_link_copied");
     }
   };
 
@@ -286,7 +284,7 @@ export function HTMLGeneratorV2({
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid && state.projectId) {
           setState((prev) => ({ ...prev, isSaving: true }));
-          saveProject(state.projectId, state.currentHTML, firebaseUid)
+          saveProject(state.projectId, state.currentHTML)
             .then(() => {
               setState((prev) => ({ ...prev, isSaving: false }));
             })
@@ -534,7 +532,7 @@ export function HTMLGeneratorV2({
         // Log prompt to Firestore for analytics
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid) {
-          logPromptToFirestore(userInput, "html_generator", firebaseUid)
+          logPromptToFirestore(userInput, "html_generator")
             .catch(console.error);
         }
       } else {
