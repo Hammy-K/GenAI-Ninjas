@@ -376,9 +376,10 @@ export default function LovableMissionStage() {
       }
 
       // Add assistant response
+      // The /api/ai/text endpoint returns { text: "response content" }
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        content: data.response,
+        content: data.text || "",
       };
 
       setState((prev) => ({
@@ -500,11 +501,11 @@ export default function LovableMissionStage() {
       return;
     }
     
-    // Check for student name
-    if (!state.studentName) {
+    // Check for project name
+    if (!state.projectName) {
       setState((prev) => ({
         ...prev,
-        error: "الرجاء إدخال اسم الطالب.",
+        error: "الرجاء إدخال اسم المشروع.",
       }));
       return;
     }
