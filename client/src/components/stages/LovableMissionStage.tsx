@@ -539,7 +539,7 @@ export default function LovableMissionStage() {
                     }
                   >
                     {message.role === "assistant" && (
-                      <>
+                      <div className="relative">
                         {/* Copy icon button with tooltip */}
                         <div 
                           className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-200 rounded-full p-1"
@@ -555,19 +555,23 @@ export default function LovableMissionStage() {
                           <Copy className="h-4 w-4 text-gray-500" />
                         </div>
                         
-                        <div className="flex items-center mb-2 gap-2">
-                          <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
+                        {/* Position avatar on the left of the bubble */}
+                        <div className="absolute left-0 top-0 -translate-x-full -translate-y-1/4 mr-2">
+                          <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
                             <img
                               src={drPengyAvatar}
                               alt="Dr. Pengy"
                               className="h-full w-full object-cover"
                             />
                           </div>
+                        </div>
+                        
+                        <div className="mb-2 text-right">
                           <span className="font-semibold text-sm">
-                           
+                            الدكتور بنجي
                           </span>
                         </div>
-                      </>
+                      </div>
                     )}
                     {message.role === "assistant" &&
                     message.content === welcomeMessage.content
