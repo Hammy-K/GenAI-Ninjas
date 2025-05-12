@@ -937,12 +937,12 @@ export default function LovableMissionStage() {
                   </Button>
                 </div>
                 
-                {/* Student Name Field - Only show when URL is valid */}
+                {/* Project Name Field - Only show when URL is valid */}
                 {state.isProjectLinkValid && (
                   <div className="mt-2">
-                    <Label htmlFor="student-name" className="text-sm font-bold">اسم الطالب</Label>
+                    <Label htmlFor="project-name" className="text-sm font-bold">اسم المشروع</Label>
                     <Input
-                      id="student-name"
+                      id="project-name"
                       placeholder="....."
                       value={state.studentName}
                       onChange={(e) =>
@@ -951,7 +951,7 @@ export default function LovableMissionStage() {
                           studentName: e.target.value,
                         }))
                       }
-                      className="text-sm bg-white-50 mt-1"
+                      className="text-sm bg-white mt-1"
                     />
                   </div>
                 )}
