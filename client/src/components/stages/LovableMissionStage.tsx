@@ -419,11 +419,11 @@ export default function LovableMissionStage() {
           (msg) => !msg.className?.includes("loading"),
         );
         
-        // Add system message about inappropriate content if it's a moderation error
-        if (errorMessage !== "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.") {
+        // Add system message about inappropriate content if it appears to be a moderation error (HTTP 400)
+        if (error instanceof Error && error.message.includes("400")) {
           const moderationMessage: ChatMessage = {
             role: "assistant",
-            content: errorMessage,
+            content: moderationErrorMessage,
             className: "moderation-warning",
           };
           
