@@ -82,13 +82,13 @@ export default function LovableMissionStage() {
       {
         id: 1,
         text: "🤔 حدد نوع المشروع (تطبيق أو لعبة)",
-        description: "بناءًا على هذا الاختيار، راح نصمم مشروعك.",
+        description: "",
         completed: false,
       },
       {
         id: 2,
-        text: "💡 طور فكرة تطبيق/لعبة مع الدكتور بنجي",
-        description: "ناقش مع الدكتور بنجي وطور فكرة مشروعك الفريدة.",
+        text: "💡 طور فكرتك مع الدكتور بنجي",
+        description: "",
         completed: false,
       },
       {
@@ -119,14 +119,14 @@ export default function LovableMissionStage() {
       },
       {
         id: 5,
-        text: "🔗 لما تنتهي، انسخ رابط مشروعك.",
-        description: "اضغط على زر المشاركة في Lovable، ثم انسخ الرابط.",
+        text: "🔗 لما تنتهي،  Publish مشروعك و انسخ رابط",
+        description: "",
         completed: false,
       },
       {
         id: 6,
         text: "🎉 شارك مشروعك مع الجميع!",
-        description: "تم تقديم مشروعك ويمكن للجميع مشاهدته.",
+        description: "",
         completed: false,
       },
     ],
@@ -743,8 +743,8 @@ export default function LovableMissionStage() {
             <h3 className="font-semibold text-center">قائمة المهام</h3>
           </div>
           
-          {/* Fixed height checklist items (no scrolling) */}
-          <div className="flex-1 p-4 overflow-hidden">
+          {/* Scrollable checklist items */}
+          <div className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-3">
               {state.checklistItems.map((item) => (
                 <div key={item.id} className="flex flex-col">
