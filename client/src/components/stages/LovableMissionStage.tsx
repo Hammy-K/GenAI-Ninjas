@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Send, Check, AlertCircle, Copy, ExternalLink } from "lucide-react";
+import { Send, Check, AlertCircle, Copy, ExternalLink, ListIcon } from "lucide-react";
+import { Link } from "wouter";
 import drPengyAvatar from "@assets/Pengy_chat.png";
 import CelebrationAnimation from "@/components/animations/CelebrationAnimation";
 import StudentInfoModal from "@/components/modals/StudentInfoModal";
@@ -1001,6 +1002,13 @@ export default function LovableMissionStage() {
               </AlertDescription>
             </Alert>
           )}
+          
+          {/* All Projects Link */}
+          <div className="mt-4 text-center">
+            <Link href="/missions/lovable/submissions" className="text-primary text-sm hover:underline">
+              عرض جميع المشاريع
+            </Link>
+          </div>
         </div>
       </div>
     </div>
