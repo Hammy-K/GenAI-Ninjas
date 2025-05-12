@@ -14,9 +14,13 @@ import {
   Copy,
   ExternalLink,
   ListIcon,
+  Loader2,
+  LayoutGrid,
+  Gamepad2,
 } from "lucide-react";
 import { Link } from "wouter";
-import drPengyAvatar from "@assets/Pengy_chat.png";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import CelebrationAnimation from "@/components/animations/CelebrationAnimation";
 import StudentInfoModal from "@/components/modals/StudentInfoModal";
 
@@ -119,6 +123,7 @@ function isAlreadyAwarded(category: string, badge: string) {
 
 export default function LovableMissionStage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handler for when celebration animation completes
@@ -350,8 +355,7 @@ export default function LovableMissionStage() {
       const apiEndpoint = "/api/ai/text";
 
       // Create the appropriate system message
-      let systemPromptContent =
-        "أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.";
+      let systemPromptContent = "";
 
       // Add the favorite app/game information if this is the first response after selection
       if (isFirstResponseAfterSelection) {
@@ -480,7 +484,7 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           firebaseUid,
           role: "assistant",
-          content: data.response,
+          content: data.text,
         }),
       });
     } catch (error) {
@@ -512,52 +516,33 @@ export default function LovableMissionStage() {
   };
 
   // Handle copy prompt to clipboard
-  const copyFinalPrompt = () => {
-    if (!state.finalPrompt) {
+  const handleCopyPrompt = () => {
+    const finalPrompt = state.finalPrompt || "";
+    if (finalPrompt) {
+      navigator.clipboard.writeText(finalPrompt);
+      toast({
+        title: "تم النسخ!",
+        description: "تم نسخ الملخص إلى الحافظة بنجاح.",
+      });
+
+      // Mark item 2 as completed
       setState((prev) => ({
         ...prev,
-        finalPrompt: state.messages[state.messages.length - 1].content,
         checklistItems: prev.checklistItems.map((item) =>
-          item.id === 1 ? { ...item, completed: true } : item,
+          item.id === 2 ? { ...item, completed: true } : item,
         ),
       }));
+
+      // Track progress
+      trackStageProgress("lovable_mission", "prompt_copied");
     }
-
-    navigator.clipboard
-      .writeText(
-        state.finalPrompt || state.messages[state.messages.length - 1].content,
-      )
-      .then(() => {
-        toast({
-          title: "تم النسخ!",
-          description: "تم نسخ فكرتك النهائية إلى الحافظة.",
-        });
-
-        // Mark checklist item 2 as complete
-        setState((prev) => ({
-          ...prev,
-          checklistItems: prev.checklistItems.map((item) =>
-            item.id === 2 ? { ...item, completed: true } : item,
-          ),
-        }));
-
-        // Track progress
-        trackStageProgress("lovable_mission", "prompt_copied");
-      })
-      .catch(() => {
-        toast({
-          title: "خطأ",
-          description: "فشل نسخ النص. يرجى المحاولة مرة أخرى.",
-          variant: "destructive",
-        });
-      });
   };
 
-  // Handle opening Lovable
-  const openLovable = () => {
-    window.open("https://lovable.dev", "_blank");
+  // Handle open Lovable.dev in new tab
+  const handleOpenLovable = () => {
+    window.open("https://lovable.dev/", "_blank");
 
-    // Mark checklist item 3 as complete
+    // Mark item 3 as completed
     setState((prev) => ({
       ...prev,
       checklistItems: prev.checklistItems.map((item) =>
@@ -569,115 +554,185 @@ export default function LovableMissionStage() {
     trackStageProgress("lovable_mission", "lovable_opened");
   };
 
-  // Handle project link submission
-  const handleLinkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Function to validate Lovable project link
+  const validateLovableLink = (link: string) => {
+    return (
+      link.includes("lovable.dev") ||
+      link.includes("lovable.app") ||
+      link.includes("lovable.repl.co")
+    );
+  };
 
-    // Skip the validation since we already did it with the Validate button
-    if (!state.isProjectLinkValid) {
+  // Handle project selection
+  const handleProjectTypeSelection = async (type: "app" | "game") => {
+    try {
       setState((prev) => ({
         ...prev,
-        error: "الرجاء التحقق من صحة الرابط أولاً.",
+        projectType: type,
+        isChatLocked: false, // Unlock chat now that they've chosen
+      }));
+
+      // Create a question based on the project type
+      const questionContent =
+        type === "app"
+          ? "ممتاز! اختيار رائع. قبل أن نبدأ، خبرني عن تطبيقك المفضل. ما هو وليش تحبه؟"
+          : "كفو! اختيار ممتاز. قبل أن نبدأ، خبرني عن لعبتك المفضلة. شنو هي وليش تحبها؟";
+
+      // Add a message from Dr. Pengy asking about their favorite app/game
+      const assistantQuestion: ChatMessage = {
+        role: "assistant",
+        content: questionContent,
+      };
+
+      setState((prev) => {
+        const updatedMessages = [...prev.messages, assistantQuestion];
+        // Save to localStorage
+        localStorage.setItem(
+          "lovable_mission_messages",
+          JSON.stringify(updatedMessages),
+        );
+        return {
+          ...prev,
+          messages: updatedMessages,
+        };
+      });
+
+      // Track progress
+      trackStageProgress("lovable_mission", `selected_${type}`);
+    } catch (error) {
+      console.error("Error in project type selection:", error);
+    }
+  };
+
+  // Handle project submission
+  const handleSubmitProject = async () => {
+    if (!state.projectLink) {
+      setState((prev) => ({
+        ...prev,
+        error: "الرجاء إدخال رابط مشروعك.",
       }));
       return;
     }
 
-    // Check for project name
     if (!state.projectName) {
       setState((prev) => ({
         ...prev,
-        error: "الرجاء إدخال اسم المشروع.",
+        error: "الرجاء إدخال اسم مشروعك.",
       }));
       return;
     }
 
-    setState((prev) => ({ ...prev, isLoading: true, error: "" }));
+    if (!validateLovableLink(state.projectLink)) {
+      setState((prev) => ({
+        ...prev,
+        error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable.",
+      }));
+      return;
+    }
+
+    setState((prev) => ({
+      ...prev,
+      isLoading: true,
+      error: "",
+    }));
 
     try {
-      // Try to get Firebase UID but don't require it
-      const firebaseUid = localStorage.getItem("firebaseUid") || "";
-      // Get student & project information
-      const submissionStudentName =
-        localStorage.getItem("lovable_student_name") || "";
-      const submissionNoonCode =
-        localStorage.getItem("lovable_noon_code") || "";
-      const projectName = state.projectName;
+      // Get student name and noon code from localStorage
+      const studentName = localStorage.getItem("lovable_student_name") || "";
+      const noonCode = localStorage.getItem("lovable_noon_code") || "";
 
-      // Debug logging
-      console.log("Submitting project:", {
-        projectLink: state.projectLink,
-        studentName: submissionStudentName,
-        projectName: projectName,
-        noonCode: submissionNoonCode,
-        firebaseUid: firebaseUid || "anonymous",
-      });
-
-      // Call API to submit link with student name
       const response = await fetch("/api/lovable-mission/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          firebaseUid: localStorage.getItem("firebaseUid") || "",
+          projectType: state.projectType,
           projectLink: state.projectLink,
-          studentName: submissionStudentName,
-          projectName: projectName, // Add project name field
-          noonCode: submissionNoonCode, // Include noon code
-          projectType: state.projectType, // Include project type (app/game)
-          finalPrompt: state.finalPrompt, // Include the final prompt used
-          firebaseUid: firebaseUid || undefined, // Include if available
+          projectName: state.projectName,
+          finalPrompt: state.finalPrompt,
+          studentName: studentName, // Include student name
+          noonCode: noonCode, // Include noon code
         }),
       });
 
       if (!response.ok) {
-        // Get detailed error information
-        const errorData = await response.json();
-        console.error("URL submission error:", errorData);
-        throw new Error(errorData.error || "Failed to submit project link");
+        throw new Error("Failed to submit project");
       }
 
-      // Mark as submitted and show celebration
+      // Project submitted successfully
       setState((prev) => ({
         ...prev,
-        isSubmitted: true,
         isLoading: false,
-        showCelebration: true, // Show the celebration animation
-        checklistItems: prev.checklistItems.map((item) =>
-          item.id === 6 ? { ...item, completed: true } : item,
-        ),
+        isSubmitted: true,
+        showCelebration: true, // Show celebration animation
+        checklistItems: prev.checklistItems.map((item) => ({
+          ...item,
+          completed: true,
+        })),
       }));
 
-      // Show success message
-      toast({
-        title: "تم التقديم بنجاح!",
-        description: "تم تقديم رابط مشروعك بنجاح.",
-      });
+      // Save to localStorage
+      localStorage.setItem("lovable_mission_project_link", state.projectLink);
+
+      // Award badge if not already awarded
+      if (!isAlreadyAwarded("mission", "lovable")) {
+        markAsAwarded("mission", "lovable");
+      }
 
       // Track progress
-      trackStageProgress("lovable_mission", "link_submitted");
+      trackStageProgress("lovable_mission", "submitted", {
+        projectType: state.projectType,
+        projectLink: state.projectLink,
+        projectName: state.projectName,
+      });
+
+      // Add a congratulatory message from Dr. Pengy
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content:
+          "🎉 مبروووك! تم تسليم مشروعك بنجاح. شكرًا لك على المشاركة وإبداعك. يمكنك استعراض مشروعك والمشاريع الأخرى في صفحة المشاريع.",
+      };
+
+      setState((prev) => {
+        const updatedMessages = [...prev.messages, assistantMessage];
+        // Save to localStorage
+        localStorage.setItem(
+          "lovable_mission_messages",
+          JSON.stringify(updatedMessages),
+        );
+        return {
+          ...prev,
+          messages: updatedMessages,
+        };
+      });
     } catch (error) {
-      console.error("Error submitting link:", error);
+      console.error("Error submitting project:", error);
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error:
-          error instanceof Error
-            ? `حدث خطأ: ${error.message}`
-            : "حدث خطأ أثناء تقديم الرابط. يرجى المحاولة مرة أخرى. تأكد من أن الرابط يحتوي على lovable.dev أو lovable.app",
+        error: "حدث خطأ أثناء تسليم المشروع. يرجى المحاولة مرة أخرى.",
       }));
     }
   };
 
-  // Initialize action functions
+  // Initialize button actions when the component mounts
   useEffect(() => {
-    // Update checklist items with action functions
     setState((prev) => ({
       ...prev,
       checklistItems: prev.checklistItems.map((item) => {
         if (item.id === 2) {
-          return { ...item, action: copyFinalPrompt };
-        } else if (item.id === 3) {
-          return { ...item, action: openLovable };
+          return {
+            ...item,
+            action: handleCopyPrompt,
+          };
+        }
+        if (item.id === 3) {
+          return {
+            ...item,
+            action: handleOpenLovable,
+          };
         }
         return item;
       }),
@@ -696,254 +751,15 @@ export default function LovableMissionStage() {
         isVisible={state.showCelebration}
         onComplete={handleCelebrationComplete}
       />
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Chat Panel - 75% width */}
-        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border">
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-4">
-              {state.messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-start" : "justify-end"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-white border"
-                    } ${message.className || ""}`}
-                    dir={
-                      message.content
-                        .trim()
-                        .match(/^[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/)
-                        ? "rtl"
-                        : "ltr"
-                    }
-                  >
-                    {message.role === "assistant" && (
-                      <div className="flex items-center mb-2 gap-2">
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
-                          <img
-                            src={drPengyAvatar}
-                            alt="Dr. Pengy"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <span className="text-xs font-bold">د. بنجي</span>
-                      </div>
-                    )}
-                    {message.role === "assistant" &&
-                    message.content === welcomeMessage.content
-                      ? message.content
-                      : message.content}
-                  </div>
-                </div>
-              ))}
-
-              {/* Option buttons shown outside chat bubbles, aligned to the right */}
-              {state.messages.length === 1 && state.isChatLocked && (
-                <div className="flex justify-end mb-4 mr-4 mt-4">
-                  <div className="flex flex-col gap-2 items-end">
-                    <p className="text-xs text-gray-500 mb-1">
-                      اختر نوع المشروع:
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={async () => {
-                          const userMessage = "لعبة";
-                          // Add as user message with right alignment
-                          const newMessage: ChatMessage = {
-                            role: "user",
-                            content: userMessage,
-                            className: "justify-end", // Align to right
-                          };
-
-                          // Create immediate follow-up question
-                          const immediateFollowupMessage: ChatMessage = {
-                            role: "assistant",
-                            content: "كفو! إيش لعبتك المفضلة؟",
-                          };
-
-                          setState((prev) => ({
-                            ...prev,
-                            messages: [
-                              ...prev.messages,
-                              newMessage,
-                              immediateFollowupMessage,
-                            ],
-                            prompt: "",
-                            isChatLocked: false, // Unlock chat after selection
-                            isLoading: false,
-                          }));
-
-                          try {
-                            // Save user message to the database
-                            const firebaseUid =
-                              localStorage.getItem("firebaseUid") || "";
-
-                            await fetch("/api/lovable-mission/chat", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                firebaseUid,
-                                role: "user",
-                                content: userMessage,
-                              }),
-                            });
-
-                            // Also save Dr. Pengy's immediate follow-up question
-                            await fetch("/api/lovable-mission/chat", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                firebaseUid,
-                                role: "assistant",
-                                content: immediateFollowupMessage.content,
-                              }),
-                            });
-                          } catch (error) {
-                            console.error("Error saving chat message:", error);
-                            // We don't need to show an error here as the messages are already displayed
-                          }
-                        }}
-                        variant="outline"
-                        className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
-                      >
-                        لعبة 🎮
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          const userMessage = "تطبيق";
-                          // Add as user message with right alignment
-                          const newMessage: ChatMessage = {
-                            role: "user",
-                            content: userMessage,
-                            className: "justify-end", // Align to right
-                          };
-
-                          // Create immediate follow-up question
-                          const immediateFollowupMessage: ChatMessage = {
-                            role: "assistant",
-                            content: "كفو! إيش تطبيقك المفضل؟",
-                          };
-
-                          setState((prev) => ({
-                            ...prev,
-                            messages: [
-                              ...prev.messages,
-                              newMessage,
-                              immediateFollowupMessage,
-                            ],
-                            prompt: "",
-                            isChatLocked: false, // Unlock chat after selection
-                            isLoading: false,
-                          }));
-
-                          try {
-                            // Save user message to the database
-                            const firebaseUid =
-                              localStorage.getItem("firebaseUid") || "";
-
-                            await fetch("/api/lovable-mission/chat", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                firebaseUid,
-                                role: "user",
-                                content: userMessage,
-                              }),
-                            });
-
-                            // Also save Dr. Pengy's immediate follow-up question
-                            await fetch("/api/lovable-mission/chat", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                firebaseUid,
-                                role: "assistant",
-                                content: immediateFollowupMessage.content,
-                              }),
-                            });
-                          } catch (error) {
-                            console.error("Error saving chat message:", error);
-                            // We don't need to show an error here as the messages are already displayed
-                          }
-                        }}
-                        variant="outline"
-                        className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
-                      >
-                        تطبيق 📱
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* Input Form */}
-          <div className="p-4 border-t">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Textarea
-                value={state.prompt}
-                onChange={(e) =>
-                  setState((prev) => ({
-                    ...prev,
-                    prompt: e.target.value,
-                    error: "",
-                  }))
-                }
-                placeholder={
-                  state.isChatLocked
-                    ? "الرجاء اختيار نوع المشروع أولاً..."
-                    : "اكتب رسالتك هنا..."
-                }
-                className="flex-1 resize-none"
-                rows={1}
-                disabled={state.isChatLocked} // Disable when chat is locked
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-              />
-              <Button
-                type="submit"
-                disabled={
-                  state.isLoading || !state.prompt.trim() || state.isChatLocked
-                }
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-            {state.isChatLocked && (
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                ⬆️ اختر تطبيق أو لعبة للبدء في المحادثة
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Checklist Panel - 25% width */}
-        <div className="w-[25%] bg-card rounded-lg shadow-sm p-4 overflow-y-auto border">
+      
+      {/* Main content layout - fixed two column layout */}
+      <div className="flex h-[calc(100vh-2rem)] gap-4 overflow-hidden">
+        {/* Checklist Sidebar - fixed width */}
+        <div className="w-64 flex-shrink-0 bg-card rounded-lg shadow-sm p-4 border h-full flex flex-col">
           <h3 className="font-semibold mb-2 text-center">قائمة المهام</h3>
           <Separator className="my-2" />
-
-          <div className="space-y-3">
+          
+          <div className="space-y-3 overflow-y-auto flex-grow">
             {state.checklistItems.map((item) => (
               <div key={item.id} className="flex flex-col">
                 <div className="flex items-start gap-2">
@@ -961,170 +777,207 @@ export default function LovableMissionStage() {
                       {item.text}
                     </Label>
                     {item.description && (
-                      <span
-                        className={`text-xs text-muted-foreground ${item.completed ? "line-through" : ""}`}
+                      <p
+                        className={`text-xs mt-0.5 ${
+                          item.completed ? "line-through text-muted-foreground" : "text-gray-500"
+                        }`}
                       >
                         {item.description}
-                      </span>
+                      </p>
                     )}
                   </div>
                 </div>
-
-                {item.type === "button" && (
+                {/* Button for items with action */}
+                {item.type === "button" && !item.completed && (
                   <Button
-                    onClick={item.action}
-                    className="mt-1 ml-6 text-xs"
-                    size="sm"
                     variant="outline"
+                    size="sm"
+                    className="mt-1 ml-6 text-sm h-8"
+                    onClick={item.action}
                   >
-                    {item.id === 2
-                      ? "انسخ الفكرة النهائية"
-                      : "افتح Lovable.dev"}
+                    {item.id === 3
+                      ? t("Open Lovable.dev")
+                      : t("Copy")}
                   </Button>
                 )}
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Project Link Submission */}
-          {!state.isSubmitted ? (
-            <form onSubmit={handleLinkSubmit} className="mt-4">
-              <div className="flex flex-col gap-3">
-                <div>
-                  <Label htmlFor="project-link" className="text-sm font-bold">
-                    رابط المشروع
-                  </Label>
+        {/* Chat Panel - fills remaining space */}
+        <div className="flex-grow flex flex-col bg-card rounded-lg shadow-sm border h-full overflow-hidden">
+          {/* Messages Container - scrollable */}
+          <div className="flex-grow overflow-y-auto p-4">
+            <div className="space-y-4">
+              {state.messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  } ${message.className || ""}`}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[85%] text-card-foreground rounded-lg p-3 flex items-start",
+                      message.role === "assistant"
+                        ? "bg-tertiary/25 rounded-br-none flex-wrap"
+                        : "bg-primary text-white rounded-bl-none",
+                      message.className?.includes("loading") && "animate-pulse",
+                    )}
+                  >
+                    {/* Dr. Pengy avatar for assistant messages */}
+                    {message.role === "assistant" && !message.className?.includes("loading") && (
+                      <img
+                        src="/images/pengy.png"
+                        alt="Dr. Pengy"
+                        className="w-6 h-6 mr-2 rounded-full"
+                      />
+                    )}
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+              {state.isLoading && (
+                <div className="text-center w-full">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Project type selection buttons (only shown before first selection) */}
+          {state.isChatLocked && (
+            <div className="flex items-center justify-center gap-4 my-4 flex-shrink-0">
+              <Button
+                className="bg-white text-violet-700 border-2 border-violet-700 hover:bg-violet-100"
+                onClick={() => handleProjectTypeSelection("app")}
+                variant="outline"
+              >
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                {t("Create an App")}
+              </Button>
+              <Button
+                className="bg-white text-violet-700 border-2 border-violet-700 hover:bg-violet-100"
+                onClick={() => handleProjectTypeSelection("game")}
+                variant="outline"
+              >
+                <Gamepad2 className="mr-2 h-4 w-4" />
+                {t("Create a Game")}
+              </Button>
+            </div>
+          )}
+
+          {/* Project submission form (shown after first message) */}
+          {!state.isChatLocked && !state.isSubmitted && (
+            <div className="p-4 border-t-2 flex-shrink-0">
+              <div className="flex flex-col gap-2 mb-4">
+                {/* Project link instructions & input */}
+                <h3 className="text-sm font-bold">
+                  {t("Project Submission")}
+                </h3>
+                <div className="flex gap-2">
                   <Input
-                    id="project-link"
-                    placeholder="https://...lovable.app"
                     value={state.projectLink}
                     onChange={(e) =>
                       setState((prev) => ({
                         ...prev,
                         projectLink: e.target.value,
+                        isProjectLinkValid: validateLovableLink(e.target.value),
                         error: "",
-                        isProjectLinkValid: false, // Reset validation on change
                       }))
                     }
-                    className="text-sm bg-white-50 mt-1"
+                    placeholder="https://your-project.lovable.app/"
+                    className={`flex-1 bg-green-50 ${
+                      state.projectLink &&
+                      (state.isProjectLinkValid
+                        ? "border-green-500 focus-visible:ring-green-500"
+                        : "border-red-500 focus-visible:ring-red-500")
+                    }`}
                   />
-
-                  {/* URL Validation Button */}
                   <Button
-                    type="button"
-                    onClick={() => {
-                      // Check URL validity
-                      if (!state.projectLink) {
-                        setState((prev) => ({
-                          ...prev,
-                          error: "الرجاء إدخال رابط المشروع.",
-                        }));
-                        return;
-                      }
-
-                      // Make sure the URL has a proper protocol prefix
-                      let projectLink = state.projectLink;
-                      if (
-                        !projectLink.startsWith("http://") &&
-                        !projectLink.startsWith("https://")
-                      ) {
-                        projectLink = "https://" + projectLink;
-                      }
-
-                      // Validate that the URL contains lovable.dev or lovable.app
-                      if (
-                        !projectLink.includes("lovable.dev") &&
-                        !projectLink.includes("lovable.app")
-                      ) {
-                        setState((prev) => ({
-                          ...prev,
-                          error:
-                            "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app).",
-                        }));
-                        return;
-                      }
-
-                      // Update state with valid URL
-                      setState((prev) => ({
-                        ...prev,
-                        projectLink,
-                        isProjectLinkValid: true,
-                        error: "",
-                      }));
-                    }}
-                    className="mt-2 w-full text-sm bg-green-50"
-                    variant="outline"
-                    disabled={state.isProjectLinkValid}
+                    onClick={handleSubmitProject}
+                    disabled={
+                      !state.isProjectLinkValid ||
+                      state.isLoading ||
+                      state.projectLink === ""
+                    }
+                    className="bg-green-700 hover:bg-green-800"
                   >
-                    {state.isProjectLinkValid
-                      ? "تم التحقق من الرابط ✓"
-                      : "التحقق من الرابط"}
+                    {t("Submit")}
                   </Button>
                 </div>
-
-                {/* Project Name Field - Only show when URL is valid */}
-                {state.isProjectLinkValid && (
-                  <div className="mt-2">
-                    <Label htmlFor="project-name" className="text-sm font-bold">
-                      اسم المشروع
-                    </Label>
-                    <Input
-                      id="project-name"
-                      placeholder="....."
-                      value={state.projectName}
-                      onChange={(e) =>
-                        setState((prev) => ({
-                          ...prev,
-                          projectName: e.target.value,
-                        }))
-                      }
-                      className="text-sm bg-white mt-1"
-                    />
-                  </div>
+                {/* Project name input */}
+                <Input
+                  value={state.projectName}
+                  onChange={(e) =>
+                    setState((prev) => ({
+                      ...prev,
+                      projectName: e.target.value,
+                    }))
+                  }
+                  placeholder="اسم المشروع"
+                  className="flex-1 mt-2 bg-green-50"
+                />
+                {state.error && (
+                  <p className="text-sm text-red-500">{state.error}</p>
                 )}
+                {state.projectLink && !state.isProjectLinkValid && (
+                  <p className="text-xs text-red-500">
+                    {t(
+                      "Invalid link. Must be a Lovable project link (lovable.dev or lovable.app).",
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
-                {/* Submit Button - Only enable when URL is valid and name is entered */}
+          {/* Chat input (shown when not submitted and chat is not locked) */}
+          {!state.isSubmitted && (
+            <div className="border-t-2 p-4 flex-shrink-0">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <Textarea
+                  value={state.prompt}
+                  onChange={(e) =>
+                    setState((prev) => ({
+                      ...prev,
+                      prompt: e.target.value,
+                      error: "",
+                    }))
+                  }
+                  placeholder={
+                    state.isChatLocked
+                      ? "الرجاء اختيار نوع المشروع أولاً..."
+                      : "اكتب رسالتك هنا..."
+                  }
+                  className="flex-1 resize-none"
+                  rows={1}
+                  disabled={state.isChatLocked} // Disable when chat is locked
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                />
                 <Button
                   type="submit"
                   disabled={
-                    state.isLoading ||
-                    !state.isProjectLinkValid ||
-                    (!state.projectName && state.isProjectLinkValid)
+                    state.isLoading || !state.prompt.trim() || state.isChatLocked
                   }
-                  className="bg-green-600 hover:bg-green-700 text-white mt-2"
                 >
-                  {state.isLoading ? "جارٍ التقديم..." : "انتهيت 🎉"}
+                  <Send className="h-4 w-4" />
                 </Button>
-              </div>
-            </form>
-          ) : (
-            <Alert variant="default" className="bg-green-100 mt-4">
-              <Check className="h-4 w-4" />
-              <AlertTitle className="text-sm">تم التقديم!</AlertTitle>
-              <AlertDescription className="text-sm">
-                تم تقديم رابط مشروعك بنجاح.
-              </AlertDescription>
-            </Alert>
+              </form>
+              {state.isChatLocked && (
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  ⬆️ اختر تطبيق أو لعبة للبدء في المحادثة
+                </p>
+              )}
+            </div>
           )}
-
-          {state.error && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                {state.error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* All Projects Link */}
-          <div className="mt-4 text-center">
-            <Link
-              href="/missions/lovable/submissions"
-              className="text-primary text-sm hover:underline"
-            >
-              عرض جميع المشاريع
-            </Link>
-          </div>
         </div>
       </div>
     </div>
