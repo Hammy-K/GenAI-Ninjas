@@ -521,12 +521,12 @@ export default function LovableMissionStage() {
                 <div
                   key={index}
                   className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
+                    message.role === "assistant" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[80%] rounded-lg p-3 relative group ${
-                      message.role === "user"
+                      message.role === "assistant"
                         ? "bg-primary text-primary-foreground"
                         : "bg-white border"
                     } ${message.className || ""}`}
@@ -542,7 +542,7 @@ export default function LovableMissionStage() {
                       <>
                         {/* Copy icon button with tooltip */}
                         <div 
-                          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-100 rounded-full p-1"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-100 rounded-full p-1"
                           title="انسخ"
                           onClick={() => {
                             navigator.clipboard.writeText(message.content);
@@ -577,10 +577,10 @@ export default function LovableMissionStage() {
                 </div>
               ))}
 
-              {/* Option buttons shown outside chat bubbles, aligned to the right */}
+              {/* Option buttons shown outside chat bubbles, aligned to the left */}
               {state.messages.length === 1 && state.isChatLocked && (
-                <div className="flex justify-end mb-4 mr-4 mt-4">
-                  <div className="flex flex-col gap-2 items-end">
+                <div className="flex justify-start mb-4 ml-4 mt-4">
+                  <div className="flex flex-col gap-2 items-start">
                     <p className="text-xs text-gray-500 mb-1">
                       اختر نوع المشروع:
                     </p>
