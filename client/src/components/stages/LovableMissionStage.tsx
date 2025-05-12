@@ -527,8 +527,8 @@ export default function LovableMissionStage() {
                   <div
                     className={`max-w-[80%] rounded-lg p-3 relative group ${
                       message.role === "assistant"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-white border"
+                        ? "bg-transparent text-foreground"
+                        : "bg-purple-500 text-white"
                     } ${message.className || ""}`}
                     dir={
                       message.content
@@ -542,7 +542,7 @@ export default function LovableMissionStage() {
                       <>
                         {/* Copy icon button with tooltip */}
                         <div 
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-100 rounded-full p-1"
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-200 rounded-full p-1"
                           title="انسخ"
                           onClick={() => {
                             navigator.clipboard.writeText(message.content);
