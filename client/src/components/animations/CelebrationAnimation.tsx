@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '@lottiefiles/react-lottie-player';
-import celebrationAnimation from '@assets/Celebration x1.5.json';
+// Use a static path to the animation file
+const celebrationAnimationPath = '/animations/celebration.json';
 
 interface CelebrationAnimationProps {
   isVisible: boolean;
@@ -34,7 +35,7 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
       <Player
         autoplay
         keepLastFrame={false}
-        src={celebrationAnimation}
+        src={celebrationAnimationPath}
         style={{ width: '100%', height: '100%' }}
         loop={false}
         onEvent={event => {

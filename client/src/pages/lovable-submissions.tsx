@@ -7,9 +7,9 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CalendarIcon, ExternalLinkIcon } from 'lucide-react';
+import { CalendarIcon, ExternalLinkIcon, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -17,6 +17,7 @@ import { ar } from 'date-fns/locale';
 interface LovableSubmission {
   id: number;
   studentName: string;
+  projectName?: string; // May not exist in older submissions
   projectLink: string;
   projectType: string;
   submissionDate: string;
@@ -24,6 +25,8 @@ interface LovableSubmission {
 
 export default function LovableSubmissionsPage() {
   const [submissions, setSubmissions] = useState<LovableSubmission[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<LovableSubmission[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +42,7 @@ export default function LovableSubmissionsPage() {
         
         const data = await response.json();
         setSubmissions(data);
+        setFilteredSubmissions(data);
       } catch (err) {
         console.error('Error fetching submissions:', err);
         setError('Failed to load submissions. Please try again later.');
@@ -49,6 +53,21 @@ export default function LovableSubmissionsPage() {
 
     fetchSubmissions();
   }, []);
+  
+  // Filter submissions based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSubmissions(submissions);
+      return;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    const filtered = submissions.filter(submission => 
+      submission.studentName.toLowerCase().includes(query)
+    );
+    
+    setFilteredSubmissions(filtered);
+  }, [searchQuery, submissions]);
 
   const formatDate = (dateString: string) => {
     return formatDistanceToNow(new Date(dateString), { 
@@ -59,16 +78,27 @@ export default function LovableSubmissionsPage() {
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl" dir="rtl">
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-3xl font-bold mb-2">مشاريع الطلاب</h1>
-        <p className="text-gray-600 mb-6">جميع المشاريع المقدمة في رحلة الدكتور بنجي</p>
+        <p className="text-gray-600 mb-4">جميع المشاريع المقدمة في رحلة الدكتور بنجي</p>
+        
+        {/* Search input */}
+        <div className="relative max-w-md mx-auto mb-4">
+          <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="البحث باسم الطالب..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-8 bg-white" 
+          />
+        </div>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center">
           <div className="animate-pulse flex flex-col w-full max-w-3xl">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg mb-4"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-lg mb-4"></div>
             ))}
           </div>
         </div>
@@ -83,46 +113,40 @@ export default function LovableSubmissionsPage() {
             إعادة المحاولة
           </Button>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : filteredSubmissions.length === 0 ? (
         <div className="text-center text-gray-500">
-          <p>لا توجد مشاريع مقدمة حتى الآن</p>
+          <p>
+            {searchQuery ? 'لا توجد نتائج تطابق البحث' : 'لا توجد مشاريع مقدمة حتى الآن'}
+          </p>
         </div>
       ) : (
         <ScrollArea className="h-[70vh]">
-          <div className="space-y-4">
-            {submissions.map((submission) => (
+          <div className="space-y-3">
+            {filteredSubmissions.map((submission) => (
               <Card key={submission.id} className="transition-all hover:shadow-md">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
+                <CardHeader className="pb-2 pt-3">
+                  <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle className="text-xl">{submission.studentName || "طالب"}</CardTitle>
-                      <CardDescription className="flex items-center mt-1">
-                        <CalendarIcon className="h-4 w-4 mr-1" />
+                      <CardTitle className="text-base font-medium">{submission.studentName || "طالب"}</CardTitle>
+                      <CardDescription className="flex items-center mt-1 text-sm">
+                        <span className="font-medium">{submission.projectName || "مشروع"}</span>
+                        <span className="mx-2">•</span>
+                        <CalendarIcon className="h-3 w-3 inline ml-1" />
                         <span>{formatDate(submission.submissionDate)}</span>
                       </CardDescription>
                     </div>
-                    <Badge variant={submission.projectType === 'app' ? 'default' : 'secondary'}>
-                      {submission.projectType === 'app' ? 'تطبيق' : 'لعبة'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <p className="text-gray-600 truncate max-w-sm">
-                      {submission.projectLink}
-                    </p>
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild className="h-8">
                       <a 
                         href={submission.projectLink} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="flex items-center"
                       >
-                        فتح المشروع <ExternalLinkIcon className="h-4 w-4 mr-1" />
+                        فتح المشروع <ExternalLinkIcon className="h-3 w-3 mr-1" />
                       </a>
                     </Button>
                   </div>
-                </CardContent>
+                </CardHeader>
               </Card>
             ))}
           </div>
