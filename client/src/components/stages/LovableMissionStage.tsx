@@ -110,6 +110,14 @@ function isAlreadyAwarded(category: string, badge: string) {
 export default function LovableMissionStage() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Handler for when celebration animation completes
+  const handleCelebrationComplete = () => {
+    setState(prev => ({
+      ...prev,
+      showCelebration: false
+    }));
+  };
   const [state, setState] = useState<LovableMissionState>({
     messages: [welcomeMessage],
     prompt: "",
@@ -496,11 +504,12 @@ export default function LovableMissionStage() {
         throw new Error(errorData.error || "Failed to submit project link");
       }
 
-      // Mark as submitted
+      // Mark as submitted and show celebration
       setState((prev) => ({
         ...prev,
         isSubmitted: true,
         isLoading: false,
+        showCelebration: true, // Show the celebration animation
         checklistItems: prev.checklistItems.map((item) =>
           item.id === 6 ? { ...item, completed: true } : item,
         ),
@@ -544,6 +553,11 @@ export default function LovableMissionStage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Celebration Animation */}
+      <CelebrationAnimation 
+        isVisible={state.showCelebration} 
+        onComplete={handleCelebrationComplete} 
+      />
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* Chat Panel - 75% width */}
         <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border">
