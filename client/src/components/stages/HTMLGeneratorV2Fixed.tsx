@@ -273,6 +273,7 @@ export function HTMLGeneratorV2({
     trackStageProgress(
       "html_generator",
       `switch_to_${state.viewMode === "preview" ? "code" : "preview"}_view`,
+      {}
     );
   };
 
@@ -713,7 +714,7 @@ export function HTMLGeneratorV2({
       // First save/update the project to ensure it's persisted
       try {
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
-        await saveProject(state.projectId, state.currentHTML, firebaseUid);
+        await saveProject(state.projectId, state.currentHTML);
         
         // Generate and set the share URL
         const shareUrl = `${window.location.origin}/project/${state.projectId}`;
