@@ -23,7 +23,6 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
   }, [isVisible]);
 
   const handleComplete = () => {
-    console.log('🎉 Animation complete');
     if (onComplete) {
       onComplete();
     }
