@@ -129,20 +129,23 @@ export function HTMLGeneratorV2({
   // Define initial state with welcome message
   const welcomeMessage: HTMLMessage = {
     role: "assistant",
-    content:
-      "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
+    content: `
+🎮  ياهلا في أداة بناء الألعاب بالذكاء الاصطناعي! 
+أنا د. بنجي، موجود هنا أساعدك تصمّم لعبتك بنفسك. 
+كل اللي عليك: توصف لي فكرتك، وأنا أكتب لك الكود ✨
+    `,
   };
 
   const examplesMessage: HTMLMessage = {
     role: "assistant",
     content: `
-مثلاً:
-- لعبة شطرنج (او اي لعبة بسيطة)
-- لوحة رسم بسيطة
-- كويز تفاعلي فيه كم سؤال مضحك
-- صفحة تسهل وش ألبس اليوم من دولابي
-- صفحة أختار فيها وجهة سفري المفضلة
-- تطبيق يرشّح لك وش تأكل حسب مزاجك
+تخيل لعبة بسيطة وممتعة، زي:
+- لعبة ذكاء أو تركيز سريعة
+- لعبة قفز وتفادي حواجز
+- لعبة كويز مضحكة بأسئلة غريبة
+- لعبة مغامرات واختيارات
+
+خلك كرييتف! 🔥 أهم شيء نبدأ بفكرة خفيفة وممتعة.
 `,
   };
 
@@ -273,7 +276,7 @@ export function HTMLGeneratorV2({
     trackStageProgress(
       "html_generator",
       `switch_to_${state.viewMode === "preview" ? "code" : "preview"}_view`,
-      {}
+      {},
     );
   };
 
@@ -319,7 +322,7 @@ export function HTMLGeneratorV2({
     if (state.isLoading) return;
 
     const userInput = state.prompt.trim();
-    
+
     // If we're in the clarification flow, the prompt handling
     // is different than the initial input
     if (
@@ -352,7 +355,7 @@ export function HTMLGeneratorV2({
           // Get the project summary based on original idea and clarification
           const summaryResult = await getProjectSummary(
             state.originalIdea,
-            userInput
+            userInput,
           );
 
           const assistantMessage: HTMLMessage = {
@@ -372,7 +375,8 @@ export function HTMLGeneratorV2({
           console.error("Error getting project summary:", error);
           const errorMessage: HTMLMessage = {
             role: "assistant",
-            content: "عذراً، حدث خطأ أثناء تلخيص المشروع. يرجى المحاولة مرة أخرى.",
+            content:
+              "عذراً، حدث خطأ أثناء تلخيص المشروع. يرجى المحاولة مرة أخرى.",
           };
 
           setState((prevState) => ({
@@ -409,9 +413,13 @@ export function HTMLGeneratorV2({
         }
 
         // Track satisfaction for analytics
-        trackStageProgress("html_generator", isSatisfied ? "satisfied" : "not_satisfied", {
-          project_length: state.currentHTML.length,
-        });
+        trackStageProgress(
+          "html_generator",
+          isSatisfied ? "satisfied" : "not_satisfied",
+          {
+            project_length: state.currentHTML.length,
+          },
+        );
       } else if (state.flowStep === "confirm") {
         // This is a normal message after the initial generation
         try {
@@ -429,7 +437,9 @@ export function HTMLGeneratorV2({
             // Create the assistant message with confirmation
             const assistantMessage: HTMLMessage = {
               role: "assistant",
-              content: htmlResult.message?.content || "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
+              content:
+                htmlResult.message?.content ||
+                "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
             };
 
             setState((prevState) => ({
@@ -456,7 +466,7 @@ export function HTMLGeneratorV2({
                   hasUnlockedBadge: true,
                 }));
                 onUnlockBadge("html_pro", "HTML generator");
-                
+
                 // Show confetti for badge
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
@@ -469,7 +479,8 @@ export function HTMLGeneratorV2({
           console.error("Error generating HTML:", error);
           const errorMessage: HTMLMessage = {
             role: "assistant",
-            content: "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى بوصف أكثر تفصيلاً.",
+            content:
+              "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى بوصف أكثر تفصيلاً.",
           };
 
           setState((prevState) => ({
@@ -517,7 +528,7 @@ export function HTMLGeneratorV2({
     try {
       // Get a clarifying question based on the user's idea
       const clarificationResult = await getClarifyingQuestion(userInput);
-      
+
       if (clarificationResult && clarificationResult.question) {
         const assistantMessage: HTMLMessage = {
           role: "assistant",
@@ -533,8 +544,9 @@ export function HTMLGeneratorV2({
         // Log prompt to Firestore for analytics
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid) {
-          logPromptToFirestore(userInput, "html_generator")
-            .catch(console.error);
+          logPromptToFirestore(userInput, "html_generator").catch(
+            console.error,
+          );
         }
       } else {
         throw new Error("No clarifying question received");
@@ -573,16 +585,22 @@ export function HTMLGeneratorV2({
         // Compile a full project summary
         const fullSummaryResult = await getFullProjectSummary(
           state.originalIdea,
-          state.clarificationAnswer
+          state.clarificationAnswer,
         );
 
         // Generate the HTML based on the full project specification
         // Create a message history for the generateHTML function
         const messages: HTMLMessage[] = [
           { role: "user", content: state.originalIdea },
-          { role: "assistant", content: "سؤال للتوضيح: " + state.clarificationAnswer },
+          {
+            role: "assistant",
+            content: "سؤال للتوضيح: " + state.clarificationAnswer,
+          },
           { role: "user", content: state.clarificationAnswer },
-          { role: "assistant", content: "تلخيص المشروع: " + fullSummaryResult.summary },
+          {
+            role: "assistant",
+            content: "تلخيص المشروع: " + fullSummaryResult.summary,
+          },
           { role: "user", content: "نعم هذا ما أريده" },
         ];
 
@@ -592,7 +610,9 @@ export function HTMLGeneratorV2({
           // Add a message to confirm generation
           const assistantMessage: HTMLMessage = {
             role: "assistant",
-            content: htmlResult.message?.content || "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
+            content:
+              htmlResult.message?.content ||
+              "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
           };
 
           setState((prevState) => ({
@@ -619,7 +639,7 @@ export function HTMLGeneratorV2({
                 hasUnlockedBadge: true,
               }));
               onUnlockBadge("html_pro", "HTML generator");
-              
+
               // Show confetti for badge
               setShowConfetti(true);
               setTimeout(() => setShowConfetti(false), 3000);
@@ -715,7 +735,7 @@ export function HTMLGeneratorV2({
       try {
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
         await saveProject(state.currentHTML);
-        
+
         // Generate and set the share URL
         const shareUrl = `${window.location.origin}/project/${state.projectId}`;
         setState((prev) => ({
@@ -733,7 +753,8 @@ export function HTMLGeneratorV2({
         toast({
           variant: "destructive",
           title: "فشل المشاركة",
-          description: "حدث خطأ أثناء حفظ المشروع للمشاركة. يرجى المحاولة مرة أخرى.",
+          description:
+            "حدث خطأ أثناء حفظ المشروع للمشاركة. يرجى المحاولة مرة أخرى.",
         });
       }
     }
@@ -852,16 +873,7 @@ export function HTMLGeneratorV2({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8"
-                    onClick={handleCopyCode}
-                  >
-                    <Copy className="h-4 w-4 ml-2" />
-                    <span className="hidden sm:inline">نسخ الكود</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8"
+                    className="bg-[#4caf50] hover:bg-[#388e3c] border-0 h-8"
                     onClick={handleShareProject}
                   >
                     <Share className="h-4 w-4 ml-2" />
@@ -926,37 +938,48 @@ export function HTMLGeneratorV2({
               <div className="flex flex-col items-center justify-center h-full p-4 bg-neutral-50">
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-bold mb-2">
-                    مرحباً في محرر HTML التوليدي
+                    مُنشئ الألعاب بالذكاء الاصطناعي 🎮
                   </h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    استخدم الدردشة على اليمين لوصف موقع الويب أو التطبيق الذي
-                    تريد إنشاؤه، وسأقوم بتوليد كود HTML مباشرةً هنا.
+                    استخدم الدردشة اللي على اليمين، ووصّف لي فكرة لعبة بسيطة
+                    تبغى تصمّمها، وأنا أطلع لك كود HTML جاهز للعب هنا!
                   </p>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
-                  {/* Sample ideas */}
-                  {[
-                    "لعبة تخمين كلمات",
-                    "آلة حاسبة بسيطة",
-                    "صفحة شخصية",
-                    "متجر إلكتروني بسيط",
-                    "تطبيق طقس",
-                    "لوحة رسم",
-                  ].map((idea) => (
-                    <Button
-                      key={idea}
-                      variant="outline"
-                      className="h-auto py-3 text-center"
-                      onClick={() => {
-                        setState((prev) => ({
-                          ...prev,
-                          prompt: idea,
-                        }));
-                      }}
-                    >
-                      {idea}
-                    </Button>
-                  ))}
+                <div className="max-w-2xl bg-white rounded-lg p-6 shadow-md border-2 border-purple-300">
+                  <h3 className="text-2xl font-bold mb-3 text-purple-700">تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:</h3>
+                  
+                  <p className="text-xl mb-4 font-bold text-gray-800">
+                    حركة بسيطة تعيدها كل مرة — وتصير أحلى وأصعب كل شوي!
+                  </p>
+                  
+                  <div className="space-y-2 my-4">
+                    <div className="flex items-center">
+                      <span className="text-2xl ml-2">🏃‍♂️</span>
+                      <span>تقفز فوق الحواجز (ماريو)</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-2xl ml-2">🎯</span>
+                      <span>تمسك الفواكه وهي تطيح (فروت نينجا)</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-2xl ml-2">🚀</span>
+                      <span>تحاول تعيش أطول وقت ممكن (فلابي بيرد)</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl font-bold text-purple-700 my-3">
+                    حركة وحدة + تحدي = إدمان! 🔥
+                  </p>
+                  
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <p className="text-gray-800 font-semibold">
+                      <span className="inline-block ml-2">👉</span>
+                      لما تفكر بلعبتك، اسأل نفسك:
+                    </p>
+                    <p className="text-gray-800 font-bold">
+                      "وش الحركة الرئيسية اللي بتكون ممتعة؟"
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -973,7 +996,7 @@ export function HTMLGeneratorV2({
       <div className="w-full md:w-[30%] h-full flex flex-col">
         <Card className="h-full flex flex-col">
           <CardHeader className="py-3">
-            <CardTitle className="text-xl">الدردشة مع الدكتور بنجي</CardTitle>
+            <CardTitle className="text-xl">الدردشة مع مساعدك الذكي</CardTitle>
           </CardHeader>
 
           <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
@@ -1000,14 +1023,14 @@ export function HTMLGeneratorV2({
                           <img
                             src={penguinAvatar}
                             alt="Dr. Pengy"
-                            className="w-6 h-6 rounded-full ml-2"
+                            className="w-6 h-6 rounded-full ml-1"
                           />
-                          <span className="text-xs font-medium">
-                            د. بنجي - مساعد HTML
-                          </span>
+                          <span className="text-xs font-medium">بنجي</span>
                         </div>
                       )}
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="whitespace-pre-wrap">
+                        {message.content}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1033,7 +1056,7 @@ export function HTMLGeneratorV2({
                       <ArrowRight className="h-4 w-4 ml-1" />
                       لا، أحتاج تعديل
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
                       onClick={() => handleConfirmSummary(true)}
                     >
@@ -1054,7 +1077,7 @@ export function HTMLGeneratorV2({
                       <ThumbsDown className="h-4 w-4 ml-1" />
                       أحتاج تعديل
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
                       onClick={() => handleSatisfaction(true)}
                     >
@@ -1083,10 +1106,10 @@ export function HTMLGeneratorV2({
                   state.flowStep === "input"
                     ? "اكتب وصف لموقع الويب أو التطبيق الذي تريد..."
                     : state.flowStep === "clarify"
-                    ? "أجب على السؤال التوضيحي..."
-                    : state.flowStep === "confirm"
-                    ? "أكتب أي تعديلات على الوصف..."
-                    : "اكتب تعليقك أو طلب التعديل..."
+                      ? "أجب على السؤال التوضيحي..."
+                      : state.flowStep === "confirm"
+                        ? "أكتب أي تعديلات على الوصف..."
+                        : "اكتب تعليقك أو طلب التعديل..."
                 }
                 className="flex-1 ml-2"
                 disabled={state.isLoading}
@@ -1121,16 +1144,12 @@ export function HTMLGeneratorV2({
           <DialogHeader>
             <DialogTitle>هل أنت متأكد من إعادة ضبط المشروع؟</DialogTitle>
             <DialogDescription>
-              سيؤدي هذا إلى حذف كافة الرسائل والكود الذي تم إنشاؤه حتى الآن.
-              هذا الإجراء لا يمكن التراجع عنه.
+              سيؤدي هذا إلى حذف كافة الرسائل والكود الذي تم إنشاؤه حتى الآن. هذا
+              الإجراء لا يمكن التراجع عنه.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={cancelResetHTML}
-            >
+            <Button type="button" variant="secondary" onClick={cancelResetHTML}>
               إلغاء
             </Button>
             <Button
@@ -1159,11 +1178,7 @@ export function HTMLGeneratorV2({
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2">
-            <Input
-              value={state.shareUrl || ""}
-              readOnly
-              className="ml-2"
-            />
+            <Input value={state.shareUrl || ""} readOnly className="ml-2" />
             <Button
               type="button"
               size="sm"

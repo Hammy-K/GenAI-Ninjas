@@ -134,14 +134,14 @@ export function HTMLGeneratorV2({
   const examplesMessage: HTMLMessage = {
     role: "assistant",
     content: `
-مثلاً:
-- لعبة شطرنج (او اي لعبة بسيطة)
-- لوحة رسم بسيطة
-- كويز تفاعلي فيه كم سؤال مضحك
-- صفحة تسهل وش ألبس اليوم من دولابي
-- صفحة أختار فيها وجهة سفري المفضلة
-- تطبيق يرشّح لك وش تأكل حسب مزاجك
-`,
+  تخيل لعبة بسيطة وممتعة، زي:
+  - لعبة ذكاء أو تركيز سريعة
+  - لعبة قفز وتفادي حواجز
+  - لعبة كويز مضحكة بأسئلة غريبة
+  - لعبة مغامرات واختيارات
+
+  خلك كرييتف! 🔥 أهم شيء نبدأ بفكرة خفيفة وممتعة.
+  `,
   };
 
   const initialState: HTMLGeneratorState = {
@@ -279,11 +279,7 @@ export function HTMLGeneratorV2({
   // Auto-save the project if it has changed
   useEffect(() => {
     // Only auto-save if there is actual content and a projectId
-    if (
-      state.currentHTML.trim() &&
-      state.projectId &&
-      !state.isSaving
-    ) {
+    if (state.currentHTML.trim() && state.projectId && !state.isSaving) {
       const saveTimer = setTimeout(() => {
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid && state.projectId) {
@@ -322,7 +318,7 @@ export function HTMLGeneratorV2({
     if (state.isLoading) return;
 
     const userInput = state.prompt.trim();
-    
+
     // If we're in the clarification flow, the prompt handling
     // is different than the initial input
     if (
@@ -355,7 +351,7 @@ export function HTMLGeneratorV2({
           // Get the project summary based on original idea and clarification
           const summary = await getProjectSummary(
             state.originalIdea,
-            userInput
+            userInput,
           );
 
           const assistantMessage: HTMLMessage = {
@@ -375,7 +371,8 @@ export function HTMLGeneratorV2({
           console.error("Error getting project summary:", error);
           const errorMessage: HTMLMessage = {
             role: "assistant",
-            content: "عذراً، حدث خطأ أثناء تلخيص المشروع. يرجى المحاولة مرة أخرى.",
+            content:
+              "عذراً، حدث خطأ أثناء تلخيص المشروع. يرجى المحاولة مرة أخرى.",
           };
 
           setState((prevState) => ({
@@ -412,9 +409,13 @@ export function HTMLGeneratorV2({
         }
 
         // Track satisfaction for analytics
-        trackStageProgress("html_generator", isSatisfied ? "satisfied" : "not_satisfied", {
-          project_length: state.currentHTML.length,
-        });
+        trackStageProgress(
+          "html_generator",
+          isSatisfied ? "satisfied" : "not_satisfied",
+          {
+            project_length: state.currentHTML.length,
+          },
+        );
       } else if (state.flowStep === "confirm") {
         // This is a normal message after the initial generation
         try {
@@ -428,7 +429,7 @@ export function HTMLGeneratorV2({
           const result = await generateHTML(
             state.originalIdea,
             state.clarificationAnswer,
-            userInput
+            userInput,
           );
 
           // Check if we received a valid response
@@ -436,7 +437,9 @@ export function HTMLGeneratorV2({
             // Create the assistant message with confirmation
             const assistantMessage: HTMLMessage = {
               role: "assistant",
-              content: result.explanation || "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
+              content:
+                result.explanation ||
+                "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
             };
 
             setState((prevState) => ({
@@ -463,7 +466,7 @@ export function HTMLGeneratorV2({
                   hasUnlockedBadge: true,
                 }));
                 onUnlockBadge("html_pro", "HTML generator");
-                
+
                 // Show confetti for badge
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
@@ -476,7 +479,8 @@ export function HTMLGeneratorV2({
           console.error("Error generating HTML:", error);
           const errorMessage: HTMLMessage = {
             role: "assistant",
-            content: "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى بوصف أكثر تفصيلاً.",
+            content:
+              "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى بوصف أكثر تفصيلاً.",
           };
 
           setState((prevState) => ({
@@ -524,7 +528,7 @@ export function HTMLGeneratorV2({
     try {
       // Get a clarifying question based on the user's idea
       const clarifyingResponse = await getClarifyingQuestion(userInput);
-      
+
       if (clarifyingResponse) {
         const assistantMessage: HTMLMessage = {
           role: "assistant",
@@ -540,8 +544,9 @@ export function HTMLGeneratorV2({
         // Log prompt to Firestore for analytics
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid) {
-          logPromptToFirestore(userInput, "html_generator", firebaseUid)
-            .catch(console.error);
+          logPromptToFirestore(userInput, "html_generator", firebaseUid).catch(
+            console.error,
+          );
         }
       } else {
         throw new Error("No clarifying question received");
@@ -581,21 +586,23 @@ export function HTMLGeneratorV2({
         const fullSummary = await getFullProjectSummary(
           state.originalIdea,
           state.clarificationAnswer,
-          state.projectSummary
+          state.projectSummary,
         );
 
         // Generate the HTML based on the full project specification
         const result = await generateHTML(
           state.originalIdea,
           state.clarificationAnswer,
-          fullSummary
+          fullSummary,
         );
 
         if (result && result.html) {
           // Add a message to confirm generation
           const assistantMessage: HTMLMessage = {
             role: "assistant",
-            content: result.explanation || "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
+            content:
+              result.explanation ||
+              "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
           };
 
           setState((prevState) => ({
@@ -622,7 +629,7 @@ export function HTMLGeneratorV2({
                 hasUnlockedBadge: true,
               }));
               onUnlockBadge("html_pro", "HTML generator");
-              
+
               // Show confetti for badge
               setShowConfetti(true);
               setTimeout(() => setShowConfetti(false), 3000);
@@ -718,7 +725,7 @@ export function HTMLGeneratorV2({
       try {
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
         await saveProject(state.projectId, state.currentHTML, firebaseUid);
-        
+
         // Generate and set the share URL
         const shareUrl = `${window.location.origin}/project/${state.projectId}`;
         setState((prev) => ({
@@ -736,7 +743,8 @@ export function HTMLGeneratorV2({
         toast({
           variant: "destructive",
           title: "فشل المشاركة",
-          description: "حدث خطأ أثناء حفظ المشروع للمشاركة. يرجى المحاولة مرة أخرى.",
+          description:
+            "حدث خطأ أثناء حفظ المشروع للمشاركة. يرجى المحاولة مرة أخرى.",
         });
       }
     }
@@ -1010,7 +1018,9 @@ export function HTMLGeneratorV2({
                           </span>
                         </div>
                       )}
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="whitespace-pre-wrap">
+                        {message.content}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1036,9 +1046,7 @@ export function HTMLGeneratorV2({
                       <ArrowRight className="h-4 w-4 ml-1" />
                       لا، أحتاج تعديل
                     </Button>
-                    <Button 
-                      onClick={() => handleConfirmSummary(true)}
-                    >
+                    <Button onClick={() => handleConfirmSummary(true)}>
                       <Check className="h-4 w-4 ml-1" />
                       نعم، ابدأ الكود
                     </Button>
@@ -1056,9 +1064,7 @@ export function HTMLGeneratorV2({
                       <ThumbsDown className="h-4 w-4 ml-1" />
                       أحتاج تعديل
                     </Button>
-                    <Button 
-                      onClick={() => handleSatisfaction(true)}
-                    >
+                    <Button onClick={() => handleSatisfaction(true)}>
                       <ThumbsUp className="h-4 w-4 ml-1" />
                       رائع!
                     </Button>
@@ -1084,10 +1090,10 @@ export function HTMLGeneratorV2({
                   state.flowStep === "input"
                     ? "اكتب وصف لموقع الويب أو التطبيق الذي تريد..."
                     : state.flowStep === "clarify"
-                    ? "أجب على السؤال التوضيحي..."
-                    : state.flowStep === "confirm"
-                    ? "أكتب أي تعديلات على الوصف..."
-                    : "اكتب تعليقك أو طلب التعديل..."
+                      ? "أجب على السؤال التوضيحي..."
+                      : state.flowStep === "confirm"
+                        ? "أكتب أي تعديلات على الوصف..."
+                        : "اكتب تعليقك أو طلب التعديل..."
                 }
                 className="flex-1 ml-2"
                 disabled={state.isLoading}
@@ -1122,16 +1128,12 @@ export function HTMLGeneratorV2({
           <DialogHeader>
             <DialogTitle>هل أنت متأكد من إعادة ضبط المشروع؟</DialogTitle>
             <DialogDescription>
-              سيؤدي هذا إلى حذف كافة الرسائل والكود الذي تم إنشاؤه حتى الآن.
-              هذا الإجراء لا يمكن التراجع عنه.
+              سيؤدي هذا إلى حذف كافة الرسائل والكود الذي تم إنشاؤه حتى الآن. هذا
+              الإجراء لا يمكن التراجع عنه.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={cancelResetHTML}
-            >
+            <Button type="button" variant="secondary" onClick={cancelResetHTML}>
               إلغاء
             </Button>
             <Button
@@ -1160,11 +1162,7 @@ export function HTMLGeneratorV2({
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2">
-            <Input
-              value={state.shareUrl || ""}
-              readOnly
-              className="ml-2"
-            />
+            <Input value={state.shareUrl || ""} readOnly className="ml-2" />
             <Button
               type="button"
               size="sm"

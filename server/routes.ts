@@ -316,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             explanatoryMessage =
-              explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+              explanationText || "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟";
           } else {
             // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
             generatedHTML = htmlContent;
@@ -334,7 +334,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 .substring(0, doctypeIndex)
                 .trim();
             } else {
-              explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
+              explanatoryMessage =
+                "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟";
             }
           }
         } else {
