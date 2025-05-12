@@ -653,7 +653,7 @@ export default function LovableMissionStage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full p-4">
       {/* Student Info Modal - only shown if not completed */}
       {!state.isStudentInfoCompleted && (
         <StudentInfoModal onComplete={handleStudentInfoComplete} />
