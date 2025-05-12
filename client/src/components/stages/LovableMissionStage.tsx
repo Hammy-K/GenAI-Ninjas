@@ -123,10 +123,14 @@ export default function LovableMissionStage() {
 
   // Handler for when celebration animation completes
   const handleCelebrationComplete = () => {
-    setState((prev) => ({
-      ...prev,
-      showCelebration: false,
-    }));
+    console.log("Celebration animation complete!");
+    // Delay turning off so it doesn't immediately disappear
+    setTimeout(() => {
+      setState((prev) => ({
+        ...prev,
+        showCelebration: false,
+      }));
+    }, 500);
   };
   // Check if student info is already in localStorage
   const hasStudentInfo = Boolean(

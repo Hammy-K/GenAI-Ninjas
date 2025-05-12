@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Player } from '@lottiefiles/react-lottie-player';
-// Use a static path to the animation file
+
+// Use a static path to the animation file - this is more reliable
 const celebrationAnimationPath = '/animations/celebration.json';
 
 interface CelebrationAnimationProps {
@@ -12,38 +13,44 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
   isVisible, 
   onComplete 
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (isVisible) {
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
+    // When visibility changes, handle player state
+    if (isVisible && playerRef.current) {
+      playerRef.current.play();
+      console.log('🎉 Playing celebration animation');
     }
   }, [isVisible]);
 
   const handleComplete = () => {
+    console.log('🎉 Animation complete');
     if (onComplete) {
       onComplete();
     }
   };
 
+  // Don't render anything if not visible
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <Player
-        autoplay
-        keepLastFrame={false}
-        src={celebrationAnimationPath}
-        style={{ width: '100%', height: '100%' }}
-        loop={false}
-        onEvent={event => {
-          if (event === 'complete') {
-            handleComplete();
-          }
-        }}
-      />
+    <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none bg-opacity-0">
+      <div className="w-full h-full max-w-screen max-h-screen overflow-visible">
+        <Player
+          ref={playerRef}
+          autoplay={true}
+          keepLastFrame={false}
+          src={celebrationAnimation}
+          style={{ width: '120%', height: '120%', position: 'absolute', top: '-10%', left: '-10%' }}
+          loop={false}
+          speed={1.2}
+          onEvent={event => {
+            if (event === 'complete') {
+              handleComplete();
+            }
+          }}
+        />
+      </div>
     </div>
   );
 };
