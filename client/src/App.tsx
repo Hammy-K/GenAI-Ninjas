@@ -13,6 +13,7 @@ import AppBuilderStream from "@/pages/app-builder";
 import EmptyMission from "@/pages/missions/empty";
 import GameDevMission from "@/pages/missions/game-dev";
 import HTMLGeneratorV2 from "@/pages/missions/html-generator-v2";
+import HtmlGeneratorV2SubmissionsPage from "@/pages/missions/html-generator-v2/submissions";
 import LovableMission from "@/pages/lovable-mission";
 import LovableSubmissionsPage from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/reset-instructions" component={ResetInstructions} />
       <Route path="/missions/html-generator" component={HTMLGeneratorWrapper} />
       <Route path="/missions/html-generator-v2" component={HTMLGeneratorV2} />
+      <Route path="/missions/html-generator-v2/submissions" component={HtmlGeneratorV2SubmissionsPage} />
 
       <Route path="/reset" component={ResetSession} />
       <Route component={NotFound} />
