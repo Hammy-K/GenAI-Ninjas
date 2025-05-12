@@ -7,7 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Send, Check, AlertCircle, Copy, ExternalLink, ListIcon } from "lucide-react";
+import {
+  Send,
+  Check,
+  AlertCircle,
+  Copy,
+  ExternalLink,
+  ListIcon,
+} from "lucide-react";
 import { Link } from "wouter";
 import drPengyAvatar from "@assets/Pengy_chat.png";
 import CelebrationAnimation from "@/components/animations/CelebrationAnimation";
@@ -113,18 +120,18 @@ function isAlreadyAwarded(category: string, badge: string) {
 export default function LovableMissionStage() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Handler for when celebration animation completes
   const handleCelebrationComplete = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      showCelebration: false
+      showCelebration: false,
     }));
   };
   // Check if student info is already in localStorage
   const hasStudentInfo = Boolean(
-    localStorage.getItem('lovable_student_name') && 
-    localStorage.getItem('lovable_noon_code')
+    localStorage.getItem("lovable_student_name") &&
+      localStorage.getItem("lovable_noon_code"),
   );
 
   const [state, setState] = useState<LovableMissionState>({
@@ -144,12 +151,12 @@ export default function LovableMissionStage() {
     showCelebration: false, // Don't show celebration initially
     isStudentInfoCompleted: hasStudentInfo, // Track if student info is completed
   });
-  
+
   // Handle student info modal completion
   const handleStudentInfoComplete = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      isStudentInfoCompleted: true
+      isStudentInfoCompleted: true,
     }));
   };
 
@@ -161,24 +168,27 @@ export default function LovableMissionStage() {
     // Try to load chat history from localStorage first
     const loadFromLocalStorage = () => {
       const savedMessages = localStorage.getItem("lovable_mission_messages");
-      const savedProjectType = localStorage.getItem("lovable_mission_project_type") || "";
-      const savedFinalPrompt = localStorage.getItem("lovable_mission_final_prompt") || "";
-      const savedProjectLink = localStorage.getItem("lovable_mission_project_link") || "";
-      
+      const savedProjectType =
+        localStorage.getItem("lovable_mission_project_type") || "";
+      const savedFinalPrompt =
+        localStorage.getItem("lovable_mission_final_prompt") || "";
+      const savedProjectLink =
+        localStorage.getItem("lovable_mission_project_link") || "";
+
       if (savedMessages) {
         try {
           const parsedMessages = JSON.parse(savedMessages);
           if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
             // If we have messages, use them
-            setState(prev => ({ 
-              ...prev, 
+            setState((prev) => ({
+              ...prev,
               messages: parsedMessages,
               projectType: savedProjectType,
               finalPrompt: savedFinalPrompt,
               projectLink: savedProjectLink,
-              isChatLocked: false // Unlock chat if we have saved messages
+              isChatLocked: false, // Unlock chat if we have saved messages
             }));
-            
+
             // Return true if we found saved messages
             return true;
           }
@@ -219,10 +229,16 @@ export default function LovableMissionStage() {
             projectLink: data.progress.projectLink || "",
             isSubmitted: data.progress.hasSubmitted || false,
           }));
-          
+
           // Also save to localStorage for future use
-          localStorage.setItem("lovable_mission_messages", JSON.stringify(messages));
-          localStorage.setItem("lovable_mission_project_link", data.progress.projectLink || "");
+          localStorage.setItem(
+            "lovable_mission_messages",
+            JSON.stringify(messages),
+          );
+          localStorage.setItem(
+            "lovable_mission_project_link",
+            data.progress.projectLink || "",
+          );
         }
       } catch (error) {
         console.error("Failed to load progress:", error);
@@ -249,14 +265,14 @@ export default function LovableMissionStage() {
 
     // Store the prompt before clearing it
     const currentPrompt = state.prompt.trim();
-    
+
     if (!currentPrompt) return;
 
     // Add user message to chat
     const userMessage: ChatMessage = {
       role: "user",
       content: currentPrompt,
-      className: "justify-end" // Align to right
+      className: "justify-end", // Align to right
     };
 
     setState((prev) => ({
@@ -282,7 +298,8 @@ export default function LovableMissionStage() {
       // Save user message to the database
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
       // Get student info from localStorage
-      const chatStudentName = localStorage.getItem("lovable_student_name") || "";
+      const chatStudentName =
+        localStorage.getItem("lovable_student_name") || "";
       const chatNoonCode = localStorage.getItem("lovable_noon_code") || "";
 
       await fetch("/api/lovable-mission/chat", {
@@ -295,62 +312,65 @@ export default function LovableMissionStage() {
           role: "user",
           content: currentPrompt,
           studentName: chatStudentName, // Include student name
-          noonCode: chatNoonCode // Include noon code
+          noonCode: chatNoonCode, // Include noon code
         }),
       });
-      
+
       // Determine if this is the first message after selection (responding to "what's your favorite game/app?")
       const messages = state.messages;
       let isFirstResponseAfterSelection = false;
       let selectedType = "";
-      
+
       // Check the last two messages
       if (messages.length >= 2) {
         // Check if the second-to-last message was from the assistant asking about favorite app/game
         const prevMessage = messages[messages.length - 2];
         if (
-          prevMessage.role === "assistant" && 
-          (prevMessage.content.includes("لعبتك المفضلة") || prevMessage.content.includes("تطبيقك المفضل"))
+          prevMessage.role === "assistant" &&
+          (prevMessage.content.includes("لعبتك المفضلة") ||
+            prevMessage.content.includes("تطبيقك المفضل"))
         ) {
           isFirstResponseAfterSelection = true;
-          
+
           // Determine if it was game or app
           selectedType = prevMessage.content.includes("لعبتك") ? "game" : "app";
-          
+
           // Store the project type in state
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
-            projectType: selectedType
+            projectType: selectedType,
           }));
         }
       }
-      
+
       // Use the standard chat API for now because our firebaseUid isn't properly recognized
       const apiEndpoint = "/api/ai/text";
-      
+
       // Create the appropriate system message
-      let systemPromptContent = 'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.';
-      
+      let systemPromptContent =
+        "أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊.";
+
       // Add the favorite app/game information if this is the first response after selection
       if (isFirstResponseAfterSelection) {
         systemPromptContent += ` The student's favorite ${selectedType} is "${currentPrompt}". Use this information to personalize your conversation and guide them toward brainstorming a project idea related to their interests.`;
       }
-      
+
       // Create message history for API
       const messageHistory = state.messages
-        .filter(msg => !msg.className?.includes("loading")) // Remove loading messages
-        .map(msg => ({
+        .filter((msg) => !msg.className?.includes("loading")) // Remove loading messages
+        .map((msg) => ({
           role: msg.role,
           content: msg.content,
         }));
-      
+
       console.log("Sending chat request:", {
         prompt: currentPrompt,
         messageHistory: messageHistory.length,
       });
-      
+
       // Get student info from localStorage for AI metadata
-      const storedStudentName = localStorage.getItem("lovable_student_name") || "";
+      const storedStudentName =
+        localStorage.getItem("lovable_student_name") || "";
       const storedNoonCode = localStorage.getItem("lovable_noon_code") || "";
 
       // Call the standard GPT-4o chat endpoint
@@ -359,13 +379,13 @@ export default function LovableMissionStage() {
       // - messageHistory: array of previous messages
       // - maxTokens: (optional) token limit
       // NOTE: We cannot pass systemPrompt or metadata directly, as the server handles the system message differently
-      
+
       // Add the system prompt as the first message in the message history
       const fullMessageHistory = [
         { role: "system", content: systemPromptContent },
-        ...messageHistory
+        ...messageHistory,
       ];
-      
+
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
@@ -374,16 +394,16 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           prompt: currentPrompt,
           messageHistory: fullMessageHistory,
-          maxTokens: 800
+          maxTokens: 800,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to get response from Dr. Pengy");
       }
-      
+
       const data = await response.json();
-      
+
       // Remove loading message
       setState((prev) => ({
         ...prev,
@@ -392,19 +412,22 @@ export default function LovableMissionStage() {
         ),
         isLoading: false,
       }));
-      
+
       // Process final stage if needed
       // The /api/ai/text endpoint returns { text: "response content" }
       const aiResponse = data.text || "";
-      
-      if (aiResponse.includes("نسخ هذا الملخص") || 
-          aiResponse.includes("استخدامه كتوجيه في Lovable") ||
-          aiResponse.includes("تشغيل مشروعك")) {
-        
+
+      if (
+        aiResponse.includes("نسخ هذا الملخص") ||
+        aiResponse.includes("استخدامه كتوجيه في Lovable") ||
+        aiResponse.includes("تشغيل مشروعك")
+      ) {
         // Extract the final prompt from the response if available
         const finalPromptMatch = aiResponse.match(/"([^"]+)"/);
-        const finalPrompt = finalPromptMatch ? finalPromptMatch[1] : state.messages[state.messages.length - 2].content;
-        
+        const finalPrompt = finalPromptMatch
+          ? finalPromptMatch[1]
+          : state.messages[state.messages.length - 2].content;
+
         // Set as final prompt when we reach this stage
         setState((prev) => ({
           ...prev,
@@ -424,24 +447,27 @@ export default function LovableMissionStage() {
 
       setState((prev) => {
         const updatedMessages = [...prev.messages, assistantMessage];
-        
+
         // Save messages to localStorage for persistence
-        localStorage.setItem("lovable_mission_messages", JSON.stringify(updatedMessages));
-        
+        localStorage.setItem(
+          "lovable_mission_messages",
+          JSON.stringify(updatedMessages),
+        );
+
         // Also save other important state
         localStorage.setItem("lovable_mission_project_type", prev.projectType);
         localStorage.setItem("lovable_mission_final_prompt", prev.finalPrompt);
         localStorage.setItem("lovable_mission_project_link", prev.projectLink);
-        
+
         return {
           ...prev,
           messages: updatedMessages,
         };
       });
-      
+
       // Track progress
       trackStageProgress("lovable_mission", "chat_response_sent");
-      
+
       // Save assistant message to the database
       await fetch("/api/lovable-mission/chat", {
         method: "POST",
@@ -552,7 +578,7 @@ export default function LovableMissionStage() {
       }));
       return;
     }
-    
+
     // Check for project name
     if (!state.projectName) {
       setState((prev) => ({
@@ -561,26 +587,28 @@ export default function LovableMissionStage() {
       }));
       return;
     }
-    
+
     setState((prev) => ({ ...prev, isLoading: true, error: "" }));
 
     try {
       // Try to get Firebase UID but don't require it
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
       // Get student & project information
-      const submissionStudentName = localStorage.getItem("lovable_student_name") || "";
-      const submissionNoonCode = localStorage.getItem("lovable_noon_code") || "";
+      const submissionStudentName =
+        localStorage.getItem("lovable_student_name") || "";
+      const submissionNoonCode =
+        localStorage.getItem("lovable_noon_code") || "";
       const projectName = state.projectName;
-      
+
       // Debug logging
-      console.log("Submitting project:", { 
-        projectLink: state.projectLink, 
+      console.log("Submitting project:", {
+        projectLink: state.projectLink,
         studentName: submissionStudentName,
         projectName: projectName,
         noonCode: submissionNoonCode,
-        firebaseUid: firebaseUid || "anonymous" 
+        firebaseUid: firebaseUid || "anonymous",
       });
-      
+
       // Call API to submit link with student name
       const response = await fetch("/api/lovable-mission/submit", {
         method: "POST",
@@ -594,7 +622,7 @@ export default function LovableMissionStage() {
           noonCode: submissionNoonCode, // Include noon code
           projectType: state.projectType, // Include project type (app/game)
           finalPrompt: state.finalPrompt, // Include the final prompt used
-          firebaseUid: firebaseUid || undefined // Include if available
+          firebaseUid: firebaseUid || undefined, // Include if available
         }),
       });
 
@@ -629,9 +657,10 @@ export default function LovableMissionStage() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error 
-          ? `حدث خطأ: ${error.message}` 
-          : "حدث خطأ أثناء تقديم الرابط. يرجى المحاولة مرة أخرى. تأكد من أن الرابط يحتوي على lovable.dev أو lovable.app",
+        error:
+          error instanceof Error
+            ? `حدث خطأ: ${error.message}`
+            : "حدث خطأ أثناء تقديم الرابط. يرجى المحاولة مرة أخرى. تأكد من أن الرابط يحتوي على lovable.dev أو lovable.app",
       }));
     }
   };
@@ -658,11 +687,11 @@ export default function LovableMissionStage() {
       {!state.isStudentInfoCompleted && (
         <StudentInfoModal onComplete={handleStudentInfoComplete} />
       )}
-      
+
       {/* Celebration Animation */}
-      <CelebrationAnimation 
-        isVisible={state.showCelebration} 
-        onComplete={handleCelebrationComplete} 
+      <CelebrationAnimation
+        isVisible={state.showCelebration}
+        onComplete={handleCelebrationComplete}
       />
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* Chat Panel - 75% width */}
@@ -703,49 +732,55 @@ export default function LovableMissionStage() {
                         <span className="text-xs font-bold">د. بنجي</span>
                       </div>
                     )}
-                    {message.role === "assistant" && message.content === welcomeMessage.content ? (
-                      message.content
-                    ) : (
-                      message.content
-                    )}
+                    {message.role === "assistant" &&
+                    message.content === welcomeMessage.content
+                      ? message.content
+                      : message.content}
                   </div>
                 </div>
               ))}
-              
+
               {/* Option buttons shown outside chat bubbles, aligned to the right */}
               {state.messages.length === 1 && state.isChatLocked && (
                 <div className="flex justify-end mb-4 mr-4 mt-4">
                   <div className="flex flex-col gap-2 items-end">
-                    <p className="text-xs text-gray-500 mb-1">اختر نوع المشروع:</p>
+                    <p className="text-xs text-gray-500 mb-1">
+                      اختر نوع المشروع:
+                    </p>
                     <div className="flex gap-2">
-                      <Button 
+                      <Button
                         onClick={async () => {
                           const userMessage = "لعبة";
                           // Add as user message with right alignment
                           const newMessage: ChatMessage = {
                             role: "user",
                             content: userMessage,
-                            className: "justify-end" // Align to right
+                            className: "justify-end", // Align to right
                           };
-                          
+
                           // Create immediate follow-up question
                           const immediateFollowupMessage: ChatMessage = {
                             role: "assistant",
                             content: "كفو! إيش لعبتك المفضلة؟",
                           };
-                          
-                          setState(prev => ({
+
+                          setState((prev) => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage, immediateFollowupMessage],
+                            messages: [
+                              ...prev.messages,
+                              newMessage,
+                              immediateFollowupMessage,
+                            ],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
                             isLoading: false,
                           }));
-                          
+
                           try {
                             // Save user message to the database
-                            const firebaseUid = localStorage.getItem("firebaseUid") || "";
-                            
+                            const firebaseUid =
+                              localStorage.getItem("firebaseUid") || "";
+
                             await fetch("/api/lovable-mission/chat", {
                               method: "POST",
                               headers: {
@@ -757,7 +792,7 @@ export default function LovableMissionStage() {
                                 content: userMessage,
                               }),
                             });
-                            
+
                             // Also save Dr. Pengy's immediate follow-up question
                             await fetch("/api/lovable-mission/chat", {
                               method: "POST",
@@ -780,34 +815,39 @@ export default function LovableMissionStage() {
                       >
                         لعبة 🎮
                       </Button>
-                      <Button 
+                      <Button
                         onClick={async () => {
                           const userMessage = "تطبيق";
                           // Add as user message with right alignment
                           const newMessage: ChatMessage = {
                             role: "user",
                             content: userMessage,
-                            className: "justify-end" // Align to right
+                            className: "justify-end", // Align to right
                           };
-                          
+
                           // Create immediate follow-up question
                           const immediateFollowupMessage: ChatMessage = {
                             role: "assistant",
                             content: "كفو! إيش تطبيقك المفضل؟",
                           };
-                          
-                          setState(prev => ({
+
+                          setState((prev) => ({
                             ...prev,
-                            messages: [...prev.messages, newMessage, immediateFollowupMessage],
+                            messages: [
+                              ...prev.messages,
+                              newMessage,
+                              immediateFollowupMessage,
+                            ],
                             prompt: "",
                             isChatLocked: false, // Unlock chat after selection
                             isLoading: false,
                           }));
-                          
+
                           try {
                             // Save user message to the database
-                            const firebaseUid = localStorage.getItem("firebaseUid") || "";
-                            
+                            const firebaseUid =
+                              localStorage.getItem("firebaseUid") || "";
+
                             await fetch("/api/lovable-mission/chat", {
                               method: "POST",
                               headers: {
@@ -819,7 +859,7 @@ export default function LovableMissionStage() {
                                 content: userMessage,
                               }),
                             });
-                            
+
                             // Also save Dr. Pengy's immediate follow-up question
                             await fetch("/api/lovable-mission/chat", {
                               method: "POST",
@@ -837,7 +877,7 @@ export default function LovableMissionStage() {
                             // We don't need to show an error here as the messages are already displayed
                           }
                         }}
-                        variant="outline" 
+                        variant="outline"
                         className="bg-white border-purple-500 text-purple-700 hover:bg-purple-50"
                       >
                         تطبيق 📱
@@ -846,7 +886,7 @@ export default function LovableMissionStage() {
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
           </div>
@@ -863,7 +903,11 @@ export default function LovableMissionStage() {
                     error: "",
                   }))
                 }
-                placeholder={state.isChatLocked ? "الرجاء اختيار نوع المشروع أولاً..." : "اكتب رسالتك هنا..."}
+                placeholder={
+                  state.isChatLocked
+                    ? "الرجاء اختيار نوع المشروع أولاً..."
+                    : "اكتب رسالتك هنا..."
+                }
                 className="flex-1 resize-none"
                 rows={1}
                 disabled={state.isChatLocked} // Disable when chat is locked
@@ -876,13 +920,17 @@ export default function LovableMissionStage() {
               />
               <Button
                 type="submit"
-                disabled={state.isLoading || !state.prompt.trim() || state.isChatLocked}
+                disabled={
+                  state.isLoading || !state.prompt.trim() || state.isChatLocked
+                }
               >
                 <Send className="h-4 w-4" />
               </Button>
             </form>
             {state.isChatLocked && (
-              <p className="text-xs text-gray-500 mt-2 text-center">⬆️ اختر تطبيق أو لعبة للبدء في المحادثة</p>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                ⬆️ اختر تطبيق أو لعبة للبدء في المحادثة
+              </p>
             )}
           </div>
         </div>
@@ -940,7 +988,9 @@ export default function LovableMissionStage() {
             <form onSubmit={handleLinkSubmit} className="mt-4">
               <div className="flex flex-col gap-3">
                 <div>
-                  <Label htmlFor="project-link" className="text-sm font-bold">رابط المشروع</Label>
+                  <Label htmlFor="project-link" className="text-sm font-bold">
+                    رابط المشروع
+                  </Label>
                   <Input
                     id="project-link"
                     placeholder="https://...lovable.app"
@@ -955,57 +1005,66 @@ export default function LovableMissionStage() {
                     }
                     className="text-sm bg-white-50 mt-1"
                   />
-                  
+
                   {/* URL Validation Button */}
-                  <Button 
+                  <Button
                     type="button"
                     onClick={() => {
                       // Check URL validity
                       if (!state.projectLink) {
-                        setState(prev => ({
+                        setState((prev) => ({
                           ...prev,
-                          error: "الرجاء إدخال رابط المشروع."
+                          error: "الرجاء إدخال رابط المشروع.",
                         }));
                         return;
                       }
-                        
+
                       // Make sure the URL has a proper protocol prefix
                       let projectLink = state.projectLink;
-                      if (!projectLink.startsWith('http://') && !projectLink.startsWith('https://')) {
-                        projectLink = 'https://' + projectLink;
+                      if (
+                        !projectLink.startsWith("http://") &&
+                        !projectLink.startsWith("https://")
+                      ) {
+                        projectLink = "https://" + projectLink;
                       }
-                        
+
                       // Validate that the URL contains lovable.dev or lovable.app
-                      if (!projectLink.includes("lovable.dev") && !projectLink.includes("lovable.app")) {
-                        setState(prev => ({
+                      if (
+                        !projectLink.includes("lovable.dev") &&
+                        !projectLink.includes("lovable.app")
+                      ) {
+                        setState((prev) => ({
                           ...prev,
-                          error: "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app)."
+                          error:
+                            "الرابط غير صالح. يجب أن يكون رابط مشروع Lovable (lovable.dev أو lovable.app).",
                         }));
                         return;
                       }
-                        
+
                       // Update state with valid URL
-                      setState(prev => ({
-                        ...prev, 
+                      setState((prev) => ({
+                        ...prev,
                         projectLink,
                         isProjectLinkValid: true,
-                        error: ""
+                        error: "",
                       }));
                     }}
                     className="mt-2 w-full text-sm bg-green-50"
                     variant="outline"
                     disabled={state.isProjectLinkValid}
                   >
-                    {state.isProjectLinkValid ? 
-                      "تم التحقق من الرابط ✓" : 
-                      "التحقق من الرابط"}
+                    {state.isProjectLinkValid
+                      ? "تم التحقق من الرابط ✓"
+                      : "التحقق من الرابط"}
                   </Button>
                 </div>
-                
+
                 {/* Project Name Field - Only show when URL is valid */}
                 {state.isProjectLinkValid && (
                   <div className="mt-2">
-                    <Label htmlFor="project-name" className="text-sm font-bold">اسم المشروع</Label>
+                    <Label htmlFor="project-name" className="text-sm font-bold">
+                      اسم المشروع
+                    </Label>
                     <Input
                       id="project-name"
                       placeholder="....."
@@ -1020,13 +1079,13 @@ export default function LovableMissionStage() {
                     />
                   </div>
                 )}
-                
+
                 {/* Submit Button - Only enable when URL is valid and name is entered */}
                 <Button
                   type="submit"
                   disabled={
-                    state.isLoading || 
-                    !state.isProjectLinkValid || 
+                    state.isLoading ||
+                    !state.isProjectLinkValid ||
                     (!state.projectName && state.isProjectLinkValid)
                   }
                   className="bg-green-600 hover:bg-green-700 text-white mt-2"
@@ -1036,7 +1095,7 @@ export default function LovableMissionStage() {
               </div>
             </form>
           ) : (
-            <Alert variant="default" className="bg-primary/20 mt-4">
+            <Alert variant="default" className="bg-green-100 mt-4">
               <Check className="h-4 w-4" />
               <AlertTitle className="text-sm">تم التقديم!</AlertTitle>
               <AlertDescription className="text-sm">
@@ -1053,10 +1112,13 @@ export default function LovableMissionStage() {
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* All Projects Link */}
           <div className="mt-4 text-center">
-            <Link href="/missions/lovable/submissions" className="text-primary text-sm hover:underline">
+            <Link
+              href="/missions/lovable/submissions"
+              className="text-primary text-sm hover:underline"
+            >
               عرض جميع المشاريع
             </Link>
           </div>
