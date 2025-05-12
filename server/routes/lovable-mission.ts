@@ -40,6 +40,7 @@ const submitLinkSchema = z.object({
       { message: "URL must include lovable.dev or lovable.app" }
     ),
   studentName: z.string().min(1, { message: "Student name is required" }).optional(),
+  studentId: z.string().optional(), // Student ID (noon code)
   projectName: z.string().min(1, { message: "Project name is required" }).optional(),
   projectType: z.string().refine(
     (val) => ['app', 'game'].includes(val),
@@ -224,12 +225,13 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         });
       }
       
-      const { projectLink, studentName, projectName, firebaseUid, projectType, finalPrompt } = result.data;
+      const { projectLink, studentName, studentId, projectName, firebaseUid, projectType, finalPrompt } = result.data;
       
       // Project metadata to store
       const metadata = {
         projectLink,
         studentName: studentName || "Anonymous Student",
+        studentId: studentId || "", // Include student ID (noon code)
         projectName,
         submittedAt: new Date().toISOString(),
         projectType,
@@ -241,6 +243,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         await storage.createLovableSubmission({
           projectLink,
           studentName: studentName || "Anonymous Student",
+          studentId, // Include student ID (noon code)
           projectName, // Include project name
           projectType: projectType || "app", // Default to "app" if not provided
           finalPrompt, // Include the final prompt
@@ -285,6 +288,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
                     progressId: progress.id,
                     projectLink,
                     studentName: studentName || "Anonymous Student",
+                    studentId, // Include student ID (noon code)
                     projectName, // Include project name
                     projectType: projectType || "app", // Default to "app" if not provided
                     finalPrompt, // Include final prompt
