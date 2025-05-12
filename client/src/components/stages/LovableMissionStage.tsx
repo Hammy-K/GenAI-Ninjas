@@ -527,7 +527,7 @@ export default function LovableMissionStage() {
                   <div
                     className={`max-w-[80%] rounded-lg p-3 relative group ${
                       message.role === "assistant"
-                        ? "bg-transparent text-foreground"
+                        ? "bg-transparent text-foreground border border-purple-200"
                         : "bg-purple-500 text-white"
                     } ${message.className || ""}`}
                     dir={
