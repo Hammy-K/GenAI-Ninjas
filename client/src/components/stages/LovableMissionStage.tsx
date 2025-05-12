@@ -333,14 +333,14 @@ export default function LovableMissionStage() {
         JSON.stringify([...state.messages, userMessage]),
       );
 
-      const response = await fetch("/api/lovable-mission/assistant", {
+      const response = await fetch("/api/assistant/lovable-chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: currentPrompt,
-          messageHistory: state.messages.length,
+          message: currentPrompt,
+          messageHistory: state.messages,
           firebaseUid,
           studentName: chatStudentName, // Include student name
           noonCode: chatNoonCode, // Include noon code

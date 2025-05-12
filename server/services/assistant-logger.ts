@@ -27,7 +27,10 @@ export async function logAssistantInteraction(logData: InsertAssistantLog): Prom
       userName: logData.userName || null,
       // Use deviceId as a fallback when Firebase UID is not available
       // This allows us to track interactions across sessions even when Firebase Anonymous Auth is not enabled
-      deviceId: logData.deviceId || null
+      deviceId: logData.deviceId || null,
+      // Student information fields for Lovable Mission
+      studentName: logData.studentName || null,
+      studentId: logData.studentId || null
     };
 
     // Insert into database
