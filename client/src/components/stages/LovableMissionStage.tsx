@@ -333,6 +333,22 @@ export default function LovableMissionStage() {
         JSON.stringify([...state.messages, userMessage]),
       );
 
+      // Check if this is the first user message after app/game selection
+      // We need to check if the last assistant message is asking about favorite app/game
+      const isFavoriteAppGameQuestion = state.messages.length >= 2 && 
+        state.messages[state.messages.length - 1].role === "assistant" && 
+        (state.messages[state.messages.length - 1].content.includes("تطبيقك المفضل") || 
+         state.messages[state.messages.length - 1].content.includes("لعبتك المفضل"));
+      
+      // Prepare special system prompt if this is the favorite app/game response
+      let systemPrompt = undefined;
+      
+      if (isFavoriteAppGameQuestion) {
+        systemPrompt = `The student wants to start the mission now and this is their favourite app/game ${currentPrompt}. 
+1. Give the student a fun fact about this app/game, then start warming up with the student and ease them up.
+2. If you do not recognize what the student is saying, ask for clarification, and continue the flow normally`;
+      }
+
       const response = await fetch("/api/assistant/lovable-chat", {
         method: "POST",
         headers: {
@@ -344,6 +360,7 @@ export default function LovableMissionStage() {
           firebaseUid,
           studentName: chatStudentName, // Include student name
           noonCode: chatNoonCode, // Include noon code
+          systemPrompt: systemPrompt // Include the system prompt if this is a favorite app/game response
         }),
       });
 
