@@ -19,7 +19,6 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
     // When visibility changes, handle player state
     if (isVisible && playerRef.current) {
       playerRef.current.play();
-      console.log('🎉 Playing celebration animation');
     }
   }, [isVisible]);
 

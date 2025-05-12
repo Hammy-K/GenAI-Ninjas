@@ -75,7 +75,7 @@ const initialChecklistItems: ChecklistItem[] = [
   {
     id: 3,
     text: "🌐 ادخل على Lovable.الصق الفكرة وابدأ بناء فكرتك.",
-    description: "انتبه! ⚠️ عندك بس ٥ محادثات مع Lovable، استخدمها بحكمة.",
+    description: "انتبه! عندك بس ٥ محادثات مع Lovable، استخدمها بحكمة.",
     completed: false,
     type: "button",
     action: () => {},
@@ -123,7 +123,6 @@ export default function LovableMissionStage() {
 
   // Handler for when celebration animation completes
   const handleCelebrationComplete = () => {
-    console.log("Celebration animation complete!");
     // Delay turning off so it doesn't immediately disappear
     setTimeout(() => {
       setState((prev) => ({
