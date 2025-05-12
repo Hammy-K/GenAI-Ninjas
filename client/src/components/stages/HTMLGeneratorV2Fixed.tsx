@@ -285,7 +285,7 @@ export function HTMLGeneratorV2({
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (firebaseUid && state.projectId) {
           setState((prev) => ({ ...prev, isSaving: true }));
-          saveProject(state.projectId, state.currentHTML)
+          saveProject(state.currentHTML)
             .then(() => {
               setState((prev) => ({ ...prev, isSaving: false }));
             })
@@ -714,7 +714,7 @@ export function HTMLGeneratorV2({
       // First save/update the project to ensure it's persisted
       try {
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
-        await saveProject(state.projectId, state.currentHTML);
+        await saveProject(state.currentHTML);
         
         // Generate and set the share URL
         const shareUrl = `${window.location.origin}/project/${state.projectId}`;
