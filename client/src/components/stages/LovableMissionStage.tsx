@@ -33,7 +33,7 @@ interface ChatMessage {
 const welcomeMessage: ChatMessage = {
   role: "assistant",
   content:
-    "🚀 أهلاً بك في مهمة Lovable! أنا الدكتور بنجي وراح أساعدك تبني أول تطبيق أو لعبة خاصة فيك باستخدام منصة Lovable.dev. هل تبي تبني تطبيق أو لعبة؟",
+    "🚀 أهلاً! أنا د. بنجي، جاهز أساعدك تبني أول تطبيق أو لعبة بطريقتك! مستعد تبدأ الرحلة؟ 🎯",
   className: "",
 };
 
@@ -66,7 +66,7 @@ export default function LovableMissionStage() {
       }));
     }, 500);
   };
-  
+
   // Check if student info is already in localStorage
   const hasStudentInfo = Boolean(
     localStorage.getItem("lovable_student_name") &&
@@ -100,20 +100,15 @@ export default function LovableMissionStage() {
         action: () => {
           window.open("https://lovable.dev", "_blank");
           // Mark step 3 as completed if not already
-          if (
-            !state.checklistItems.find((item) => item.id === 3)?.completed
-          ) {
+          if (!state.checklistItems.find((item) => item.id === 3)?.completed) {
             setState((prev) => ({
               ...prev,
               checklistItems: prev.checklistItems.map((item) =>
-                item.id === 3 ? { ...item, completed: true } : item
+                item.id === 3 ? { ...item, completed: true } : item,
               ),
             }));
             // Track progress
-            trackStageProgress(
-              "lovable_mission",
-              "checklist_item_3_toggled"
-            );
+            trackStageProgress("lovable_mission", "checklist_item_3_toggled");
           }
         },
       },
@@ -261,19 +256,19 @@ export default function LovableMissionStage() {
   useEffect(() => {
     if (messagesEndRef.current) {
       // Use smooth scrolling for user experience
-      messagesEndRef.current.scrollIntoView({ 
+      messagesEndRef.current.scrollIntoView({
         behavior: "smooth",
-        block: "end" 
+        block: "end",
       });
     }
   }, [state.messages]);
-  
+
   // Also scroll when loading state changes
   useEffect(() => {
     if (messagesEndRef.current && state.isLoading) {
-      messagesEndRef.current.scrollIntoView({ 
+      messagesEndRef.current.scrollIntoView({
         behavior: "smooth",
-        block: "end" 
+        block: "end",
       });
     }
   }, [state.isLoading]);
@@ -429,8 +424,7 @@ export default function LovableMissionStage() {
     try {
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
       // Get student info from localStorage
-      const studentName =
-        localStorage.getItem("lovable_student_name") || "";
+      const studentName = localStorage.getItem("lovable_student_name") || "";
       const noonCode = localStorage.getItem("lovable_noon_code") || "";
 
       // Get final prompt from the latest assistant message
@@ -521,7 +515,9 @@ export default function LovableMissionStage() {
                 <div
                   key={index}
                   className={`flex ${
-                    message.role === "assistant" ? "justify-end" : "justify-start"
+                    message.role === "assistant"
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div
@@ -541,20 +537,20 @@ export default function LovableMissionStage() {
                     {message.role === "assistant" && (
                       <>
                         {/* Copy icon button with tooltip */}
-                        <div 
+                        <div
                           className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-200 rounded-full p-1"
                           title="انسخ"
                           onClick={() => {
                             navigator.clipboard.writeText(message.content);
                             toast({
                               title: "تم النسخ!",
-                              description: "تم نسخ الرسالة إلى الحافظة."
+                              description: "تم نسخ الرسالة إلى الحافظة.",
                             });
                           }}
                         >
                           <Copy className="h-4 w-4 text-gray-500" />
                         </div>
-                        
+
                         <div className="flex items-center mb-2 gap-2">
                           <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
                             <img
@@ -563,9 +559,7 @@ export default function LovableMissionStage() {
                               className="h-full w-full object-cover"
                             />
                           </div>
-                          <span className="font-semibold text-sm">
-                           
-                          </span>
+                          <span className="font-semibold text-sm"></span>
                         </div>
                       </>
                     )}
@@ -613,7 +607,7 @@ export default function LovableMissionStage() {
                             checklistItems: prev.checklistItems.map((item) =>
                               item.id === 1
                                 ? { ...item, completed: true }
-                                : item
+                                : item,
                             ),
                           }));
 
@@ -624,10 +618,13 @@ export default function LovableMissionStage() {
                               ...state.messages,
                               userMessageObj,
                               immediateFollowupMessage,
-                            ])
+                            ]),
                           );
 
-                          trackStageProgress("lovable_mission", "game_selected");
+                          trackStageProgress(
+                            "lovable_mission",
+                            "game_selected",
+                          );
                         }}
                         variant="outline"
                         className="bg-white"
@@ -662,7 +659,7 @@ export default function LovableMissionStage() {
                             checklistItems: prev.checklistItems.map((item) =>
                               item.id === 1
                                 ? { ...item, completed: true }
-                                : item
+                                : item,
                             ),
                           }));
 
@@ -673,7 +670,7 @@ export default function LovableMissionStage() {
                               ...state.messages,
                               userMessageObj,
                               immediateFollowupMessage,
-                            ])
+                            ]),
                           );
 
                           trackStageProgress("lovable_mission", "app_selected");
@@ -742,7 +739,7 @@ export default function LovableMissionStage() {
           <div className="p-4 border-b flex-shrink-0">
             <h3 className="font-semibold text-center">قائمة المهام</h3>
           </div>
-          
+
           {/* Scrollable checklist items */}
           <div className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-3">
@@ -757,7 +754,7 @@ export default function LovableMissionStage() {
                           // Track progress
                           trackStageProgress(
                             "lovable_mission",
-                            `checklist_item_${item.id}_toggled`
+                            `checklist_item_${item.id}_toggled`,
                           );
                         }
                         setState((prev) => ({
@@ -765,7 +762,7 @@ export default function LovableMissionStage() {
                           checklistItems: prev.checklistItems.map((i) =>
                             i.id === item.id
                               ? { ...i, completed: Boolean(isChecked) }
-                              : i
+                              : i,
                           ),
                         }));
                       }}
@@ -773,9 +770,8 @@ export default function LovableMissionStage() {
                       disabled={
                         // Disable step 2 until step 1 is completed
                         (item.id === 2 &&
-                          !state.checklistItems.find(
-                            (item) => item.id === 1
-                          )?.completed) ||
+                          !state.checklistItems.find((item) => item.id === 1)
+                            ?.completed) ||
                         // Disable step 6 until link is submitted
                         (item.id === 6 && !state.isSubmitted)
                       }
@@ -815,7 +811,7 @@ export default function LovableMissionStage() {
               ))}
             </div>
           </div>
-          
+
           {/* Project submission form - fixed at bottom */}
           <div className="p-4 border-t flex-shrink-0">
             {!state.isSubmitted ? (
@@ -845,7 +841,9 @@ export default function LovableMissionStage() {
                       type="button"
                       onClick={() => {
                         // Check URL validity
-                        const isLovableUrl = validateLovableUrl(state.projectLink);
+                        const isLovableUrl = validateLovableUrl(
+                          state.projectLink,
+                        );
                         setState((prev) => ({
                           ...prev,
                           isProjectLinkValid: isLovableUrl,
@@ -868,7 +866,10 @@ export default function LovableMissionStage() {
                   {/* Project Name Field - Only show when URL is valid */}
                   {state.isProjectLinkValid && (
                     <div className="mt-2">
-                      <Label htmlFor="project-name" className="text-sm font-bold">
+                      <Label
+                        htmlFor="project-name"
+                        className="text-sm font-bold"
+                      >
                         اسم المشروع
                       </Label>
                       <Input
@@ -891,7 +892,8 @@ export default function LovableMissionStage() {
                       type="submit"
                       className="mt-4 bg-green-600 hover:bg-green-700 text-white w-full"
                       disabled={
-                        !state.isProjectLinkValid || state.projectName.length < 2
+                        !state.isProjectLinkValid ||
+                        state.projectName.length < 2
                       }
                     >
                       تقديم المشروع
@@ -903,9 +905,7 @@ export default function LovableMissionStage() {
               <div className="text-center space-y-2">
                 <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto" />
                 <p className="text-sm">تم تقديم مشروعك بنجاح!</p>
-                <p className="text-xs text-gray-500">
-                  {state.projectLink}
-                </p>
+                <p className="text-xs text-gray-500">{state.projectLink}</p>
               </div>
             )}
           </div>
