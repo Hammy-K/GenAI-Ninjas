@@ -38,7 +38,7 @@ interface LovableMissionState {
   checklistItems: ChecklistItem[];
   finalPrompt: string;
   projectLink: string;
-  studentName: string;
+  projectName: string; // Changed from studentName to projectName
   isSubmitted: boolean;
   error: string;
   isProjectLinkValid: boolean;
@@ -134,7 +134,7 @@ export default function LovableMissionStage() {
     checklistItems: initialChecklistItems,
     finalPrompt: "",
     projectLink: "",
-    studentName: localStorage.getItem('lovable_student_name') || "",
+    projectName: "", // Initialize with empty project name
     isSubmitted: false,
     error: "",
     isProjectLinkValid: false,
@@ -148,8 +148,7 @@ export default function LovableMissionStage() {
   const handleStudentInfoComplete = () => {
     setState(prev => ({
       ...prev,
-      isStudentInfoCompleted: true,
-      studentName: localStorage.getItem('lovable_student_name') || "",
+      isStudentInfoCompleted: true
     }));
   };
 
@@ -944,11 +943,11 @@ export default function LovableMissionStage() {
                     <Input
                       id="project-name"
                       placeholder="....."
-                      value={state.studentName}
+                      value={state.projectName}
                       onChange={(e) =>
                         setState((prev) => ({
                           ...prev,
-                          studentName: e.target.value,
+                          projectName: e.target.value,
                         }))
                       }
                       className="text-sm bg-white mt-1"
