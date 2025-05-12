@@ -7,6 +7,7 @@ import { Session } from 'express-session';
 import OpenAI from 'openai';
 import { AssistantService, createAssistantService } from '../services/assistant';
 import { logEvent, logError } from '../services';
+import { logAssistantInteraction } from '../services/assistant-logger';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage';
 
@@ -190,10 +191,27 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         message_length: assistantResponse.length,
       });
       
+      // Extract student information from request body
+      const firebaseUid = req.body.firebaseUid;
+      const studentName = req.body.studentName;
+      const noonCode = req.body.noonCode; // Student ID
+      
+      // Log interaction to assistant_logs table
+      await logAssistantInteraction({
+        sessionId,
+        threadId,
+        assistantId: "asst_L23zNIrbAjmHwouCGGqRr1fA", // Lovable Mission Assistant ID
+        model: "gpt-4o", // Assistants use GPT-4o by default
+        promptContent: { message: message, history: messageHistory },
+        responseContent: { response: assistantResponse },
+        firebaseUid: firebaseUid || null,
+        deviceId: req.body.deviceId || null,
+        studentName: studentName || null,
+        studentId: noonCode || null
+      }).catch(e => console.error("Failed to log assistant interaction:", e));
+      
       // Save both the user message and assistant response to the database if user is logged in
       try {
-        const firebaseUid = req.body.firebaseUid;
-        
         if (firebaseUid) {
           // Get progress record for this user
           const progress = await storage.getLovableMissionProgressByFirebaseUid(firebaseUid);
