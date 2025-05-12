@@ -124,29 +124,31 @@ export default function LovableSubmissionsPage() {
           <div className="space-y-3">
             {filteredSubmissions.map((submission) => (
               <Card key={submission.id} className="transition-all hover:shadow-md">
-                <CardHeader className="pb-2 pt-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle className="text-base font-medium">{submission.studentName || "طالب"}</CardTitle>
-                      <CardDescription className="flex items-center mt-1 text-sm">
-                        <span className="font-medium">{submission.projectName || "مشروع"}</span>
-                        <span className="mx-2">•</span>
-                        <CalendarIcon className="h-3 w-3 inline ml-1" />
-                        <span>{formatDate(submission.submissionDate)}</span>
-                      </CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" asChild className="h-8">
+                <CardHeader className="pb-2 pt-4">
+                  <div className="text-center mb-1">
+                    <CardTitle className="text-lg font-medium mb-1">{submission.projectName || "مشروع"}</CardTitle>
+                    <CardDescription className="text-sm flex justify-center items-center">
+                      <span>{submission.studentName || "طالب"}</span>
+                      <span className="mx-2">•</span>
+                      <CalendarIcon className="h-3 w-3 inline ml-1" />
+                      <span>{formatDate(submission.submissionDate)}</span>
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 pb-4">
+                  <div className="flex justify-center">
+                    <Button variant="outline" size="sm" asChild className="h-8 min-w-32">
                       <a 
                         href={submission.projectLink} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center"
+                        className="flex items-center justify-center"
                       >
                         فتح المشروع <ExternalLinkIcon className="h-3 w-3 mr-1" />
                       </a>
                     </Button>
                   </div>
-                </CardHeader>
+                </CardContent>
               </Card>
             ))}
           </div>

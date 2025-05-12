@@ -40,6 +40,7 @@ const submitLinkSchema = z.object({
       { message: "URL must include lovable.dev or lovable.app" }
     ),
   studentName: z.string().min(1, { message: "Student name is required" }).optional(),
+  projectName: z.string().min(1, { message: "Project name is required" }).optional(),
   projectType: z.string().refine(
     (val) => ['app', 'game'].includes(val),
     { message: "Project type must be 'app' or 'game'" }
@@ -90,6 +91,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         .select({
           id: lovableSubmissions.id,
           studentName: lovableSubmissions.studentName,
+          projectName: lovableSubmissions.projectName,
           projectLink: lovableSubmissions.projectLink,
           projectType: lovableSubmissions.projectType,
           submissionDate: lovableSubmissions.submissionDate,
@@ -222,7 +224,7 @@ export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
         });
       }
       
-      const { projectLink, studentName, firebaseUid, projectType, finalPrompt } = result.data;
+      const { projectLink, studentName, projectName, firebaseUid, projectType, finalPrompt } = result.data;
       
       // Project metadata to store
       const metadata = {
