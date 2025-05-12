@@ -201,7 +201,7 @@ export default function LovableMissionStage() {
     // Add loading message
     const loadingMessage: ChatMessage = {
       role: "assistant",
-      content: "جاري التحميل...",
+      content: "أفكر ... 💭",
       className: "loading",
     };
 

@@ -7,13 +7,14 @@ import { z } from 'zod';
 import { db } from '../db';
 import { storage } from '../storage';
 import { logEvent } from '../services';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { Session } from 'express-session';
 import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   lovableMissionProgress, 
-  lovableMissionChatHistory 
+  lovableMissionChatHistory,
+  lovableSubmissions
 } from '@shared/schema';
 
 // Lovable Mission Assistant ID
@@ -81,6 +82,28 @@ const assistantChatSchema = z.object({
 export function registerLovableMissionRoutes(router: Router, openai?: OpenAI) {
   const lovableMissionRouter = Router();
 
+  // Get all submissions
+  lovableMissionRouter.get('/submissions', async (req: Request, res: Response) => {
+    try {
+      // Fetch all submissions from the database
+      const submissions = await db
+        .select({
+          id: lovableSubmissions.id,
+          studentName: lovableSubmissions.studentName,
+          projectLink: lovableSubmissions.projectLink,
+          projectType: lovableSubmissions.projectType,
+          submissionDate: lovableSubmissions.submissionDate,
+        })
+        .from(lovableSubmissions)
+        .orderBy(desc(lovableSubmissions.submissionDate));
+      
+      return res.status(200).json(submissions);
+    } catch (error) {
+      console.error('Error fetching Lovable Mission submissions:', error);
+      return res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+  });
+  
   // Get user progress
   lovableMissionRouter.get('/progress', async (req: Request, res: Response) => {
     try {
