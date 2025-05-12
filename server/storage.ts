@@ -93,6 +93,7 @@ export interface IStorage {
   
   // HTML Project methods
   getHtmlProjectByProjectId(projectId: string): Promise<HtmlProject | undefined>;
+  getAllHtmlProjects(): Promise<HtmlProject[]>;
   createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject>;
   updateHtmlProject(projectId: string, html: string): Promise<HtmlProject | undefined>;
 
@@ -441,6 +442,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(htmlProjects.projectId, projectId));
     
     return project || undefined;
+  }
+  
+  async getAllHtmlProjects(): Promise<HtmlProject[]> {
+    return db
+      .select()
+      .from(htmlProjects)
+      .orderBy(desc(htmlProjects.createdAt));
   }
   
   async createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject> {

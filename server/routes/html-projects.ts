@@ -1,9 +1,7 @@
 import { Router, Request, Response } from "express";
-import { db } from "../db";
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { storage } from "../storage";
 import { htmlProjects } from "@shared/schema";
 
-htmlProjects;
 export function registerHTMLProjectsRoutes(router: Router) {
   const htmlProjectsRouter = Router();
 
@@ -12,17 +10,8 @@ export function registerHTMLProjectsRoutes(router: Router) {
     "/submissions",
     async (req: Request, res: Response) => {
       try {
-        const submissions = await db
-          .select({
-            id: htmlProjects.id,
-            projectId: htmlProjects.projectId,
-            html: htmlProjects.html,
-            firebaseUid: htmlProjects.firebaseUid,
-            createdAt: htmlProjects.createdAt,
-            updatedAt: htmlProjects.updatedAt,
-          })
-          .from(htmlProjects)
-          .orderBy(htmlProjects.createdAt);
+        // Get all projects using the storage interface
+        const submissions = await storage.getAllHtmlProjects();
 
         // Set content type to JSON explicitly
         res.setHeader("Content-Type", "application/json");
@@ -38,6 +27,29 @@ export function registerHTMLProjectsRoutes(router: Router) {
         });
       }
     },
+  );
+
+  // Get a single project by ID
+  htmlProjectsRouter.get(
+    "/:projectId",
+    async (req: Request, res: Response) => {
+      try {
+        const { projectId } = req.params;
+        const project = await storage.getHtmlProjectByProjectId(projectId);
+
+        if (!project) {
+          return res.status(404).json({ error: "Project not found" });
+        }
+
+        return res.status(200).json(project);
+      } catch (error) {
+        console.error("Error fetching HTML project:", error);
+        return res.status(500).json({
+          error: "Failed to fetch project",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   );
 
   router.use("/html-projects", htmlProjectsRouter);
