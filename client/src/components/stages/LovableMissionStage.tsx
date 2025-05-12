@@ -314,6 +314,18 @@ export default function LovableMissionStage() {
       const storedNoonCode = localStorage.getItem("lovable_noon_code") || "";
 
       // Call the standard GPT-4o chat endpoint
+      // The /api/ai/text endpoint expects a different format:
+      // - prompt: the user's message
+      // - messageHistory: array of previous messages
+      // - maxTokens: (optional) token limit
+      // NOTE: We cannot pass systemPrompt or metadata directly, as the server handles the system message differently
+      
+      // Add the system prompt as the first message in the message history
+      const fullMessageHistory = [
+        { role: "system", content: systemPromptContent },
+        ...messageHistory
+      ];
+      
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
@@ -321,13 +333,8 @@ export default function LovableMissionStage() {
         },
         body: JSON.stringify({
           prompt: currentPrompt,
-          systemPrompt: systemPromptContent,
-          messageHistory,
-          maxTokens: 800,
-          metadata: {
-            studentName: storedStudentName, // Include student name in metadata
-            noonCode: storedNoonCode, // Include noon code in metadata
-          }
+          messageHistory: fullMessageHistory,
+          maxTokens: 800
         }),
       });
       
@@ -347,12 +354,15 @@ export default function LovableMissionStage() {
       }));
       
       // Process final stage if needed
-      if (data.response.includes("نسخ هذا الملخص") || 
-          data.response.includes("استخدامه كتوجيه في Lovable") ||
-          data.response.includes("تشغيل مشروعك")) {
+      // The /api/ai/text endpoint returns { text: "response content" }
+      const aiResponse = data.text || "";
+      
+      if (aiResponse.includes("نسخ هذا الملخص") || 
+          aiResponse.includes("استخدامه كتوجيه في Lovable") ||
+          aiResponse.includes("تشغيل مشروعك")) {
         
         // Extract the final prompt from the response if available
-        const finalPromptMatch = data.response.match(/"([^"]+)"/);
+        const finalPromptMatch = aiResponse.match(/"([^"]+)"/);
         const finalPrompt = finalPromptMatch ? finalPromptMatch[1] : state.messages[state.messages.length - 2].content;
         
         // Set as final prompt when we reach this stage
