@@ -504,14 +504,16 @@ export default function LovableMissionStage() {
     try {
       // Try to get Firebase UID but don't require it
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
-      // Get student information from localStorage
-      const submissionStudentName = localStorage.getItem("lovable_student_name") || state.studentName;
+      // Get student & project information
+      const submissionStudentName = localStorage.getItem("lovable_student_name") || "";
       const submissionNoonCode = localStorage.getItem("lovable_noon_code") || "";
+      const projectName = state.projectName;
       
       // Debug logging
       console.log("Submitting project:", { 
         projectLink: state.projectLink, 
         studentName: submissionStudentName,
+        projectName: projectName,
         noonCode: submissionNoonCode,
         firebaseUid: firebaseUid || "anonymous" 
       });
@@ -525,6 +527,7 @@ export default function LovableMissionStage() {
         body: JSON.stringify({
           projectLink: state.projectLink,
           studentName: submissionStudentName,
+          projectName: projectName, // Add project name field
           noonCode: submissionNoonCode, // Include noon code
           projectType: state.projectType, // Include project type (app/game)
           finalPrompt: state.finalPrompt, // Include the final prompt used
@@ -961,7 +964,7 @@ export default function LovableMissionStage() {
                   disabled={
                     state.isLoading || 
                     !state.isProjectLinkValid || 
-                    (!state.studentName && state.isProjectLinkValid)
+                    (!state.projectName && state.isProjectLinkValid)
                   }
                   className="bg-green-600 hover:bg-green-700 text-white mt-2"
                 >
