@@ -158,6 +158,37 @@ export default function LovableMissionStage() {
     // Track stage started
     trackStageProgress("lovable_mission", "started");
 
+    // Try to load chat history from localStorage first
+    const loadFromLocalStorage = () => {
+      const savedMessages = localStorage.getItem("lovable_mission_messages");
+      const savedProjectType = localStorage.getItem("lovable_mission_project_type") || "";
+      const savedFinalPrompt = localStorage.getItem("lovable_mission_final_prompt") || "";
+      const savedProjectLink = localStorage.getItem("lovable_mission_project_link") || "";
+      
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+            // If we have messages, use them
+            setState(prev => ({ 
+              ...prev, 
+              messages: parsedMessages,
+              projectType: savedProjectType,
+              finalPrompt: savedFinalPrompt,
+              projectLink: savedProjectLink,
+              isChatLocked: false // Unlock chat if we have saved messages
+            }));
+            
+            // Return true if we found saved messages
+            return true;
+          }
+        } catch (e) {
+          console.error("Error parsing saved messages:", e);
+        }
+      }
+      return false;
+    };
+
     // Try to load existing progress from API
     const loadProgress = async () => {
       try {
@@ -188,13 +219,21 @@ export default function LovableMissionStage() {
             projectLink: data.progress.projectLink || "",
             isSubmitted: data.progress.hasSubmitted || false,
           }));
+          
+          // Also save to localStorage for future use
+          localStorage.setItem("lovable_mission_messages", JSON.stringify(messages));
+          localStorage.setItem("lovable_mission_project_link", data.progress.projectLink || "");
         }
       } catch (error) {
         console.error("Failed to load progress:", error);
       }
     };
 
-    loadProgress();
+    // First try to load from localStorage, if that fails, try the API
+    const foundSavedMessages = loadFromLocalStorage();
+    if (!foundSavedMessages) {
+      loadProgress();
+    }
   }, []);
 
   // Auto-scroll to bottom of messages
@@ -383,10 +422,22 @@ export default function LovableMissionStage() {
         content: data.text || "",
       };
 
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-      }));
+      setState((prev) => {
+        const updatedMessages = [...prev.messages, assistantMessage];
+        
+        // Save messages to localStorage for persistence
+        localStorage.setItem("lovable_mission_messages", JSON.stringify(updatedMessages));
+        
+        // Also save other important state
+        localStorage.setItem("lovable_mission_project_type", prev.projectType);
+        localStorage.setItem("lovable_mission_final_prompt", prev.finalPrompt);
+        localStorage.setItem("lovable_mission_project_link", prev.projectLink);
+        
+        return {
+          ...prev,
+          messages: updatedMessages,
+        };
+      });
       
       // Track progress
       trackStageProgress("lovable_mission", "chat_response_sent");
