@@ -242,6 +242,9 @@ export default function LovableMissionStage() {
     try {
       // Save user message to the database
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
+      // Get student info from localStorage
+      const chatStudentName = localStorage.getItem("lovable_student_name") || "";
+      const chatNoonCode = localStorage.getItem("lovable_noon_code") || "";
 
       await fetch("/api/lovable-mission/chat", {
         method: "POST",
@@ -252,6 +255,8 @@ export default function LovableMissionStage() {
           firebaseUid,
           role: "user",
           content: currentPrompt,
+          studentName: chatStudentName, // Include student name
+          noonCode: chatNoonCode // Include noon code
         }),
       });
       
@@ -305,6 +310,10 @@ export default function LovableMissionStage() {
         messageHistory: messageHistory.length,
       });
       
+      // Get student info from localStorage for AI metadata
+      const storedStudentName = localStorage.getItem("lovable_student_name") || "";
+      const storedNoonCode = localStorage.getItem("lovable_noon_code") || "";
+
       // Call the standard GPT-4o chat endpoint
       const response = await fetch(apiEndpoint, {
         method: "POST",
@@ -315,7 +324,11 @@ export default function LovableMissionStage() {
           prompt: currentPrompt,
           systemPrompt: systemPromptContent,
           messageHistory,
-          maxTokens: 800
+          maxTokens: 800,
+          metadata: {
+            studentName: storedStudentName, // Include student name in metadata
+            noonCode: storedNoonCode, // Include noon code in metadata
+          }
         }),
       });
       
@@ -492,11 +505,15 @@ export default function LovableMissionStage() {
     try {
       // Try to get Firebase UID but don't require it
       const firebaseUid = localStorage.getItem("firebaseUid") || "";
+      // Get student information from localStorage
+      const submissionStudentName = localStorage.getItem("lovable_student_name") || state.studentName;
+      const submissionNoonCode = localStorage.getItem("lovable_noon_code") || "";
       
       // Debug logging
       console.log("Submitting project:", { 
         projectLink: state.projectLink, 
-        studentName: state.studentName,
+        studentName: submissionStudentName,
+        noonCode: submissionNoonCode,
         firebaseUid: firebaseUid || "anonymous" 
       });
       
@@ -508,7 +525,8 @@ export default function LovableMissionStage() {
         },
         body: JSON.stringify({
           projectLink: state.projectLink,
-          studentName: state.studentName,
+          studentName: submissionStudentName,
+          noonCode: submissionNoonCode, // Include noon code
           projectType: state.projectType, // Include project type (app/game)
           finalPrompt: state.finalPrompt, // Include the final prompt used
           firebaseUid: firebaseUid || undefined // Include if available
