@@ -3,7 +3,7 @@ import { HTMLGeneratorV2 } from "../../components/stages/HTMLGeneratorV2Fixed";
 
 export default function HTMLGeneratorV2Page() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-tajawal" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal" dir="rtl">
       <main className="flex-1">
         <HTMLGeneratorV2
           onComplete={() => {}}

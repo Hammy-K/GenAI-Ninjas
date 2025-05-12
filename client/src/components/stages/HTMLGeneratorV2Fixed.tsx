@@ -992,7 +992,7 @@ export function HTMLGeneratorV2({
                       className={`rounded-lg px-4 py-2 max-w-[85%] ${
                         message.role === "user"
                           ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
+                          : "bg-white border-2 border-purple-300"
                       }`}
                     >
                       {message.role === "assistant" && (
@@ -1027,13 +1027,14 @@ export function HTMLGeneratorV2({
                   <div className="flex justify-center space-x-2 my-2">
                     <Button
                       variant="outline"
-                      className="ml-2"
+                      className="ml-2 bg-[#f44336] text-white hover:bg-[#d32f2f] border-0"
                       onClick={() => handleConfirmSummary(false)}
                     >
                       <ArrowRight className="h-4 w-4 ml-1" />
                       لا، أحتاج تعديل
                     </Button>
                     <Button 
+                      className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
                       onClick={() => handleConfirmSummary(true)}
                     >
                       <Check className="h-4 w-4 ml-1" />
@@ -1047,13 +1048,14 @@ export function HTMLGeneratorV2({
                   <div className="flex justify-center space-x-2 my-2">
                     <Button
                       variant="outline"
-                      className="ml-2"
+                      className="ml-2 bg-[#f44336] text-white hover:bg-[#d32f2f] border-0"
                       onClick={() => handleSatisfaction(false)}
                     >
                       <ThumbsDown className="h-4 w-4 ml-1" />
                       أحتاج تعديل
                     </Button>
                     <Button 
+                      className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
                       onClick={() => handleSatisfaction(true)}
                     >
                       <ThumbsUp className="h-4 w-4 ml-1" />
