@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Send, Check, AlertCircle, Copy, ExternalLink } from "lucide-react";
 import drPengyAvatar from "@assets/Pengy_chat.png";
+import CelebrationAnimation from "@/components/animations/CelebrationAnimation";
 
 // Define types for messages and state
 type MessageRole = "user" | "assistant" | "system";
@@ -42,6 +43,7 @@ interface LovableMissionState {
   isProjectLinkValid: boolean;
   isChatLocked: boolean; // Added for locking chat input until selection
   projectType: string; // 'app' or 'game'
+  showCelebration: boolean; // For controlling the celebration animation
 }
 
 // Initial data
@@ -122,6 +124,7 @@ export default function LovableMissionStage() {
     isProjectLinkValid: false,
     isChatLocked: true, // Lock the chat input initially
     projectType: "app", // Default to 'app' - will be updated based on conversation
+    showCelebration: false, // Don't show celebration initially
   });
 
   // Load progress on mount
