@@ -90,53 +90,6 @@ export default function LovableMissionStage() {
         text: "💡 طور فكرة تطبيق/لعبة مع الدكتور بنجي",
         description: "ناقش مع الدكتور بنجي وطور فكرة مشروعك الفريدة.",
         completed: false,
-        type: "button",
-        action: () => {
-          // Find the last message from the assistant containing game/app ideas
-          const lastAssistantMessage = [...state.messages]
-            .reverse()
-            .find(
-              (m) =>
-                m.role === "assistant" &&
-                m.content.includes("هنا الفكرة النهائية")
-            );
-
-          if (lastAssistantMessage) {
-            // Extract the final idea part
-            const idea = lastAssistantMessage.content
-              .split("هنا الفكرة النهائية")[1]
-              .trim();
-            navigator.clipboard.writeText(idea);
-            toast({
-              title: "تم النسخ!",
-              description: "تم نسخ الفكرة النهائية إلى الحافظة.",
-            });
-
-            // Mark step 2 as completed if not already
-            if (
-              !state.checklistItems.find((item) => item.id === 2)?.completed
-            ) {
-              setState((prev) => ({
-                ...prev,
-                checklistItems: prev.checklistItems.map((item) =>
-                  item.id === 2 ? { ...item, completed: true } : item
-                ),
-              }));
-              // Track progress
-              trackStageProgress(
-                "lovable_mission",
-                "checklist_item_2_toggled"
-              );
-            }
-          } else {
-            toast({
-              title: "لم يتم العثور على فكرة نهائية!",
-              description:
-                "تحدث مع الدكتور بنجي أكثر للحصول على فكرة نهائية.",
-              variant: "destructive",
-            });
-          }
-        },
       },
       {
         id: 3,
@@ -572,7 +525,7 @@ export default function LovableMissionStage() {
                   }`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[80%] rounded-lg p-3 relative group ${
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-white border"
@@ -586,18 +539,35 @@ export default function LovableMissionStage() {
                     }
                   >
                     {message.role === "assistant" && (
-                      <div className="flex items-center mb-2 gap-2">
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
-                          <img
-                            src={drPengyAvatar}
-                            alt="Dr. Pengy"
-                            className="h-full w-full object-cover"
-                          />
+                      <>
+                        {/* Copy icon button with tooltip */}
+                        <div 
+                          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-gray-100 rounded-full p-1"
+                          title="انسخ"
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                            toast({
+                              title: "تم النسخ!",
+                              description: "تم نسخ الرسالة إلى الحافظة."
+                            });
+                          }}
+                        >
+                          <Copy className="h-4 w-4 text-gray-500" />
                         </div>
-                        <span className="font-semibold text-sm">
-                          الدكتور بنجي
-                        </span>
-                      </div>
+                        
+                        <div className="flex items-center mb-2 gap-2">
+                          <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
+                            <img
+                              src={drPengyAvatar}
+                              alt="Dr. Pengy"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <span className="font-semibold text-sm">
+                            الدكتور بنجي
+                          </span>
+                        </div>
+                      </>
                     )}
                     {message.role === "assistant" &&
                     message.content === welcomeMessage.content
@@ -831,16 +801,14 @@ export default function LovableMissionStage() {
                     </div>
                   </div>
 
-                  {item.type === "button" && (
+                  {item.id === 3 && item.type === "button" && (
                     <Button
                       onClick={item.action}
                       className="mt-1 ml-6 text-xs"
                       size="sm"
                       variant="outline"
                     >
-                      {item.id === 2
-                        ? "انسخ الفكرة النهائية"
-                        : "افتح Lovable.dev"}
+                      {"افتح Lovable.dev"}
                     </Button>
                   )}
                 </div>
