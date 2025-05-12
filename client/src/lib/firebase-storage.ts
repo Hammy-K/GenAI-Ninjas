@@ -75,6 +75,43 @@ export async function uploadImageFromUrl(
 }
 
 /**
+ * Upload a project screenshot to Firebase Storage
+ * @param imageBlob The image blob to upload
+ * @param projectId The project ID to use as the filename
+ * @returns Promise resolving to the Firebase Storage URL
+ */
+export async function uploadProjectScreenshot(
+  imageBlob: Blob,
+  projectId: string
+): Promise<string> {
+  try {
+    // Create a filename based on the project ID
+    const filename = `screenshots/${projectId}.png`;
+    
+    // Create a storage reference
+    const storageRef = ref(storage, filename);
+    
+    // Upload the image blob to Firebase Storage
+    const uploadResult = await uploadBytes(storageRef, imageBlob, {
+      contentType: 'image/png',
+      customMetadata: {
+        projectId,
+        uploadedAt: new Date().toISOString(),
+      },
+    });
+    
+    // Get the public URL
+    const publicUrl = await getDownloadURL(uploadResult.ref);
+    console.log(`Project screenshot uploaded to Firebase Storage: ${publicUrl}`);
+    
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading project screenshot to Firebase Storage:", error);
+    throw error;
+  }
+}
+
+/**
  * List all images in the gallery folder
  * @param limit Maximum number of images to return
  * @param startAfter Reference to start after for pagination

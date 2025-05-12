@@ -130,6 +130,7 @@ export const htmlProjects = pgTable("html_projects", {
   projectId: text("project_id").notNull().unique(), // Preserve existing project IDs for URL compatibility
   html: text("html").notNull(), // Store the HTML content
   firebaseUid: text("firebase_uid"), // Optional link to user's Firebase ID
+  screenshotUrl: text("screenshot_url"), // URL to the project screenshot in Firebase Storage
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
