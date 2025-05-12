@@ -255,12 +255,26 @@ export default function LovableMissionStage() {
     }
   }, []);
 
-  // Auto-scroll to bottom of messages
+  // Auto-scroll to bottom of messages whenever messages change
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      // Use smooth scrolling for user experience
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end" 
+      });
     }
   }, [state.messages]);
+  
+  // Also scroll when loading state changes (for loading indicators)
+  useEffect(() => {
+    if (messagesEndRef.current && state.isLoading) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end" 
+      });
+    }
+  }, [state.isLoading]);
 
   // Handle form submission with OpenAI Assistant API
   const handleSubmit = async (e: React.FormEvent) => {
@@ -698,9 +712,9 @@ export default function LovableMissionStage() {
       />
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* Chat Panel - 75% width */}
-        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border">
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4">
+        <div className="w-[75%] flex flex-col bg-card rounded-lg shadow-sm border overflow-hidden max-h-full">
+          {/* Messages Container - added overflow handling and max-height */}
+          <div className="flex-1 overflow-y-auto p-4 h-0 min-h-0">
             <div className="space-y-4">
               {state.messages.map((message, index) => (
                 <div
