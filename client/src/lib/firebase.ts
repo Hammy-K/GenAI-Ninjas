@@ -138,9 +138,11 @@ export async function saveProject(html: string, screenshotUrl?: string): Promise
     
     // Get Firebase UID if available
     let firebaseUid = null;
-    if (isFirebaseReady() && firestoreDb) {
-      // TODO: Get current user UID if needed
-      console.log("Firebase is configured, could include UID if user is authenticated");
+    try {
+      firebaseUid = localStorage.getItem("firebaseUid") || null;
+      console.log("Firebase UID from localStorage:", firebaseUid);
+    } catch (e) {
+      console.warn("Could not read Firebase UID from localStorage:", e);
     }
     
     // Save to PostgreSQL via API instead of directly to Firestore
@@ -155,21 +157,26 @@ export async function saveProject(html: string, screenshotUrl?: string): Promise
         },
         body: JSON.stringify({ 
           html: processedHTML,
-          firebaseUid, // Include Firebase UID if available
-          screenshotUrl // Include screenshot URL if available
+          firebaseUid // Include Firebase UID if available
         })
       });
       
       if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
+        const errorText = await response.text();
+        console.error(`API error (${response.status}):`, errorText);
+        throw new Error(`API returned status ${response.status}: ${errorText}`);
       }
       
       const data = await response.json();
-      console.log("Project saved successfully via API!");
+      console.log("Project saved successfully via API! Project ID:", data.projectId);
       
       if (!data.projectId) {
         throw new Error("No project ID returned from API");
       }
+      
+      // Generate share URL
+      const shareUrl = `${window.location.origin}/project/${data.projectId}`;
+      console.log("Share URL:", shareUrl);
       
       return data.projectId;
     } catch (apiError) {

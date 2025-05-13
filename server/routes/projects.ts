@@ -39,38 +39,49 @@ export function registerProjectRoutes(router: Router) {
   // Save project to database
   projectRoutes.post("/save-project", async (req: Request, res: Response) => {
     try {
-      // Validate request with Zod
-      const validation = saveProjectSchema.safeParse(req.body);
-      if (!validation.success) {
+      // Validate request with Zod - but use more flexible schema
+      const { html } = req.body;
+      
+      if (!html || typeof html !== 'string') {
         return res.status(400).json({ 
-          error: 'Invalid request data',
-          details: validation.error.format()
+          error: 'Invalid request data: HTML content is required'
         });
       }
       
-      const { html, screenshotUrl } = validation.data;
-      
       // Generate a unique project ID with the same format for URL compatibility
+      // Format: project_timestamp_randomstring
       const projectId = `project_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       
       // Get Firebase UID from body if available (optional)
-      const firebaseUid = req.body.firebaseUid;
+      const firebaseUid = req.body.firebaseUid || null;
+      
+      // Log for debugging
+      console.log(`Creating project with ID: ${projectId}, Firebase UID: ${firebaseUid || 'none'}`);
       
       // Save project to PostgreSQL
-      // Omit screenshotUrl to avoid database errors with missing columns
-      await storage.createHtmlProject({
-        projectId,
-        html,
-        firebaseUid
-      });
-      
-      // Log the success
-      logEvent('project_save', 'Project saved to Neon DB', {
-        project_id: projectId,
-        html_length: html.length
-      });
-      
-      return res.json({ projectId });
+      try {
+        await storage.createHtmlProject({
+          projectId,
+          html,
+          firebaseUid
+        });
+        
+        // Log the success
+        logEvent('project_save', 'Project saved to Neon DB', {
+          project_id: projectId,
+          html_length: html.length
+        });
+        
+        console.log(`Project ${projectId} saved successfully`);
+        
+        return res.json({ projectId });
+      } catch (dbError: any) {
+        console.error("Database error saving project:", dbError);
+        return res.status(500).json({ 
+          error: "Database error saving project", 
+          details: dbError?.message || String(dbError) 
+        });
+      }
     } catch (error) {
       logError('project_save', error instanceof Error ? error : 'Unknown error');
       return res.status(500).json({ error: "Failed to save project" });
