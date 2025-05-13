@@ -294,7 +294,7 @@ export default function HTMLGeneratorV2Fixed({
             );
             try {
               // This is a fallback save method that bypasses some Firebase checks
-              const fallbackId = await saveProject(state.currentHTML);
+              const fallbackId = await saveProject(state.currentHTML, undefined);
               resolve(fallbackId);
             } catch (fallbackError) {
               console.error("Fallback save also failed:", fallbackError);
