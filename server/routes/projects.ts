@@ -57,11 +57,11 @@ export function registerProjectRoutes(router: Router) {
       const firebaseUid = req.body.firebaseUid;
       
       // Save project to PostgreSQL
+      // Omit screenshotUrl to avoid database errors with missing columns
       await storage.createHtmlProject({
         projectId,
         html,
-        firebaseUid,
-        screenshotUrl
+        firebaseUid
       });
       
       // Log the success
