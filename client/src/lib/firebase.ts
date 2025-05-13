@@ -149,8 +149,8 @@ export async function saveProject(html: string, screenshotUrl?: string): Promise
     try {
       console.log("Saving project to PostgreSQL via API...");
       
-      // Make API call to save project
-      const response = await fetch('/api/save-project', {
+      // Make API call to save project - using the correct endpoint path
+      const response = await fetch('/api/projects/save-project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -231,8 +231,8 @@ export async function loadProject(projectId: string): Promise<{ html: string } |
     try {
       console.log("Fetching project from PostgreSQL via API...");
       
-      // Make API call to load project
-      const response = await fetch(`/api/load-project/${projectId}`);
+      // Make API call to load project using the correct endpoint path
+      const response = await fetch(`/api/projects/load-project/${projectId}`);
       
       if (!response.ok) {
         // Handle 404 or other error statuses
