@@ -126,26 +126,21 @@ export function HTMLGeneratorV2({
   // Get the current location for routing
   const [location, setLocation] = useLocation();
 
-  // Define initial state with welcome message
+  // Define initial state with welcome message - matching the original HTML Generator
   const welcomeMessage: HTMLMessage = {
     role: "assistant",
-    content: `
-🎮  ياهلا في أداة بناء الألعاب بالذكاء الاصطناعي! 
-أنا د. بنجي، موجود هنا أساعدك تصمّم لعبتك بنفسك. 
-كل اللي عليك: توصف لي فكرتك، وأنا أكتب لك الكود ✨
-    `,
+    content: "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
   };
 
   const examplesMessage: HTMLMessage = {
     role: "assistant",
     content: `
-تخيل لعبة بسيطة وممتعة، زي:
-- لعبة ذكاء أو تركيز سريعة
-- لعبة قفز وتفادي حواجز
-- لعبة كويز مضحكة بأسئلة غريبة
-- لعبة مغامرات واختيارات
-
-خلك كرييتف! 🔥 أهم شيء نبدأ بفكرة خفيفة وممتعة.
+مثلاً:
+- لعبة شطرنج (او اي لعبة بسيطة)
+- لوحة رسم بسيطة
+- كويز تفاعلي فيه كم سؤال مضحك
+- صفحة تسهل وش ألبس اليوم من دولابي
+- صفحة أختار فيها وجهة سفري المفضلة
 `,
   };
 
@@ -360,7 +355,7 @@ export function HTMLGeneratorV2({
 
           const assistantMessage: HTMLMessage = {
             role: "assistant",
-            content: `شكراً على التوضيح. هذا ما سأقوم ببنائه:\n\n${summaryResult.summary}\n\nهل هذا ما تريده؟`,
+            content: `شكراً على التوضيح. :\n\n${summaryResult.summary}\n\ `,
           };
 
           setState((prevState) => ({
@@ -394,8 +389,8 @@ export function HTMLGeneratorV2({
         const satisfactionMessage: HTMLMessage = {
           role: "assistant",
           content: isSatisfied
-            ? "رائع! سعيد بأن النتيجة أعجبتك. يمكنك الاستمرار في تعديل المشروع أو مشاركته مع الآخرين."
-            : "أفهم، دعنا نحسن المشروع. أخبرني بالتحديد ما الذي ترغب بتغييره وسأقوم بتعديل الكود.",
+            ? "كفو! مبسوط إن المشروع عجبك 🔥 تقدر تكمل تعدل عليه أو تشاركه مع أصحابك."
+            : "تمام، خلينا نحسّن المشروع! قل لي بالضبط وش تبغى نغير، وأنا أعدلك الكود. 🚀",
         };
 
         setState((prevState) => ({
@@ -946,12 +941,14 @@ export function HTMLGeneratorV2({
                   </p>
                 </div>
                 <div className="max-w-2xl bg-white rounded-lg p-6 shadow-md border-2 border-purple-300">
-                  <h3 className="text-2xl font-bold mb-3 text-purple-700">تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:</h3>
-                  
+                  <h3 className="text-2xl font-bold mb-3 text-purple-700">
+                    تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:
+                  </h3>
+
                   <p className="text-xl mb-4 font-bold text-gray-800">
                     حركة بسيطة تعيدها كل مرة — وتصير أحلى وأصعب كل شوي!
                   </p>
-                  
+
                   <div className="space-y-2 my-4">
                     <div className="flex items-center">
                       <span className="text-2xl ml-2">🏃‍♂️</span>
@@ -966,12 +963,12 @@ export function HTMLGeneratorV2({
                       <span>تحاول تعيش أطول وقت ممكن (فلابي بيرد)</span>
                     </div>
                   </div>
-                  
+
                   <p className="text-xl font-bold text-purple-700 my-3">
                     حركة وحدة + تحدي = إدمان! 🔥
                   </p>
-                  
-                  <div className="mt-4 pt-3 border-t border-gray-200">
+
+                  <div className="mt-4 pt-3 borde-gray-200">
                     <p className="text-gray-800 font-semibold">
                       <span className="inline-block ml-2">👉</span>
                       لما تفكر بلعبتك، اسأل نفسك:
