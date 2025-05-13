@@ -452,9 +452,16 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject> {
+    // Explicitly create a clean project object without screenshotUrl to avoid DB errors
+    const cleanProject = {
+      projectId: project.projectId,
+      html: project.html,
+      firebaseUid: project.firebaseUid
+    };
+    
     const [newProject] = await db
       .insert(htmlProjects)
-      .values(project)
+      .values(cleanProject)
       .returning();
     
     return newProject;
