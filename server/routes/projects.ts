@@ -93,9 +93,12 @@ export function registerProjectRoutes(router: Router) {
     try {
       const { projectId } = req.params;
       
+      console.log(`Loading project with ID: ${projectId}`);
+      
       // Validate projectId
       const validation = loadProjectSchema.safeParse({ projectId });
       if (!validation.success) {
+        console.log(`Invalid project ID format: ${projectId}`);
         return res.status(400).json({ 
           error: 'Invalid project ID',
           details: validation.error.format()
@@ -106,8 +109,12 @@ export function registerProjectRoutes(router: Router) {
       const project = await storage.getHtmlProjectByProjectId(projectId);
       
       if (!project) {
+        console.log(`Project not found in database: ${projectId}`);
         return res.status(404).json({ error: "Project not found" });
       }
+      
+      // Log the loaded project 
+      console.log(`Project loaded successfully: ${projectId}`);
       
       // Return in the same format as the previous API for backward compatibility
       const response = {

@@ -927,10 +927,14 @@ export function HTMLGeneratorStage({
       }
 
       console.log("Project saved with ID:", projectId);
-
+      
+      // Get the fully qualified domain for the share URL
+      const domain = window.location.origin;
+      console.log("Using domain for share URL:", domain);
+      
       // Create a shareable URL using the current hostname
-      const shareUrl = `${window.location.origin}/project/${projectId}`;
-      console.log("Share URL:", shareUrl);
+      const shareUrl = `${domain}/project/${projectId}`;
+      console.log("Generated share URL:", shareUrl);
 
       // Update state with project ID and share URL
       setState((prev) => ({
