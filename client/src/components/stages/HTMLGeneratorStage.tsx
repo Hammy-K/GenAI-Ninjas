@@ -115,21 +115,24 @@ export function HTMLGeneratorStage({
   // Define initial state with welcome message
   const welcomeMessage: HTMLMessage = {
     role: "assistant",
-    content:
-      "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
+    content: `
+  🎮  ياهلا في أداة بناء الألعاب بالذكاء الاصطناعي! 
+  أنا د. بنجي، موجود هنا أساعدك تصمّم لعبتك بنفسك. 
+  كل اللي عليك: توصف لي فكرتك، وأنا أكتب لك الكود ✨
+      `,
   };
 
   const examplesMessage: HTMLMessage = {
     role: "assistant",
     content: `
-مثلاً:
-- لعبة شطرنج (او اي لعبة بسيطة)
-- لوحة رسم بسيطة
-- كويز تفاعلي فيه كم سؤال مضحك
-- صفحة تسهل وش ألبس اليوم من دولابي
-- صفحة أختار فيها وجهة سفري المفضلة
-- تطبيق يرشّح لك وش تأكل حسب مزاجك
-`,
+  تخيل لعبة بسيطة وممتعة، زي:
+  - لعبة ذكاء أو تركيز سريعة
+  - لعبة قفز وتفادي حواجز
+  - لعبة كويز مضحكة بأسئلة غريبة
+  - لعبة مغامرات واختيارات
+
+  خلك كرييتف! 🔥 أهم شيء نبدأ بفكرة خفيفة وممتعة.
+  `,
   };
 
   const initialState: HTMLGeneratorState = {
@@ -378,8 +381,7 @@ export function HTMLGeneratorStage({
       // Use the response message from the API
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content:
-          "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟\n\nهل أنت راضٍ عن النتيجة؟",
+        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
       // Update state with the AI response and HTML
@@ -1382,7 +1384,7 @@ export function HTMLGeneratorStage({
                           size="sm"
                           className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
                         >
-                          نعم، أريد المتابعة
+                          أحتاج تعديلات!
                         </Button>
                         <Button
                           onClick={() => handleSatisfaction(false)}
@@ -1390,7 +1392,7 @@ export function HTMLGeneratorStage({
                           size="sm"
                           className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                         >
-                          لا، أريد تعديلات
+                          انتهيت
                         </Button>
                       </div>
                     )}

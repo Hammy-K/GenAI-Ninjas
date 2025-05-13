@@ -286,11 +286,21 @@ export function HTMLGeneratorV2({
     if (state.currentHTML.trim() && state.projectId && !state.isSaving) {
       const saveTimer = setTimeout(() => {
         const firebaseUid = localStorage.getItem("firebaseUid");
-        if (firebaseUid && state.projectId) {
+        if (state.projectId) {
           setState((prev) => ({ ...prev, isSaving: true }));
           saveProject(state.currentHTML)
-            .then(() => {
-              setState((prev) => ({ ...prev, isSaving: false }));
+            .then((savedProjectId) => {
+              // Update the project ID in state if it's different from the API response
+              if (savedProjectId !== state.projectId) {
+                console.log(`Auto-save: Updating project ID from ${state.projectId} to ${savedProjectId}`);
+                setState((prev) => ({ 
+                  ...prev, 
+                  isSaving: false,
+                  projectId: savedProjectId
+                }));
+              } else {
+                setState((prev) => ({ ...prev, isSaving: false }));
+              }
             })
             .catch((err) => {
               console.error("Error auto-saving project:", err);
@@ -734,10 +744,17 @@ export function HTMLGeneratorV2({
       // First save/update the project to ensure it's persisted
       try {
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
-        await saveProject(state.currentHTML);
+        // Save the project and get the returned project ID from the API
+        const savedProjectId = await saveProject(state.currentHTML);
+        
+        // Update the project ID in state if it's different from the API response
+        if (savedProjectId !== state.projectId) {
+          console.log(`Updating project ID from ${state.projectId} to ${savedProjectId}`);
+          setState(prev => ({ ...prev, projectId: savedProjectId }));
+        }
 
-        // Generate and set the share URL
-        const shareUrl = `${window.location.origin}/project/${state.projectId}`;
+        // Generate and set the share URL using the potentially updated project ID
+        const shareUrl = `${window.location.origin}/project/${savedProjectId}`;
         setState((prev) => ({
           ...prev,
           shareUrl,
@@ -746,7 +763,7 @@ export function HTMLGeneratorV2({
 
         // Track share action for analytics
         trackStageProgress("html_generator", "share_project", {
-          project_id: state.projectId,
+          project_id: savedProjectId,
         });
       } catch (error) {
         console.error("Error saving project for sharing:", error);

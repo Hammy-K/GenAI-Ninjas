@@ -192,19 +192,25 @@ export default function HtmlGeneratorV2SubmissionsPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <a
-                    href={`/project/${submission.projectId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full"
-                  >
-                    <Button
-                      variant="outline"
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href={`/project/${submission.projectId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full"
                     >
-                      عرض المشروع <ExternalLink className="h-4 w-4 mr-2" />
-                    </Button>
-                  </a>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                      >
+                        عرض المشروع <ExternalLink className="h-4 w-4 mr-2" />
+                      </Button>
+                    </a>
+                    <div className="text-xs text-muted-foreground overflow-hidden text-ellipsis">
+                      <span className="font-medium">الرابط:</span> 
+                      <span className="rtl:text-left rtl:dir-ltr overflow-hidden text-ellipsis" dir="ltr">{window.location.origin}/project/{submission.projectId}</span>
+                    </div>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
