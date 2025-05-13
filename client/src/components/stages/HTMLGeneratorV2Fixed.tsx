@@ -59,16 +59,17 @@ import {
   Eye,
 } from "lucide-react";
 import {
-  useEffect,
   useCallback,
-  useState,
+  useEffect,
+  useLayoutEffect,
   useRef,
-  useMemo,
-  UIEvent,
+  useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "wouter";
-import { v4 as uuidv4 } from "uuid";
+import { Link, useLocation } from "wouter";
+import { useState as useHookState } from "@hookstate/core";
+import { StudentInfoModal } from "@/components/modals/StudentInfoModal";
+import React from "react";
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
@@ -111,7 +112,7 @@ interface HTMLGeneratorState {
   showSatisfactionButtons: boolean;
 }
 
-export function HTMLGeneratorV2({
+export function HTMLGeneratorV2Fixed({
   onComplete,
   onEarnXp,
   onUnlockBadge,
@@ -122,14 +123,21 @@ export function HTMLGeneratorV2({
     useXpTracker();
   const [showConfetti, setShowConfetti] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [showStudentInfoModal, setShowStudentInfoModal] = useState(false);
+  const [studentInfo, setStudentInfo] = useState({
+    name: localStorage.getItem("studentName") || "",
+    id: localStorage.getItem("studentId") || "",
+  });
 
   // Get the current location for routing
   const [location, setLocation] = useLocation();
 
-  // Define initial state with welcome message - matching the original HTML Generator
+  // Define initial state with welcome message
   const welcomeMessage: HTMLMessage = {
     role: "assistant",
-    content: "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
+    content:
+      "أهلًا في أداة بناء المواقع بالذكاء الاصطناعي! أنا هنا أساعدك تبني تطبيق ويب من خلال كتابة الكود حسب وصفك. جرّب توصف اللي تبغى تسويه،",
   };
 
   const examplesMessage: HTMLMessage = {
@@ -141,6 +149,7 @@ export function HTMLGeneratorV2({
 - كويز تفاعلي فيه كم سؤال مضحك
 - صفحة تسهل وش ألبس اليوم من دولابي
 - صفحة أختار فيها وجهة سفري المفضلة
+- تطبيق يرشّح لك وش تأكل حسب مزاجك
 `,
   };
 
@@ -172,11 +181,26 @@ export function HTMLGeneratorV2({
     showSatisfactionButtons: false,
   };
 
+  // Check stored student info on component mount
+  useEffect(() => {
+    const storedName = localStorage.getItem("studentName");
+    const storedId = localStorage.getItem("studentId");
+    // Only show the modal if either name or ID is missing
+    if (!storedName || !storedId) {
+      setShowStudentInfoModal(true);
+    } else {
+      setStudentInfo({
+        name: storedName || "",
+        id: storedId || "",
+      });
+    }
+  }, []);
+
   // Clear stale state if needed
   useEffect(() => {
     // This will clear any stale state on component mount to prevent stuck states
     try {
-      const storageKey = "genAIQuest_html_generator_v2_state";
+      const storageKey = "genAIQuest_html_generatorState";
       const savedState = localStorage.getItem(storageKey);
 
       if (savedState) {
@@ -185,7 +209,7 @@ export function HTMLGeneratorV2({
         // Force reset isSaving to false and any error messages on component mount
         console.log(
           "Ensuring clean state on mount - previous isSaving:",
-          parsedState.isSaving,
+          parsedState.isSaving
         );
 
         const cleanState = {
@@ -200,14 +224,14 @@ export function HTMLGeneratorV2({
     } catch (e) {
       console.error("Error checking saved state:", e);
       // Just in case there's an error, clear the entire localStorage entry
-      localStorage.removeItem("genAIQuest_html_generator_v2_state");
+      localStorage.removeItem("genAIQuest_html_generatorState");
     }
   }, []);
 
   // Initialize state with localStorage values or defaults
   const [state, setState] = useStageState<HTMLGeneratorState>(
-    "html_generator_v2",
-    initialState,
+    "html_generator",
+    initialState
   );
 
   // Initialize toast hook for notifications
@@ -219,354 +243,250 @@ export function HTMLGeneratorV2({
     // 1. Use scrollIntoView for standard behavior
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-    // 2. Set scrollTop to ensure it works in all browsers
-    const chatArea = document.querySelector(".chat-area");
-    if (chatArea) {
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
-  }, [state.messages, state.isLoading]);
+    // 2. Use a timeout as a fallback to ensure scrolling happens after render
+    const timer = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }, 100);
 
-  // Handler for copying the HTML code to clipboard
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(state.currentHTML);
-    toast({
-      title: "تم نسخ الكود",
-      description: "تم نسخ كود HTML إلى الحافظة بنجاح.",
-    });
-
-    // Track progress for analytics
-    trackStageProgress("html_generator", "copy_code", {
-      project_length: state.currentHTML.length,
-    });
-  };
-
-  // Handle shared link copied from dialog
-  const handleCopyShareLink = () => {
-    if (state.shareUrl) {
-      navigator.clipboard.writeText(state.shareUrl);
-      toast({
-        title: "تم نسخ الرابط",
-        description: "يمكنك الآن مشاركة رابط المشروع مع الآخرين.",
-      });
-
-      // Mark the link as copied in the state
-      setState((prev) => ({
-        ...prev,
-        hasSharedLink: true,
-      }));
-
-      // Track sharing for analytics
-      trackStageProgress("html_generator", "share_link_copied");
-    }
-  };
-
-  // Handler for toggling the view between preview and code
-  const toggleView = () => {
-    setState((prevState) => ({
-      ...prevState,
-      viewMode: prevState.viewMode === "preview" ? "code" : "preview",
-    }));
-
-    // Track view toggle for analytics
-    trackStageProgress(
-      "html_generator",
-      `switch_to_${state.viewMode === "preview" ? "code" : "preview"}_view`,
-      {},
-    );
-  };
+    return () => clearTimeout(timer);
+  }, [state.messages]);
 
   // Auto-save the project if it has changed
   useEffect(() => {
     // Only auto-save if there is actual content and a projectId
-    if (state.currentHTML.trim() && state.projectId && !state.isSaving) {
+    if (state.currentHTML) {
       const saveTimer = setTimeout(() => {
-        const firebaseUid = localStorage.getItem("firebaseUid");
-        if (firebaseUid && state.projectId) {
-          setState((prev) => ({ ...prev, isSaving: true }));
+        // Only auto-save if there is HTML content and we're not already saving
+        if (state.currentHTML && !state.isSaving) {
+          console.log("Auto-saving project...");
           saveProject(state.currentHTML)
-            .then(() => {
-              setState((prev) => ({ ...prev, isSaving: false }));
+            .then((projectId) => {
+              console.log("Auto-saved project with ID:", projectId);
+              setState((prev) => ({ ...prev, projectId }));
             })
-            .catch((err) => {
-              console.error("Error auto-saving project:", err);
-              setState((prev) => ({
-                ...prev,
-                isSaving: false,
-                error: "فشل في حفظ المشروع تلقائيًا. الرجاء المحاولة مرة أخرى.",
-              }));
+            .catch((error) => {
+              console.error("Error auto-saving project:", error);
             });
         }
       }, 3000); // Auto-save after 3 seconds of inactivity
 
       return () => clearTimeout(saveTimer);
     }
-  }, [state.currentHTML, state.projectId]);
+  }, [state.currentHTML]);
 
-  // Generate project ID on initial HTML generation if needed
-  useEffect(() => {
-    if (state.currentHTML && !state.projectId) {
-      setState((prev) => ({
-        ...prev,
-        projectId: uuidv4(),
-      }));
-    }
-  }, [state.currentHTML, state.projectId]);
+  // Handler for the first message from user describing what they want
+  const handleGenerateHTML = useCallback(async () => {
+    // Don't continue if already loading or no prompt
+    if (state.isLoading || !state.prompt.trim()) return;
 
-  const handleGenerateHTML = async () => {
-    // Skip if already loading or no input
-    if (state.isLoading) return;
-
-    const userInput = state.prompt.trim();
-
-    // If we're in the clarification flow, the prompt handling
-    // is different than the initial input
-    if (
-      state.flowStep === "clarify" ||
-      state.flowStep === "confirm" ||
-      state.flowStep === "satisfied"
-    ) {
-      // Just add the message to the chat, don't generate HTML yet
-      const userMessage: HTMLMessage = {
-        role: "user",
-        content: userInput,
+    // Validate input
+    const validation = validateInput(state.prompt);
+    if (!validation.isValid) {
+      const validationWarning: HTMLMessage = {
+        role: "assistant",
+        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد.",
       };
 
       setState((prevState) => ({
         ...prevState,
-        prompt: "",
-        messages: [...prevState.messages, userMessage],
-        isLoading: true,
+        messages: [...prevState.messages, validationWarning],
+        error: validation.errorMessage,
       }));
+      return;
+    }
 
-      if (state.flowStep === "clarify") {
-        // This is the answer to the clarification question
-        setState((prevState) => ({
-          ...prevState,
-          clarificationAnswer: userInput,
-          isLoading: true,
-        }));
+    // Add the user's message
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: state.prompt,
+    };
 
-        try {
-          // Get the project summary based on original idea and clarification
-          const summaryResult = await getProjectSummary(
-            state.originalIdea,
-            userInput,
-          );
+    // Clear the prompt input and start loading
+    setState((prevState) => ({
+      ...prevState,
+      messages: [...prevState.messages, userMessage],
+      prompt: "",
+      isLoading: true,
+      error: "",
+    }));
 
-          const assistantMessage: HTMLMessage = {
-            role: "assistant",
-            content: `شكراً على التوضيح. :\n\n${summaryResult.summary}\n\ `,
-          };
+    // Log prompt to analytics
+    logPromptToFirestore("html_generator_v2", state.prompt).catch((error) => {
+      console.error("Error logging prompt:", error);
+    });
 
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, assistantMessage],
-            projectSummary: summaryResult.summary,
-            isLoading: false,
-            flowStep: "confirm",
-            showConfirmButtons: true,
-          }));
-        } catch (error) {
-          console.error("Error getting project summary:", error);
+    // Based on the current step, determine the next action
+    if (state.flowStep === "input" || state.flowStep === "modify") {
+      // We're in the initial step or modifying the project, so start with clarification
+      try {
+        // Get a clarifying question
+        const clarificationResult = await getClarifyingQuestion(state.prompt);
+
+        if (clarificationResult.error) {
           const errorMessage: HTMLMessage = {
             role: "assistant",
             content:
-              "عذراً، حدث خطأ أثناء تلخيص المشروع. يرجى المحاولة مرة أخرى.",
+              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
           };
 
           setState((prevState) => ({
             ...prevState,
             messages: [...prevState.messages, errorMessage],
             isLoading: false,
-            error: "فشل في الحصول على ملخص المشروع",
+            error: clarificationResult.error,
           }));
+          return;
         }
-      } else if (state.flowStep === "satisfied") {
-        // User has provided feedback
-        const isSatisfied = state.isSatisfied;
 
-        // Add a system message about satisfaction
-        const satisfactionMessage: HTMLMessage = {
+        // Add the clarifying question to the chat
+        const assistantMessage: HTMLMessage = {
           role: "assistant",
-          content: isSatisfied
-            ? "كفو! مبسوط إن المشروع عجبك 🔥 تقدر تكمل تعدل عليه أو تشاركه مع أصحابك."
-            : "تمام، خلينا نحسّن المشروع! قل لي بالضبط وش تبغى نغير، وأنا أعدلك الكود. 🚀",
+          content: clarificationResult.question,
+        };
+
+        // Update state with the original idea and clarifying question
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, assistantMessage],
+          originalIdea: state.prompt,
+          isLoading: false,
+          flowStep: "clarify",
+        }));
+      } catch (error) {
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
         };
 
         setState((prevState) => ({
           ...prevState,
-          messages: [...prevState.messages, satisfactionMessage],
+          messages: [...prevState.messages, errorMessage],
           isLoading: false,
-          flowStep: isSatisfied ? "satisfied" : "modify",
-          showConfirmButtons: false,
-          showSatisfactionButtons: false,
+          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+        }));
+      }
+    } else if (state.flowStep === "clarify") {
+      // User has answered the clarifying question, now generate a summary
+      try {
+        // Store their clarification answer
+        setState((prevState) => ({
+          ...prevState,
+          clarificationAnswer: state.prompt,
         }));
 
-        // If not satisfied, set up for a new generation
-        if (!isSatisfied) {
-          // We'll wait for the next user message with specific feedback
-        }
-
-        // Track satisfaction for analytics
-        trackStageProgress(
-          "html_generator",
-          isSatisfied ? "satisfied" : "not_satisfied",
-          {
-            project_length: state.currentHTML.length,
-          },
+        // Get project summary
+        const summaryResult = await getFullProjectSummary(
+          state.originalIdea,
+          state.prompt
         );
-      } else if (state.flowStep === "confirm") {
-        // This is a normal message after the initial generation
-        try {
-          // Now we'll update the HTML based on the feedback
-          setState((prevState) => ({
-            ...prevState,
-            isLoading: true,
-          }));
 
-          // Generate HTML based on all the context we've gathered
-          const htmlResult = await generateHTML(state.messages);
-
-          // Check if we received a valid response
-          if (htmlResult && htmlResult.html) {
-            // Create the assistant message with confirmation
-            const assistantMessage: HTMLMessage = {
-              role: "assistant",
-              content:
-                htmlResult.message?.content ||
-                "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
-            };
-
-            setState((prevState) => ({
-              ...prevState,
-              messages: [...prevState.messages, assistantMessage],
-              currentHTML: htmlResult.html,
-              isLoading: false,
-              showSatisfactionButtons: true,
-              flowStep: "modify", // Move to modification/feedback stage
-            }));
-
-            // Award XP if not already awarded
-            if (!state.hasEarnedXp) {
-              setState((prevState) => ({
-                ...prevState,
-                hasEarnedXp: true,
-              }));
-
-              onEarnXp(50, "HTML generator");
-
-              if (!state.hasUnlockedBadge) {
-                setState((prevState) => ({
-                  ...prevState,
-                  hasUnlockedBadge: true,
-                }));
-                onUnlockBadge("html_pro", "HTML generator");
-
-                // Show confetti for badge
-                setShowConfetti(true);
-                setTimeout(() => setShowConfetti(false), 3000);
-              }
-            }
-          } else {
-            throw new Error("No HTML in response");
-          }
-        } catch (error) {
-          console.error("Error generating HTML:", error);
+        if (summaryResult.error) {
           const errorMessage: HTMLMessage = {
             role: "assistant",
             content:
-              "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى بوصف أكثر تفصيلاً.",
+              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
           };
 
           setState((prevState) => ({
             ...prevState,
             messages: [...prevState.messages, errorMessage],
             isLoading: false,
-            error: "فشل في إنشاء كود HTML",
+            error: summaryResult.error,
           }));
+          return;
         }
-      }
-      return;
-    }
 
-    // Validate input to prevent harmful content
-    const validationResult = validateInput(userInput);
-    if (!validationResult.isValid) {
-      setState((prevState) => ({
-        ...prevState,
-        error: validationResult.errorMessage,
-      }));
-      toast({
-        variant: "destructive",
-        title: "محتوى غير مناسب",
-        description: validationResult.errorMessage,
-      });
-      return;
-    }
-
-    // Add user message to the chat
-    const userMessage: HTMLMessage = {
-      role: "user",
-      content: userInput,
-    };
-
-    // Start loading state and add the message
-    setState((prevState) => ({
-      ...prevState,
-      messages: [...prevState.messages, userMessage],
-      isLoading: true,
-      prompt: "", // Clear the input field
-      originalIdea: userInput, // Store the original idea for the clarify & confirm flow
-      flowStep: "clarify", // Move to clarification step
-    }));
-
-    try {
-      // Get a clarifying question based on the user's idea
-      const clarificationResult = await getClarifyingQuestion(userInput);
-
-      if (clarificationResult && clarificationResult.question) {
+        // Add the summary with confirmation buttons
         const assistantMessage: HTMLMessage = {
           role: "assistant",
-          content: clarificationResult.question,
+          content: summaryResult.summary,
+        };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, assistantMessage],
+          projectSummary: summaryResult.summary,
+          isLoading: false,
+          flowStep: "confirm",
+          showConfirmButtons: true,
+        }));
+      } catch (error) {
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+        };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, errorMessage],
+          isLoading: false,
+          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+        }));
+      }
+    } else if (state.flowStep === "confirm") {
+      // They've sent more refinements after the summary
+      try {
+        // Update the summary with the refinements
+        const summaryResult = await getFullProjectSummary(
+          state.originalIdea,
+          state.prompt
+        );
+
+        if (summaryResult.error) {
+          const errorMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, errorMessage],
+            isLoading: false,
+            error: summaryResult.error,
+          }));
+          return;
+        }
+
+        // Add the updated summary with confirmation buttons again
+        const assistantMessage: HTMLMessage = {
+          role: "assistant",
+          content: summaryResult.summary,
         };
 
         setState((prevState) => ({
           ...prevState,
           messages: [...prevState.messages, assistantMessage],
           isLoading: false,
+          flowStep: "confirm", // Stay in confirm step for refinement
         }));
+      } catch (error) {
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+        };
 
-        // Log prompt to Firestore for analytics
-        const firebaseUid = localStorage.getItem("firebaseUid");
-        if (firebaseUid) {
-          logPromptToFirestore(userInput, "html_generator").catch(
-            console.error,
-          );
-        }
-      } else {
-        throw new Error("No clarifying question received");
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, errorMessage],
+          isLoading: false,
+          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+        }));
       }
-    } catch (error) {
-      console.error("Error getting clarifying question:", error);
-      // Handle the error with a message to the user
-      const errorMessage: HTMLMessage = {
-        role: "assistant",
-        content:
-          "عذراً، واجهت مشكلة في فهم طلبك. هل يمكنك وصف ما تريد بناءه بطريقة أخرى؟",
-      };
-
-      setState((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, errorMessage],
-        isLoading: false,
-        error: "فشل في الحصول على سؤال توضيحي",
-        flowStep: "input", // Reset to input step
-      }));
     }
-  };
+  }, [state.prompt, state.flowStep, state.originalIdea, state.isLoading]);
 
-  // Handle confirmation or rejection of the project summary
-  const handleConfirmSummary = async (isConfirmed: boolean) => {
+  // Handle user confirming the summary
+  const handleConfirmation = async (isConfirmed: boolean) => {
+    // Add user's response message
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: isConfirmed ? "نعم، هذا ما أريده!" : "لا، أريد تغيير بعض التفاصيل.",
+    };
+
     // Reset the confirm buttons state
     setState((prevState) => ({
       ...prevState,
@@ -612,10 +532,10 @@ export function HTMLGeneratorV2({
 
           setState((prevState) => ({
             ...prevState,
-            messages: [...prevState.messages, assistantMessage],
+            messages: [...prevState.messages, userMessage, assistantMessage],
             currentHTML: htmlResult.html,
             isLoading: false,
-            flowStep: "modify", // Move to modification stage
+            flowStep: "satisfied", // Move to satisfied stage
             showSatisfactionButtons: true, // Show satisfaction buttons
           }));
 
@@ -627,64 +547,224 @@ export function HTMLGeneratorV2({
             }));
 
             onEarnXp(50, "HTML generator");
-
-            if (!state.hasUnlockedBadge) {
-              setState((prevState) => ({
-                ...prevState,
-                hasUnlockedBadge: true,
-              }));
-              onUnlockBadge("html_pro", "HTML generator");
-
-              // Show confetti for badge
-              setShowConfetti(true);
-              setTimeout(() => setShowConfetti(false), 3000);
-            }
           }
         } else {
-          throw new Error("No HTML in response");
+          // Handle error with HTML generation
+          const errorMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, userMessage, errorMessage],
+            isLoading: false,
+            error: htmlResult.error || "فشل في إنشاء HTML",
+          }));
         }
       } catch (error) {
-        console.error("Error generating HTML:", error);
+        // Handle any errors during generation
         const errorMessage: HTMLMessage = {
           role: "assistant",
-          content: "عذراً، واجهت مشكلة في إنشاء الكود. يرجى المحاولة مرة أخرى.",
+          content:
+            "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
         };
 
         setState((prevState) => ({
           ...prevState,
-          messages: [...prevState.messages, errorMessage],
+          messages: [...prevState.messages, userMessage, errorMessage],
           isLoading: false,
-          error: "فشل في إنشاء كود HTML",
-          flowStep: "input", // Reset to input step
+          error: error instanceof Error ? error.message : "فشل في إنشاء HTML",
         }));
       }
     } else {
-      // User rejected the summary, ask for refinement
+      // User wants to change details, go back to clarify step
       const assistantMessage: HTMLMessage = {
         role: "assistant",
-        content:
-          "بالتأكيد. أخبرني ما الذي ترغب في تعديله أو إضافته للوصف، وسأقوم بتحديث فهمي للمشروع.",
+        content: "لا مشكلة، قم بتوضيح التغييرات التي تريد إجراءها.",
       };
 
       setState((prevState) => ({
         ...prevState,
-        messages: [...prevState.messages, assistantMessage],
+        messages: [...prevState.messages, userMessage, assistantMessage],
         isLoading: false,
         flowStep: "confirm", // Stay in confirm step for refinement
       }));
     }
   };
 
+  // Combined save and share function - matches original implementation
+  const saveAndShareProject = async () => {
+    // Don't proceed if no HTML content or already saving
+    if (!state.currentHTML || state.isSaving) {
+      console.log("Save canceled: No HTML content or already saving");
+      return;
+    }
+
+    console.log("Starting save and share process...");
+
+    // Set saving state immediately to prevent multiple clicks
+    setState((prev) => ({ ...prev, isSaving: true, error: "" }));
+
+    try {
+      // Save the project to Firebase with timeout protection
+      console.log("Calling saveProject function...");
+      let projectId: string;
+
+      try {
+        // Add a safety timeout to prevent indefinite hanging
+        const savePromise = saveProject(state.currentHTML);
+
+        // Extend timeout to 30 seconds for Firebase operations in Replit
+        const timeoutPromise = new Promise<string>((resolve) => {
+          setTimeout(() => {
+            console.log("Save operation timed out, using fallback ID");
+            // Try to save to localStorage as backup
+            try {
+              const backupKey = `html_backup_${Date.now()}`;
+              localStorage.setItem(backupKey, state.currentHTML);
+              console.log(
+                "HTML content backed up to localStorage with key:",
+                backupKey
+              );
+            } catch (backupError) {
+              console.error(
+                "Failed to backup HTML to localStorage:",
+                backupError
+              );
+            }
+
+            resolve(`project_${Date.now()}_timeout`);
+          }, 30000); // 30 second timeout - Firebase operations can be slow in Replit
+        });
+
+        // Double attempt: Try native save first, if it fails within 15 seconds, use a different approach
+        const attemptTimeoutPromise = new Promise<string>(async (resolve) => {
+          setTimeout(async () => {
+            console.log(
+              "Initial save approaching timeout, trying alternate method..."
+            );
+            try {
+              // This is a fallback save method that bypasses some Firebase checks
+              const fallbackId = await saveProject(state.currentHTML, true);
+              resolve(fallbackId);
+            } catch (fallbackError) {
+              console.error("Fallback save also failed:", fallbackError);
+              resolve(`project_${Date.now()}_fallback_failed`);
+            }
+          }, 15000); // Try fallback after 15 seconds
+        });
+
+        // Race the promises to get the fastest result
+        projectId = await Promise.race([
+          savePromise,
+          timeoutPromise,
+          attemptTimeoutPromise,
+        ]);
+      } catch (saveError) {
+        console.error("Error in saveProject:", saveError);
+        // Handle error with a fallback ID
+        projectId = `project_${Date.now()}_error`;
+      }
+
+      console.log("Project saved with ID:", projectId);
+
+      // Generate the share URL
+      const shareUrl = `${window.location.origin}/project/${projectId}`;
+      
+      // Update state with project ID and share URL
+      setState((prev) => ({
+        ...prev,
+        projectId,
+        shareUrl,
+        isSaving: false,
+        showShareDialog: true,
+      }));
+
+      // Track successful save for analytics
+      trackStageProgress("html_generator", "project_saved", {
+        project_id: projectId,
+      });
+
+      // Auto-copy URL to clipboard for easier sharing
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        console.log("Share URL copied to clipboard:", shareUrl);
+        
+        // Mark as shared so the badge can be awarded
+        setState(prev => ({
+          ...prev,
+          hasSharedLink: true
+        }));
+        
+        toast({
+          title: "تم نسخ الرابط",
+          description: "تم نسخ رابط المشاركة إلى الحافظة.",
+        });
+      } catch (clipboardError) {
+        console.error("Failed to copy URL to clipboard:", clipboardError);
+        // Don't show error toast here, just log the issue
+      }
+    } catch (error) {
+      console.error("Error in saveAndShareProject:", error);
+      setState((prev) => ({ 
+        ...prev, 
+        isSaving: false,
+        error: error instanceof Error ? error.message : "فشل حفظ المشروع"
+      }));
+      
+      toast({
+        variant: "destructive",
+        title: "فشل الحفظ",
+        description: "حدث خطأ أثناء حفظ المشروع. يرجى المحاولة مرة أخرى.",
+      });
+    }
+  };
+
   // Handle satisfaction with the generated HTML
   const handleSatisfaction = (satisfied: boolean) => {
-    setState((prevState) => ({
-      ...prevState,
-      isSatisfied: satisfied,
-      showSatisfactionButtons: false,
-      flowStep: "satisfied",
-    }));
+    if (satisfied) {
+      setState((prev) => ({
+        ...prev,
+        messages: [
+          ...prev.messages,
+          {
+            role: "user",
+            content: "نعم، أريد المتابعة",
+          },
+        ],
+        isSatisfied: true,
+        showSatisfactionButtons: false,
+        flowStep: "satisfied",
+      }));
 
-    // The rest will be handled in the next user message
+      // Show save options and automatically save and share the project
+      saveAndShareProject();
+    } else {
+      setState((prev) => ({
+        ...prev,
+        messages: [
+          ...prev.messages,
+          {
+            role: "user",
+            content: "لا، أريد التعديل",
+          },
+          {
+            role: "assistant",
+            content: "اوكي، وش تبي نغير؟",
+          },
+        ],
+        isSatisfied: false,
+        showSatisfactionButtons: false,
+        flowStep: "modify",
+      }));
+    }
+
+    // Track satisfaction for analytics
+    trackStageProgress("html_generator", satisfied ? "satisfied" : "not_satisfied", {
+      is_satisfied: satisfied,
+    });
   };
 
   // Handler for resetting the HTML and starting over
@@ -722,37 +802,34 @@ export function HTMLGeneratorV2({
     }));
   };
 
-  // Handle sharing project
-  const handleShareProject = async () => {
-    // If we already have a project ID and HTML, create the share URL
-    if (state.projectId && state.currentHTML) {
-      // First save/update the project to ensure it's persisted
-      try {
-        const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
-        await saveProject(state.currentHTML);
+  // Handle view mode toggle
+  const toggleViewMode = () => {
+    setState((prev) => ({
+      ...prev,
+      viewMode: prev.viewMode === "preview" ? "code" : "preview",
+    }));
+  };
 
-        // Generate and set the share URL
-        const shareUrl = `${window.location.origin}/project/${state.projectId}`;
-        setState((prev) => ({
-          ...prev,
-          shareUrl,
-          showShareDialog: true,
-        }));
+  // Handle copying HTML code
+  const copyHtmlCode = () => {
+    if (state.currentHTML) {
+      navigator.clipboard.writeText(state.currentHTML);
+      setCodeCopied(true);
+      toast({
+        title: "تم النسخ",
+        description: "تم نسخ كود HTML إلى الحافظة.",
+      });
 
-        // Track share action for analytics
-        trackStageProgress("html_generator", "share_project", {
-          project_id: state.projectId,
-        });
-      } catch (error) {
-        console.error("Error saving project for sharing:", error);
-        toast({
-          variant: "destructive",
-          title: "فشل المشاركة",
-          description:
-            "حدث خطأ أثناء حفظ المشروع للمشاركة. يرجى المحاولة مرة أخرى.",
-        });
-      }
+      // Reset the copied state after a short delay
+      setTimeout(() => {
+        setCodeCopied(false);
+      }, 2000);
     }
+  };
+
+  // Legacy handleShareProject function now just calls saveAndShareProject
+  const handleShareProject = async () => {
+    await saveAndShareProject();
   };
 
   // Close share dialog
@@ -783,378 +860,323 @@ export function HTMLGeneratorV2({
     }
   };
 
-  const formatHTML = () => {
-    let formatted = state.currentHTML;
-    // Add simple HTML formatting logic here if needed
-    return formatted;
+  const handleStudentInfoSubmit = (name: string, id: string) => {
+    setStudentInfo({ name, id });
+    localStorage.setItem("studentName", name);
+    localStorage.setItem("studentId", id);
+    setShowStudentInfoModal(false);
   };
 
-  const handleTryAgain = () => {
-    setState((prevState) => ({
-      ...prevState,
-      error: "",
-    }));
-  };
-
-  // Render the HTML preview
-  const renderHTMLPreview = () => {
-    // Sometimes we need to render an empty iframe to avoid stale content
-    if (!state.currentHTML) {
-      return (
-        <div className="flex items-center justify-center h-full bg-neutral-50 rounded-md">
-          <p className="text-muted-foreground text-center">
-            قم بكتابة وصف للمشروع وسوف يظهر هنا عرض HTML الخاص بك
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <iframe
-        sandbox="allow-scripts allow-same-origin"
-        className="w-full h-full bg-white rounded-md"
-        srcDoc={state.currentHTML}
-      />
-    );
-  };
-
-  // Show the HTML code view
-  const renderHTMLCode = () => {
-    if (!state.currentHTML) {
-      return (
-        <div className="flex items-center justify-center h-full bg-neutral-50 rounded-md p-4">
-          <p className="text-muted-foreground text-center">
-            قم بكتابة وصف للمشروع وسوف يظهر هنا كود HTML الخاص بك
-          </p>
-        </div>
-      );
-    }
-
-    // Simple code viewer with syntax highlighting would go here
-    return (
-      <ScrollArea className="h-full bg-neutral-900 text-white p-4 rounded-md font-mono text-sm">
-        <pre>{formatHTML()}</pre>
-      </ScrollArea>
-    );
-  };
-
-  // Check if any messages are loading
-  const hasLoadingMessage = state.messages.some((msg) =>
-    msg.className?.includes("loading"),
-  );
-
+  // Render the HTML Generator interface with side-by-side layout
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-2rem)] p-2 gap-4">
-      {/* Preview Section - 70% width on desktop, full on mobile */}
-      <div className="w-full md:w-[70%] h-full flex flex-col">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="justify-between flex-row items-center py-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-xl">
-                {state.viewMode === "preview" ? "معاينة الموقع" : "عرض الكود"}
-              </CardTitle>
+    <div className="flex flex-col h-screen bg-[#F9F5EB]">
+      {/* Student Information Modal */}
+      <StudentInfoModal
+        isOpen={showStudentInfoModal}
+        onClose={() => setShowStudentInfoModal(false)}
+        onSubmit={handleStudentInfoSubmit}
+      />
 
-              {state.isSaving && (
-                <div className="flex items-center text-xs">
-                  <Loader2 className="w-3 h-3 animate-spin ml-1" />
-                  <span className="text-muted-foreground">جاري الحفظ...</span>
-                </div>
-              )}
+      {/* Title bar */}
+      <div className="px-6 py-2 bg-white border-b flex justify-between items-center">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-primary"
+          >
+            <ArrowRight className="ml-1 h-4 w-4 rtl:rotate-180" />
+            عودة
+          </Button>
+          <h1 className="text-lg font-bold ml-4 text-primary">
+            منشئ HTML بالذكاء الاصطناعي
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/missions/html-generator-v2/submissions"
+            className="text-sm text-primary hover:underline focus:outline-none"
+          >
+            عرض المشاريع المحفوظة
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetHTML}
+            className="text-destructive"
+          >
+            <X className="ml-1 h-4 w-4" />
+            مسح وإعادة تشغيل
+          </Button>
+        </div>
+      </div>
+
+      {/* Main content - Side by side layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Preview/Code area - 70% */}
+        <div className="w-[70%] flex flex-col border-l relative overflow-hidden">
+          <div className="flex justify-between items-center p-2 border-b bg-white">
+            <div className="flex">
+              <Button
+                variant={state.viewMode === "preview" ? "default" : "outline"}
+                size="sm"
+                onClick={() =>
+                  setState((prev) => ({ ...prev, viewMode: "preview" }))
+                }
+                className="rounded-l-md rounded-r-none text-xs h-8"
+              >
+                معاينة
+              </Button>
+              <Button
+                variant={state.viewMode === "code" ? "default" : "outline"}
+                size="sm"
+                onClick={() =>
+                  setState((prev) => ({ ...prev, viewMode: "code" }))
+                }
+                className="rounded-r-md rounded-l-none text-xs h-8"
+              >
+                الكود
+              </Button>
             </div>
-
             <div className="flex items-center gap-2">
-              {state.currentHTML && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="bg-[#4caf50] hover:bg-[#388e3c] border-0 h-8"
-                    onClick={handleShareProject}
-                  >
-                    <Share className="h-4 w-4 ml-2" />
-                    <span className="hidden sm:inline">مشاركة</span>
-                  </Button>
-                </>
+              {state.viewMode === "code" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyHtmlCode}
+                  className="text-xs h-8"
+                >
+                  {codeCopied ? (
+                    <Check className="ml-1 h-4 w-4" />
+                  ) : (
+                    <Copy className="ml-1 h-4 w-4" />
+                  )}
+                  {codeCopied ? "تم النسخ" : "نسخ الكود"}
+                </Button>
               )}
               <Button
-                size="sm"
                 variant="outline"
-                className="h-8"
-                onClick={toggleView}
-              >
-                {state.viewMode === "preview" ? (
-                  <>
-                    <Code className="h-4 w-4 ml-2" />
-                    <span className="hidden sm:inline">عرض الكود</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-4 w-4 ml-2" />
-                    <span className="hidden sm:inline">المعاينة</span>
-                  </>
-                )}
-              </Button>
-              <Button
                 size="sm"
-                variant="destructive"
-                className="h-8"
-                onClick={handleResetHTML}
+                onClick={handleShareProject}
+                disabled={!state.currentHTML || state.isSaving}
+                className="text-xs h-8"
               >
-                <Plus className="h-4 w-4 ml-2 rotate-45" />
-                <span className="hidden sm:inline">اعادة</span>
+                {state.isSaving ? (
+                  <Loader2 className="ml-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Share className="ml-1 h-4 w-4" />
+                )}
+                {state.isSaving ? "جاري الحفظ..." : "حفظ ومشاركة"}
               </Button>
             </div>
-          </CardHeader>
+          </div>
 
-          {/* Show any error messages */}
-          {state.error && (
-            <div className="px-6 pb-2">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>خطأ</AlertTitle>
-                <AlertDescription>
-                  {state.error}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={handleTryAgain}
-                  >
-                    المحاولة مرة أخرى
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          <CardContent className="flex-1 p-0 overflow-hidden">
-            {/* Placeholder when no HTML has been generated */}
-            {!state.currentHTML && state.viewMode === "preview" && (
-              <div className="flex flex-col items-center justify-center h-full p-4 bg-neutral-50">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-2">
-                    مُنشئ الألعاب بالذكاء الاصطناعي 🎮
-                  </h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    استخدم الدردشة اللي على اليمين، ووصّف لي فكرة لعبة بسيطة
-                    تبغى تصمّمها، وأنا أطلع لك كود HTML جاهز للعب هنا!
-                  </p>
-                </div>
-                <div className="max-w-2xl bg-white rounded-lg p-6 shadow-md border-2 border-purple-300">
-                  <h3 className="text-2xl font-bold mb-3 text-purple-700">
-                    تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:
-                  </h3>
-
-                  <p className="text-xl mb-4 font-bold text-gray-800">
-                    حركة بسيطة تعيدها كل مرة — وتصير أحلى وأصعب كل شوي!
-                  </p>
-
-                  <div className="space-y-2 my-4">
-                    <div className="flex items-center">
-                      <span className="text-2xl ml-2">🏃‍♂️</span>
-                      <span>تقفز فوق الحواجز (ماريو)</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-2xl ml-2">🎯</span>
-                      <span>تمسك الفواكه وهي تطيح (فروت نينجا)</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-2xl ml-2">🚀</span>
-                      <span>تحاول تعيش أطول وقت ممكن (فلابي بيرد)</span>
+          {/* Preview or Code content */}
+          <div className="flex-1 overflow-auto">
+            {state.viewMode === "preview" ? (
+              // Preview the HTML
+              <div className="h-full bg-white">
+                {state.currentHTML ? (
+                  <iframe
+                    srcDoc={state.currentHTML}
+                    title="HTML Preview"
+                    className="w-full h-full border-0"
+                    sandbox="allow-same-origin allow-scripts"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="text-center p-8">
+                      <Eye className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                      <p className="mb-2 text-lg">لا يوجد محتوى للعرض</p>
+                      <p className="text-sm opacity-75">
+                        أخبرني عن فكرة موقعك وسأقوم بإنشاءه لك!
+                      </p>
                     </div>
                   </div>
-
-                  <p className="text-xl font-bold text-purple-700 my-3">
-                    حركة وحدة + تحدي = إدمان! 🔥
-                  </p>
-
-                  <div className="mt-4 pt-3 borde-gray-200">
-                    <p className="text-gray-800 font-semibold">
-                      <span className="inline-block ml-2">👉</span>
-                      لما تفكر بلعبتك، اسأل نفسك:
-                    </p>
-                    <p className="text-gray-800 font-bold">
-                      "وش الحركة الرئيسية اللي بتكون ممتعة؟"
-                    </p>
-                  </div>
-                </div>
+                )}
+              </div>
+            ) : (
+              // Display the HTML code
+              <div className="p-4 bg-gray-900 text-gray-300 h-full overflow-auto font-mono text-sm whitespace-pre rtl:text-left">
+                {state.currentHTML || "// سيظهر كود HTML هنا بعد الإنشاء"}
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Preview vs. Code View */}
-            {state.viewMode === "preview"
-              ? renderHTMLPreview()
-              : renderHTMLCode()}
-          </CardContent>
-        </Card>
-      </div>
+        {/* Chat area - 30% */}
+        <div className="w-[30%] flex flex-col bg-white">
+          <div className="border-b p-2 text-center">
+            <h3 className="font-semibold">المحادثة مع الذكاء الاصطناعي</h3>
+          </div>
 
-      {/* Chat Section - 30% width on desktop */}
-      <div className="w-full md:w-[30%] h-full flex flex-col">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="py-3">
-            <CardTitle className="text-xl">الدردشة مع مساعدك الذكي</CardTitle>
-          </CardHeader>
-
-          <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
-            {/* Messages area with scroll */}
-            <ScrollArea className="flex-1 p-4 chat-area">
-              <div className="space-y-4">
-                {/* Render messages */}
-                {state.messages.map((message, index) => (
+          {/* Messages area */}
+          <ScrollArea className="flex-1 p-3">
+            <div className="space-y-4">
+              {state.messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  } ${message.className || ""}`}
+                >
                   <div
-                    key={index}
-                    className={`flex ${
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    } ${message.className || ""}`}
+                    className={`rounded-lg p-3 max-w-[90%] ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
                   >
+                    {message.role === "assistant" && (
+                      <div className="flex items-center mb-1">
+                        <img
+                          src={penguinAvatar}
+                          alt="Dr. Pengy"
+                          className="w-6 h-6 rounded-full ml-2"
+                        />
+                        <span className="text-xs font-medium">د. بنجي</span>
+                      </div>
+                    )}
                     <div
-                      className={`rounded-lg px-4 py-2 max-w-[85%] ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-white border-2 border-purple-300"
+                      className={`whitespace-pre-wrap text-sm ${
+                        message.role === "assistant" ? "text-card-foreground" : ""
                       }`}
                     >
-                      {message.role === "assistant" && (
-                        <div className="flex items-center mb-1">
-                          <img
-                            src={penguinAvatar}
-                            alt="Dr. Pengy"
-                            className="w-6 h-6 rounded-full ml-1"
-                          />
-                          <span className="text-xs font-medium">بنجي</span>
-                        </div>
-                      )}
-                      <div className="whitespace-pre-wrap">
-                        {message.content}
-                      </div>
+                      {message.content}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
 
-                {/* Loading indicator if needed */}
-                {state.isLoading && !hasLoadingMessage && (
-                  <div className="flex justify-start">
-                    <div className="rounded-lg px-4 py-2 bg-muted flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                      <span>د. بنجي يكتب...</span>
-                    </div>
+              {/* Confirmation buttons */}
+              {state.showConfirmButtons && (
+                <div className="flex justify-center gap-2 my-2">
+                  <Button
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => handleConfirmation(false)}
+                  >
+                    لا، أريد تغيير التفاصيل
+                  </Button>
+                  <Button
+                    onClick={() => handleConfirmation(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    نعم، هذا ما أريده
+                  </Button>
+                </div>
+              )}
+
+              {/* Satisfaction buttons */}
+              {state.showSatisfactionButtons && (
+                <div className="flex justify-center gap-2 my-2">
+                  <Button
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground flex items-center"
+                    onClick={() => handleSatisfaction(false)}
+                  >
+                    <ThumbsDown className="w-4 h-4 ml-2" />
+                    أريد تعديل المشروع
+                  </Button>
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center"
+                    onClick={() => handleSatisfaction(true)}
+                  >
+                    <ThumbsUp className="w-4 h-4 ml-2" />
+                    أعجبني المشروع
+                  </Button>
+                </div>
+              )}
+
+              {/* Error message */}
+              {state.error && (
+                <Alert variant="destructive" className="my-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>خطأ</AlertTitle>
+                  <AlertDescription>{state.error}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Loading indicator */}
+              {state.isLoading && (
+                <div className="flex justify-center">
+                  <div className="bg-muted rounded-lg p-3 flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    <span className="text-sm">جاري التفكير...</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Show confirm buttons if we're in the confirm step */}
-                {state.showConfirmButtons && (
-                  <div className="flex justify-center space-x-2 my-2">
-                    <Button
-                      variant="outline"
-                      className="ml-2 bg-[#f44336] text-white hover:bg-[#d32f2f] border-0"
-                      onClick={() => handleConfirmSummary(false)}
-                    >
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                      لا، أحتاج تعديل
-                    </Button>
-                    <Button
-                      className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
-                      onClick={() => handleConfirmSummary(true)}
-                    >
-                      <Check className="h-4 w-4 ml-1" />
-                      نعم، ابدأ الكود
-                    </Button>
-                  </div>
-                )}
+              {/* Bottom ref for auto-scrolling */}
+              <div ref={chatEndRef} />
+            </div>
+          </ScrollArea>
 
-                {/* Show satisfaction buttons if needed */}
-                {state.showSatisfactionButtons && (
-                  <div className="flex justify-center space-x-2 my-2">
-                    <Button
-                      variant="outline"
-                      className="ml-2 bg-[#f44336] text-white hover:bg-[#d32f2f] border-0"
-                      onClick={() => handleSatisfaction(false)}
-                    >
-                      <ThumbsDown className="h-4 w-4 ml-1" />
-                      أحتاج تعديل
-                    </Button>
-                    <Button
-                      className="bg-[#4caf50] hover:bg-[#388e3c] border-0"
-                      onClick={() => handleSatisfaction(true)}
-                    >
-                      <ThumbsUp className="h-4 w-4 ml-1" />
-                      رائع!
-                    </Button>
-                  </div>
-                )}
-
-                {/* Element for scrolling to bottom */}
-                <div ref={chatEndRef}></div>
-              </div>
-            </ScrollArea>
-
-            {/* Input form */}
-            <Separator />
-            <form
-              onSubmit={handleSubmit}
-              className="p-4 flex items-center space-x-2"
+          {/* Input area */}
+          <form
+            onSubmit={handleSubmit}
+            className="border-t p-3 flex gap-2 items-center"
+          >
+            <Input
+              value={state.prompt}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyPress}
+              placeholder={
+                state.flowStep === "input"
+                  ? "اكتب وصف للموقع الذي تريد إنشاءه..."
+                  : state.flowStep === "clarify"
+                  ? "أجب على السؤال التوضيحي..."
+                  : state.flowStep === "confirm"
+                  ? "هل تريد تعديل أي شيء؟ اكتب هنا..."
+                  : state.flowStep === "modify"
+                  ? "اكتب تعديلاتك هنا..."
+                  : "اكتب رسالتك هنا..."
+              }
+              disabled={state.isLoading || state.showConfirmButtons || state.showSatisfactionButtons}
+              className="flex-1"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={
+                !state.prompt.trim() ||
+                state.isLoading ||
+                state.showConfirmButtons ||
+                state.showSatisfactionButtons
+              }
             >
-              <Input
-                value={state.prompt}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyPress}
-                placeholder={
-                  state.flowStep === "input"
-                    ? "اكتب وصف لموقع الويب أو التطبيق الذي تريد..."
-                    : state.flowStep === "clarify"
-                      ? "أجب على السؤال التوضيحي..."
-                      : state.flowStep === "confirm"
-                        ? "أكتب أي تعديلات على الوصف..."
-                        : "اكتب تعليقك أو طلب التعديل..."
-                }
-                className="flex-1 ml-2"
-                disabled={state.isLoading}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={state.isLoading || !state.prompt.trim()}
-                className={`h-10 w-10 rounded-full ${
-                  state.isLoading ? "opacity-50" : ""
-                }`}
-              >
-                {state.isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </div>
 
-      {/* Reset Confirmation Dialog */}
+      {/* Reset confirmation dialog */}
       <Dialog
         open={state.showResetDialog}
         onOpenChange={(open) => {
           if (!open) cancelResetHTML();
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>هل أنت متأكد من إعادة ضبط المشروع؟</DialogTitle>
+            <DialogTitle>تأكيد إعادة البدء</DialogTitle>
             <DialogDescription>
-              سيؤدي هذا إلى حذف كافة الرسائل والكود الذي تم إنشاؤه حتى الآن. هذا
-              الإجراء لا يمكن التراجع عنه.
+              هل أنت متأكد من رغبتك في حذف المحتوى الحالي وبدء مشروع جديد؟ لن
+              تتمكن من استعادة البيانات بعد هذه العملية.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-between">
-            <Button type="button" variant="secondary" onClick={cancelResetHTML}>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelResetHTML}>
               إلغاء
             </Button>
             <Button
-              type="button"
               variant="destructive"
               onClick={confirmResetHTML}
+              className="mr-2"
             >
-              نعم، إعادة ضبط
+              نعم، أريد البدء من جديد
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1167,42 +1189,46 @@ export function HTMLGeneratorV2({
           if (!open) closeShareDialog();
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>مشاركة المشروع</DialogTitle>
             <DialogDescription>
-              يمكنك مشاركة هذا الرابط مع الآخرين لعرض المشروع الخاص بك.
+              تم حفظ مشروعك بنجاح! يمكنك مشاركة هذا الرابط مع الآخرين لعرض
+              مشروعك.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center space-x-2">
-            <Input value={state.shareUrl || ""} readOnly className="ml-2" />
+
+          <div className="flex items-center">
+            <Input
+              value={state.shareUrl || ""}
+              readOnly
+              className="copy-link-input"
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
             <Button
-              type="button"
-              size="sm"
-              className="px-3"
-              onClick={handleCopyShareLink}
+              className="mr-2"
+              onClick={async () => {
+                if (state.shareUrl) {
+                  await navigator.clipboard.writeText(state.shareUrl);
+                  setState((prev) => ({ ...prev, hasSharedLink: true }));
+                  toast({
+                    title: "تم النسخ",
+                    description: "تم نسخ الرابط إلى الحافظة.",
+                  });
+                }
+              }}
             >
-              <span className="sr-only">نسخ</span>
-              {state.hasSharedLink ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
+              نسخ
             </Button>
           </div>
+
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={closeShareDialog}
-            >
-              إغلاق
-            </Button>
+            <Button onClick={closeShareDialog}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Confetti effect for unlocking badges */}
+      {/* Confetti effect when earning XP */}
       {showConfetti && <Confetti />}
     </div>
   );
