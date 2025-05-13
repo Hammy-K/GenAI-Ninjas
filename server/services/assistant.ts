@@ -392,7 +392,7 @@ export class AssistantService {
           }
 
           explanatoryMessage =
-            explanationText || "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟";
+            explanationText || "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
         } else {
           // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
           generatedHTML = htmlContent;
@@ -410,7 +410,7 @@ export class AssistantService {
               .substring(0, doctypeIndex)
               .trim();
           } else {
-            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟";
+            explanatoryMessage = "سويت لك الصفحة! شوف النتيجة في الأسفل 👇";
           }
         }
       } else {
