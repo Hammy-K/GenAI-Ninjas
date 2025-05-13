@@ -20,7 +20,7 @@ interface RequestWithFirebaseSession extends Request {
 // Validation schemas
 const saveProjectSchema = z.object({
   html: z.string().min(1),
-  screenshotUrl: z.string().optional()
+  firebaseUid: z.string().optional() // Changed from screenshotUrl to firebaseUid
 });
 
 const loadProjectSchema = z.object({
