@@ -67,7 +67,6 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
-import { useState as useHookState } from "@hookstate/core";
 import { StudentInfoModal } from "@/components/modals/StudentInfoModal";
 import React from "react";
 
@@ -112,7 +111,7 @@ interface HTMLGeneratorState {
   showSatisfactionButtons: boolean;
 }
 
-export function HTMLGeneratorV2Fixed({
+export default function HTMLGeneratorV2Fixed({
   onComplete,
   onEarnXp,
   onUnlockBadge,
@@ -196,38 +195,6 @@ export function HTMLGeneratorV2Fixed({
     }
   }, []);
 
-  // Clear stale state if needed
-  useEffect(() => {
-    // This will clear any stale state on component mount to prevent stuck states
-    try {
-      const storageKey = "genAIQuest_html_generatorState";
-      const savedState = localStorage.getItem(storageKey);
-
-      if (savedState) {
-        const parsedState = JSON.parse(savedState);
-
-        // Force reset isSaving to false and any error messages on component mount
-        console.log(
-          "Ensuring clean state on mount - previous isSaving:",
-          parsedState.isSaving
-        );
-
-        const cleanState = {
-          ...parsedState,
-          isSaving: false,
-          error: "",
-          isChatOpen: true, // Chat is always visible in new layout
-        };
-
-        localStorage.setItem(storageKey, JSON.stringify(cleanState));
-      }
-    } catch (e) {
-      console.error("Error checking saved state:", e);
-      // Just in case there's an error, clear the entire localStorage entry
-      localStorage.removeItem("genAIQuest_html_generatorState");
-    }
-  }, []);
-
   // Initialize state with localStorage values or defaults
   const [state, setState] = useStageState<HTMLGeneratorState>(
     "html_generator",
@@ -273,326 +240,6 @@ export function HTMLGeneratorV2Fixed({
       return () => clearTimeout(saveTimer);
     }
   }, [state.currentHTML]);
-
-  // Handler for the first message from user describing what they want
-  const handleGenerateHTML = useCallback(async () => {
-    // Don't continue if already loading or no prompt
-    if (state.isLoading || !state.prompt.trim()) return;
-
-    // Validate input
-    const validation = validateInput(state.prompt);
-    if (!validation.isValid) {
-      const validationWarning: HTMLMessage = {
-        role: "assistant",
-        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد.",
-      };
-
-      setState((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, validationWarning],
-        error: validation.errorMessage,
-      }));
-      return;
-    }
-
-    // Add the user's message
-    const userMessage: HTMLMessage = {
-      role: "user",
-      content: state.prompt,
-    };
-
-    // Clear the prompt input and start loading
-    setState((prevState) => ({
-      ...prevState,
-      messages: [...prevState.messages, userMessage],
-      prompt: "",
-      isLoading: true,
-      error: "",
-    }));
-
-    // Log prompt to analytics
-    logPromptToFirestore("html_generator_v2", state.prompt).catch((error) => {
-      console.error("Error logging prompt:", error);
-    });
-
-    // Based on the current step, determine the next action
-    if (state.flowStep === "input" || state.flowStep === "modify") {
-      // We're in the initial step or modifying the project, so start with clarification
-      try {
-        // Get a clarifying question
-        const clarificationResult = await getClarifyingQuestion(state.prompt);
-
-        if (clarificationResult.error) {
-          const errorMessage: HTMLMessage = {
-            role: "assistant",
-            content:
-              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-          };
-
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, errorMessage],
-            isLoading: false,
-            error: clarificationResult.error,
-          }));
-          return;
-        }
-
-        // Add the clarifying question to the chat
-        const assistantMessage: HTMLMessage = {
-          role: "assistant",
-          content: clarificationResult.question,
-        };
-
-        // Update state with the original idea and clarifying question
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, assistantMessage],
-          originalIdea: state.prompt,
-          isLoading: false,
-          flowStep: "clarify",
-        }));
-      } catch (error) {
-        const errorMessage: HTMLMessage = {
-          role: "assistant",
-          content:
-            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, errorMessage],
-          isLoading: false,
-          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
-        }));
-      }
-    } else if (state.flowStep === "clarify") {
-      // User has answered the clarifying question, now generate a summary
-      try {
-        // Store their clarification answer
-        setState((prevState) => ({
-          ...prevState,
-          clarificationAnswer: state.prompt,
-        }));
-
-        // Get project summary
-        const summaryResult = await getFullProjectSummary(
-          state.originalIdea,
-          state.prompt
-        );
-
-        if (summaryResult.error) {
-          const errorMessage: HTMLMessage = {
-            role: "assistant",
-            content:
-              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-          };
-
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, errorMessage],
-            isLoading: false,
-            error: summaryResult.error,
-          }));
-          return;
-        }
-
-        // Add the summary with confirmation buttons
-        const assistantMessage: HTMLMessage = {
-          role: "assistant",
-          content: summaryResult.summary,
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, assistantMessage],
-          projectSummary: summaryResult.summary,
-          isLoading: false,
-          flowStep: "confirm",
-          showConfirmButtons: true,
-        }));
-      } catch (error) {
-        const errorMessage: HTMLMessage = {
-          role: "assistant",
-          content:
-            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, errorMessage],
-          isLoading: false,
-          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
-        }));
-      }
-    } else if (state.flowStep === "confirm") {
-      // They've sent more refinements after the summary
-      try {
-        // Update the summary with the refinements
-        const summaryResult = await getFullProjectSummary(
-          state.originalIdea,
-          state.prompt
-        );
-
-        if (summaryResult.error) {
-          const errorMessage: HTMLMessage = {
-            role: "assistant",
-            content:
-              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-          };
-
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, errorMessage],
-            isLoading: false,
-            error: summaryResult.error,
-          }));
-          return;
-        }
-
-        // Add the updated summary with confirmation buttons again
-        const assistantMessage: HTMLMessage = {
-          role: "assistant",
-          content: summaryResult.summary,
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, assistantMessage],
-          isLoading: false,
-          flowStep: "confirm", // Stay in confirm step for refinement
-        }));
-      } catch (error) {
-        const errorMessage: HTMLMessage = {
-          role: "assistant",
-          content:
-            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, errorMessage],
-          isLoading: false,
-          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
-        }));
-      }
-    }
-  }, [state.prompt, state.flowStep, state.originalIdea, state.isLoading]);
-
-  // Handle user confirming the summary
-  const handleConfirmation = async (isConfirmed: boolean) => {
-    // Add user's response message
-    const userMessage: HTMLMessage = {
-      role: "user",
-      content: isConfirmed ? "نعم، هذا ما أريده!" : "لا، أريد تغيير بعض التفاصيل.",
-    };
-
-    // Reset the confirm buttons state
-    setState((prevState) => ({
-      ...prevState,
-      showConfirmButtons: false,
-      isLoading: true,
-    }));
-
-    if (isConfirmed) {
-      // User confirmed the summary, generate the HTML
-      try {
-        // Compile a full project summary
-        const fullSummaryResult = await getFullProjectSummary(
-          state.originalIdea,
-          state.clarificationAnswer,
-        );
-
-        // Generate the HTML based on the full project specification
-        // Create a message history for the generateHTML function
-        const messages: HTMLMessage[] = [
-          { role: "user", content: state.originalIdea },
-          {
-            role: "assistant",
-            content: "سؤال للتوضيح: " + state.clarificationAnswer,
-          },
-          { role: "user", content: state.clarificationAnswer },
-          {
-            role: "assistant",
-            content: "تلخيص المشروع: " + fullSummaryResult.summary,
-          },
-          { role: "user", content: "نعم هذا ما أريده" },
-        ];
-
-        const htmlResult = await generateHTML(messages);
-
-        if (htmlResult && htmlResult.html) {
-          // Add a message to confirm generation
-          const assistantMessage: HTMLMessage = {
-            role: "assistant",
-            content:
-              htmlResult.message?.content ||
-              "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
-          };
-
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, userMessage, assistantMessage],
-            currentHTML: htmlResult.html,
-            isLoading: false,
-            flowStep: "satisfied", // Move to satisfied stage
-            showSatisfactionButtons: true, // Show satisfaction buttons
-          }));
-
-          // Award XP if not already awarded
-          if (!state.hasEarnedXp) {
-            setState((prevState) => ({
-              ...prevState,
-              hasEarnedXp: true,
-            }));
-
-            onEarnXp(50, "HTML generator");
-          }
-        } else {
-          // Handle error with HTML generation
-          const errorMessage: HTMLMessage = {
-            role: "assistant",
-            content:
-              "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
-          };
-
-          setState((prevState) => ({
-            ...prevState,
-            messages: [...prevState.messages, userMessage, errorMessage],
-            isLoading: false,
-            error: htmlResult.error || "فشل في إنشاء HTML",
-          }));
-        }
-      } catch (error) {
-        // Handle any errors during generation
-        const errorMessage: HTMLMessage = {
-          role: "assistant",
-          content:
-            "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
-        };
-
-        setState((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, userMessage, errorMessage],
-          isLoading: false,
-          error: error instanceof Error ? error.message : "فشل في إنشاء HTML",
-        }));
-      }
-    } else {
-      // User wants to change details, go back to clarify step
-      const assistantMessage: HTMLMessage = {
-        role: "assistant",
-        content: "لا مشكلة، قم بتوضيح التغييرات التي تريد إجراءها.",
-      };
-
-      setState((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, userMessage, assistantMessage],
-        isLoading: false,
-        flowStep: "confirm", // Stay in confirm step for refinement
-      }));
-    }
-  };
 
   // Combined save and share function - matches original implementation
   const saveAndShareProject = async () => {
@@ -647,7 +294,7 @@ export function HTMLGeneratorV2Fixed({
             );
             try {
               // This is a fallback save method that bypasses some Firebase checks
-              const fallbackId = await saveProject(state.currentHTML, true);
+              const fallbackId = await saveProject(state.currentHTML);
               resolve(fallbackId);
             } catch (fallbackError) {
               console.error("Fallback save also failed:", fallbackError);
@@ -763,7 +410,7 @@ export function HTMLGeneratorV2Fixed({
 
     // Track satisfaction for analytics
     trackStageProgress("html_generator", satisfied ? "satisfied" : "not_satisfied", {
-      is_satisfied: satisfied,
+      is_satisfied: satisfied ? "yes" : "no",
     });
   };
 
@@ -847,9 +494,159 @@ export function HTMLGeneratorV2Fixed({
     }));
   };
 
+  const handleGenerateHTML = async () => {
+    // Different behavior based on the current flow step
+    if (!state.prompt.trim() || state.isLoading) return;
+
+    // Validate input
+    const validation = validateInput(state.prompt);
+    if (!validation.isValid) {
+      const validationWarning: HTMLMessage = {
+        role: "assistant",
+        content: validation.errorMessage || "الرجاء إدخال وصف واضح لما تريد.",
+      };
+
+      setState((prevState) => ({
+        ...prevState,
+        messages: [...prevState.messages, validationWarning],
+        error: validation.errorMessage || "",
+      }));
+      return;
+    }
+
+    // Add the user's message to chat
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: state.prompt,
+    };
+
+    setState((prevState) => ({
+      ...prevState,
+      messages: [...prevState.messages, userMessage],
+      prompt: "",
+      isLoading: true,
+      error: "",
+    }));
+
+    // Log prompt to analytics
+    logPromptToFirestore("html_generator_v2", state.prompt).catch((error) => {
+      console.error("Error logging prompt:", error);
+    });
+
+    if (state.flowStep === "input" || state.flowStep === "modify") {
+      // We're in the initial step or modifying the project, so start with clarification
+      try {
+        // Get a clarifying question
+        const clarificationResult = await getClarifyingQuestion(state.prompt);
+
+        if (clarificationResult.error) {
+          const errorMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, errorMessage],
+            isLoading: false,
+            error: clarificationResult.error || "",
+          }));
+          return;
+        }
+
+        // Add the clarifying question to the chat
+        const assistantMessage: HTMLMessage = {
+          role: "assistant",
+          content: clarificationResult.question,
+        };
+
+        // Update state with the original idea and clarifying question
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, assistantMessage],
+          originalIdea: state.prompt,
+          isLoading: false,
+          flowStep: "clarify",
+        }));
+      } catch (error) {
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+        };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, errorMessage],
+          isLoading: false,
+          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+        }));
+      }
+    } else if (state.flowStep === "clarify") {
+      // User has answered the clarifying question, now generate a summary
+      try {
+        // Store their clarification answer
+        setState((prevState) => ({
+          ...prevState,
+          clarificationAnswer: state.prompt,
+        }));
+
+        // Get project summary
+        const summaryResult = await getFullProjectSummary(
+          state.originalIdea,
+          state.prompt
+        );
+
+        if (summaryResult.error) {
+          const errorMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, errorMessage],
+            isLoading: false,
+            error: summaryResult.error || "",
+          }));
+          return;
+        }
+
+        // Add the summary with confirmation buttons
+        const assistantMessage: HTMLMessage = {
+          role: "assistant",
+          content: summaryResult.summary,
+        };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, assistantMessage],
+          projectSummary: summaryResult.summary,
+          isLoading: false,
+          flowStep: "confirm",
+          showConfirmButtons: true,
+        }));
+      } catch (error) {
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "حدث خطأ أثناء محاولة التواصل مع الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.",
+          };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, errorMessage],
+          isLoading: false,
+          error: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+        }));
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Different behavior based on the current flow step
     handleGenerateHTML();
   };
 
@@ -857,6 +654,126 @@ export function HTMLGeneratorV2Fixed({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  // Handle confirmation of project summary
+  const handleConfirmation = async (isConfirmed: boolean) => {
+    // Add user's response message
+    const userMessage: HTMLMessage = {
+      role: "user",
+      content: isConfirmed ? "نعم، هذا ما أريده!" : "لا، أريد تغيير بعض التفاصيل.",
+    };
+
+    // Reset the confirm buttons state
+    setState((prevState) => ({
+      ...prevState,
+      showConfirmButtons: false,
+      isLoading: true,
+      messages: [...prevState.messages, userMessage],
+    }));
+
+    if (isConfirmed) {
+      // User confirmed the summary, generate the HTML
+      try {
+        // Compile a full project summary
+        const fullSummaryResult = await getFullProjectSummary(
+          state.originalIdea,
+          state.clarificationAnswer
+        );
+
+        // Generate the HTML based on the full project specification
+        // Create a message history for the generateHTML function
+        const messages: HTMLMessage[] = [
+          { role: "user", content: state.originalIdea },
+          {
+            role: "assistant",
+            content: "سؤال للتوضيح: " + state.clarificationAnswer,
+          },
+          { role: "user", content: state.clarificationAnswer },
+          {
+            role: "assistant",
+            content: "تلخيص المشروع: " + fullSummaryResult.summary,
+          },
+          { role: "user", content: "نعم هذا ما أريده" },
+        ];
+
+        const htmlResult = await generateHTML(messages);
+
+        if (htmlResult && htmlResult.html) {
+          // Add a message to confirm generation
+          const assistantMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              htmlResult.message?.content ||
+              "تم إنشاء كود HTML بناءً على طلبك. هل أنت راضٍ عن النتيجة؟",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, assistantMessage],
+            currentHTML: htmlResult.html,
+            isLoading: false,
+            flowStep: "satisfied", // Move to satisfied stage
+            showSatisfactionButtons: true, // Show satisfaction buttons
+          }));
+
+          // Award XP if not already awarded
+          if (!state.hasEarnedXp) {
+            setState((prevState) => ({
+              ...prevState,
+              hasEarnedXp: true,
+            }));
+
+            onEarnXp(50, "HTML generator");
+            
+            // Show confetti
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3000);
+          }
+        } else {
+          // Handle error with HTML generation
+          const errorMessage: HTMLMessage = {
+            role: "assistant",
+            content:
+              "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
+          };
+
+          setState((prevState) => ({
+            ...prevState,
+            messages: [...prevState.messages, errorMessage],
+            isLoading: false,
+            error: htmlResult.error || "",
+          }));
+        }
+      } catch (error) {
+        // Handle any errors during generation
+        const errorMessage: HTMLMessage = {
+          role: "assistant",
+          content:
+            "عذرًا، حدث خطأ أثناء إنشاء HTML. هل يمكنك المحاولة مرة أخرى بوصف مختلف؟",
+        };
+
+        setState((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, errorMessage],
+          isLoading: false,
+          error: error instanceof Error ? error.message : "فشل في إنشاء HTML",
+        }));
+      }
+    } else {
+      // User wants to change details, go back to clarify step
+      const assistantMessage: HTMLMessage = {
+        role: "assistant",
+        content: "لا مشكلة، قم بتوضيح التغييرات التي تريد إجراءها.",
+      };
+
+      setState((prevState) => ({
+        ...prevState,
+        messages: [...prevState.messages, assistantMessage],
+        isLoading: false,
+        flowStep: "confirm", // Stay in confirm step for refinement
+      }));
     }
   };
 
