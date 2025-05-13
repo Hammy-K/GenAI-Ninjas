@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useStageState } from "@/hooks/useStageState";
 import { useXpTracker } from "@/hooks/useXpTracker";
+import * as firebase from "@/lib/firebase";
 import {
   loadProject,
   logPromptToFirestore,
@@ -288,15 +289,24 @@ export function HTMLGeneratorV2({
         const firebaseUid = localStorage.getItem("firebaseUid");
         if (state.projectId) {
           setState((prev) => ({ ...prev, isSaving: true }));
+          
+          // Use the saveProject method directly
           saveProject(state.currentHTML)
             .then((savedProjectId) => {
               // Update the project ID in state if it's different from the API response
               if (savedProjectId !== state.projectId) {
                 console.log(`Auto-save: Updating project ID from ${state.projectId} to ${savedProjectId}`);
+                
+                // Get the fully qualified domain for the share URL
+                const domain = window.location.origin;
+                const shareUrl = `${domain}/project/${savedProjectId}`;
+                console.log("Auto-save: Generated share URL:", shareUrl);
+                
                 setState((prev) => ({ 
                   ...prev, 
                   isSaving: false,
-                  projectId: savedProjectId
+                  projectId: savedProjectId,
+                  shareUrl: shareUrl
                 }));
               } else {
                 setState((prev) => ({ ...prev, isSaving: false }));
@@ -743,9 +753,17 @@ export function HTMLGeneratorV2({
     if (state.projectId && state.currentHTML) {
       // First save/update the project to ensure it's persisted
       try {
+        console.log("Starting project share process...");
         const firebaseUid = localStorage.getItem("firebaseUid") || "anonymous";
+        console.log("Using Firebase UID:", firebaseUid);
+        
         // Save the project and get the returned project ID from the API
         const savedProjectId = await saveProject(state.currentHTML);
+        console.log("Project saved for sharing, received ID:", savedProjectId);
+        
+        if (!savedProjectId) {
+          throw new Error("Failed to get project ID from server");
+        }
         
         // Update the project ID in state if it's different from the API response
         if (savedProjectId !== state.projectId) {
@@ -753,8 +771,14 @@ export function HTMLGeneratorV2({
           setState(prev => ({ ...prev, projectId: savedProjectId }));
         }
 
+        // Get the fully qualified domain for the share URL
+        const domain = window.location.origin;
+        console.log("Using domain for share URL:", domain);
+        
         // Generate and set the share URL using the potentially updated project ID
-        const shareUrl = `${window.location.origin}/project/${savedProjectId}`;
+        const shareUrl = `${domain}/project/${savedProjectId}`;
+        console.log("Generated share URL:", shareUrl);
+        
         setState((prev) => ({
           ...prev,
           shareUrl,
@@ -764,6 +788,7 @@ export function HTMLGeneratorV2({
         // Track share action for analytics
         trackStageProgress("html_generator", "share_project", {
           project_id: savedProjectId,
+          domain: domain
         });
       } catch (error) {
         console.error("Error saving project for sharing:", error);
