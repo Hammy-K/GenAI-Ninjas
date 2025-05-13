@@ -135,6 +135,9 @@ export function registerProjectRoutes(router: Router) {
     }
   });
 
-  // Mount project routes
-  router.use('/', projectRoutes);
+  // Mount project routes under the /projects namespace
+  router.use('/projects', projectRoutes);
+  
+  // Log that routes are mounted
+  console.log("Project routes mounted at /api/projects/*");
 }
