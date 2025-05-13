@@ -82,6 +82,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   // Create router for API endpoints
   const apiRouter = express.Router();
+  
+  // Add a health check endpoint
+  apiRouter.get('/health', (_req, res) => {
+    console.log('Health check endpoint called');
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
 
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

@@ -125,10 +125,9 @@ export function isFirebaseReady(): boolean {
 /**
  * Saves a project to PostgreSQL database using the backend API
  * @param html The HTML content to save
- * @param screenshotUrl Optional URL to the project screenshot in Firebase Storage
  * @returns A unique project ID that can be used to retrieve the project later
  */
-export async function saveProject(html: string, screenshotUrl?: string): Promise<string> {
+export async function saveProject(html: string): Promise<string> {
   try {
     console.log("Starting to save project to database...");
     
@@ -145,63 +144,87 @@ export async function saveProject(html: string, screenshotUrl?: string): Promise
       console.warn("Could not read Firebase UID from localStorage:", e);
     }
     
-    // Save to PostgreSQL via API instead of directly to Firestore
+    // Enhanced debugging for API call
+    console.log("Making API call with improved error handling...");
+    
     try {
-      console.log("Saving project to PostgreSQL via API...");
+      // First, let's try a simple test request to ensure our API is accessible
+      const testResponse = await fetch('/api/health', { method: 'GET' })
+        .catch(err => {
+          console.error("Health check failed:", err);
+          return { ok: false, status: -1 };
+        });
       
-      // Make API call to save project - using the correct endpoint path
+      console.log(`API health check: ${testResponse.ok ? 'OK' : 'Failed'}`);
+      
+      // Make the actual API call to save the project
       const response = await fetch('/api/projects/save-project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           html: processedHTML,
-          firebaseUid // Include Firebase UID if available
+          firebaseUid
         })
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error (${response.status}):`, errorText);
-        throw new Error(`API returned status ${response.status}: ${errorText}`);
+      // Get the response text to help with debugging
+      let responseText = "";
+      try {
+        responseText = await response.text();
+        console.log(`Response from API (${response.status}):`, responseText);
+      } catch (textError) {
+        console.error("Failed to read response text:", textError);
       }
       
-      const data = await response.json();
-      console.log("Project saved successfully via API! Project ID:", data.projectId);
+      if (!response.ok) {
+        throw new Error(`API returned status ${response.status}: ${responseText}`);
+      }
       
+      // Try to parse the response as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error("Failed to parse API response as JSON:", jsonError);
+        throw new Error("Invalid JSON response from API");
+      }
+      
+      console.log("Response data from API:", data);
+      
+      // Check if we have a project ID
       if (!data.projectId) {
+        console.error("API response is missing projectId:", data);
         throw new Error("No project ID returned from API");
       }
       
-      // Generate share URL
-      const shareUrl = `${window.location.origin}/project/${data.projectId}`;
-      console.log("Share URL:", shareUrl);
+      console.log("Project saved successfully with ID:", data.projectId);
       
+      // Success! Return the project ID
       return data.projectId;
-    } catch (apiError) {
-      console.error("API call to save project failed:", apiError);
+    } catch (apiError: any) {
+      console.error("API call failed with detailed error:", apiError);
       
-      // Fallback to localStorage if API call fails
-      try {
-        const fallbackId = `project_${Date.now()}_local`;
-        localStorage.setItem(`project_${fallbackId}`, JSON.stringify({
-          html: processedHTML,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }));
-        console.log("Project saved to localStorage as fallback");
-        return fallbackId;
-      } catch (storageError) {
-        console.error("LocalStorage fallback failed:", storageError);
-        return `project_${Date.now()}_error`;
-      }
+      // Instead of silently falling back, throw the error to the caller
+      throw new Error(`Server API error: ${apiError.message || String(apiError)}`);
     }
   } catch (error: any) {
-    console.error("Error saving project:", error);
-    // Return a project ID to prevent UI from getting stuck
-    const fallbackId = `project_${Date.now()}_error`;
-    console.log("Returning fallback project ID:", fallbackId);
+    console.error("Fatal error in saveProject function:", error);
+    
+    // FALLBACK to local storage only if absolutely necessary
+    const fallbackId = `project_${Date.now()}_local`;
+    try {
+      localStorage.setItem(`project_${fallbackId}`, JSON.stringify({
+        html,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+      console.log("FALLBACK: Stored project in localStorage with ID:", fallbackId);
+    } catch (storageError) {
+      console.error("LocalStorage fallback also failed:", storageError);
+    }
+    
     return fallbackId;
   }
 }

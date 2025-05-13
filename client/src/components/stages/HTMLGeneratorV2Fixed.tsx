@@ -380,7 +380,7 @@ export function HTMLGeneratorV2({
 
           const assistantMessage: HTMLMessage = {
             role: "assistant",
-            content: `شكراً على التوضيح. هذا ما سأقوم ببنائه:\n\n${summaryResult.summary}\n\nهل هذا ما تريده؟`,
+            content: `\n\n${summaryResult.summary}\n\n`,
           };
 
           setState((prevState) => ({
