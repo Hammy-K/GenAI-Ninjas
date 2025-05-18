@@ -127,7 +127,7 @@ export function isFirebaseReady(): boolean {
  * @param html The HTML content to save
  * @returns A unique project ID that can be used to retrieve the project later
  */
-export async function saveProject(html: string): Promise<string> {
+export async function saveProject(html: string, studentId: string): Promise<string> {
   try {
     console.log("Starting to save project to database...");
     
@@ -165,7 +165,8 @@ export async function saveProject(html: string): Promise<string> {
         },
         body: JSON.stringify({
           html: processedHTML,
-          firebaseUid
+          firebaseUid,
+          studentId
         })
       });
       

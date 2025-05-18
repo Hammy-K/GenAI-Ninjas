@@ -41,7 +41,7 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
   // HTML Generation with Assistant API
   assistantRoutes.post("/generate-html", async (req: RequestWithAssistantSession, res: Response) => {
     try {
-      const { messageHistory = [] } = req.body;
+      const { messageHistory = [], userId } = req.body;
       
       console.log("HTML Generate Request - Message history length:", messageHistory.length);
       
@@ -71,6 +71,7 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
       const response = await assistantService.generateHTML(
         messageHistory, 
         sessionId,
+        userId,
         firebaseUid,
         deviceId
       );
@@ -238,7 +239,8 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
         firebaseUid: firebaseUid || null,
         deviceId: req.body.deviceId || null,
         studentName: studentName || null,
-        studentId: noonCode || null
+        studentId: noonCode || null,
+        userId: req.body.userId,
       }).catch(e => console.error("Failed to log assistant interaction:", e));
       
       // Save both the user message and assistant response to the database if user is logged in

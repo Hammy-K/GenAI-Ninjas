@@ -277,7 +277,7 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
   // TryAI Assistant endpoint
   aiRoutes.post("/try-ai-assistant", validatePrompt, async (req: RequestWithTryAISession, res: Response) => {
     try {
-      const { prompt, messageHistory = [], firebaseUid, deviceId } = req.body;
+      const { prompt, messageHistory = [], firebaseUid, deviceId, studentId } = req.body;
       
       // Log the TryAI assistant request
       logEvent('tryai_assistant', prompt, {
@@ -299,6 +299,7 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
         prompt, 
         messageHistory, 
         sessionId, 
+        studentId,
         firebaseUid,
         deviceId
       );

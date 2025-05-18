@@ -44,6 +44,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Code,
+  Database,
   Loader2,
   Plus,
   Save,
@@ -55,6 +56,9 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
+import { Footer } from "../layout/Footer";
+import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
+import Cookies from "js-cookie";
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
@@ -111,6 +115,17 @@ export function HTMLStandalone({
 
   // Get the current location for routing
   const [location, setLocation] = useLocation();
+
+  const getStudentId = (): string => {
+    var studentId = Cookies.get("studentId");
+
+    if (!studentId) {
+      console.error("No student ID found in cookies");
+      throw new Error("No student ID found in cookies");
+    }
+
+    return studentId;
+  };
 
   // Define initial state with welcome message
   const welcomeMessage: HTMLMessage = {
@@ -237,7 +252,27 @@ export function HTMLStandalone({
       // );
 
       // Get the clarifying question but include full message history for context
-      const clarificationResult = await getClarifyingQuestion(idea);
+      const studentId = getStudentId();
+
+      // Create an enhanced prompt that includes HTML context if available
+      let enhancedPrompt = idea;
+
+      if (state.currentHTML) {
+        enhancedPrompt = `
+      NEW MODIFICATION REQUEST: ${idea}
+
+      CONTEXT - CURRENT HTML:
+      \`\`\`html
+      ${state.currentHTML}
+      \`\`\`
+
+      Please ask a clarifying question about what the user wants to change in this HTML.`;
+      }
+
+      const clarificationResult = await getClarifyingQuestion(
+        enhancedPrompt,
+        studentId,
+      );
 
       if (clarificationResult.error) {
         setState((prev) => ({
@@ -305,7 +340,13 @@ export function HTMLStandalone({
         messages: [...prev.messages, gettingSummaryMessage],
       }));
 
-      const summaryResult = await getFullProjectSummary(idea, clarification);
+      const studentId = getStudentId();
+
+      const summaryResult = await getFullProjectSummary(
+        idea,
+        clarification,
+        studentId,
+      );
 
       if (summaryResult.error) {
         setState((prev) => ({
@@ -362,7 +403,9 @@ export function HTMLStandalone({
       // 3. The loading message "جاري الإنشاء..." was added in handleConfirmation
 
       // Generate HTML with the existing message history (already contains all context)
-      const htmlResponse = await generateHTML(state.messages);
+      const studentId = getStudentId();
+
+      const htmlResponse = await generateHTML(state.messages, studentId);
 
       if (htmlResponse.error) {
         setState((prev) => ({
@@ -381,8 +424,7 @@ export function HTMLStandalone({
       // Use the response message from the API
       const aiResponse: HTMLMessage = htmlResponse.message || {
         role: "assistant",
-        content:
-          "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟\n\nهل أنت راضٍ عن النتيجة؟",
+        content: "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟",
       };
 
       // Update state with the AI response and HTML
@@ -465,9 +507,27 @@ export function HTMLStandalone({
 
     try {
       // Create a modified version of the messages array with the HTML context
+      const studentId = getStudentId();
+
+      // Create a comprehensive context string for the AI
+      const enhancedPrompt = `
+      MODIFICATION REQUEST: ${prompt}
+
+      ORIGINAL PROJECT IDEA: ${state.originalIdea}
+
+      PREVIOUS CLARIFICATION: ${state.clarificationAnswer}
+
+      CURRENT HTML:
+      \`\`\`html
+      ${state.currentHTML}
+      \`\`\`
+
+      Please provide a summary of what changes will be made to this HTML based on the user's request.`;
+
       const summaryResult = await getFullProjectSummary(
         state.originalIdea,
-        prompt,
+        enhancedPrompt,
+        studentId,
       );
 
       if (summaryResult.error) {
@@ -572,7 +632,7 @@ export function HTMLStandalone({
           ...prev.messages,
           {
             role: "user",
-            content: "نعم، أريد المتابعة",
+            content: "كل شي تمام",
           },
         ],
         isSatisfied: true,
@@ -617,6 +677,10 @@ export function HTMLStandalone({
 
     // Validate input
     const validation = validateInput(state.prompt);
+
+    const studentId = getStudentId();
+
+    console.log("### User ID: ", studentId);
 
     if (!validation.isValid) {
       const validationWarning: HTMLMessage = {
@@ -694,25 +758,10 @@ export function HTMLStandalone({
 
         case "modify":
           // User is providing feedback after HTML generation
-          // Instead of just modifying, restart the full clarification flow for a better experience
           if (state.currentHTML) {
-            // Store current HTML for reference
-            const currentHtml = state.currentHTML;
-
-            // Start with clarification for improved context
-            // This resets the flow but preserves the HTML until we get a new one
-            await handleClarificationStep(state.prompt);
-
-            // Restore the HTML so it's still visible in preview
-            setState((prev) => ({
-              ...prev,
-              currentHTML: currentHtml,
-            }));
+            // Simply call handleModifyHtml instead of restarting the flow
+            await handleModifyHtml(state.prompt);
           } else {
-            // If somehow we're in modify state but have no HTML, revert to new project flow
-            console.log(
-              "In modify state but no HTML found, reverting to new project flow",
-            );
             await handleClarificationStep(state.prompt);
           }
           break;
@@ -722,11 +771,13 @@ export function HTMLStandalone({
           setState((prev) => ({
             ...prev,
             prompt: "",
+            isLoading: false,
             messages: [
               ...prev.messages,
               {
                 role: "assistant",
-                content: "احفظ مشروعك أولاً قبل المتابعة",
+                content:
+                  "أحسنت! أنهيت اللعبة بنجاح 🎉 جاهز للتحدي التالي؟ اضغط على الزر في أعلى الصفحة لبدء مشروعك الجديد!",
               },
             ],
           }));
@@ -861,8 +912,14 @@ export function HTMLStandalone({
       let projectId: string;
 
       try {
+        const studentId = Cookies.get("studentId");
+
+        if (!studentId) {
+          throw new Error("No student ID found in cookies");
+        }
+
         // Add a safety timeout to prevent indefinite hanging
-        const savePromise = saveProject(state.currentHTML);
+        const savePromise = saveProject(state.currentHTML, studentId);
 
         // Extend timeout to 30 seconds for Firebase operations in Replit
         const timeoutPromise = new Promise<string>((resolve) => {
@@ -929,9 +986,13 @@ export function HTMLStandalone({
 
       console.log("Project saved with ID:", projectId);
 
+      // Get the fully qualified domain for the share URL
+      const domain = window.location.origin;
+      console.log("Using domain for share URL:", domain);
+
       // Create a shareable URL using the current hostname
-      const shareUrl = `${window.location.origin}/project/${projectId}`;
-      console.log("Share URL:", shareUrl);
+      const shareUrl = `${domain}/project/${projectId}`;
+      console.log("Generated share URL:", shareUrl);
 
       // Update state with project ID and share URL
       setState((prev) => ({
@@ -1029,16 +1090,16 @@ export function HTMLStandalone({
   const startNewProject = () => {
     // Reset state to initial state while preserving any existing session ID
     // This ensures thread continuity with the OpenAI Assistant API
-    setState((prev) => ({
-      ...prev,
-      currentHTML: "",
-      messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
-      projectId: null,
-      shareUrl: null,
-      hasSharedLink: false, // Reset the shared link flag
-      showShareDialog: false,
-      showResetDialog: false,
-    }));
+
+    console.log(
+      "################################# New Project ###################################",
+    );
+
+    console.log("State before: ", state);
+
+    setState((_) => initialState);
+
+    console.log("State after: ", state);
 
     // Track this for analytics
     trackStageProgress("html_generator", "new_project_started", {
@@ -1060,10 +1121,72 @@ export function HTMLStandalone({
     "########################################## Component Rendered ##################################################",
   );
 
-  return (
-    <div className="html-generator-stage min-h-screen flex flex-col">
-      {showConfetti && <Confetti />}
+  const goToSubmissions = () => {
+    setLocation("/missions/html-generator/submissions");
+  };
 
+  const welcomeCard = (
+    <div className="flex flex-col items-center justify-center h-full p-4 bg-neutral-50">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-bold mb-2">
+          مُنشئ الألعاب بالذكاء الاصطناعي 🎮
+        </h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          استخدم الدردشة اللي على اليمين، ووصّف لي فكرة لعبة بسيطة تبغى تصمّمها،
+          وأنا أطلع لك كود HTML جاهز للعب هنا!
+        </p>
+      </div>
+      <div className="max-w-2xl bg-white rounded-lg p-6 shadow-md border-2 border-purple-300">
+        <h3 className="text-2xl font-bold mb-3 text-purple-700">
+          تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:
+        </h3>
+
+        <p className="text-xl mb-4 font-bold text-gray-800">
+          حركة بسيطة تعيدها كل مرة — وتصير أحلى وأصعب كل شوي!
+        </p>
+
+        <div className="space-y-2 my-4">
+          <div className="flex items-center">
+            <span className="text-2xl ml-2">🏃‍♂️</span>
+            <span>تقفز فوق الحواجز (ماريو)</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-2xl ml-2">🎯</span>
+            <span>تمسك الفواكه وهي تطيح (فروت نينجا)</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-2xl ml-2">🚀</span>
+            <span>تحاول تعيش أطول وقت ممكن (فلابي بيرد)</span>
+          </div>
+        </div>
+
+        <p className="text-xl font-bold text-purple-700 my-3">
+          حركة وحدة + تحدي = إدمان! 🔥
+        </p>
+
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <p className="text-gray-800 font-semibold">
+            <span className="inline-block ml-2">👉</span>
+            لما تفكر بلعبتك، اسأل نفسك:
+          </p>
+          <p className="text-gray-800 font-bold">
+            "وش الحركة الرئيسية اللي بتكون ممتعة؟"
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // <div className="min-h-screen flex flex-col bg-[#f5f2e8]">
+  return (
+    <div
+      className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal"
+      dir="rtl"
+    >
+      {/* Student Info Modal */}
+      <HtmlGeneratorStudentModal />
+
+      {showConfetti && <Confetti />}
       {/* Share Project Dialog */}
       <Dialog
         open={state.showShareDialog}
@@ -1071,7 +1194,7 @@ export function HTMLStandalone({
           setState((prev) => ({ ...prev, showShareDialog: open }))
         }
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="" dir="rtl">
           <DialogHeader>
             <DialogTitle>تم حفظ المشروع!</DialogTitle>
             <DialogDescription>
@@ -1079,8 +1202,8 @@ export function HTMLStandalone({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-center space-x-2 mt-4">
-            <div className="grid flex-1 gap-2">
+          <div className="flex items-center space-x-2 mt-4" dir="rtl">
+            <div className="grid flex-1 gap-2 mx-4">
               <Input
                 readOnly
                 value={state.shareUrl || ""}
@@ -1090,7 +1213,7 @@ export function HTMLStandalone({
             <Button
               type="button"
               size="sm"
-              className={`px-3 ${
+              className={`px-3 mx-3 ${
                 state.projectId && !state.hasSharedLink
                   ? "animate-pulse bg-green-100 hover:bg-green-200 text-green-800"
                   : ""
@@ -1157,337 +1280,342 @@ export function HTMLStandalone({
         </DialogContent>
       </Dialog>
 
-      <div className="py-6 border-b bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
+      {/* <header className="bg-white shadow-sm p-3">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
             <Wand2 className="h-6 w-6 text-purple-500" />
             منشئ الويب بالذكاء الاصطناعي
           </h1>
-          <p className="text-center text-muted-foreground mt-2">
-            اكتب ما ترغب ببنائه، وشاهده يتحول إلى واقع فوراً.
-          </p>
+          <Button
+            variant="default"
+            className="flex items-center gap-2"
+            onClick={goToSubmissions}
+          >
+            <Database className="h-4 w-4" />
+            <span>عرض جميع المشاريع</span>
+          </Button>
         </div>
-      </div>
+      </header> */}
 
       {/* Main Content Area - Two Columns Layout */}
-      <div className="flex-grow p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row h-[calc(100vh-250px)]">
+      <div className="flex-1">
+        {/* <div className="max-w-6xl mx-auto"> */}
+        <div className="">
+          {/* <div className="flex flex-col md:flex-row h-[calc(100vh-250px)]"> */}
+          <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4">
             {/* Left Column: Preview Panel - 70% width */}
-            <div className="w-full md:w-[70%] h-full mb-4 md:mb-0 md:pr-2">
-              <div className="bg-gray-100 border rounded-t px-4 py-2 flex items-center justify-between">
-                <span className="font-medium text-sm">
-                  {state.viewMode === "preview" ? "معاينة مباشرة" : "كود HTML"}
-                </span>
+            <div className="w-full md:w-[70%] h-full flex flex-col">
+              <Card className="h-full flex flex-col border-lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">
+                      {state.viewMode === "preview"
+                        ? "معاينة مباشرة"
+                        : "كود HTML"}
+                    </CardTitle>
 
-                {state.currentHTML && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex border rounded overflow-hidden">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={
-                          state.viewMode === "preview" ? "default" : "outline"
-                        }
-                        className="rounded-none px-3 py-1 h-8 text-xs"
-                        onClick={() =>
-                          setState((prev) => ({ ...prev, viewMode: "preview" }))
-                        }
-                      >
-                        معاينة
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={
-                          state.viewMode === "code" ? "default" : "outline"
-                        }
-                        className="rounded-none px-3 py-1 h-8 text-xs"
-                        onClick={() =>
-                          setState((prev) => ({ ...prev, viewMode: "code" }))
-                        }
-                      >
-                        الكود
-                      </Button>
-                    </div>
+                    {state.currentHTML && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex border rounded overflow-hidden">
+                          <Button
+                            type="button"
+                            variant={
+                              state.viewMode === "preview"
+                                ? "default"
+                                : "outline"
+                            }
+                            className="rounded-none px-3 py-1 h-8 text-xs"
+                            onClick={() =>
+                              setState((prev) => ({
+                                ...prev,
+                                viewMode: "preview",
+                              }))
+                            }
+                          >
+                            معاينة
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={
+                              state.viewMode === "code" ? "default" : "outline"
+                            }
+                            className="rounded-none px-3 py-1 h-8 text-xs"
+                            onClick={() =>
+                              setState((prev) => ({
+                                ...prev,
+                                viewMode: "code",
+                              }))
+                            }
+                          >
+                            الكود
+                          </Button>
+                        </div>
 
-                    {/* Project Actions */}
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant={
-                          state.currentHTML && !state.projectId
-                            ? "default"
-                            : "outline"
-                        }
-                        className={`h-8 flex items-center gap-1 text-xs ${
-                          state.currentHTML && !state.projectId
-                            ? "animate-pulse"
-                            : ""
-                        }`}
-                        onClick={saveAndShareProject}
-                        disabled={state.isSaving}
-                      >
-                        {state.isSaving ? (
-                          <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            جاري الحفظ...
-                          </>
-                        ) : (
-                          <>
-                            <Share2 className="h-3 w-3" />
-                            حفظ ومشاركة
-                          </>
-                        )}
-                      </Button>
+                        {/* Project Actions */}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant={
+                              state.currentHTML && !state.projectId
+                                ? "default"
+                                : "default"
+                            }
+                            className={`h-8 flex items-center gap-1 text-xs ${
+                              state.currentHTML && !state.projectId
+                                ? "animate-pulse"
+                                : ""
+                            }`}
+                            onClick={saveAndShareProject}
+                            disabled={state.isSaving}
+                          >
+                            {state.isSaving ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                جاري الحفظ...
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="h-3 w-3" />
+                                حفظ ومشاركة
+                              </>
+                            )}
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 flex items-center gap-1 text-xs"
-                        onClick={confirmReset}
-                      >
-                        <Plus className="h-3 w-3" />
-                        مشروع جديد
-                      </Button>
-                    </div>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-8 flex items-center gap-1 text-xs"
+                            onClick={confirmReset}
+                          >
+                            <Plus className="h-3 w-3" />
+                            مشروع جديد
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      variant="default"
+                      className="flex items-center gap-2"
+                      onClick={goToSubmissions}
+                    >
+                      <Database className="h-4 w-4" />
+                      <span>عرض جميع المشاريع</span>
+                    </Button>
                   </div>
-                )}
-              </div>
-
-              <div className="flex-grow bg-white h-full border-x border-b rounded-b">
-                {!state.currentHTML ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p>سيظهر إبداعك هنا</p>
+                </CardHeader>
+                {/*
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>سيظهر إبداعك هنا</p>
+              </div>*/}
+                <CardContent className="flex-1 p-0 overflow-hidden">
+                  <div className="flex-grow bg-white h-full ">
+                    {!state.currentHTML ? (
+                      welcomeCard
+                    ) : state.viewMode === "preview" ? (
+                      <div className="w-full h-full overflow-hidden">
+                        <iframe
+                          title="HTML Preview"
+                          srcDoc={state.currentHTML}
+                          className="w-full h-full border-0"
+                          sandbox="allow-scripts allow-popups allow-forms"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : (
+                      <ScrollArea className="w-full h-full rounded-md">
+                        <pre className="p-4 overflow-x-auto text-sm">
+                          <code className="language-html">
+                            {state.currentHTML}
+                          </code>
+                        </pre>
+                      </ScrollArea>
+                    )}
                   </div>
-                ) : state.viewMode === "preview" ? (
-                  <div className="w-full h-full overflow-hidden">
-                    <iframe
-                      title="HTML Preview"
-                      srcDoc={state.currentHTML}
-                      className="w-full h-full border-0"
-                      sandbox="allow-scripts allow-popups allow-forms"
-                      loading="lazy"
-                    />
-                  </div>
-                ) : (
-                  <ScrollArea className="w-full h-full rounded-md">
-                    <pre className="p-4 overflow-x-auto text-sm">
-                      <code className="language-html">{state.currentHTML}</code>
-                    </pre>
-                  </ScrollArea>
-                )}
-              </div>
+                </CardContent>
+                <CardFooter className=" m-0 pb-2"></CardFooter>
+              </Card>
             </div>
 
             {/* Right Column: Chat Thread - 30% width */}
-            <div className="w-full md:w-[30%] h-full md:pl-2 flex flex-col">
-              <div className="rounded-t bg-gray-100 border-t border-r border-l px-4 py-3 flex items-center">
-                <div className="flex items-center">
-                  <img
-                    src={penguinAvatar}
-                    alt="د. بنجي"
-                    className="h-6 w-6 ml-2"
-                  />
-                  <span className="font-medium text-sm">دردشة مع د. بنجي</span>
-                </div>
-              </div>
+            <div className="w-full md:w-[30%] h-full flex flex-col">
+              <Card className="h-full flex flex-col">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-xl">
+                    الدردشة مع مساعدك الذكي
+                  </CardTitle>
+                </CardHeader>
 
-              {/* Chat Messages Area */}
-              <div className="flex-grow border-x overflow-hidden relative">
-                <ScrollArea className="h-[calc(100vh-400px)]">
-                  <div className="p-4 space-y-4">
-                    {state.messages.map((msg, i) => (
-                      <div
-                        key={i + 1}
-                        className={`p-3 rounded-lg ${
-                          msg.role === "user"
-                            ? "bg-primary text-primary-foreground ml-6"
-                            : "bg-amber-50 border border-amber-100 mr-6"
-                        }`}
-                      >
-                        <div className="flex items-center mb-2">
-                          {msg.role === "user" ? (
-                            <div className="font-medium text-xs">أنت</div>
-                          ) : (
-                            <div className="flex items-center">
-                              <img
-                                src={penguinAvatar}
-                                alt="د. بنجي"
-                                className="h-5 w-5 ml-1.5"
-                              />
-                              <div className="font-medium text-xs">د. بنجي</div>
+                {/* Chat Messages Area */}
+                {/* <div className="flex-grow overflow-hidden relative"> */}
+                <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
+                  <ScrollArea className="flex-1 chat-area">
+                    <div className="p-4 space-y-4">
+                      {state.messages.map((msg, i) => (
+                        <div
+                          key={i}
+                          className={`flex ${
+                            msg.role === "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                              msg.role === "user"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-white border-2 border-purple-300"
+                            }`}
+                          >
+                            <div className="flex items-center mb-2">
+                              {msg.role === "user" ? (
+                                <div className="font-medium text-xs">أنت</div>
+                              ) : (
+                                <div className="flex items-center">
+                                  <img
+                                    src={penguinAvatar}
+                                    alt="د. بنجي"
+                                    className="h-5 w-5 ml-1.5"
+                                  />
+                                  <div className="font-medium text-xs">
+                                    د. بنجي
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="whitespace-pre-wrap text-xs">
-                          {msg.role === "assistant" &&
-                          msg.className === "loading-animation" ? (
-                            <div className="flex">
-                              <span>جاري الإنشاء</span>
-                              <span className="flex ml-1">
-                                <span className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
-                                <span
-                                  className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
-                                  style={{ animationDelay: "0.2s" }}
-                                ></span>
-                                <span
-                                  className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
-                                  style={{ animationDelay: "0.4s" }}
-                                ></span>
-                              </span>
+                            <div className="whitespace-pre-wrap">
+                              {msg.role === "assistant" &&
+                              msg.className === "loading-animation" ? (
+                                <div className="flex">
+                                  <span>جاري الإنشاء</span>
+                                  <span className="flex ml-1">
+                                    <span className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
+                                    <span
+                                      className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                                      style={{ animationDelay: "0.2s" }}
+                                    ></span>
+                                    <span
+                                      className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                                      style={{ animationDelay: "0.4s" }}
+                                    ></span>
+                                  </span>
+                                </div>
+                              ) : msg.role === "assistant" &&
+                                (msg.content.includes("<!DOCTYPE html") ||
+                                  msg.content.includes("<html")) ? (
+                                "سويت لك الصفحة! شوف النتيجة 👈"
+                              ) : (
+                                msg.content.split("<!DOCTYPE html")[0] ||
+                                msg.content
+                              )}
                             </div>
-                          ) : msg.role === "assistant" &&
-                            (msg.content.includes("<!DOCTYPE html") ||
-                              msg.content.includes("<html")) ? (
-                            "سويت لك الصفحة! شوف النتيجة 👈"
-                          ) : (
-                            msg.content.split("<!DOCTYPE html")[0] ||
-                            msg.content
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {/* The "يكتب" loader has been removed as requested - the loading state 
+                      {/* The "يكتب" loader has been removed as requested - the loading state 
                         is now only shown in the "جاري الإنشاء..." message that's added to the chat */}
 
-                    {/* Confirmation Buttons - only show during confirmation step */}
-                    {state.showConfirmButtons && (
-                      <div className="flex gap-2 my-3 justify-center">
-                        <Button
-                          onClick={() => handleConfirmation(true)}
-                          variant="outline"
-                          size="sm"
-                          className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                          disabled={state.isLoading}
-                        >
-                          يلا!
-                        </Button>
-                        <Button
-                          onClick={() => handleConfirmation(false)}
-                          variant="outline"
-                          size="sm"
-                          className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
-                          disabled={state.isLoading}
-                        >
-                          لا لسا
-                        </Button>
-                      </div>
-                    )}
+                      {/* Confirmation Buttons - only show during confirmation step */}
+                      {state.showConfirmButtons && (
+                        <div className="flex gap-2 my-3 justify-center">
+                          <Button
+                            onClick={() => handleConfirmation(true)}
+                            variant="outline"
+                            size="sm"
+                            className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                            disabled={state.isLoading}
+                          >
+                            يلا!
+                          </Button>
+                          <Button
+                            onClick={() => handleConfirmation(false)}
+                            variant="outline"
+                            size="sm"
+                            className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                            disabled={state.isLoading}
+                          >
+                            لا لسا
+                          </Button>
+                        </div>
+                      )}
 
-                    {/* Satisfaction Buttons - only show during satisfaction step */}
-                    {state.showSatisfactionButtons && (
-                      <div className="flex gap-2 my-3 justify-center">
-                        <Button
-                          onClick={() => handleSatisfaction(true)}
-                          variant="outline"
-                          size="sm"
-                          className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                        >
-                          نعم، أريد المتابعة
-                        </Button>
-                        <Button
-                          onClick={() => handleSatisfaction(false)}
-                          variant="outline"
-                          size="sm"
-                          className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
-                        >
-                          لا، أريد تعديلات
-                        </Button>
-                      </div>
-                    )}
+                      {/* Satisfaction Buttons - only show during satisfaction step */}
+                      {state.showSatisfactionButtons && (
+                        <div className="flex gap-2 my-3 justify-center">
+                          <Button
+                            onClick={() => handleSatisfaction(true)}
+                            variant="outline"
+                            size="sm"
+                            className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                          >
+                            كل شي تمام
+                          </Button>
+                          <Button
+                            onClick={() => handleSatisfaction(false)}
+                            variant="outline"
+                            size="sm"
+                            className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                          >
+                            أحتاج تعديلات!
+                          </Button>
+                        </div>
+                      )}
 
-                    <div ref={chatEndRef} />
-                  </div>
-                </ScrollArea>
-              </div>
+                      <div ref={chatEndRef} />
+                    </div>
+                  </ScrollArea>
+                </CardContent>
 
-              {/* Input Area */}
-              <div className="border-x border-b rounded-b p-3">
-                {state.error && (
-                  <Alert variant="destructive" className="mb-3 py-2">
-                    <AlertCircle className="h-3 w-3" />
-                    <AlertTitle className="text-xs">خطأ</AlertTitle>
-                    <AlertDescription className="text-xs">
-                      {state.error}
-                    </AlertDescription>
-                  </Alert>
-                )}
+                {/* Input Area */}
+                <div className="px-3 pt-3 pb-1">
+                  {state.error && (
+                    <Alert variant="destructive" className="mb-3 py-2">
+                      <AlertCircle className="h-3 w-3" />
+                      <AlertTitle className="text-xs">خطأ</AlertTitle>
+                      <AlertDescription className="text-xs">
+                        {state.error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                  <Input
-                    value={state.prompt}
-                    onChange={(e) =>
-                      setState((prev) => ({ ...prev, prompt: e.target.value }))
-                    }
-                    placeholder={
-                      state.flowStep === "clarify"
-                        ? "أجب على سؤال د. بنجي..."
-                        : "صف ما تريد بناءه..."
-                    }
-                    disabled={state.isLoading || state.showConfirmButtons}
-                    className="flex-grow text-sm h-9"
-                    dir="auto"
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="h-9 w-9"
-                    disabled={
-                      !state.prompt.trim() ||
-                      state.isLoading ||
-                      state.showConfirmButtons
-                    }
-                  >
-                    {state.isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 pt-2 text-center border-t flex-shrink-0">
-        <Link
-          href="/missions/html-projects/submissions"
-          className="text-primary text-sm hover:underline"
-        >
-          عرض جميع المشاريع
-        </Link>
-      </div>
-
-      {/* Footer with Navigation */}
-      <div className="bg-white border-t py-4 mt-6">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-between">
-            <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowRight className="ml-2 h-4 w-4" />
-              <span>للخلف</span>
-            </Button>
-            <Button
-              onClick={handleContinue}
-              size="lg"
-              className={
-                !state.projectId || !state.hasSharedLink ? "relative" : ""
-              }
-              variant={
-                state.projectId && state.hasSharedLink ? "default" : "outline"
-              }
-            >
-              {!state.projectId || !state.hasSharedLink ? (
-                <div className="absolute -top-8 right-0 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
-                  {!state.projectId ? "احفظ مشروعك" : "انسخ الرابط"}
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <Input
+                      value={state.prompt}
+                      onChange={(e) =>
+                        setState((prev) => ({
+                          ...prev,
+                          prompt: e.target.value,
+                        }))
+                      }
+                      placeholder={
+                        state.flowStep === "clarify"
+                          ? "أجب على سؤال د. بنجي..."
+                          : "صف ما تريد بناءه..."
+                      }
+                      disabled={state.isLoading || state.showConfirmButtons}
+                      className="flex-grow text-sm bg-card"
+                      dir="auto"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className=""
+                      disabled={
+                        !state.prompt.trim() ||
+                        state.isLoading ||
+                        state.showConfirmButtons
+                      }
+                    >
+                      {state.isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </form>
                 </div>
-              ) : null}
-              <span>المتابعة</span>
-              <ArrowLeft className="ml-2 h-4 w-4" />
-            </Button>
+                <CardFooter className=" m-0 pb-2"></CardFooter>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

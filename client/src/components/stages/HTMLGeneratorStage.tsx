@@ -571,7 +571,7 @@ export function HTMLGeneratorStage({
           ...prev.messages,
           {
             role: "user",
-            content: "نعم، أريد المتابعة",
+            content: "كل شي تمام",
           },
         ],
         isSatisfied: true,
@@ -927,11 +927,11 @@ export function HTMLGeneratorStage({
       }
 
       console.log("Project saved with ID:", projectId);
-      
+
       // Get the fully qualified domain for the share URL
       const domain = window.location.origin;
       console.log("Using domain for share URL:", domain);
-      
+
       // Create a shareable URL using the current hostname
       const shareUrl = `${domain}/project/${projectId}`;
       console.log("Generated share URL:", shareUrl);
@@ -1032,16 +1032,16 @@ export function HTMLGeneratorStage({
   const startNewProject = () => {
     // Reset state to initial state while preserving any existing session ID
     // This ensures thread continuity with the OpenAI Assistant API
-    setState((prev) => ({
-      ...prev,
-      currentHTML: "",
-      messages: [welcomeMessage, examplesMessage], // Retain the welcome message and examples
-      projectId: null,
-      shareUrl: null,
-      hasSharedLink: false, // Reset the shared link flag
-      showShareDialog: false,
-      showResetDialog: false,
-    }));
+
+    console.log(
+      "################################# New Project ###################################",
+    );
+
+    console.log("State before: ", state);
+
+    setState((_) => initialState);
+
+    console.log("State after: ", state);
 
     // Track this for analytics
     trackStageProgress("html_generator", "new_project_started", {
@@ -1388,7 +1388,7 @@ export function HTMLGeneratorStage({
                           size="sm"
                           className="px-4 py-1 h-9 w-24 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
                         >
-                          أحتاج تعديلات!
+                          كل شي تمام
                         </Button>
                         <Button
                           onClick={() => handleSatisfaction(false)}
@@ -1396,7 +1396,7 @@ export function HTMLGeneratorStage({
                           size="sm"
                           className="px-4 py-1 h-9 w-24 bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                         >
-                          انتهيت
+                          أحتاج تعديلات!
                         </Button>
                       </div>
                     )}

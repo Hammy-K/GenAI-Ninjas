@@ -1,206 +1,167 @@
 import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { useLocation } from "wouter";
+import { Database } from "lucide-react";
 
 type HtmlProject = {
   id: number;
-  project_id: string;
+  projectId: string;
   html: string;
-  firebase_uid: string | null;
-  created_at: string;
-  updated_at: string;
+  firebaseUid: string | null;
+  userId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Student = {
+  id: string;
+  fullName: string;
+  schoolName: string;
+  phoneNumber: string;
+  createdAt: string;
+};
+
+type ProjectWithStudent = HtmlProject & {
+  student?: Student;
 };
 
 export default function HtmlProjectsList() {
-  const [projects, setProjects] = useState<HtmlProject[]>([]);
+  const [projects, setProjects] = useState<ProjectWithStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProject, setSelectedProject] = useState<HtmlProject | null>(
-    null,
-  );
-  const [showModal, setShowModal] = useState(false);
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    async function fetchProjects() {
+    async function fetchProjectsAndStudents() {
       try {
         const res = await fetch("/api/html-projects/submissions");
-        if (!res.ok) throw new Error("Failed to fetch submissions");
-        const data = await res.json();
-        setProjects(data);
+        if (!res.ok) throw new Error("فشل في تحميل المشاريع");
+        const projectData: HtmlProject[] = await res.json();
+
+        // Extract unique user IDs
+        const userIds = Array.from(
+          new Set(projectData.map((p) => p.userId).filter(Boolean)),
+        );
+
+        // Fetch students in parallel
+        const studentPromises = userIds.map((id) =>
+          fetch(`/api/students/${id}`).then((res) =>
+            res.ok ? res.json() : null,
+          ),
+        );
+        const studentResults = await Promise.all(studentPromises);
+
+        // Map userId -> student
+        const studentMap = new Map<string, Student>();
+
+        studentResults.forEach((student) => {
+          if (student && student.id) {
+            studentMap.set(String(student.id), student);
+          }
+        });
+
+        // Attach student to each project
+        const enrichedProjects = projectData.map((project) => ({
+          ...project,
+          student: project.userId ? studentMap.get(project.userId) : undefined,
+        }));
+
+        setProjects(enrichedProjects);
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
+        setError(err.message || "حدث خطأ ما");
       } finally {
         setLoading(false);
       }
     }
-    fetchProjects();
+
+    fetchProjectsAndStudents();
   }, []);
 
-  const openProjectModal = (project: HtmlProject) => {
-    setSelectedProject(project);
-    setShowModal(true);
+  const goToHtmlGenerator = () => {
+    setLocation("/missions/html-generator");
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedProject(null);
-  };
-
-  if (loading)
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
+  }
 
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  if (error) {
+    return (
+      <p className="text-center text-red-500 bg-[#f5f2e8]">خطأ: {error}</p>
+    );
+  }
 
   return (
-    <div className="p-6 font-sans max-w-6xl mx-auto bg-purple-100 min-h-screen">
-      <div className="text-right mb-8">
-        <h1 className="text-3xl font-bold mb-2">مشاريع الطلاب</h1>
-        <p className="text-gray-600 mb-4">
-          جميع المشاريع المقدمة في تطبيق Lovable
-        </p>
-      </div>
+    <div className="bg-[#f5f2e8]">
+      <div className="p-6 font-sans max-w-7xl mx-auto min-h-screen">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">مشاريع الطلاب</h1>
+          <p className="text-gray-600 mb-4">
+            جميع المشاريع المعروضة في هذا التطبيق تم إنشاؤها بواسطة الطلاب
+            باستخدام تقنيات الذكاء الاصطناعي
+          </p>
 
-      {projects.length === 0 ? (
-        <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer h-48"
-              onClick={() => openProjectModal(project)}
-            >
-              <iframe
-                srcDoc={project.html}
-                title={`Preview of ${project.project_id}`}
-                className="w-full h-full"
-                sandbox="allow-scripts"
-              ></iframe>
-            </div>
-          ))}
+          <Button
+            variant="default"
+            className="flex items-center gap-2 mx-auto"
+            onClick={goToHtmlGenerator}
+          >
+            <Database className="h-4 w-4" />
+            <span>منشئ الويب بالذكاء الاصطناعي</span>
+          </Button>
         </div>
-      )}
 
-      {/* Modal for viewing project details */}
-      {showModal && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold"></h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700"
+        {projects.length === 0 ? (
+          <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                className="relative bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer h-64"
               >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[70vh]">
-              <div className="bg-gray-100 rounded-lg h-full w-full overflow-hidden">
+                {/* Transparent overlay to capture clicks */}
+                <div
+                  className="absolute inset-0 z-10"
+                  onClick={() =>
+                    window.open(
+                      `https://noongenai.replit.app/project/${project.projectId}`,
+                      "_blank",
+                    )
+                  }
+                ></div>
+
+                {/* iframe preview */}
                 <iframe
-                  srcDoc={selectedProject.html}
-                  title={`Full preview of ${selectedProject.project_id}`}
-                  className="w-full h-full min-h-[80vh]"
+                  srcDoc={project.html}
+                  title={`Preview of ${project.projectId}`}
                   sandbox="allow-scripts"
+                  className="w-full h-2/3 border-0"
+                  style={{ pointerEvents: "none" }}
                 ></iframe>
+
+                {/* Student Info Section */}
+                <div className="p-3 bg-[#fafafa] border-t text-sm z-20">
+                  <p className="font-semibold text-lg text-center">
+                    👤 {project.student?.fullName || "طالب غير معروف"}
+                  </p>
+                  <p className="text-gray-600 text-center">
+                    🏫 {project.student?.schoolName || "مدرسة غير معروفة"}
+                  </p>
+                  <p className="text-gray-500 text-xs text-center">
+                    🗓️ تاريخ المشروع:{" "}
+                    {new Date(project.createdAt).toLocaleDateString("ar-EG")}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="border-t p-4 flex justify-end">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700"
-              >
-                Close
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
-// import { useEffect, useState } from "react";
-
-// type HtmlProject = {
-//   id: number;
-//   project_id: string;
-//   html: string;
-//   firebase_uid: string | null;
-//   created_at: string;
-//   updated_at: string;
-// };
-
-// export default function HtmlProjectsList() {
-//   const [projects, setProjects] = useState<HtmlProject[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   useEffect(() => {
-//     async function fetchProjects() {
-//       try {
-//         const res = await fetch("/api/html-projects/submissions");
-//         if (!res.ok) throw new Error("Failed to fetch submissions");
-
-//         const data = await res.json();
-//         console.log("Fetched HTML projects data frontend:", data);
-//         setProjects(data);
-//       } catch (err: any) {
-//         setError(err.message || "Something went wrong");
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-
-//     fetchProjects();
-//   }, []);
-
-//   if (loading)
-//     return (
-//       <p className="text-center text-gray-600">Loading HTML projects...</p>
-//     );
-//   if (error) return <p className="text-center text-red-500">Error: {error}</p>;
-
-//   return (
-//     <div className="p-6 font-sans max-w-4xl mx-auto">
-//       <h2 className="text-2xl font-semibold mb-4">HTML Project Submissions</h2>
-//       {projects.length === 0 ? (
-//         <p className="text-gray-500">No submissions found.</p>
-//       ) : (
-//         <ul className="space-y-6">
-//           {projects.map((project) => (
-//             <li
-//               key={project.id}
-//               className="p-4 border border-gray-300 rounded-lg shadow-sm"
-//             >
-//               <p>
-//                 <span className="font-medium">Project ID:</span>{" "}
-//                 {project.project_id}
-//               </p>
-//               <p>
-//                 <span className="font-medium">Firebase UID:</span>{" "}
-//                 {project.firebase_uid || "N/A"}
-//               </p>
-//               <p>
-//                 <span className="font-medium">Created At:</span>{" "}
-//                 {new Date(project.created_at).toLocaleString()}
-//               </p>
-//               <p>
-//                 <span className="font-medium">Updated At:</span>{" "}
-//                 {new Date(project.updated_at).toLocaleString()}
-//               </p>
-//               <details className="mt-2">
-//                 <summary className="cursor-pointer text-blue-600 hover:underline">
-//                   View HTML Content
-//                 </summary>
-//                 <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto text-sm">
-//                   {project.html}
-//                 </pre>
-//               </details>
-//             </li>
-//           ))}
-//         </ul>
-//       )}
-//     </div>
-//   );
-// }

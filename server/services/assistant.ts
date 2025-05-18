@@ -7,6 +7,7 @@
 import OpenAI from "openai";
 import { logEvent, logError } from "./logging";
 import { logAssistantInteraction, extractTokenUsage } from "./assistant-logger";
+import { number } from "zod";
 
 // Constants for the Assistants
 const HTML_ASSISTANT_ID = "asst_8KzUOWHXMVpF1okBkE3AmnVq"; // HTML generator assistant
@@ -60,6 +61,7 @@ export class AssistantService {
   async generateHTML(
     messageHistory: AssistantMessage[],
     sessionId: string,
+    studentId: string,
     firebaseUid?: string,
     deviceId?: string,
   ): Promise<AssistantResponse> {
@@ -89,22 +91,25 @@ export class AssistantService {
       // We've discovered an issue: simply adding the last message doesn't preserve
       // the HTML context we're adding on the client side. Instead, let's create a new thread
       // for each request to ensure all context is included.
-      
+
       // If we have an existing thread, delete it to avoid context confusion
       if (existingThreadId) {
         try {
           // Remove the old thread from our map - don't delete via API as that could fail
           this.removeThreadId(sessionId);
-          
+
           // Create a new thread - this ensures we're starting fresh
           threadId = await this.createThread(sessionId);
         } catch (error) {
-          console.log("Error refreshing thread, continuing with existing thread:", error);
+          console.log(
+            "Error refreshing thread, continuing with existing thread:",
+            error,
+          );
           // Continue with existing thread if unable to create a new one
           threadId = existingThreadId;
         }
       }
-      
+
       // Always add ALL messages to ensure we have complete context
       // This includes any HTML context we've added on the client side
       for (const message of messageHistory) {
@@ -138,6 +143,7 @@ export class AssistantService {
           errorMessage: errorMsg,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log assistant error:", e));
 
         return this.createErrorResponse(errorMsg);
@@ -172,6 +178,7 @@ export class AssistantService {
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log assistant error:", e));
 
         return this.createErrorResponse(errorMsg);
@@ -208,6 +215,7 @@ export class AssistantService {
           },
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) =>
           console.error("Failed to log assistant interaction:", e),
         );
@@ -227,6 +235,7 @@ export class AssistantService {
           errorMessage: errorMsg,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log assistant error:", e));
 
         return this.createErrorResponse(errorMsg);
@@ -248,6 +257,7 @@ export class AssistantService {
           errorMessage: errorMessage,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log assistant error:", e));
       }
 
@@ -289,7 +299,7 @@ export class AssistantService {
 
   /**
    * Remove thread ID mapping for a session
-   * 
+   *
    * @param sessionId Session identifier
    * @returns True if removed, false if not found
    */
@@ -479,6 +489,7 @@ export class AssistantService {
     prompt: string,
     messageHistory: AssistantMessage[],
     sessionId: string,
+    studentId: string,
     firebaseUid?: string,
     deviceId?: string,
   ): Promise<TryAIResponse> {
@@ -500,16 +511,19 @@ export class AssistantService {
         try {
           // Remove the old thread from our map - don't delete via API as that could fail
           this.removeThreadId(sessionId);
-          
+
           // Create a new thread - this ensures we're starting fresh
           threadId = await this.createThread(sessionId);
         } catch (error) {
-          console.log("Error refreshing thread, continuing with existing thread:", error);
+          console.log(
+            "Error refreshing thread, continuing with existing thread:",
+            error,
+          );
           // Continue with existing thread if unable to create a new one
           threadId = existingThreadId;
         }
       }
-      
+
       // Add all previous messages for context
       if (messageHistory && messageHistory.length > 0) {
         for (const message of messageHistory) {
@@ -521,7 +535,7 @@ export class AssistantService {
           }
         }
       }
-      
+
       // Add the current prompt as the last message
       await this.openai.beta.threads.messages.create(threadId, {
         role: "user",
@@ -550,6 +564,7 @@ export class AssistantService {
           errorMessage: errorMsg,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log TryAI error:", e));
 
         throw new Error(errorMsg);
@@ -580,6 +595,7 @@ export class AssistantService {
           errorMessage: errorMsg,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log TryAI error:", e));
 
         throw new Error(errorMsg);
@@ -608,6 +624,7 @@ export class AssistantService {
         },
         firebaseUid: firebaseUid || null,
         deviceId: deviceId || null,
+        studentId: studentId,
       }).catch((e) => console.error("Failed to log TryAI interaction:", e));
 
       return {
@@ -630,6 +647,7 @@ export class AssistantService {
           errorMessage: errorMessage,
           firebaseUid: firebaseUid || null,
           deviceId: deviceId || null,
+          studentId: studentId,
         }).catch((e) => console.error("Failed to log TryAI error:", e));
       }
 

@@ -12,6 +12,7 @@ type TextGenerationOptions = {
   prompt: string;
   maxTokens?: number;
   messageHistory?: Message[];
+  studentId: string;
 };
 
 type CompletionResponse = {
@@ -43,7 +44,9 @@ export async function generateText(
       "/api/ai/text/try-ai-assistant",
       options,
     );
+
     const data = await response.json();
+
     return { text: data.text, error: data.error };
   } catch (error) {
     console.error("Error generating text:", error);
@@ -177,6 +180,7 @@ export type SummaryResponse = {
  */
 export async function getClarifyingQuestion(
   idea: string,
+  studentId: string,
 ): Promise<ClarificationResponse> {
   try {
     // Create a message history with a user message first
@@ -190,11 +194,21 @@ export async function getClarifyingQuestion(
     // Make the prompt more conversational and specifically ask the AI to use Saudi dialect
     const prompt = `أنا طالب وأبي أبني ${idea} باستخدام HTML. اسألني سؤال واحد يساعدني أوضح فكرتي بشكل أفضل. لازم تسألني بالعامية السعودية وبأسلوب ودي مثل "وش رأيك..."`;
 
+    console.log("##################################");
+    console.log(
+      "Student ID Inside getClarificationQuestion inside openai file: ",
+      studentId,
+      " type of ",
+      typeof studentId,
+    );
+    console.log("##################################");
+
     const response = await apiRequest("POST", "/api/ai/text/try-ai-assistant", {
       prompt,
       messageHistory,
       // Use the clarification assistant ID
       assistantId: "asst_x31y8qYnTlwvs1gAxKCNG5KB",
+      studentId: studentId,
     });
     const data = await response.json();
 
@@ -221,6 +235,7 @@ export async function getClarifyingQuestion(
 export async function getProjectSummary(
   idea: string,
   clarification: string,
+  studentId: string,
 ): Promise<SummaryResponse> {
   try {
     // Create a message history for context
@@ -249,6 +264,7 @@ export async function getProjectSummary(
       messageHistory,
       // Use the same clarification assistant ID
       assistantId: "asst_x31y8qYnTlwvs1gAxKCNG5KB",
+      studentId: studentId,
     });
     const data = await response.json();
 
@@ -271,6 +287,7 @@ export async function getProjectSummary(
 export async function getFullProjectSummary(
   idea: string,
   clarification: string,
+  studentId: string,
 ): Promise<SummaryResponse> {
   try {
     // Create a message history for context
@@ -299,7 +316,9 @@ export async function getFullProjectSummary(
       messageHistory,
       // Use the same clarification assistant ID
       assistantId: "asst_x31y8qYnTlwvs1gAxKCNG5KB",
+      studentId: studentId,
     });
+
     const data = await response.json();
 
     return {
@@ -320,6 +339,7 @@ export async function getFullProjectSummary(
 
 export async function generateHTML(
   messageHistory: HTMLMessage[],
+  studentId: string,
 ): Promise<GenerateHTMLResponse> {
   try {
     // Filter out any loading messages to keep the context clean
@@ -330,7 +350,9 @@ export async function generateHTML(
     // Use the new Assistant API endpoint for better context preservation and clarification handling
     const response = await apiRequest("POST", "/api/assistant/generate-html", {
       messageHistory: filteredMessages,
+      studentId: studentId,
     });
+
     return await response.json();
   } catch (error) {
     console.error("Error generating HTML:", error);

@@ -26,7 +26,10 @@ import { HTMLStandalone } from "./components/stages/HTMLStandalone";
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-tajawal" dir="rtl">
+    <div
+      className="min-h-screen flex flex-col text-foreground font-tajawal"
+      dir="rtl"
+    >
       <main className="flex-1">
         <HTMLStandalone
           onComplete={() => {}}
@@ -62,14 +65,21 @@ function Router() {
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
       />
-      <Route
+      {/* <Route
         path="/missions/html-projects/submissions"
         component={HtmlProjectsList}
-      />
+      /> */}
       <Route path="/reset-instructions" component={ResetInstructions} />
+      {/* Standalone HTML Generator */}
       <Route path="/missions/html-generator" component={HTMLGeneratorWrapper} />
+      <Route
+        path="/missions/html-generator/submissions"
+        component={HtmlProjectsList}
+      />
+      {/* Standalone HTML Generator */}
+
       <Route path="/missions/html-generator-v2" component={HTMLGeneratorV2} />
-      <Route path="/missions/html-generator-v2/submissions" component={HtmlGeneratorV2SubmissionsPage} />
+      {/* <Route path="/missions/html-generator-v2/submissions" component={HtmlGeneratorV2SubmissionsPage} /> */}
 
       <Route path="/reset" component={ResetSession} />
       <Route component={NotFound} />
