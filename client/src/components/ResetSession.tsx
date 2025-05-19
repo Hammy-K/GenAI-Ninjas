@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -12,6 +13,9 @@ export function ResetSession() {
       // Clear all localStorage
       window.localStorage.clear();
       console.log("Session reset complete - all local storage cleared");
+
+      // remove studentId cookie saved for the html generator
+      Cookies.remove("studentId");
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
