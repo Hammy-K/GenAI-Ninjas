@@ -15,7 +15,7 @@ export function ResetSession() {
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        navigate("/");
+        navigate("/missions/html-generator");
         window.location.reload(); // Force a full reload
       }, 500);
     } catch (error) {
@@ -47,7 +47,7 @@ export function ResetSession() {
             {isResetting ? "جاري المسح..." : "نعم، امسح جلستي وابدأ من جديد"}
           </Button>
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/missions/html-generator")}
             variant="outline"
             className="w-full"
             disabled={isResetting}
