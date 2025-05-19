@@ -34,7 +34,7 @@ export default function HtmlGeneratorStudentModal() {
     setIsValid(
       fullName.trim() !== "" &&
         schoolName.trim() !== "" &&
-        phoneNumber.trim() !== "",
+        /^05\d{8}$/.test(phoneNumber.trim()),
     );
   }, [fullName, schoolName, phoneNumber]);
 
@@ -130,7 +130,7 @@ export default function HtmlGeneratorStudentModal() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="col-span-3 bg-white"
-              placeholder="...."
+              placeholder="مثال: 0555321542"
               required
             />
           </div>

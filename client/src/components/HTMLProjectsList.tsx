@@ -30,6 +30,7 @@ export default function HtmlProjectsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     async function fetchProjectsAndStudents() {
@@ -115,50 +116,68 @@ export default function HtmlProjectsList() {
           </Button>
         </div>
 
+        <div className="mb-6 max-w-md mx-auto">
+          <input
+            type="text"
+            placeholder="ابحث باسم الطالب..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
         {projects.length === 0 ? (
           <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="relative bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer h-64"
-              >
-                {/* Transparent overlay to capture clicks */}
+            {projects
+              .filter(
+                (project) =>
+                  !searchTerm.trim() ||
+                  project.student?.fullName
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase()),
+              )
+              .map((project) => (
                 <div
-                  className="absolute inset-0 z-10"
-                  onClick={() =>
-                    window.open(
-                      `https://noongenai.replit.app/project/${project.projectId}`,
-                      "_blank",
-                    )
-                  }
-                ></div>
+                  key={project.id}
+                  className="relative bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer h-64"
+                >
+                  {/* Transparent overlay to capture clicks */}
+                  <div
+                    className="absolute inset-0 z-10"
+                    onClick={() =>
+                      window.open(
+                        `https://noongenai.replit.app/project/${project.projectId}`,
+                        "_blank",
+                      )
+                    }
+                  ></div>
 
-                {/* iframe preview */}
-                <iframe
-                  srcDoc={project.html}
-                  title={`Preview of ${project.projectId}`}
-                  sandbox="allow-scripts"
-                  className="w-full h-2/3 border-0"
-                  style={{ pointerEvents: "none" }}
-                ></iframe>
+                  {/* iframe preview */}
+                  <iframe
+                    srcDoc={project.html}
+                    title={`Preview of ${project.projectId}`}
+                    sandbox="allow-scripts"
+                    className="w-full h-2/3 border-0"
+                    style={{ pointerEvents: "none" }}
+                  ></iframe>
 
-                {/* Student Info Section */}
-                <div className="p-3 bg-[#fafafa] border-t text-sm z-20">
-                  <p className="font-semibold text-lg text-center">
-                    👤 {project.student?.fullName || "طالب غير معروف"}
-                  </p>
-                  <p className="text-gray-600 text-center">
-                    🏫 {project.student?.schoolName || "مدرسة غير معروفة"}
-                  </p>
-                  <p className="text-gray-500 text-xs text-center">
-                    🗓️ تاريخ المشروع:{" "}
-                    {new Date(project.createdAt).toLocaleDateString("ar-EG")}
-                  </p>
+                  {/* Student Info Section */}
+                  <div className="p-3 bg-[#fafafa] border-t text-sm z-20">
+                    <p className="font-semibold text-lg text-center">
+                      👤 {project.student?.fullName || "طالب غير معروف"}
+                    </p>
+                    <p className="text-gray-600 text-center">
+                      🏫 {project.student?.schoolName || "مدرسة غير معروفة"}
+                    </p>
+                    <p className="text-gray-500 text-xs text-center">
+                      🗓️ تاريخ المشروع:{" "}
+                      {new Date(project.createdAt).toLocaleDateString("ar-EG")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </div>

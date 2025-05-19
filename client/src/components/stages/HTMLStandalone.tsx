@@ -59,6 +59,7 @@ import { Link, useLocation } from "wouter";
 import { Footer } from "../layout/Footer";
 import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
 import Cookies from "js-cookie";
+import { Label } from "@radix-ui/react-label";
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;
@@ -254,25 +255,8 @@ export function HTMLStandalone({
       // Get the clarifying question but include full message history for context
       const studentId = getStudentId();
 
-      // Create an enhanced prompt that includes HTML context if available
-      let enhancedPrompt = idea;
-
-      if (state.currentHTML) {
-        enhancedPrompt = `
-      NEW MODIFICATION REQUEST: ${idea}
-
-      CONTEXT - CURRENT HTML:
-      \`\`\`html
-      ${state.currentHTML}
-      \`\`\`
-
-      Please ask a clarifying question about what the user wants to change in this HTML.`;
-      }
-
-      const clarificationResult = await getClarifyingQuestion(
-        enhancedPrompt,
-        studentId,
-      );
+      // add history for extra context
+      const clarificationResult = await getClarifyingQuestion(idea, studentId);
 
       if (clarificationResult.error) {
         setState((prev) => ({
@@ -509,24 +493,9 @@ export function HTMLStandalone({
       // Create a modified version of the messages array with the HTML context
       const studentId = getStudentId();
 
-      // Create a comprehensive context string for the AI
-      const enhancedPrompt = `
-      MODIFICATION REQUEST: ${prompt}
-
-      ORIGINAL PROJECT IDEA: ${state.originalIdea}
-
-      PREVIOUS CLARIFICATION: ${state.clarificationAnswer}
-
-      CURRENT HTML:
-      \`\`\`html
-      ${state.currentHTML}
-      \`\`\`
-
-      Please provide a summary of what changes will be made to this HTML based on the user's request.`;
-
       const summaryResult = await getFullProjectSummary(
         state.originalIdea,
-        enhancedPrompt,
+        prompt,
         studentId,
       );
 
@@ -758,10 +727,25 @@ export function HTMLStandalone({
 
         case "modify":
           // User is providing feedback after HTML generation
+          // Instead of just modifying, restart the full clarification flow for a better experience
           if (state.currentHTML) {
-            // Simply call handleModifyHtml instead of restarting the flow
-            await handleModifyHtml(state.prompt);
+            // Store current HTML for reference
+            const currentHtml = state.currentHTML;
+
+            // Start with clarification for improved context
+            // This resets the flow but preserves the HTML until we get a new one
+            await handleClarificationStep(state.prompt);
+
+            // Restore the HTML so it's still visible in preview
+            setState((prev) => ({
+              ...prev,
+              currentHTML: currentHtml,
+            }));
           } else {
+            // If somehow we're in modify state but have no HTML, revert to new project flow
+            console.log(
+              "In modify state but no HTML found, reverting to new project flow",
+            );
             await handleClarificationStep(state.prompt);
           }
           break;
@@ -1177,6 +1161,12 @@ export function HTMLStandalone({
     </div>
   );
 
+  const [feedback, setFeedback] = useState({
+    excitement: "",
+    firstAiIdea: "",
+    surprise: "",
+  });
+
   // <div className="min-h-screen flex flex-col bg-[#f5f2e8]">
   return (
     <div
@@ -1194,7 +1184,7 @@ export function HTMLStandalone({
           setState((prev) => ({ ...prev, showShareDialog: open }))
         }
       >
-        <DialogContent className="" dir="rtl">
+        <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>تم حفظ المشروع!</DialogTitle>
             <DialogDescription>
@@ -1225,6 +1215,59 @@ export function HTMLStandalone({
             </Button>
           </div>
 
+          {/* Feedback Inputs */}
+          <div>
+            <div className="my-4">
+              <label className="block text-sm font-medium">
+                ما مدى حماسك تجاه استخدام الذكاء الاصطناعي بعد الجلسة؟
+              </label>
+              <select
+                value={feedback.excitement}
+                onChange={(e) =>
+                  setFeedback((prev) => ({
+                    ...prev,
+                    excitement: e.target.value,
+                  }))
+                }
+                className="mt-1 block w-full border-gray-300 rounded-sm bg-primary shadow-sm text-sm"
+              >
+                <option value="">اختر...</option>
+                <option value="1">١ = عادي جدًا</option>
+                <option value="2">٢</option>
+                <option value="3">٣</option>
+                <option value="4">٤</option>
+                <option value="5">٥ = مرة متحمس</option>
+              </select>
+            </div>
+
+            <Label htmlFor="fullName" className="text-right mt-4">
+              ما أول فكرة ترغب في تنفيذها باستخدام الذكاء الاصطناعي؟
+            </Label>
+            <Input
+              placeholder="اكتب أي فكرة تخطر ببالك، حتى لو كانت مجنونة 👀"
+              value={feedback.firstAiIdea}
+              onChange={(e) =>
+                setFeedback((prev) => ({
+                  ...prev,
+                  firstAiIdea: e.target.value,
+                }))
+              }
+            />
+
+            <div className="my-5"></div>
+
+            <Label htmlFor="fullName" className="text-right">
+              هل هناك شيء فاجأك اليوم بخصوص الذكاء الاصطناعي؟
+            </Label>
+            <Input
+              placeholder="اكتب معلومة أو فكرة لم تكن تتوقعها عن الذكاء الاصطناعي"
+              value={feedback.surprise}
+              onChange={(e) =>
+                setFeedback((prev) => ({ ...prev, surprise: e.target.value }))
+              }
+            />
+          </div>
+
           <DialogFooter className="sm:justify-start mt-4">
             <Button
               type="button"
@@ -1234,6 +1277,29 @@ export function HTMLStandalone({
               }
             >
               إغلاق
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                try {
+                  await fetch("/api/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      excitement: feedback.excitement,
+                      firstAiIdea: feedback.firstAiIdea,
+                      surprise: feedback.surprise,
+                      studentId: Cookies.get("studentId"),
+                    }),
+                  });
+
+                  // setState((prev) => ({ ...prev, showShareDialog: false }));
+                } catch (error) {
+                  console.error("Error submitting feedback:", error);
+                }
+              }}
+            >
+              إرسال التقييم
             </Button>
           </DialogFooter>
         </DialogContent>

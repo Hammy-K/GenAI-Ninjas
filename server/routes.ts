@@ -27,6 +27,7 @@ import { buildSystemPrompt } from "./templates/prompts";
 // Import OpenAI client
 import OpenAI from "openai";
 import { registerStudentsRoutes } from "./routes/students";
+import { registerFeedbackRoutes } from "./routes/feedback";
 
 /**
  * Legacy function for server-side prompt logging
@@ -413,6 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerLovableMissionRoutes(apiRouter, openai);
   registerHTMLProjectsRoutes(apiRouter);
   registerStudentsRoutes(apiRouter);
+  registerFeedbackRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
