@@ -1216,7 +1216,7 @@ export function HTMLStandalone({
           </div>
 
           {/* Feedback Inputs */}
-          <div>
+          {/* <div>
             <div className="my-4">
               <label className="block text-sm font-medium">
                 ما مدى حماسك تجاه استخدام الذكاء الاصطناعي بعد الجلسة؟
@@ -1266,7 +1266,7 @@ export function HTMLStandalone({
                 setFeedback((prev) => ({ ...prev, surprise: e.target.value }))
               }
             />
-          </div>
+          </div> */}
 
           <DialogFooter className="sm:justify-start mt-4">
             <Button
@@ -1278,7 +1278,7 @@ export function HTMLStandalone({
             >
               إغلاق
             </Button>
-            <Button
+            {/* <Button
               type="button"
               onClick={async () => {
                 try {
@@ -1300,7 +1300,7 @@ export function HTMLStandalone({
               }}
             >
               إرسال التقييم
-            </Button>
+            </Button> */}
           </DialogFooter>
         </DialogContent>
       </Dialog>

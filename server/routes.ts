@@ -28,6 +28,7 @@ import { buildSystemPrompt } from "./templates/prompts";
 import OpenAI from "openai";
 import { registerStudentsRoutes } from "./routes/students";
 import { registerFeedbackRoutes } from "./routes/feedback";
+import { registerHtmlAiRoute } from "./routes/html-ai";
 
 /**
  * Legacy function for server-side prompt logging
@@ -415,6 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerHTMLProjectsRoutes(apiRouter);
   registerStudentsRoutes(apiRouter);
   registerFeedbackRoutes(apiRouter);
+  registerHtmlAiRoute(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
