@@ -107,74 +107,77 @@ export default function AiHtmlGenerator() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-foreground font-tajawal bg-[#f5f2e8] p-4">
-      {/* Playground */}
-      <Card className="w-full md:w-[70%] h-[87vh] flex flex-col bg-white border-0">
-        <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-          <CardTitle className="font-medium text-lg">معاينة</CardTitle>
-          <img
-            src={penguinAvatar}
-            alt="د. بنجي"
-            className="h-8 w-8 rounded-full mr-2"
-          />
-        </CardHeader>
-      </Card>
-
-      {/* Chat Panel */}
-      <Card className="w-full md:w-[30%] h-[87vh] flex flex-col bg-white border-0">
-        <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-          <CardTitle className="font-medium text-lg">د. بنجي</CardTitle>
-          <img
-            src={penguinAvatar}
-            alt="د. بنجي"
-            className="h-8 w-8 rounded-full mr-2"
-          />
-        </CardHeader>
-
-        <CardContent className="flex-1 p-0 overflow-hidden">
-          <ScrollArea className="h-[78vh] p-4">
-            <div className="space-y-4 mt-3">
-              {messages.length > 0 ? (
-                messages.map((message, index) => (
-                  <div key={index} className="flex flex-col">
-                    <ChatMessage message={message} />
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-8 text-sm">
-                  ابدأ محادثة مع د. بنجي
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </div>
-          </ScrollArea>
-        </CardContent>
-
-        <CardFooter className="border-t p-3 border-gray-200 rouneded-full">
-          <div className="relative w-full">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isLoading || !inputValue.trim()}
-              className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
-            >
-              <Send size={18} />
-            </button>
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="اكتب رسالة وبنجي في مساعدتك"
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSubmit();
-                }
-              }}
-              disabled={isLoading}
-              className="w-full pr-10 text-right bg-white border-gray-200"
-              dir="rtl"
+      <div className="flex-1">
+        <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4">
+        {/* Playground */}
+        <Card className="w-full md:w-[70%] h-[87vh] flex flex-col bg-white border-0">
+          <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
+            <CardTitle className="font-medium text-lg">معاينة</CardTitle>
+            <img
+              src={penguinAvatar}
+              alt="د. بنجي"
+              className="h-8 w-8 rounded-full mr-2"
             />
-          </div>
-        </CardFooter>
-      </Card>
+          </CardHeader>
+        </Card>
+
+        {/* Chat Panel */}
+        <Card className="w-full md:w-[30%] h-[87vh] flex flex-col bg-white border-0">
+          <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
+            <CardTitle className="font-medium text-lg">د. بنجي</CardTitle>
+            <img
+              src={penguinAvatar}
+              alt="د. بنجي"
+              className="h-8 w-8 rounded-full mr-2"
+            />
+          </CardHeader>
+
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <ScrollArea className="h-[78vh] p-4">
+              <div className="space-y-4 mt-3">
+                {messages.length > 0 ? (
+                  messages.map((message, index) => (
+                    <div key={index} className="flex flex-col">
+                      <ChatMessage message={message} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-8 text-sm">
+                    ابدأ محادثة مع د. بنجي
+                  </div>
+                )}
+                <div ref={bottomRef} />
+              </div>
+            </ScrollArea>
+          </CardContent>
+
+          <CardFooter className="border-t p-3 border-gray-200 rouneded-full">
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isLoading || !inputValue.trim()}
+                className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
+              >
+                <Send size={18} />
+              </button>
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="اكتب رسالة وبنجي في مساعدتك"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSubmit();
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full pr-10 text-right bg-white border-gray-200"
+                dir="rtl"
+              />
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
