@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
-import { Message } from "./types";
+import { AiResponse, Message } from "./types";
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "./ChatMessage";
-import { callAiApi } from "./api";
+import { callAiApi } from "./ai-html-api";
 import penguinAvatar from "@/assets/Group 26087843.png";
 
 const welcomeMessage: Message = {
@@ -28,6 +28,27 @@ export default function AiHtmlGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [htmlContent, setHtmlContent] = useState<string | undefined>(undefined);
+
+  const handleTriggerConversationCompleted = () => {
+    console.log("Conversation completed!");
+
+    handleTriggerConfetti();
+  };
+
+  const handleTriggerConfetti = () => {
+    console.log("Triggering confetti!");
+  };
+
+  const handleAiResponseSideEffects = (response: AiResponse) => {
+    if (response.isHtmlGenerated) {
+      setHtmlContent(() => response.htmlContent);
+    }
+
+    if (response.isConversationComplete) {
+      handleTriggerConversationCompleted();
+    }
+  };
 
   const sendMessage = async (userMessage: string): Promise<void> => {
     try {
@@ -47,12 +68,14 @@ export default function AiHtmlGenerator() {
 
       setMessages([...newMessages, loadingMsg]);
 
-      const response = await callAiApi(userMessage, newMessages);
+      const response: AiResponse = await callAiApi(userMessage, newMessages);
 
       const assistantMsg: Message = {
         role: "assistant",
-        content: response.content,
+        content: response.aiMessage,
       };
+
+      handleAiResponseSideEffects(response);
 
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
@@ -106,77 +129,93 @@ export default function AiHtmlGenerator() {
   }, [messages]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-foreground font-tajawal bg-[#f5f2e8] p-4">
+    <div className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal p-4">
       <div className="flex-1">
         <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4">
-        {/* Playground */}
-        <Card className="w-full md:w-[70%] h-[87vh] flex flex-col bg-white border-0">
-          <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-            <CardTitle className="font-medium text-lg">معاينة</CardTitle>
-            <img
-              src={penguinAvatar}
-              alt="د. بنجي"
-              className="h-8 w-8 rounded-full mr-2"
-            />
-          </CardHeader>
-        </Card>
-
-        {/* Chat Panel */}
-        <Card className="w-full md:w-[30%] h-[87vh] flex flex-col bg-white border-0">
-          <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-            <CardTitle className="font-medium text-lg">د. بنجي</CardTitle>
-            <img
-              src={penguinAvatar}
-              alt="د. بنجي"
-              className="h-8 w-8 rounded-full mr-2"
-            />
-          </CardHeader>
-
-          <CardContent className="flex-1 p-0 overflow-hidden">
-            <ScrollArea className="h-[78vh] p-4">
-              <div className="space-y-4 mt-3">
-                {messages.length > 0 ? (
-                  messages.map((message, index) => (
-                    <div key={index} className="flex flex-col">
-                      <ChatMessage message={message} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-400 py-8 text-sm">
-                    ابدأ محادثة مع د. بنجي
-                  </div>
-                )}
-                <div ref={bottomRef} />
-              </div>
-            </ScrollArea>
-          </CardContent>
-
-          <CardFooter className="border-t p-3 border-gray-200 rouneded-full">
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isLoading || !inputValue.trim()}
-                className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
-              >
-                <Send size={18} />
-              </button>
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="اكتب رسالة وبنجي في مساعدتك"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleSubmit();
-                  }
-                }}
-                disabled={isLoading}
-                className="w-full pr-10 text-right bg-white border-gray-200"
-                dir="rtl"
+          {/* Playground */}
+          <Card className="w-full md:w-[70%] h-full bg-white border-0">
+            <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
+              <CardTitle className="font-medium text-lg">معاينة</CardTitle>
+              <img
+                src={penguinAvatar}
+                alt="د. بنجي"
+                className="h-8 w-8 rounded-full mr-2"
               />
-            </div>
-          </CardFooter>
-        </Card>
+            </CardHeader>
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              {htmlContent && (
+                <div className="flex-grow bg-white h-full ">
+                  <div className="w-full h-full overflow-hidden">
+                    <iframe
+                      title="HTML Preview"
+                      srcDoc={htmlContent}
+                      className="w-full h-full border-0"
+                      sandbox="allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Chat Panel */}
+          <Card className="w-full md:w-[30%] bg-white border-0">
+            <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
+              <CardTitle className="font-medium text-lg">د. بنجي</CardTitle>
+              <img
+                src={penguinAvatar}
+                alt="د. بنجي"
+                className="h-8 w-8 rounded-full mr-2"
+              />
+            </CardHeader>
+
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              <ScrollArea className="h-[75vh] p-4">
+                <div className="space-y-4 mt-3">
+                  {messages.length > 0 ? (
+                    messages.map((message, index) => (
+                      <div key={index} className="flex flex-col">
+                        <ChatMessage message={message} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-400 py-8 text-sm">
+                      ابدأ محادثة مع د. بنجي
+                    </div>
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+              </ScrollArea>
+            </CardContent>
+
+            <CardFooter className="border-t p-3 border-gray-200 rouneded-full">
+              <div className="relative w-full">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading || !inputValue.trim()}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
+                >
+                  <Send size={18} />
+                </button>
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="اكتب رسالة وبنجي في مساعدتك"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleSubmit();
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="w-full pr-10 text-right bg-white border-gray-200"
+                  dir="rtl"
+                />
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );
