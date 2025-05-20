@@ -15,6 +15,7 @@ import GameDevMission from "@/pages/missions/game-dev";
 import HTMLGeneratorV2 from "@/pages/missions/html-generator-v2";
 import HtmlGeneratorV2SubmissionsPage from "@/pages/missions/html-generator-v2/submissions";
 import LovableMission from "@/pages/lovable-mission";
+import IntroMission from "@/pages/intro-mission";
 import LovableSubmissionsPage from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
@@ -62,7 +63,7 @@ function Router() {
       <Route path="/missions/empty" component={EmptyMission} />
       <Route path="/missions/game-dev" component={GameDevMission} />
       <Route path="/missions/lovable" component={LovableMission} />
-      <Route path="/intro-mission" component={Mission1} />
+      <Route path="/intro-mission" component={IntroMission} />
       <Route
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}

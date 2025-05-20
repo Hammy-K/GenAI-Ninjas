@@ -19,7 +19,7 @@ export function ResetSession() {
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        navigate("/missions/html-generator");
+        navigate("/missions/ai-html-generator");
         window.location.reload(); // Force a full reload
       }, 500);
     } catch (error) {

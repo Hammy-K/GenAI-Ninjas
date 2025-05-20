@@ -20,6 +20,7 @@ import Cookies from "js-cookie";
 import { saveProject } from "@/lib/firebase";
 import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
 import { ProjectShareDialog } from "./ProjectShareDialog";
+import { toast } from "@/hooks/use-toast";
 
 const welcomeMessage: Message = {
   role: "assistant",
@@ -40,6 +41,26 @@ export default function AiHtmlGenerator() {
   const [isProjectSaving, setIsProjectSaving] = useState(false);
   const [openShareProjectDialog, setOpenShareProjectDialog] = useState(false);
   const [projectId, setProjectId] = useState<string | undefined>(undefined);
+
+  // Load from cookies on initial load
+  useEffect(() => {
+    const savedMessages = Cookies.get("aiMessages");
+    const savedHtml = Cookies.get("aiHtmlContent");
+
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    }
+
+    if (savedHtml) {
+      setHtmlContent(savedHtml);
+    }
+  }, []);
+
+  // Store messages + HTML content in cookies
+  useEffect(() => {
+    Cookies.set("aiMessages", JSON.stringify(messages));
+    Cookies.set("aiHtmlContent", htmlContent || "");
+  }, [messages, htmlContent]);
 
   const handleTriggerConversationCompleted = () => {
     console.log("Conversation completed!");
@@ -134,15 +155,6 @@ export default function AiHtmlGenerator() {
     }
   };
 
-  // const formatTime = () => {
-  //   const now = new Date();
-  //   return now.toLocaleTimeString("en-US", {
-  //     hour: "2-digit",
-  //     minute: "2-digit",
-  //     hour12: true,
-  //   });
-  // };
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     // handleTriggerConfetti();
@@ -183,8 +195,16 @@ export default function AiHtmlGenerator() {
   };
 
   const startNewProject = () => {
-    // setMessages([welcomeMessage]);
-    // setHtmlContent(undefined);
+    setMessages([welcomeMessage]);
+    setHtmlContent(undefined);
+    Cookies.remove("aiMessages");
+    Cookies.remove("aiHtmlContent");
+
+    toast({
+      title: "تم بدء مشروع جديد",
+      description: "يمكنك الآن بدء مشروع جديد",
+      variant: "default",
+    });
   };
 
   return (
@@ -209,7 +229,7 @@ export default function AiHtmlGenerator() {
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={startNewProject}
+                    onClick={openNew}
                   >
                     <Plus className="ml-2 h-4 w-4" />
                     <span>بدء مشروع جديد</span>

@@ -758,7 +758,7 @@ export function ImageGenerationStage({
                     }
                     placeholder="صف الصورة التي تريد إنشاءها بالتفصيل..."
                     disabled={state.isLoading}
-                    className="text-sm resize-none"
+                    className="text-sm resize-none bg-white rtl:text-right"
                     rows={3}
                     dir="auto"
                   />

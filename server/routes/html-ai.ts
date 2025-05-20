@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
+import { isContentSafe } from "server/services/ai-moderation";
 import { HTML_AI_SYSTEM_PROMPT } from "server/templates/html-ai-prompt";
 import { AiResponse } from "server/types/html-ai-response";
 
@@ -20,6 +21,19 @@ export function registerHtmlAiRoute(router: Router) {
     }
 
     try {
+      const isMessageSafe = await isContentSafe(message);
+
+      if (!isMessageSafe) {
+        return res.status(200).json({
+          content: JSON.stringify({
+            aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
+            htmlContent: "",
+            isHtmlGenerated: false,
+            isConversationComplete: false,
+          }),
+        });
+      }
+
       const completion = await openai.chat.completions.create({
         model: GPT_MODEL,
         response_format: {
@@ -68,10 +82,6 @@ export function registerHtmlAiRoute(router: Router) {
         ],
         temperature: 0.25,
       });
-
-      // console.log("#############################");
-      // console.log("Response from AI API:", completion.choices[0].message);
-      // console.log("#############################");
 
       const content = completion.choices[0].message.content;
       res.status(200).json({ content });

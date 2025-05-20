@@ -107,17 +107,17 @@ export function PromptChallengeStage({
       setError(generalValidation.errorMessage);
       return;
     }
-    
+
     // Then check if the prompt is too similar to the example prompt
     const exampleCheck = validatePromptAnalyzerInput(state.improvedPrompt);
     if (!exampleCheck.isValid) {
       setError(exampleCheck.errorMessage);
-      
+
       // Track this as a plagiarism attempt in analytics
       trackStageProgress("prompt_challenge", "example_copied", {
         prompt_length: state.improvedPrompt.length,
       });
-      
+
       return;
     }
 
@@ -268,17 +268,17 @@ export function PromptChallengeStage({
 
             {/* Challenge Section */}
             <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3">حسّن هذا:</h3>
+              <h3 className="text-lg font-bold mb-3">حسّن هذا البرومبت:</h3>
 
               <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
                 <p className="font-medium">{weakPrompt}</p>
               </div>
 
               <Textarea
-                placeholder="أعد كتابة البرومبت ليكون أكثر تحديداً وتفصيلاً..."
+                placeholder="أعد كتابة البرومبت ليكون أكثر تحديداً وتفصيلاً"
                 value={state.improvedPrompt}
                 onChange={(e) => setImprovedPrompt(e.target.value)}
-                className="min-h-[100px] mb-4"
+                className="min-h-[100px] mb-4 bg-white text-sm rtl:text-right"
                 dir="auto"
               />
 
@@ -389,7 +389,11 @@ export function PromptChallengeStage({
               onClick={onComplete}
               size="lg"
               disabled={!(state.analysis && state.analysis.score >= 7)} // Disable until score is 7 or higher
-              className={state.analysis && state.analysis.score >= 7 ? "bg-green-600 hover:bg-green-700" : ""}
+              className={
+                state.analysis && state.analysis.score >= 7
+                  ? "bg-green-600 hover:bg-green-700"
+                  : ""
+              }
             >
               <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
