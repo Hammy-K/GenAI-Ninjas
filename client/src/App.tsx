@@ -62,6 +62,7 @@ function Router() {
       <Route path="/missions/empty" component={EmptyMission} />
       <Route path="/missions/game-dev" component={GameDevMission} />
       <Route path="/missions/lovable" component={LovableMission} />
+      <Route path="/intro-mission" component={Mission1} />
       <Route
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
