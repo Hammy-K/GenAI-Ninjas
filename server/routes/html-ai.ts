@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const GPT_MODEL = "gpt-4o"; // or "gpt-3.5-turbo" if you're cost-conscious
+const GPT_MODEL = "gpt-4.1-mini"; // or "gpt-3.5-turbo" if you're cost-conscious
 
 export function registerHtmlAiRoute(router: Router) {
   const htmlAiRoutes = Router();
@@ -66,12 +66,12 @@ export function registerHtmlAiRoute(router: Router) {
           ...history,
           { role: "user", content: message },
         ],
-        temperature: 0.5,
+        temperature: 0.25,
       });
 
-      console.log("#############################");
-      console.log("Response from AI API:", completion.choices[0].message);
-      console.log("#############################");
+      // console.log("#############################");
+      // console.log("Response from AI API:", completion.choices[0].message);
+      // console.log("#############################");
 
       const content = completion.choices[0].message.content;
       res.status(200).json({ content });

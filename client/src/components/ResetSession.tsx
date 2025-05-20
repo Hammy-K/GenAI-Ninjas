@@ -35,28 +35,17 @@ export function ResetSession() {
     >
       <div className="max-w-md w-full bg-card p-6 rounded-lg shadow-lg">
         <h1 className="text-2xl font-bold text-center mb-6">
-          مسح بيانات الجلسة
+          🚀 المهمة جاهزة... باقي تبدأها بس!
         </h1>
-        <p className="mb-6 text-center">
-          سيؤدي هذا إلى مسح جميع التقدم الخاص بك والعودة إلى حالة البداية. هل
-          أنت متأكد؟
-        </p>
-        <div className="flex flex-col gap-4">
+        <p className="mb-6 text-center">ابدأ مهمة اليوم وورّينا ابداعك</p>
+        <div className="flex flex-col  gap-4">
           <Button
             onClick={resetAllLocalStorage}
-            variant="destructive"
-            className="w-full"
+            variant="positive"
+            className="w-full text-xl"
             disabled={isResetting}
           >
-            {isResetting ? "جاري المسح..." : "نعم، امسح جلستي وابدأ من جديد"}
-          </Button>
-          <Button
-            onClick={() => navigate("/missions/html-generator")}
-            variant="outline"
-            className="w-full"
-            disabled={isResetting}
-          >
-            إلغاء والعودة للرئيسية
+            {isResetting ? "🔥 جهز نفسك ..." : "يلا نبدأ! 🔥"}
           </Button>
         </div>
       </div>

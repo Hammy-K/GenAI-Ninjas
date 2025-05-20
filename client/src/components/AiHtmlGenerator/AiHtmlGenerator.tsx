@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Database, Loader2, Plus, Send, Share2 } from "lucide-react";
 import { AiResponse, Message } from "./types";
 import {
   Card,
@@ -13,6 +13,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "./ChatMessage";
 import { callAiApi } from "./ai-html-api";
 import penguinAvatar from "@/assets/Group 26087843.png";
+import confetti from "canvas-confetti";
+import { PlaygroundWelcomeCard } from "./PlaygroundWelcomeCard";
+import { Button } from "../ui/button";
+import Cookies from "js-cookie";
+import { saveProject } from "@/lib/firebase";
+import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
+import { ProjectShareDialog } from "./ProjectShareDialog";
 
 const welcomeMessage: Message = {
   role: "assistant",
@@ -29,6 +36,10 @@ export default function AiHtmlGenerator() {
   const [inputValue, setInputValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const [htmlContent, setHtmlContent] = useState<string | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
+  const [isProjectSaving, setIsProjectSaving] = useState(false);
+  const [openShareProjectDialog, setOpenShareProjectDialog] = useState(false);
+  const [projectId, setProjectId] = useState<string | undefined>(undefined);
 
   const handleTriggerConversationCompleted = () => {
     console.log("Conversation completed!");
@@ -37,7 +48,15 @@ export default function AiHtmlGenerator() {
   };
 
   const handleTriggerConfetti = () => {
-    console.log("Triggering confetti!");
+    confetti({
+      particleCount: 5000,
+      spread: 500,
+      origin: { y: 0.5, x: 0 },
+    });
+
+    setTimeout(() => {
+      confetti.reset();
+    }, 1000);
   };
 
   const handleAiResponseSideEffects = (response: AiResponse) => {
@@ -126,39 +145,165 @@ export default function AiHtmlGenerator() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // handleTriggerConfetti();
   }, [messages]);
+
+  const goToSubmissions = () => {
+    window.open(
+      "/missions/html-generator/submissions",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const saveAndShareProject = async () => {
+    if (!htmlContent || isProjectSaving) {
+      console.warn("Save canceled: No HTML content or already saving");
+      return;
+    }
+
+    setIsProjectSaving(true);
+
+    try {
+      const studentId = Cookies.get("studentId");
+
+      if (!studentId) {
+        throw new Error("No student ID found in cookies");
+      }
+
+      const projectId = await saveProject(htmlContent, studentId);
+
+      setProjectId(() => projectId);
+      setOpenShareProjectDialog(() => true);
+    } catch (error) {
+      console.error("Failed to save project:", error);
+    } finally {
+      setIsProjectSaving(false);
+    }
+  };
+
+  const startNewProject = () => {
+    // setMessages([welcomeMessage]);
+    // setHtmlContent(undefined);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal p-4">
+      <HtmlGeneratorStudentModal />
+
+      <ProjectShareDialog
+        onClose={() => {
+          setOpenShareProjectDialog(() => false);
+        }}
+        projectId={projectId ?? ""}
+        open={openShareProjectDialog}
+      />
+
       <div className="flex-1">
         <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4">
           {/* Playground */}
-          <Card className="w-full md:w-[70%] h-full bg-white border-0">
-            <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-              <CardTitle className="font-medium text-lg">معاينة</CardTitle>
-              <img
-                src={penguinAvatar}
-                alt="د. بنجي"
-                className="h-8 w-8 rounded-full mr-2"
-              />
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              {htmlContent && (
-                <div className="flex-grow bg-white h-full ">
-                  <div className="w-full h-full overflow-hidden">
-                    <iframe
-                      title="HTML Preview"
-                      srcDoc={htmlContent}
-                      className="w-full h-full border-0"
-                      sandbox="allow-scripts allow-popups allow-forms"
-                      loading="lazy"
-                    />
-                  </div>
+          <div className="w-full md:w-[70%] h-full ">
+            <Card className="h-full flex flex-col border-lg bg-white border-0">
+              <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={startNewProject}
+                  >
+                    <Plus className="ml-2 h-4 w-4" />
+                    <span>بدء مشروع جديد</span>
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="flex items-center gap-2"
+                    onClick={goToSubmissions}
+                  >
+                    <Database className="h-4 w-4" />
+                    <span>عرض جميع المشاريع</span>
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
+                {htmlContent && (
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    <div className="flex border rounded overflow-hidden">
+                      <Button
+                        type="button"
+                        variant={viewMode === "preview" ? "default" : "outline"}
+                        className="rounded-none px-3 py-1 h-8 text-xs"
+                        onClick={() => setViewMode("preview")}
+                      >
+                        معاينة
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={viewMode === "code" ? "default" : "outline"}
+                        className="rounded-none px-3 py-1 h-8 text-xs"
+                        onClick={() => setViewMode("code")}
+                      >
+                        الكود
+                      </Button>
+                    </div>
+                    <Button
+                      variant="default"
+                      className={`h-8 flex items-center gap-1 text-xs ${
+                        !isProjectSaving ? "" : "animate-pulse"
+                      }`}
+                      onClick={saveAndShareProject}
+                      disabled={isProjectSaving}
+                    >
+                      {isProjectSaving ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          جاري الحفظ...
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="h-3 w-3" />
+                          حفظ ومشاركة
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <img
+                    src={penguinAvatar}
+                    alt="د. بنجي"
+                    className="h-8 w-8 rounded-full"
+                  />
+                  <CardTitle className="font-medium text-lg">
+                    {htmlContent ? "كود HTML" : "معاينة مباشرة"}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-1 p-0 overflow-hidden h-[90%] bg-white">
+                {htmlContent ? (
+                  viewMode === "preview" ? (
+                    <div className="flex-grow bg-white h-full bg-white">
+                      <div className="w-full h-full overflow-hidden">
+                        <iframe
+                          title="HTML Preview"
+                          srcDoc={htmlContent}
+                          className="w-full h-full border-0"
+                          sandbox="allow-scripts allow-popups allow-forms"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto h-full bg-gray-50 rounded">
+                      {htmlContent}
+                    </pre>
+                  )
+                ) : (
+                  PlaygroundWelcomeCard
+                )}
+              </CardContent>
+            </Card>
+          </div>
           {/* Chat Panel */}
           <Card className="w-full md:w-[30%] bg-white border-0">
             <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
