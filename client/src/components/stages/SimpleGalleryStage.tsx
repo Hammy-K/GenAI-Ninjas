@@ -314,12 +314,16 @@ export function SimpleGalleryStage({
                   >
                     <div className="aspect-square relative overflow-hidden">
                       <img
-                        src={image.imageUrl.startsWith('/generated-images/') 
-                          ? `/api/ai/image-proxy?url=${encodeURIComponent(image.imageUrl)}` 
-                          : image.imageUrl}
+                        src={image.imageUrl.startsWith('/generated-images/') || image.imageUrl.startsWith('/api/ai/image-proxy')
+                          ? image.imageUrl
+                          : image.imageUrl.startsWith('http') 
+                            ? `/api/ai/image-proxy?url=${encodeURIComponent(image.imageUrl)}`
+                            : image.imageUrl}
                         alt={`صورة بواسطة ${image.studentName}`}
                         className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                        onLoad={() => console.log(`Image loaded: ${image.id}`)}
                         onError={(e) => {
+                          console.log(`Image error loading: ${image.id}, URL: ${image.imageUrl}`);
                           // Hide the card if image fails to load
                           const card = e.currentTarget.closest(".bg-card");
                           if (card) card.classList.add("hidden");
