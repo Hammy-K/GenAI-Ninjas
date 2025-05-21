@@ -36,6 +36,7 @@ function parseAiResponse(rawContent: string): AiResponse {
 export const callAiApi = async (
   userMessage: string,
   messageHistory: Message[],
+  studentId: string,
 ): Promise<AiResponse> => {
   try {
     const response = await fetch("/api/html-ai", {
@@ -46,6 +47,7 @@ export const callAiApi = async (
       body: JSON.stringify({
         message: userMessage,
         history: messageHistory.map(({ role, content }) => ({ role, content })),
+        studentId: studentId,
       }),
     });
 

@@ -1,56 +1,48 @@
 export const PlaygroundWelcomeCard = (
-  <div className="flex flex-col h-full w-full items-center justify-center p-10  bg-white">
-    <div className="max-w-3xl w-full bg-white rounded-3xl shadow-xl p-10 space-y-8 transition-all hover:shadow-2xl duration-300">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-extrabold text-purple-800 tracking-tight">
-          🎮 مُنشئ الألعاب بالذكاء الاصطناعي
-        </h1>
-        <p className="text-gray-600 text-lg leading-relaxed">
-          استخدم الدردشة اللي على اليمين، ووصّف لي فكرة لعبة بسيطة تبغى تصمّمها،
-          وأنا أطلع لك كود HTML جاهز للعب هنا!
-        </p>
+  <div className="flex flex-col items-center justify-center h-full p-4 bg-neutral-50">
+    <div className="text-center mb-6">
+      <h3 className="text-xl font-bold mb-2">
+        مُنشئ الألعاب بالذكاء الاصطناعي 🎮
+      </h3>
+      <p className="text-muted-foreground max-w-md mx-auto">
+        استخدم الدردشة اللي على اليمين، ووصّف لي فكرة لعبة بسيطة تبغى تصمّمها،
+        وأنا أطلع لك كود HTML جاهز للعب هنا!
+      </p>
+    </div>
+    <div className="max-w-2xl bg-white rounded-lg p-6 shadow-md border-2 border-purple-300">
+      <h3 className="text-2xl font-bold mb-3 text-purple-700">
+        تقريبًا كل الألعاب اللي كسرت الدنيا مبنية على شغلة وحدة:
+      </h3>
+
+      <p className="text-xl mb-4 font-bold text-gray-800">
+        حركة بسيطة تعيدها كل مرة — وتصير أحلى وأصعب كل شوي!
+      </p>
+
+      <div className="space-y-2 my-4">
+        <div className="flex items-center">
+          <span className="text-2xl ml-2">🏃‍♂️</span>
+          <span>تقفز فوق الحواجز (ماريو)</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-2xl ml-2">🎯</span>
+          <span>تمسك الفواكه وهي تطيح (فروت نينجا)</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-2xl ml-2">🚀</span>
+          <span>تحاول تعيش أطول وقت ممكن (فلابي بيرد)</span>
+        </div>
       </div>
 
-      {/* Idea Breakdown */}
-      <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 space-y-4">
-        <h2 className="text-2xl font-semibold text-purple-700">
-          كل الألعاب القوية تبدأ بفكرة بسيطة 👇
-        </h2>
+      <p className="text-xl font-bold text-purple-700 my-3">
+        حركة وحدة + تحدي = إدمان! 🔥
+      </p>
 
-        <ul className="space-y-3">
-          <li className="flex items-start">
-            <span className="text-2xl mr-2">🏃‍♂️</span>
-            <span className="text-gray-800">تقفز فوق الحواجز (ماريو)</span>
-          </li>
-          <li className="flex items-start">
-            <span className="text-2xl mr-2">🎯</span>
-            <span className="text-gray-800">
-              تمسك الفواكه وهي تطيح (فروت نينجا)
-            </span>
-          </li>
-          <li className="flex items-start">
-            <span className="text-2xl mr-2">🚀</span>
-            <span className="text-gray-800">
-              تحاول تعيش أطول وقت ممكن (فلابي بيرد)
-            </span>
-          </li>
-        </ul>
-      </div>
-
-      {/* Core Insight */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-inner">
-        <p className="text-lg font-bold text-yellow-700">
-          حركة وحدة + تحدي = إدمان! 🔥
+      <div className="mt-4 pt-3 border-t border-gray-200">
+        <p className="text-gray-800 font-semibold">
+          <span className="inline-block ml-2">👉</span>
+          لما تفكر بلعبتك، اسأل نفسك:
         </p>
-      </div>
-
-      {/* Prompt for Action */}
-      <div className="bg-gray-100 rounded-xl p-5 text-center space-y-2">
-        <p className="text-gray-800 font-semibold text-lg">
-          👉 لما تفكر بلعبتك، اسأل نفسك:
-        </p>
-        <p className="text-gray-900 text-xl font-bold">
+        <p className="text-gray-800 font-bold">
           "وش الحركة الرئيسية اللي بتكون ممتعة؟"
         </p>
       </div>

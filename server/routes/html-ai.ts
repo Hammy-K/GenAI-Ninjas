@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
 import { isContentSafe } from "server/services/ai-moderation";
+import { logStudentHtmlMessage } from "server/services/student-html-message";
 import { HTML_AI_SYSTEM_PROMPT } from "server/templates/html-ai-prompt";
 import { AiResponse } from "server/types/html-ai-response";
 
@@ -14,7 +15,7 @@ export function registerHtmlAiRoute(router: Router) {
   const htmlAiRoutes = Router();
 
   htmlAiRoutes.post("/", async (req: Request, res: Response) => {
-    const { message, history } = req.body;
+    const { message, history, studentId } = req.body;
 
     if (!message || !Array.isArray(history)) {
       return res.status(400).json({ error: "Missing message or history" });
@@ -33,6 +34,8 @@ export function registerHtmlAiRoute(router: Router) {
           }),
         });
       }
+
+      logStudentHtmlMessage(studentId, message);
 
       const completion = await openai.chat.completions.create({
         model: GPT_MODEL,

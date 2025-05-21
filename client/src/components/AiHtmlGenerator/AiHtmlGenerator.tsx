@@ -21,6 +21,7 @@ import { saveProject } from "@/lib/firebase";
 import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
 import { ProjectShareDialog } from "./ProjectShareDialog";
 import { toast } from "@/hooks/use-toast";
+import NewProjectDialog from "./NewProjectDialog";
 
 const welcomeMessage: Message = {
   role: "assistant",
@@ -41,6 +42,7 @@ export default function AiHtmlGenerator() {
   const [isProjectSaving, setIsProjectSaving] = useState(false);
   const [openShareProjectDialog, setOpenShareProjectDialog] = useState(false);
   const [projectId, setProjectId] = useState<string | undefined>(undefined);
+  const [openNewProjectDialog, setOpenNewProjectDialog] = useState(false);
 
   // Load from cookies on initial load
   useEffect(() => {
@@ -70,14 +72,13 @@ export default function AiHtmlGenerator() {
 
   const handleTriggerConfetti = () => {
     confetti({
-      particleCount: 5000,
-      spread: 500,
-      origin: { y: 0.5, x: 0 },
+      particleCount: 500,
+      spread: 1080,
     });
 
     setTimeout(() => {
       confetti.reset();
-    }, 1000);
+    }, 2000);
   };
 
   const handleAiResponseSideEffects = (response: AiResponse) => {
@@ -108,7 +109,13 @@ export default function AiHtmlGenerator() {
 
       setMessages([...newMessages, loadingMsg]);
 
-      const response: AiResponse = await callAiApi(userMessage, newMessages);
+      const studentId = Cookies.get("studentId");
+
+      const response: AiResponse = await callAiApi(
+        userMessage,
+        newMessages,
+        studentId ?? "",
+      );
 
       const assistantMsg: Message = {
         role: "assistant",
@@ -186,7 +193,10 @@ export default function AiHtmlGenerator() {
       const projectId = await saveProject(htmlContent, studentId);
 
       setProjectId(() => projectId);
+
       setOpenShareProjectDialog(() => true);
+
+      handleTriggerConfetti();
     } catch (error) {
       console.error("Failed to save project:", error);
     } finally {
@@ -205,183 +215,223 @@ export default function AiHtmlGenerator() {
       description: "يمكنك الآن بدء مشروع جديد",
       variant: "default",
     });
+
+    setOpenNewProjectDialog(() => false);
+  };
+
+  const handleOpenNewProjectDialog = () => {
+    setOpenNewProjectDialog(() => true);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal p-4">
-      <HtmlGeneratorStudentModal />
+    <div
+      className="min-h-screen flex flex-col text-foreground font-tajawal"
+      dir="rtl"
+    >
+      <main className="flex-1">
+        <div
+          className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal"
+          dir="rtl"
+        >
+          <HtmlGeneratorStudentModal />
 
-      <ProjectShareDialog
-        onClose={() => {
-          setOpenShareProjectDialog(() => false);
-        }}
-        projectId={projectId ?? ""}
-        open={openShareProjectDialog}
-      />
+          <ProjectShareDialog
+            onClose={() => {
+              setOpenShareProjectDialog(() => false);
+            }}
+            projectId={projectId ?? ""}
+            open={openShareProjectDialog}
+          />
 
-      <div className="flex-1">
-        <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4">
-          {/* Playground */}
-          <div className="w-full md:w-[70%] h-full ">
-            <Card className="h-full flex flex-col border-lg bg-white border-0">
-              <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={openNew}
-                  >
-                    <Plus className="ml-2 h-4 w-4" />
-                    <span>بدء مشروع جديد</span>
-                  </Button>
-                  <Button
-                    variant="default"
-                    className="flex items-center gap-2"
-                    onClick={goToSubmissions}
-                  >
-                    <Database className="h-4 w-4" />
-                    <span>عرض جميع المشاريع</span>
-                  </Button>
-                </div>
+          <NewProjectDialog
+            open={openNewProjectDialog}
+            onClose={() => {
+              setOpenNewProjectDialog(() => false);
+            }}
+            onConfirmed={startNewProject}
+          />
 
-                {htmlContent && (
-                  <div className="flex items-center gap-2 px-4 py-2">
-                    <div className="flex border rounded overflow-hidden">
-                      <Button
-                        type="button"
-                        variant={viewMode === "preview" ? "default" : "outline"}
-                        className="rounded-none px-3 py-1 h-8 text-xs"
-                        onClick={() => setViewMode("preview")}
-                      >
-                        معاينة
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={viewMode === "code" ? "default" : "outline"}
-                        className="rounded-none px-3 py-1 h-8 text-xs"
-                        onClick={() => setViewMode("code")}
-                      >
-                        الكود
-                      </Button>
-                    </div>
-                    <Button
-                      variant="default"
-                      className={`h-8 flex items-center gap-1 text-xs ${
-                        !isProjectSaving ? "" : "animate-pulse"
-                      }`}
-                      onClick={saveAndShareProject}
-                      disabled={isProjectSaving}
-                    >
-                      {isProjectSaving ? (
-                        <>
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          جاري الحفظ...
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="h-3 w-3" />
-                          حفظ ومشاركة
-                        </>
+          <div className="flex-1">
+            {/* <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4"> */}
+            <div className="">
+              <div className="flex flex-col md:flex-row h-[87vh] gap-4 p-2">
+                {/* Playground */}
+                {/* <div className="w-full md:w-[70%] h-full"> */}
+                <div className="w-full md:w-[70%] flex flex-col h-full min-h-0">
+                  <Card className="h-full flex flex-col border-lg bg-white border-0">
+                    <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={handleOpenNewProjectDialog}
+                        >
+                          <Plus className="ml-2 h-4 w-4" />
+                          <span>بدء مشروع جديد</span>
+                        </Button>
+                        <Button
+                          variant="default"
+                          className="flex items-center gap-2"
+                          onClick={goToSubmissions}
+                        >
+                          <Database className="h-4 w-4" />
+                          <span>عرض جميع المشاريع</span>
+                        </Button>
+                      </div>
+
+                      {htmlContent && (
+                        <div className="flex items-center gap-2 px-4 py-2">
+                          <div className="flex border rounded overflow-hidden">
+                            <Button
+                              type="button"
+                              variant={
+                                viewMode === "preview" ? "default" : "outline"
+                              }
+                              className="rounded-none px-3 py-1 h-8 text-xs"
+                              onClick={() => setViewMode("preview")}
+                            >
+                              معاينة
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={
+                                viewMode === "code" ? "default" : "outline"
+                              }
+                              className="rounded-none px-3 py-1 h-8 text-xs"
+                              onClick={() => setViewMode("code")}
+                            >
+                              الكود
+                            </Button>
+                          </div>
+                          <Button
+                            variant="default"
+                            className={`h-8 flex items-center gap-1 text-xs ${
+                              !isProjectSaving ? "" : "animate-pulse"
+                            }`}
+                            onClick={saveAndShareProject}
+                            disabled={isProjectSaving}
+                          >
+                            {isProjectSaving ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                جاري الحفظ...
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="h-3 w-3" />
+                                حفظ ومشاركة
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       )}
-                    </Button>
-                  </div>
-                )}
 
-                <div className="flex items-center gap-2">
-                  <img
-                    src={penguinAvatar}
-                    alt="د. بنجي"
-                    className="h-8 w-8 rounded-full"
-                  />
-                  <CardTitle className="font-medium text-lg">
-                    {htmlContent ? "كود HTML" : "معاينة مباشرة"}
-                  </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={penguinAvatar}
+                          alt="د. بنجي"
+                          className="h-8 w-8 rounded-full"
+                        />
+                        <CardTitle className="font-medium text-lg">
+                          {htmlContent ? "كود HTML" : "معاينة مباشرة"}
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+
+                    {/* <CardContent className="flex-1 p-0 overflow-hidden h-[90%] bg-white"> */}
+                    <CardContent className="flex-1 p-0 bg-white">
+                      {htmlContent ? (
+                        viewMode === "preview" ? (
+                          <div className="flex-grow bg-white h-full bg-white">
+                            <div className="w-full h-full overflow-hidden">
+                              <iframe
+                                title="HTML Preview"
+                                srcDoc={htmlContent}
+                                className="w-full h-full border-0"
+                                sandbox="allow-scripts allow-popups allow-forms"
+                                loading="lazy"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto h-full bg-gray-50 rounded">
+                            {htmlContent}
+                          </pre>
+                        )
+                      ) : (
+                        PlaygroundWelcomeCard
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardHeader>
 
-              <CardContent className="flex-1 p-0 overflow-hidden h-[90%] bg-white">
-                {htmlContent ? (
-                  viewMode === "preview" ? (
-                    <div className="flex-grow bg-white h-full bg-white">
-                      <div className="w-full h-full overflow-hidden">
-                        <iframe
-                          title="HTML Preview"
-                          srcDoc={htmlContent}
-                          className="w-full h-full border-0"
-                          sandbox="allow-scripts allow-popups allow-forms"
-                          loading="lazy"
+                {/* Chat Panel */}
+                {/* <Card className="w-full md:w-[30%] bg-white border-0"> */}
+                <div className="w-full md:w-[30%] h-full flex flex-col ">
+                  <Card className="h-full flex flex-col bg-white border-0">
+                    <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
+                      <CardTitle className="font-medium text-lg">
+                        د. بنجي
+                      </CardTitle>
+                      <img
+                        src={penguinAvatar}
+                        alt="د. بنجي"
+                        className="h-8 w-8 rounded-full mr-2"
+                      />
+                    </CardHeader>
+
+                    <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
+                      <ScrollArea className="flex-1 chat-area p-4">
+                        {/* <ScrollArea className="flex-1 p-4 overflow-auto"> */}
+                        <div className="space-y-4 mt-3">
+                          {messages.length > 0 ? (
+                            messages.map((message, index) => (
+                              <div key={index} className="flex flex-col">
+                                <ChatMessage message={message} />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center text-gray-400 py-8 text-sm">
+                              ابدأ محادثة مع د. بنجي
+                            </div>
+                          )}
+                          <div ref={bottomRef} />
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+
+                    <CardFooter className="border-t p-3 border-gray-200">
+                      <div className="relative w-full">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={isLoading || !inputValue.trim()}
+                          className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
+                        >
+                          <Send size={18} />
+                        </button>
+                        <Input
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          placeholder="اكتب رسالة وبنجي في مساعدتك"
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleSubmit();
+                            }
+                          }}
+                          disabled={isLoading}
+                          className="w-full pr-10 text-right bg-white border-gray-200"
+                          dir="rtl"
                         />
                       </div>
-                    </div>
-                  ) : (
-                    <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto h-full bg-gray-50 rounded">
-                      {htmlContent}
-                    </pre>
-                  )
-                ) : (
-                  PlaygroundWelcomeCard
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          {/* Chat Panel */}
-          <Card className="w-full md:w-[30%] bg-white border-0">
-            <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-              <CardTitle className="font-medium text-lg">د. بنجي</CardTitle>
-              <img
-                src={penguinAvatar}
-                alt="د. بنجي"
-                className="h-8 w-8 rounded-full mr-2"
-              />
-            </CardHeader>
-
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              <ScrollArea className="h-[75vh] p-4">
-                <div className="space-y-4 mt-3">
-                  {messages.length > 0 ? (
-                    messages.map((message, index) => (
-                      <div key={index} className="flex flex-col">
-                        <ChatMessage message={message} />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-gray-400 py-8 text-sm">
-                      ابدأ محادثة مع د. بنجي
-                    </div>
-                  )}
-                  <div ref={bottomRef} />
+                    </CardFooter>
+                  </Card>
                 </div>
-              </ScrollArea>
-            </CardContent>
-
-            <CardFooter className="border-t p-3 border-gray-200 rouneded-full">
-              <div className="relative w-full">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isLoading || !inputValue.trim()}
-                  className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
-                >
-                  <Send size={18} />
-                </button>
-                <Input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="اكتب رسالة وبنجي في مساعدتك"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleSubmit();
-                    }
-                  }}
-                  disabled={isLoading}
-                  className="w-full pr-10 text-right bg-white border-gray-200"
-                  dir="rtl"
-                />
               </div>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
