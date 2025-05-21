@@ -4,10 +4,16 @@
  * This script reads from projects.csv and uploads each project to the database
  * Preserves existing document IDs, creation dates, and user IDs from the CSV
  */
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
-const axios = require('axios');
+import fs from 'fs';
+import path from 'path';
+import { createReadStream } from 'fs';
+import { fileURLToPath } from 'url';
+import csv from 'csv-parser';
+import axios from 'axios';
+
+// Get current directory with ESM support
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const API_URL = 'http://localhost:5000/api/projects/save-project';
@@ -93,7 +99,7 @@ async function processCSV() {
   const projects = [];
   
   // Parse the CSV file
-  fs.createReadStream(CSV_FILE_PATH)
+  createReadStream(CSV_FILE_PATH)
     .pipe(csv())
     .on('data', (row) => {
       projects.push(row);
