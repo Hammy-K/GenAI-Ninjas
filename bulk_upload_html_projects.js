@@ -55,12 +55,23 @@ async function saveProject(projectData) {
       payload.firebaseUid = projectData.firebase_uid;
     }
 
-    // Optional: Add timestamps if available (these might be handled by the server)
+    // Add timestamps from the CSV file
     if (projectData.createdAt) {
-      payload.createdAt = projectData.createdAt;
+      // Remove quotes from the timestamp string if they exist
+      let createdAtString = projectData.createdAt;
+      if (createdAtString.startsWith('"') && createdAtString.endsWith('"')) {
+        createdAtString = createdAtString.substring(1, createdAtString.length - 1);
+      }
+      payload.createdAt = createdAtString;
     }
+    
     if (projectData.updatedAt) {
-      payload.updatedAt = projectData.updatedAt;
+      // Remove quotes from the timestamp string if they exist
+      let updatedAtString = projectData.updatedAt;
+      if (updatedAtString.startsWith('"') && updatedAtString.endsWith('"')) {
+        updatedAtString = updatedAtString.substring(1, updatedAtString.length - 1);
+      }
+      payload.updatedAt = updatedAtString;
     }
 
     // Call the API to save the project with the complete payload
