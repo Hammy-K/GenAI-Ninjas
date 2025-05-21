@@ -40,7 +40,7 @@ export function registerProjectRoutes(router: Router) {
   projectRoutes.post("/save-project", async (req: Request, res: Response) => {
     try {
       // Validate request with Zod - but use more flexible schema
-      const { html, studentId } = req.body;
+      const { html, studentId, createdAt, updatedAt, projectId: requestedProjectId } = req.body;
 
       if (!html || typeof html !== "string") {
         return res.status(400).json({
@@ -48,9 +48,9 @@ export function registerProjectRoutes(router: Router) {
         });
       }
 
-      // Generate a unique project ID with the same format for URL compatibility
+      // Use the provided project ID or generate a new one
       // Format: project_timestamp_randomstring
-      const projectId = `project_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const projectId = requestedProjectId || `project_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
       // Get Firebase UID from body if available (optional)
       const firebaseUid = req.body.firebaseUid || null;
@@ -60,14 +60,25 @@ export function registerProjectRoutes(router: Router) {
         `Creating project with ID: ${projectId}, Firebase UID: ${firebaseUid || "none"}`,
       );
 
-      // Save project to PostgreSQL
+      // Save project to PostgreSQL with timestamps if provided
       try {
-        await storage.createHtmlProject({
+        const projectData = {
           projectId,
           html,
           firebaseUid,
           userId: studentId,
-        });
+        };
+        
+        // Add timestamps if provided
+        if (createdAt) {
+          projectData.createdAt = new Date(createdAt);
+        }
+        
+        if (updatedAt) {
+          projectData.updatedAt = new Date(updatedAt);
+        }
+        
+        await storage.createHtmlProject(projectData);
 
         // Log the success
         logEvent("project_save", "Project saved to Neon DB", {
