@@ -5,7 +5,6 @@
 import express, { Router, Request, Response } from 'express';
 import { storage } from '../storage';
 import { logEvent, logError } from '../services/logging';
-import { uploadImageFromUrl, listGalleryImages } from '../services/firebase';
 import { z } from 'zod';
 import { insertGalleryImageSchema, galleryImages, galleryLikes } from '@shared/schema';
 import { db } from '../db';
@@ -166,73 +165,27 @@ export function registerGalleryRoutes(router: Router) {
         return res.status(400).json({ error: 'Empty image URL provided' });
       }
       
-      console.log(`🔍 DEBUG - Gallery Share: Image URL validation passed, starting upload process`);
+      console.log(`🔍 DEBUG - Gallery Share: Image URL validation passed, proceeding with direct database storage`);
       
-      let galleryImage;
+      // Create the gallery image directly in the database without Firebase Storage
+      const galleryImage = await storage.createGalleryImage({
+        imageUrl, // Store the original URL directly
+        studentName: finalStudentName,
+        missionNumber: missionNumber || 1,
+        sessionId,
+        firebaseUid: firebaseUid || null // Include Firebase UID if available
+      });
       
-      // Step 1: Upload the image to Firebase Storage first to get a permanent URL
-      try {
-        // Upload to Firebase Storage
-        logEvent('firebase_upload_start', 'Beginning Firebase upload process', {
-          original_url_length: imageUrl.length,
-          student_name: finalStudentName,
-        });
-        
-        console.log(`🔍 DEBUG - Gallery Share: Calling uploadImageFromUrl with imageUrl length=${imageUrl.length}`);
-        
-        const permanentImageUrl = await uploadImageFromUrl(imageUrl, {
-          studentName: finalStudentName,
-          missionNumber: missionNumber || 1,
-          sessionId,
-          prompt
-        });
-        
-        console.log(`🔍 DEBUG - Gallery Share: Firebase upload successful, got permanentImageUrl=${permanentImageUrl.substring(0, 50)}...`);
-        
-        // Step 2: Create a gallery image record with the permanent Firebase URL
-        galleryImage = await storage.createGalleryImage({
-          imageUrl: permanentImageUrl, // Use the permanent Firebase URL
-          studentName: finalStudentName,
-          missionNumber: missionNumber || 1,
-          sessionId,
-          firebaseUid: firebaseUid || null // Include Firebase UID if available
-        });
+      console.log(`🔍 DEBUG - Gallery Share: Gallery record created successfully with ID=${galleryImage.id}`);
 
-        console.log(`🔍 DEBUG - Gallery Share: Gallery record created successfully with ID=${galleryImage.id}`);
-
-        // Log successful sharing
-        logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
-          student_name: finalStudentName,
-          mission_number: missionNumber || 1,
-          session_id: sessionId,
-          prompt_length: prompt ? prompt.length : 0,
-          permanent_url: true,
-          firebase_uid: firebaseUid || null
-        });
-      } catch (firebaseError) {
-        // If Firebase upload fails, fall back to the original URL
-        console.error(`🔍 DEBUG - Gallery Share: Firebase upload failed`, firebaseError);
-        logError('firebase_upload', firebaseError instanceof Error ? firebaseError : 'Unknown error');
-        
-        console.log(`🔍 DEBUG - Gallery Share: Falling back to storing original URL in database`);
-        
-        // Just create gallery image with original URL as fallback
-        galleryImage = await storage.createGalleryImage({
-          imageUrl, // Use the original URL as fallback
-          studentName: finalStudentName,
-          missionNumber: missionNumber || 1,
-          sessionId,
-          firebaseUid: firebaseUid || null // Include Firebase UID if available
-        });
-        
-        console.log(`🔍 DEBUG - Gallery Share: Fallback gallery record created with ID=${galleryImage.id}`);
-        
-        logEvent('gallery_image_shared', 'Image shared to gallery with original URL (Firebase failed)', {
-          student_name: finalStudentName,
-          session_id: sessionId,
-          permanent_url: false
-        });
-      }
+      // Log successful sharing
+      logEvent('gallery_image_shared', 'Image shared to gallery from generator', {
+        student_name: finalStudentName,
+        mission_number: missionNumber || 1,
+        session_id: sessionId,
+        prompt_length: prompt ? prompt.length : 0,
+        firebase_uid: firebaseUid || null
+      });
       
       // Verify we have a valid gallery image to return
       if (!galleryImage || !galleryImage.id) {
@@ -265,89 +218,49 @@ export function registerGalleryRoutes(router: Router) {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const nameFilter = req.query.name as string || '';
-      const pageToken = req.query.pageToken as string || undefined;
       
       console.log(`🔍 DEBUG - Gallery All: Parsed parameters`, {
-        limit, page, nameFilter: nameFilter || 'none', pageToken: pageToken || 'none'
+        limit, page, nameFilter: nameFilter || 'none'
       });
       
-      // First, try to get images from Firebase Storage
-      try {
-        console.log(`🔍 DEBUG - Gallery All: Attempting to fetch from Firebase Storage`);
-        const firebaseImages = await listGalleryImages(limit, pageToken);
+      // Fetch images directly from the database
+      console.log(`🔍 DEBUG - Gallery All: Fetching images from database`);
+      const dbImages = await storage.getAllGalleryImages();
+      
+      console.log(`🔍 DEBUG - Gallery All: Database returned ${dbImages.length} images`);
+      
+      // Apply filtering
+      const filteredImages = nameFilter
+        ? dbImages.filter(img => {
+            return (img.studentName || '').toLowerCase().includes(nameFilter.toLowerCase());
+          })
+        : dbImages;
+      
+      console.log(`🔍 DEBUG - Gallery All: After filtering, ${filteredImages.length} images remain`);
         
-        console.log(`🔍 DEBUG - Gallery All: Firebase returned ${firebaseImages.files.length} images`);
-        
-        // Filter images by student name if filter is provided
-        const filteredImages = nameFilter 
-          ? firebaseImages.files.filter(img => {
-              const studentName = typeof img.metadata?.studentName === 'string' ? img.metadata.studentName.toLowerCase() : '';
-              return studentName.includes(nameFilter.toLowerCase());
-            })
-          : firebaseImages.files;
-        
-        console.log(`🔍 DEBUG - Gallery All: After filtering, ${filteredImages.length} images remain`);
-            
-        // Log the successful Firebase fetch
-        logEvent('gallery_images_fetch_firebase', 'Fetched gallery images from Firebase', {
-          image_count: filteredImages.length,
-          filter: nameFilter ? true : false,
-          total_files: firebaseImages.files.length
-        });
-        
-        // Return the images with pagination info
-        return res.json({
-          images: filteredImages,
-          pagination: {
-            nextPageToken: firebaseImages.nextPageToken,
-            currentPage: page,
-            limit
-          }
-        });
-      } catch (firebaseError) {
-        // If Firebase fetch fails, fall back to database
-        console.error(`🔍 DEBUG - Gallery All: Firebase fetch failed, falling back to database`, firebaseError);
-        logError('gallery_fetch_firebase', firebaseError instanceof Error ? firebaseError : 'Unknown error');
-        
-        // Fetch images from the database as fallback
-        console.log(`🔍 DEBUG - Gallery All: Fetching from database as fallback`);
-        const dbImages = await storage.getAllGalleryImages();
-        
-        console.log(`🔍 DEBUG - Gallery All: Database returned ${dbImages.length} images`);
-        
-        // Apply filtering
-        const filteredImages = nameFilter
-          ? dbImages.filter(img => {
-              return (img.studentName || '').toLowerCase().includes(nameFilter.toLowerCase());
-            })
-          : dbImages;
-        
-        console.log(`🔍 DEBUG - Gallery All: After filtering, ${filteredImages.length} images remain`);
-          
-        // Apply pagination manually (simple offset-based pagination)
-        const startIndex = (page - 1) * limit;
-        const paginatedImages = filteredImages.slice(startIndex, startIndex + limit);
-        
-        console.log(`🔍 DEBUG - Gallery All: After pagination, returning ${paginatedImages.length} images`);
-        
-        // Log the database fallback fetch
-        logEvent('gallery_images_fetch_db', 'Fetched gallery images from database (fallback)', {
-          image_count: paginatedImages.length,
-          total_count: dbImages.length,
-          filter: nameFilter ? true : false
-        });
-        
-        // Return the images with pagination info
-        return res.json({
-          images: paginatedImages,
-          pagination: {
-            totalCount: filteredImages.length,
-            currentPage: page,
-            totalPages: Math.ceil(filteredImages.length / limit),
-            limit
-          }
-        });
-      }
+      // Apply pagination manually (simple offset-based pagination)
+      const startIndex = (page - 1) * limit;
+      const paginatedImages = filteredImages.slice(startIndex, startIndex + limit);
+      
+      console.log(`🔍 DEBUG - Gallery All: After pagination, returning ${paginatedImages.length} images`);
+      
+      // Log the successful database fetch
+      logEvent('gallery_images_fetch_db', 'Fetched gallery images from database', {
+        image_count: paginatedImages.length,
+        total_count: dbImages.length,
+        filter: nameFilter ? true : false
+      });
+      
+      // Return the images with pagination info
+      return res.json({
+        images: paginatedImages,
+        pagination: {
+          totalCount: filteredImages.length,
+          currentPage: page,
+          totalPages: Math.ceil(filteredImages.length / limit),
+          limit
+        }
+      });
     } catch (error) {
       console.error('🔍 DEBUG - Gallery All: Unhandled error', error);
       logError('gallery_fetch', error instanceof Error ? error : 'Unknown error');
