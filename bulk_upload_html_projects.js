@@ -19,6 +19,7 @@ const __dirname = path.dirname(__filename);
 const API_URL = 'http://localhost:5000/api/projects/save-project';
 const CSV_FILE_PATH = path.join(__dirname, 'projects.csv');
 const OUTPUT_FILE = path.join(__dirname, 'upload_results.txt');
+const WEBSITE_URL = 'https://noongenai.replit.app'; // Update with your actual domain
 
 // Initialize output file
 fs.writeFileSync(OUTPUT_FILE, '# HTML Project Upload Results\n\n');
@@ -35,14 +36,14 @@ let errorCount = 0;
 async function saveProject(projectData) {
   try {
     // Ensure we have the minimum required data
-    if (!projectData.html || !projectData.document_id) {
-      throw new Error('Missing required fields: html or document_id');
+    if (!projectData.html || !projectData['Document ID']) {
+      throw new Error('Missing required fields: html or Document ID');
     }
 
     // Prepare the request payload
     const payload = {
       html: projectData.html,
-      projectId: projectData.document_id, // Use existing document_id as projectId
+      projectId: projectData['Document ID'], // Use existing Document ID as projectId
       userId: projectData.user_id || '0',  // Use user_id from CSV or default to '0'
     };
 
@@ -52,22 +53,22 @@ async function saveProject(projectData) {
     }
 
     // Optional: Add timestamps if available (these might be handled by the server)
-    if (projectData.created_at) {
-      payload.created_at = projectData.created_at;
+    if (projectData.createdAt) {
+      payload.createdAt = projectData.createdAt;
     }
-    if (projectData.updated_at) {
-      payload.updated_at = projectData.updated_at;
+    if (projectData.updatedAt) {
+      payload.updatedAt = projectData.updatedAt;
     }
 
     // Call the API to save the project with the complete payload
-    console.log(`📤 Uploading project ${projectData.document_id}...`);
+    console.log(`📤 Uploading project ${projectData['Document ID']}...`);
     const response = await axios.post(API_URL, payload);
 
     // Get the project ID from the response
-    const projectId = response.data.projectId || projectData.document_id;
+    const projectId = response.data.projectId || projectData['Document ID'];
     
     // Create the URL for this project
-    const projectUrl = `${process.env.WEBSITE_URL || 'http://localhost:5000'}/project/${projectId}`;
+    const projectUrl = `${WEBSITE_URL}/project/${projectId}`;
     
     // Log success
     console.log(`✅ Project uploaded with ID: ${projectId}`);
