@@ -62,7 +62,8 @@ export function registerProjectRoutes(router: Router) {
 
       // Save project to PostgreSQL with timestamps if provided
       try {
-        const projectData = {
+        // Prepare project data with all fields
+        const projectData: any = {
           projectId,
           html,
           firebaseUid,

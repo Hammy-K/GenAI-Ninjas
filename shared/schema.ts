@@ -221,8 +221,10 @@ export const insertAssistantLogSchema = createInsertSchema(assistantLogs).omit({
 
 export const insertHtmlProjectSchema = createInsertSchema(htmlProjects).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
+}).extend({
+  // Make timestamps optional so they can be explicitly set during imports
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
 
 // Define types

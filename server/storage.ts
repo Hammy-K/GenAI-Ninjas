@@ -564,15 +564,22 @@ export class DatabaseStorage implements IStorage {
 
   async createHtmlProject(project: InsertHtmlProject): Promise<HtmlProject> {
     // Explicitly create a clean project object without screenshotUrl to avoid DB errors
-    const cleanProject = {
+    // Use any type to avoid TypeScript errors with extended fields
+    const cleanProject: any = {
       projectId: project.projectId,
       html: project.html,
       firebaseUid: project.firebaseUid,
       userId: project.userId,
-      // Include timestamps if provided in the project data
-      ...(project.createdAt && { createdAt: project.createdAt }),
-      ...(project.updatedAt && { updatedAt: project.updatedAt }),
     };
+    
+    // Add timestamps if provided
+    if (project.createdAt) {
+      cleanProject.createdAt = project.createdAt;
+    }
+    
+    if (project.updatedAt) {
+      cleanProject.updatedAt = project.updatedAt;
+    }
 
     const [newProject] = await db
       .insert(htmlProjects)
