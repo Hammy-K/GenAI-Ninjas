@@ -15,6 +15,9 @@ import axios from 'axios';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// For Replit environment - ignore SSL certificate issues
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 // Configuration
 const API_URL = 'http://localhost:5000/api/projects/save-project';
 const CSV_FILE_PATH = path.join(__dirname, 'projects.csv');
@@ -44,7 +47,7 @@ async function saveProject(projectData) {
     const payload = {
       html: projectData.html,
       projectId: projectData['Document ID'], // Use existing Document ID as projectId
-      userId: projectData.user_id || '0',  // Use user_id from CSV or default to '0'
+      studentId: projectData.user_id || '9999999',  // Use user_id from CSV or default to a valid student ID
     };
 
     // Optional: Add Firebase UID if available
