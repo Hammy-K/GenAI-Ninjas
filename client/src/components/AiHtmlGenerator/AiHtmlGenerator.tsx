@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Database, Loader2, Plus, Send, Share2 } from "lucide-react";
+import {
+  Database,
+  Loader2,
+  Plus,
+  Send,
+  Share2,
+  Mic,
+  Loader,
+} from "lucide-react";
 import { AiResponse, Message } from "./types";
 import {
   Card,
@@ -11,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "./ChatMessage";
-import { callAiApi } from "./ai-html-api";
+import { callAiApi, transcribeAudio } from "./ai-html-api";
 import penguinAvatar from "@/assets/Group 26087843.png";
 import confetti from "canvas-confetti";
 import { PlaygroundWelcomeCard } from "./PlaygroundWelcomeCard";
@@ -22,6 +30,7 @@ import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
 import { ProjectShareDialog } from "./ProjectShareDialog";
 import { toast } from "@/hooks/use-toast";
 import NewProjectDialog from "./NewProjectDialog";
+import { Textarea } from "../ui/textarea";
 
 const welcomeMessage: Message = {
   role: "assistant",
@@ -43,8 +52,13 @@ export default function AiHtmlGenerator() {
   const [openShareProjectDialog, setOpenShareProjectDialog] = useState(false);
   const [projectId, setProjectId] = useState<string | undefined>(undefined);
   const [openNewProjectDialog, setOpenNewProjectDialog] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null,
+  );
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
 
-  // Load from cookies on initial load
   useEffect(() => {
     const savedMessages = Cookies.get("aiMessages");
     const savedHtml = Cookies.get("aiHtmlContent");
@@ -58,10 +72,13 @@ export default function AiHtmlGenerator() {
     }
   }, []);
 
-  // Store messages + HTML content in cookies
   useEffect(() => {
     Cookies.set("aiMessages", JSON.stringify(messages));
     Cookies.set("aiHtmlContent", htmlContent || "");
+
+    console.log("####################################");
+    console.log("Messages: ", messages, " \naiHtmlContent: ", htmlContent);
+    console.log("####################################");
   }, [messages, htmlContent]);
 
   const handleTriggerConversationCompleted = () => {
@@ -103,7 +120,7 @@ export default function AiHtmlGenerator() {
 
       const loadingMsg: Message = {
         role: "assistant",
-        content: "جاري الإنشاء",
+        content: "",
         className: "loading-animation",
       };
 
@@ -223,6 +240,73 @@ export default function AiHtmlGenerator() {
     setOpenNewProjectDialog(() => true);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+
+        setIsProcessingAudio(() => true);
+        setIsRecording(() => false);
+
+        try {
+          const transcribedText = await transcribeAudio(audioBlob);
+
+          setInputValue(() => transcribedText.trim());
+        } catch (error) {
+          console.error("Error during transcription:", error);
+
+          toast({
+            title: "خطأ في التسجيل",
+            description: "حدث خطأ أثناء تحويل الصوت إلى نص",
+            variant: "destructive",
+          });
+        } finally {
+          setIsProcessingAudio(() => false);
+          stream.getTracks().forEach((track) => track.stop());
+          setMediaRecorder(null);
+          setAudioChunks([]);
+        }
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setAudioChunks(chunks);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+
+      toast({
+        title: "خطأ في التسجيل",
+        description: "تعذر الوصول إلى اt�ميكروفون",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+    }
+  };
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col text-foreground font-tajawal"
@@ -252,11 +336,9 @@ export default function AiHtmlGenerator() {
           />
 
           <div className="flex-1">
-            {/* <div className="flex flex-col md:flex-row h-[87vh] p-2 gap-4"> */}
             <div className="">
               <div className="flex flex-col md:flex-row h-[87vh] gap-4 p-2">
                 {/* Playground */}
-                {/* <div className="w-full md:w-[70%] h-full"> */}
                 <div className="w-full md:w-[70%] flex flex-col h-full min-h-0">
                   <Card className="h-full flex flex-col border-lg bg-white border-0">
                     <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
@@ -285,7 +367,7 @@ export default function AiHtmlGenerator() {
                             <Button
                               type="button"
                               variant={
-                                viewMode === "preview" ? "default" : "outline"
+                                viewMode === "preview" ? "outline" : "default"
                               }
                               className="rounded-none px-3 py-1 h-8 text-xs"
                               onClick={() => setViewMode("preview")}
@@ -295,7 +377,7 @@ export default function AiHtmlGenerator() {
                             <Button
                               type="button"
                               variant={
-                                viewMode === "code" ? "default" : "outline"
+                                viewMode === "code" ? "outline" : "default"
                               }
                               className="rounded-none px-3 py-1 h-8 text-xs"
                               onClick={() => setViewMode("code")}
@@ -338,8 +420,7 @@ export default function AiHtmlGenerator() {
                       </div>
                     </CardHeader>
 
-                    {/* <CardContent className="flex-1 p-0 overflow-hidden h-[90%] bg-white"> */}
-                    <CardContent className="flex-1 p-0 bg-white">
+                    <CardContent className="flex-1 p-0 bg-white border-lg">
                       {htmlContent ? (
                         viewMode === "preview" ? (
                           <div className="flex-grow bg-white h-full bg-white">
@@ -355,18 +436,18 @@ export default function AiHtmlGenerator() {
                           </div>
                         ) : (
                           <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto h-full bg-gray-50 rounded">
-                            {htmlContent}
+                            <code>{htmlContent}</code>
                           </pre>
                         )
                       ) : (
                         PlaygroundWelcomeCard
                       )}
                     </CardContent>
+                    <CardFooter className=" m-0 pb-2"></CardFooter>
                   </Card>
                 </div>
 
                 {/* Chat Panel */}
-                {/* <Card className="w-full md:w-[30%] bg-white border-0"> */}
                 <div className="w-full md:w-[30%] h-full flex flex-col ">
                   <Card className="h-full flex flex-col bg-white border-0">
                     <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
@@ -382,7 +463,6 @@ export default function AiHtmlGenerator() {
 
                     <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                       <ScrollArea className="flex-1 chat-area p-4">
-                        {/* <ScrollArea className="flex-1 p-4 overflow-auto"> */}
                         <div className="space-y-4 mt-3">
                           {messages.length > 0 ? (
                             messages.map((message, index) => (
@@ -401,28 +481,72 @@ export default function AiHtmlGenerator() {
                     </CardContent>
 
                     <CardFooter className="border-t p-3 border-gray-200">
-                      <div className="relative w-full">
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={isLoading || !inputValue.trim()}
-                          className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:bg-gray-100 rounded-sm transition-colors"
-                        >
-                          <Send size={18} />
-                        </button>
-                        <Input
-                          value={inputValue}
-                          onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="اكتب رسالة وبنجي في مساعدتك"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              handleSubmit();
+                      <div className="flex gap-2 w-full items-center">
+                        {/* Textarea */}
+                        <div className="flex-1 relative">
+                          <Textarea
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder={
+                              isRecording
+                                ? "جاري التسجيل..."
+                                : "اكتب رسالة وبنجي في مساعدتك ..."
                             }
-                          }}
-                          disabled={isLoading}
-                          className="w-full pr-10 text-right bg-white border-gray-200"
-                          dir="rtl"
-                        />
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit();
+                              }
+                            }}
+                            disabled={isLoading || isRecording}
+                            className="w-full min-h-10 max-h-32 px-3 py-2 text-right bg-white border border-gray-200 rounded-md resize-none overflow-y-auto"
+                            dir="rtl"
+                            rows={1}
+                            style={{
+                              height: "auto",
+                            }}
+                            onInput={(e) => {
+                              const target = e.target as HTMLTextAreaElement;
+                              target.style.height = "auto";
+                              target.style.height = target.scrollHeight + "px";
+                            }}
+                          />
+                        </div>
+
+                        {/* Button - Mic or Send */}
+                        <div className="flex-shrink-0">
+                          {!inputValue.trim() || isRecording ? (
+                            <button
+                              className={`p-2 rounded-md transition-colors ${
+                                isRecording
+                                  ? "text-red-500 bg-red-50 animate-pulse"
+                                  : isProcessingAudio
+                                    ? "text-blue-500 bg-blue-50"
+                                    : "text-gray-500 hover:bg-gray-100"
+                              }`}
+                              onClick={handleMicClick}
+                              disabled={isProcessingAudio || isLoading}
+                            >
+                              {isProcessingAudio ? (
+                                <Loader
+                                  className="animate-spin duration-700"
+                                  size={20}
+                                />
+                              ) : (
+                                <Mic size={20} />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSubmit}
+                              disabled={isLoading || !inputValue.trim()}
+                              className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              <Send size={20} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </CardFooter>
                   </Card>

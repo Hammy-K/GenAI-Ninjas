@@ -43,18 +43,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             // : "bg-white border border-gray-200 text-gray-900 rounded-bl-none"
           }`}
         >
-          <div className="whitespace-pre-wrap text-sm">
+          <div className="whitespace-pre-wrap">
             {isLoading ? (
               <div className="flex">
-                <span>جاري الإنشاء</span>
+                {/* <span>جاري الإنشاء</span> */}
                 <span className="flex mr-1">
-                  <span className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"></span>
+                  <span className="w-1.5 h-1.5 bg-[#83e0be] rounded-full animate-bounce mx-0.5"></span>
                   <span
-                    className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                    className="w-1.5 h-1.5 bg-[#83e0be] rounded-full animate-bounce mx-0.5"
                     style={{ animationDelay: "0.2s" }}
                   ></span>
                   <span
-                    className="w-1 h-1 bg-amber-500 rounded-full animate-bounce mx-0.5"
+                    className="w-1.5 h-1.5 bg-[#83e0be] rounded-full animate-bounce mx-0.5"
                     style={{ animationDelay: "0.4s" }}
                   ></span>
                 </span>

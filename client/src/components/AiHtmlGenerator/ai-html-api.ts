@@ -53,13 +53,7 @@ export const callAiApi = async (
 
     const data = await response.json();
 
-    console.log("✅ Raw AI API response:", data);
-
     const aiResponse = parseAiResponse(data.content);
-
-    console.log("################################");
-    console.log("Parsed AI response:", aiResponse);
-    console.log("################################");
 
     return aiResponse;
   } catch (error) {
@@ -68,10 +62,35 @@ export const callAiApi = async (
     return {
       role: "assistant",
       aiMessage:
-        "أوه لا! شكلي تلخبطت شوي. ممكن تعيد المحاولة؟ وأنا حاضر أساعدك بكل حماس! 😊",
+        "أوه لا! شكلي تلخبطت شوي. ممكن تعيد المحاولة؟ وأنا حاضر أساعدك  ! 😊",
       htmlContent: undefined,
       isHtmlGenerated: false,
       isConversationComplete: false,
     };
+  }
+};
+
+export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+  try {
+    const formData = new FormData();
+
+    formData.append("audio", audioBlob, "audio.webm");
+
+    const response = await fetch("/api/ai-transcribe", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to transcribe audio");
+    }
+
+    const data = await response.json();
+    const transcription = data.text;
+
+    return transcription;
+  } catch (error) {
+    console.error("Error transcribing audio:", error);
+    throw error;
   }
 };

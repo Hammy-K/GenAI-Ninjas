@@ -1,5 +1,5 @@
 export const PlaygroundWelcomeCard = (
-  <div className="flex flex-col items-center justify-center h-full p-4 bg-neutral-50">
+  <div className="flex flex-col items-center justify-center h-full p-4">
     <div className="text-center mb-6">
       <h3 className="text-xl font-bold mb-2">
         مُنشئ الألعاب بالذكاء الاصطناعي 🎮

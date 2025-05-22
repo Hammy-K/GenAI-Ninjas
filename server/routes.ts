@@ -29,6 +29,7 @@ import OpenAI from "openai";
 import { registerStudentsRoutes } from "./routes/students";
 import { registerFeedbackRoutes } from "./routes/feedback";
 import { registerHtmlAiRoute } from "./routes/html-ai";
+import { registerTranscribeRoute } from "./routes/ai-transcribe";
 
 /**
  * Legacy function for server-side prompt logging
@@ -417,6 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerStudentsRoutes(apiRouter);
   registerFeedbackRoutes(apiRouter);
   registerHtmlAiRoute(apiRouter);
+  registerTranscribeRoute(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

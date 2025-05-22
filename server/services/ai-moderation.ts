@@ -12,13 +12,10 @@ export async function isContentSafe(input: string): Promise<boolean> {
 
     const [result] = moderation.results;
 
-    console.log("##########################");
-    console.log("Moderation result:", result.flagged);
-    console.log("##########################");
-
     return !result.flagged;
   } catch (err) {
     console.error("Moderation API error:", err);
-    return false; // default to unsafe if moderation fails
+
+    return false;
   }
 }
