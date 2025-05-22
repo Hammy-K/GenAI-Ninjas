@@ -529,7 +529,7 @@ export default function AiHtmlGenerator() {
                             >
                               {isProcessingAudio ? (
                                 <Loader
-                                  className="animate-spin duration-700"
+                                  className="animate-spin duration-700 primary"
                                   size={20}
                                 />
                               ) : (
