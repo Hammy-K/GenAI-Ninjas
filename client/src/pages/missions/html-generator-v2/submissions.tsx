@@ -97,7 +97,7 @@ export default function HtmlGeneratorV2SubmissionsPage() {
 
   // Back to HTML Generator page
   const goBack = () => {
-    setLocation("/missions/html-generator-v2");
+    setLocation("/missions/ai-html-generator");
   };
 
   return (

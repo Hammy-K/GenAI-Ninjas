@@ -79,7 +79,7 @@ export default function HtmlProjectsList() {
   }, []);
 
   const goToHtmlGenerator = () => {
-    setLocation("/missions/html-generator");
+    setLocation("/missions/ai-html-generator");
   };
 
   if (loading) {
@@ -131,6 +131,7 @@ export default function HtmlProjectsList() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects
+              /* 1️⃣  Filter by search term */
               .filter(
                 (project) =>
                   !searchTerm.trim() ||
@@ -138,6 +139,13 @@ export default function HtmlProjectsList() {
                     ?.toLowerCase()
                     .includes(searchTerm.toLowerCase()),
               )
+              /* 2️⃣  Sort so projects **without** a student name are last */
+              .sort((a, b) => {
+                const aHasName = Boolean(a.student?.fullName?.trim());
+                const bHasName = Boolean(b.student?.fullName?.trim());
+                if (aHasName === bHasName) return 0;
+                return aHasName ? -1 : 1; // a first if it *has* a name
+              })
               .map((project) => (
                 <div
                   key={project.id}
