@@ -83,7 +83,7 @@ export function registerHtmlAiRoute(router: Router) {
           ...history,
           { role: "user", content: message },
         ],
-        temperature: 0.25,
+        temperature: 0.1,
       });
 
       const content = completion.choices[0].message.content;

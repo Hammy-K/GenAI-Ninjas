@@ -16,6 +16,8 @@ export function ResetSession() {
 
       // remove studentId cookie saved for the html generator
       Cookies.remove("studentId");
+      Cookies.remove("aiMessages");
+      Cookies.remove("aiHtmlContent");
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {

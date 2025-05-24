@@ -221,6 +221,30 @@ export default function AiHtmlGenerator() {
     }
   };
 
+  useEffect(() => {
+    const autoSave = async () => {
+      if (!htmlContent) {
+        return;
+      }
+
+      const studentId = Cookies.get("studentId");
+
+      if (!studentId) {
+        return;
+      }
+
+      try {
+        await saveProject(htmlContent, studentId);
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+      }
+    };
+
+    if (htmlContent && htmlContent.trim()) {
+      autoSave();
+    }
+  }, [htmlContent]);
+
   const startNewProject = () => {
     setMessages([welcomeMessage]);
     setHtmlContent(undefined);

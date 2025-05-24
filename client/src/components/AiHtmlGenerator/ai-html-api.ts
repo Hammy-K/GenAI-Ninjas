@@ -21,7 +21,7 @@ function parseAiResponse(rawContent: string): AiResponse {
     return {
       role: "assistant",
       aiMessage:
-        "يا للأسف! صار خطأ بسيط وما قدرت أفهم ردك. جرب ترسله من جديد، وأنا معك خطوة بخطوة! 💪",
+        "هاه؟ الرد طار عليّ شوي 😅 جرّب ترسله مرّة ثانية، وبساعدك فوراً!",
       htmlContent: undefined,
       isHtmlGenerated: false,
       isConversationComplete: false,
@@ -61,8 +61,7 @@ export const callAiApi = async (
 
     return {
       role: "assistant",
-      aiMessage:
-        "أوه لا! شكلي تلخبطت شوي. ممكن تعيد المحاولة؟ وأنا حاضر أساعدك  ! 😊",
+      aiMessage: "أوه لحظة... صار في لخبطة! 😅 جرّب مرّة ثانية وأنا معك!",
       htmlContent: undefined,
       isHtmlGenerated: false,
       isConversationComplete: false,
