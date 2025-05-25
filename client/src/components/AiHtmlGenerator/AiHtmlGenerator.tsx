@@ -59,9 +59,33 @@ export default function AiHtmlGenerator() {
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
 
+  const getAiMessagesFromLocatStorage = () => {
+    return localStorage.getItem("aiMessages");
+  };
+
+  const setAiMessagesToLocalStorage = (messages: Message[]) => {
+    localStorage.setItem("aiMessages", JSON.stringify(messages));
+  };
+
+  const getAiHtmlContentFromLocatStorage = () => {
+    return localStorage.getItem("aiHtmlContent");
+  };
+
+  const setAiHtmlContentToLocalStorage = (htmlContent: string) => {
+    localStorage.setItem("aiHtmlContent", htmlContent);
+  };
+
+  const removeAiMessagesFromLocalStorage = () => {
+    localStorage.removeItem("aiMessages");
+  };
+
+  const removeAiHtmlContentFromLocalStorage = () => {
+    localStorage.removeItem("aiHtmlContent");
+  };
+
   useEffect(() => {
-    const savedMessages = Cookies.get("aiMessages");
-    const savedHtml = Cookies.get("aiHtmlContent");
+    const savedMessages = getAiMessagesFromLocatStorage();
+    const savedHtml = getAiHtmlContentFromLocatStorage();
 
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
@@ -73,11 +97,18 @@ export default function AiHtmlGenerator() {
   }, []);
 
   useEffect(() => {
-    Cookies.set("aiMessages", JSON.stringify(messages));
-    Cookies.set("aiHtmlContent", htmlContent || "");
+    // Cookies.set("aiMessages", JSON.stringify(messages));
+    setAiMessagesToLocalStorage(messages);
+    // Cookies.set("aiHtmlContent", htmlContent || "");
+    setAiHtmlContentToLocalStorage(htmlContent || "");
 
     console.log("####################################");
-    console.log("Messages: ", messages, " \naiHtmlContent: ", htmlContent);
+    console.log(
+      "Storage Messages: ",
+      getAiMessagesFromLocatStorage(),
+      " \n Storage aiHtmlContent: ",
+      getAiHtmlContentFromLocatStorage(),
+    );
     console.log("####################################");
   }, [messages, htmlContent]);
 
@@ -114,8 +145,9 @@ export default function AiHtmlGenerator() {
         role: "user",
         content: userMessage,
       };
+
       const newMessages: Message[] = [...messages, userMsg];
-      setMessages(newMessages);
+      setMessages(() => newMessages);
       setIsLoading(true);
 
       const loadingMsg: Message = {
@@ -124,7 +156,7 @@ export default function AiHtmlGenerator() {
         className: "loading-animation",
       };
 
-      setMessages([...newMessages, loadingMsg]);
+      setMessages(() => [...newMessages, loadingMsg]);
 
       const studentId = Cookies.get("studentId");
 
@@ -145,6 +177,7 @@ export default function AiHtmlGenerator() {
         const updatedMessages = prevMessages.filter(
           (msg) => msg.className !== "loading-animation",
         );
+
         return [...updatedMessages, assistantMsg];
       });
     } catch (error) {
@@ -159,6 +192,7 @@ export default function AiHtmlGenerator() {
         const updatedMessages = prevMessages.filter(
           (msg) => msg.className !== "loading-animation",
         );
+
         return [...updatedMessages, errorMsg];
       });
     } finally {
@@ -248,8 +282,10 @@ export default function AiHtmlGenerator() {
   const startNewProject = () => {
     setMessages([welcomeMessage]);
     setHtmlContent(undefined);
-    Cookies.remove("aiMessages");
-    Cookies.remove("aiHtmlContent");
+    // Cookies.remove("aiMessages");
+    removeAiMessagesFromLocalStorage();
+    // Cookies.remove("aiHtmlContent");
+    removeAiHtmlContentFromLocalStorage();
 
     toast({
       title: "تم بدء مشروع جديد",
