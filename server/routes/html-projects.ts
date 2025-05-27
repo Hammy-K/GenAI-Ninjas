@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { storage } from "../storage";
 import { htmlProjects } from "@shared/schema";
 import { HtmlProjectRepository } from "../database/html-projects-repository";
+import { NormalizedPaginationParams } from "server/types/pagination.types";
 
 export function registerHTMLProjectsRoutes(router: Router) {
   const htmlProjectsRouter = Router();
@@ -12,17 +13,19 @@ export function registerHTMLProjectsRoutes(router: Router) {
     async (req: Request, res: Response) => {
       try {
         // Get all projects using the storage interface
-        const submissions = await storage.getAllHtmlProjects();
-        // const submissions =
-        //   await new HtmlProjectRepository().findAllProjectsWithPagination(
-        //     req.params,
-        //   );
+        // const submissions = await storage.getAllHtmlProjects();
 
-        console.log("###############################################");
-        console.log("params: ", req.params);
-        console.log("###############################################");
-        console.log("Fetched HTML projects submissions: ", submissions);
-        console.log("###############################################");
+        const { page, limit, search, sortBy, sortOrder, filters } = req.query;
+
+        const submissions =
+          await new HtmlProjectRepository().findAllProjectsWithPagination({
+            page: page,
+            limit: limit,
+            search,
+            sortBy,
+            sortOrder: sortOrder === "desc" ? "desc" : "asc",
+            filters: {},
+          });
 
         // Set content type to JSON explicitly
         res.setHeader("Content-Type", "application/json");

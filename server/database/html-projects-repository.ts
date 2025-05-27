@@ -1,12 +1,16 @@
 import { db } from "../db";
 import { htmlProjects } from "../../shared/schema";
 import { students } from "../schemas/students";
-import { and, or, ilike, eq, desc, asc, count, SQL } from "drizzle-orm";
+import { and, or, ilike, eq, desc, asc, count, SQL, sql } from "drizzle-orm";
 import type {
   NormalizedPaginationParams,
   PaginatedResponse,
+} from "../types/pagination.types";
+import {
+  HtmlProject,
   HtmlProjectWithStudent,
-} from "@/types";
+} from "../types/htmlProject.types";
+import { PaginationUtils } from "../utils/pagination.utils";
 
 export class HtmlProjectRepository {
   private static readonly VALID_SORT_FIELDS = [
@@ -34,6 +38,21 @@ export class HtmlProjectRepository {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const orderByClause = this.buildOrderByClause(validatedSortBy, sortOrder);
+
+    console.log("###############################################");
+    console.log("page: ", page);
+    console.log("limit: ", limit);
+    console.log("search: ", search);
+    console.log("sortBy: ", sortBy);
+    console.log("sortOrder: ", sortOrder);
+    console.log("filters: ", filters);
+    console.log("###############################################");
+    console.log("whereClause: ", whereClause);
+    console.log("orderByClause: ", orderByClause);
+    console.log("limit: ", limit);
+    console.log("offset: ", offset);
+    console.log("page: ", page);
+    console.log("###############################################");
 
     const [data, totalResult] = await Promise.all([
       this.executeSelectQuery(whereClause, orderByClause, limit, offset),
@@ -64,13 +83,26 @@ export class HtmlProjectRepository {
     const conditions: SQL[] = [];
 
     if (search) {
-      conditions.push(
-        or(
-          ilike(students.fullName, `%${search}%`),
-          ilike(htmlProjects.projectId, `%${search}%`),
-          ilike(htmlProjects.userId, `%${search}%`),
-        ),
-      );
+      const searchConditions = [];
+
+      if (students.fullName) {
+        searchConditions.push(ilike(students.fullName, `%${search}%`));
+      }
+
+      if (students.schoolName) {
+        searchConditions.push(ilike(students.schoolName, `%${search}%`));
+      }
+
+      if (students.phoneNumber) {
+        searchConditions.push(ilike(students.phoneNumber, `%${search}%`));
+      }
+
+      const orCondition =
+        searchConditions.length > 0 ? or(...searchConditions) : undefined;
+
+      if (orCondition) {
+        conditions.push(orCondition);
+      }
     }
 
     if (filters.userId) {
@@ -131,10 +163,14 @@ export class HtmlProjectRepository {
         },
       })
       .from(htmlProjects)
-      .leftJoin(students, eq(htmlProjects.userId, students.id))
+      .leftJoin(
+        students,
+        eq(htmlProjects.userId, sql`(${students.id})::text` as SQL),
+      )
       .where(whereClause)
       .orderBy(orderByClause)
-      .limit(limit)
+      // .limit(limit)
+      .limit(30)
       .offset(offset);
 
     return result as HtmlProjectWithStudent[];
@@ -146,7 +182,10 @@ export class HtmlProjectRepository {
     return db
       .select({ count: count() })
       .from(htmlProjects)
-      .leftJoin(students, eq(htmlProjects.userId, students.id))
+      .leftJoin(
+        students,
+        eq(htmlProjects.userId, sql`(${students.id})::text` as SQL),
+      )
       .where(whereClause);
   }
 

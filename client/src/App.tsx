@@ -25,6 +25,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import HtmlProjectsList from "./components/HTMLProjectsList";
 import { HTMLStandalone } from "./components/stages/HTMLStandalone";
 import AiHtmlGenerator from "./components/AiHtmlGenerator/AiHtmlGenerator";
+import HTMLProjectsPage from "./components/HTMLProjectsList/HTMLProjectsPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -78,7 +79,7 @@ function Router() {
       <Route path="/missions/html-generator" component={HTMLGeneratorWrapper} />
       <Route
         path="/missions/html-generator/submissions"
-        component={HtmlProjectsList}
+        component={HTMLProjectsPage}
       />
       <Route path="/missions/ai-html-generator" component={AiHtmlGenerator} />
       {/* Standalone HTML Generator */}

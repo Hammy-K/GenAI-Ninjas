@@ -1,73 +1,49 @@
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import { useLocation } from "wouter";
-import { Database } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ProjectWithStudent } from "@/types/html-projects-types";
+import ProjectCard from "./ProjectCard";
+import LoadingSpinner from "./LoadingSpinner";
 
-type HtmlProject = {
-  id: number;
-  projectId: string;
-  html: string;
-  firebaseUid: string | null;
-  userId: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+interface Props {
+  search: string;
+}
 
-type Student = {
-  id: string;
-  fullName: string;
-  schoolName: string;
-  phoneNumber: string;
-  createdAt: string;
-};
-
-type ProjectWithStudent = HtmlProject & {
-  student?: Student;
-};
-
-export default function HtmlProjectsList() {
+export default function HtmlProjectsList({ search }: Props) {
   const [projects, setProjects] = useState<ProjectWithStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [location, setLocation] = useLocation();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [queryParams, setQueryParams] = useState({
+    page: 1,
+    limit: 30,
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  });
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 30,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  });
+
+  const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    async function fetchProjectsAndStudents() {
+    async function fetchProjects() {
       try {
-        const res = await fetch("/api/html-projects/submissions");
+        setLoading(true);
+        const res = await fetch(
+          `/api/html-projects/submissions?page=${queryParams.page}&limit=${queryParams.limit}&search=${encodeURIComponent(debouncedSearch)}&sortBy=${queryParams.sortBy}&sortOrder=${queryParams.sortOrder}`,
+        );
+
         if (!res.ok) throw new Error("فشل في تحميل المشاريع");
-        const projectData: HtmlProject[] = await res.json();
 
-        // Extract unique user IDs
-        const userIds = Array.from(
-          new Set(projectData.map((p) => p.userId).filter(Boolean)),
-        );
-
-        // Fetch students in parallel
-        const studentPromises = userIds.map((id) =>
-          fetch(`/api/students/${id}`).then((res) =>
-            res.ok ? res.json() : null,
-          ),
-        );
-        const studentResults = await Promise.all(studentPromises);
-
-        // Map userId -> student
-        const studentMap = new Map<string, Student>();
-
-        studentResults.forEach((student) => {
-          if (student && student.id) {
-            studentMap.set(String(student.id), student);
-          }
-        });
-
-        // Attach student to each project
-        const enrichedProjects = projectData.map((project) => ({
-          ...project,
-          student: project.userId ? studentMap.get(project.userId) : undefined,
-        }));
-
-        setProjects(enrichedProjects);
+        const response = await res.json();
+        setProjects(response.data);
+        setPagination(response.pagination);
       } catch (err: any) {
         setError(err.message || "حدث خطأ ما");
       } finally {
@@ -75,146 +51,53 @@ export default function HtmlProjectsList() {
       }
     }
 
-    fetchProjectsAndStudents();
-  }, []);
-
-  // useEffect(() => {
-  //   async function fetchProjectsAndStudents() {
-  //     try {
-  //       const res = await fetch("/api/html-projects/submissions");
-
-  //       if (!res.ok) throw new Error("فشل في تحميل المشاريع");
-
-  //       const projectData: HtmlProject[] = await res.json();
-
-  //       // Extract unique user IDs
-
-  //       console.log("############################");
-  //       console.log("projectData: ", projectData);
-  //       console.log("############################");
-
-  //       setProjects(projectData);
-  //     } catch (err: any) {
-  //       setError(err.message || "حدث خطأ ما");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   fetchProjectsAndStudents();
-  // }, []);
-
-  const goToHtmlGenerator = () => {
-    setLocation("/missions/ai-html-generator");
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <p className="text-center text-red-500 bg-[#f5f2e8]">خطأ: {error}</p>
-    );
-  }
+    fetchProjects();
+  }, [
+    queryParams.page,
+    queryParams.limit,
+    debouncedSearch,
+    queryParams.sortBy,
+    queryParams.sortOrder,
+  ]);
 
   return (
-    <div className="bg-[#f5f2e8]">
-      <div className="p-6 font-sans max-w-7xl mx-auto min-h-screen">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">مشاريع الطلاب</h1>
-          <p className="text-gray-600 mb-4">
-            جميع المشاريع المعروضة في هذا التطبيق تم إنشاؤها بواسطة الطلاب
-            باستخدام تقنيات الذكاء الاصطناعي
-          </p>
-
-          <Button
-            variant="default"
-            className="flex items-center gap-2 mx-auto"
-            onClick={goToHtmlGenerator}
-          >
-            <Database className="h-4 w-4" />
-            <span>منشئ الويب بالذكاء الاصطناعي</span>
-          </Button>
-        </div>
-
-        <div className="mb-6 max-w-md mx-auto">
-          <input
-            type="text"
-            placeholder="ابحث باسم الطالب..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-
-        {projects.length === 0 ? (
-          <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
-        ) : (
+    <div>
+      {loading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <p className="text-center text-red-500 bg-[#f5f2e8]">خطأ: {error}</p>
+      ) : projects.length === 0 ? (
+        <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
+      ) : (
+        <div className="flex flex-col items-center">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects
-              /* 1️⃣  Filter by search term */
-              .filter(
-                (project) =>
-                  !searchTerm.trim() ||
-                  project.student?.fullName
-                    ?.toLowerCase()
-                    .includes(searchTerm.toLowerCase()),
-              )
-              /* 2️⃣  Sort so projects **without** a student name are last */
-              .sort((a, b) => {
-                const aHasName = Boolean(a.student?.fullName?.trim());
-                const bHasName = Boolean(b.student?.fullName?.trim());
-                if (aHasName === bHasName) return 0;
-                return aHasName ? -1 : 1; // a first if it *has* a name
-              })
-              .map((project) => (
-                <div
-                  key={project.id}
-                  className="relative bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer h-64"
-                >
-                  {/* Transparent overlay to capture clicks */}
-                  <div
-                    className="absolute inset-0 z-10"
-                    onClick={() =>
-                      window.open(
-                        `https://noongenai.replit.app/project/${project.projectId}`,
-                        "_blank",
-                      )
-                    }
-                  ></div>
-
-                  {/* iframe preview */}
-                  <iframe
-                    srcDoc={project.html}
-                    title={`Preview of ${project.projectId}`}
-                    sandbox="allow-scripts"
-                    className="w-full h-2/3 border-0"
-                    style={{ pointerEvents: "none" }}
-                  ></iframe>
-
-                  {/* Student Info Section */}
-                  <div className="p-3 bg-[#fafafa] border-t text-sm z-20">
-                    <p className="font-semibold text-lg text-center">
-                      👤 {project.student?.fullName || "طالب غير معروف"}
-                    </p>
-                    <p className="text-gray-600 text-center">
-                      🏫 {project.student?.schoolName || "مدرسة غير معروفة"}
-                    </p>
-                    <p className="text-gray-500 text-xs text-center">
-                      🗓️ تاريخ المشروع:{" "}
-                      {new Date(project.createdAt).toLocaleDateString("ar-EG")}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
           </div>
-        )}
-      </div>
+          <div className="flex justify-between gap-4 mt-6 w-full px-36">
+            <Button
+              disabled={queryParams.page === 1}
+              onClick={() =>
+                setQueryParams((prev) => ({ ...prev, page: prev.page - 1 }))
+              }
+            >
+              السابق
+            </Button>
+            <span className="self-center">
+              الصفحة {pagination.page} من {pagination.totalPages}
+            </span>
+            <Button
+              disabled={queryParams.page === pagination.totalPages}
+              onClick={() =>
+                setQueryParams((prev) => ({ ...prev, page: prev.page + 1 }))
+              }
+            >
+              التالي
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

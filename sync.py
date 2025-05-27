@@ -25,6 +25,9 @@ cur.execute("""
     full_name,
     school_name
   FROM students
+  where phone_number is not null
+  and phone_number != '0536391122'
+  and phone_number != ''
 ),
 
 html_messages AS (
@@ -132,6 +135,9 @@ WHERE rn = 1
 , student_info as (
   SELECT distinct s.id user_id, s.phone_number, s.full_name,  s.school_name
   FROM students s
+  where phone_number is not null
+  and phone_number != '0536391122'
+  and phone_number != ''
 )
 
 SELECT 
@@ -183,11 +189,11 @@ ws1.update([proj_cols] + safe_proj, value_input_option='RAW')
 
 # 4) Push messages summary to (or create) "Messages" tab
 try:
-    ws2 = sh.worksheet("Student_projects")
+  ws2 = sh.worksheet("Student_projects")
 except WorksheetNotFound:
-    ws2 = sh.add_worksheet(title="Student_projects",
-                           rows=str(len(msg_rows) + 5),
-                           cols=str(len(msg_cols) + 5))
+  ws2 = sh.add_worksheet(title="Student_projects",
+                         rows=str(len(msg_rows) + 5),
+                         cols=str(len(msg_cols) + 5))
 
 ws2.clear()
 safe_msgs = [[

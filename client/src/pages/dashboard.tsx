@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateInput } from "@/lib/inputFilter";
+import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGeneratorIntroCard";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -548,6 +549,8 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                <AIGameGeneratorIntroCard />
+
                 {/* Stream Content Container - Changes based on state */}
                 <div className="min-h-[400px] content-container">
                   {/* Always render both states, use CSS to control visibility */}
@@ -653,9 +656,7 @@ export default function Dashboard() {
                               </div>
 
                               <div className="relative">
-                                <div
-                                  className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70"
-                                >
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">💡</div>
                                   <div className="font-medium text-sm">
                                     وش فكرة لعبتك؟
@@ -692,57 +693,55 @@ export default function Dashboard() {
                               </div>
 
                               {/* Row 2 */}
-                                  <div className="relative">
-                                    <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
-                                      <div className="text-2xl mb-2">🎨</div>
-                                      <div className="font-medium text-sm">
-                                        الرسوميات والفن
-                                      </div>
-                                      <div className="absolute top-2 left-2">
-                                        <Lock className="h-5 w-5 text-gray-400" />
-                                      </div>
-                                    </div>
+                              <div className="relative">
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                  <div className="text-2xl mb-2">🎨</div>
+                                  <div className="font-medium text-sm">
+                                    الرسوميات والفن
                                   </div>
-
-                                  <div className="relative">
-                                    <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
-                                      <div className="text-2xl mb-2">🎵</div>
-                                      <div className="font-medium text-sm">
-                                        الصوت والموسيقى
-                                      </div>
-                                      <div className="absolute top-2 left-2">
-                                        <Lock className="h-5 w-5 text-gray-400" />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="relative">
-                                    <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
-                                      <div className="text-2xl mb-2">🔁</div>
-                                      <div className="font-medium text-sm">
-                                        الاختبار والتعديل
-                                      </div>
-                                      <div className="absolute top-2 left-2">
-                                        <Lock className="h-5 w-5 text-gray-400" />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="relative">
-                                    <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
-                                      <div className="text-2xl mb-2">🚀</div>
-                                      <div className="font-medium text-sm">
-                                        النشر، الإطلاق، والمشاركة
-                                      </div>
-                                      <div className="absolute top-2 left-2">
-                                        <Lock className="h-5 w-5 text-gray-400" />
-                                      </div>
-                                    </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
                                   </div>
                                 </div>
                               </div>
 
-                          
+                              <div className="relative">
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                  <div className="text-2xl mb-2">🎵</div>
+                                  <div className="font-medium text-sm">
+                                    الصوت والموسيقى
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="relative">
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                  <div className="text-2xl mb-2">🔁</div>
+                                  <div className="font-medium text-sm">
+                                    الاختبار والتعديل
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="relative">
+                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                  <div className="text-2xl mb-2">🚀</div>
+                                  <div className="font-medium text-sm">
+                                    النشر، الإطلاق، والمشاركة
+                                  </div>
+                                  <div className="absolute top-2 left-2">
+                                    <Lock className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

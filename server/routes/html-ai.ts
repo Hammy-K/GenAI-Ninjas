@@ -108,7 +108,7 @@ export function registerHtmlAiRoute(router: Router) {
     try {
       const response = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 16000,
+        max_tokens: 4000,
         temperature: 0.1,
         system: HTML_CLAUDE_AI_SYSTEM_PROMPT,
         messages: messages,
