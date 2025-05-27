@@ -20,7 +20,7 @@ export default function HtmlProjectsPage() {
           <h1 className="text-3xl font-bold mb-2">مشاريع الطلاب</h1>
           <p className="text-gray-600 mb-4">
             جميع المشاريع المعروضة في هذا التطبيق تم إنشاؤها بواسطة الطلاب
-            باستخدام تقنيات الذكاء الاصطناعي
+            باستخدام الذكاء الاصطناعي
           </p>
 
           <Button
@@ -29,7 +29,7 @@ export default function HtmlProjectsPage() {
             onClick={goToHtmlGenerator}
           >
             <Database className="h-4 w-4" />
-            <span>منشئ الويب بالذكاء الاصطناعي</span>
+            <span>العودة الى تصميم الالعاب</span>
           </Button>
         </div>
 

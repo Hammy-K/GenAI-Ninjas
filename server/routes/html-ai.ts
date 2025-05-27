@@ -1,137 +1,137 @@
-import { Router, Request, Response } from "express";
-import Anthropic from "@anthropic-ai/sdk";
-import { isContentSafe } from "server/services/ai-moderation";
-import { logStudentHtmlMessage } from "server/services/student-html-message";
-import { HTML_AI_SYSTEM_PROMPT } from "server/templates/html-ai-prompt";
-import { AiResponse } from "server/types/html-ai-response";
-import { HTML_CLAUDE_AI_SYSTEM_PROMPT } from "server/templates/html-claude-ai-prompt";
+// import { Router, Request, Response } from "express";
+// import Anthropic from "@anthropic-ai/sdk";
+// import { isContentSafe } from "server/services/ai-moderation";
+// import { logStudentHtmlMessage } from "server/services/student-html-message";
+// import { HTML_AI_SYSTEM_PROMPT } from "server/templates/html-ai-prompt";
+// import { AiResponse } from "server/types/html-ai-response";
+// import { HTML_CLAUDE_AI_SYSTEM_PROMPT } from "server/templates/html-claude-ai-prompt";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// const anthropic = new Anthropic({
+//   apiKey: process.env.ANTHROPIC_API_KEY,
+// });
 
-const CLAUDE_MODEL = "claude-sonnet-4-20250514";
+// const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 
-type ClaudeMessage = {
-  role: "assistant" | "user";
-  content: string;
-};
+// type ClaudeMessage = {
+//   role: "assistant" | "user";
+//   content: string;
+// };
 
-type StandardAiResponse = {
-  aiMessage: string;
-  htmlContent: string;
-  isHtmlGenerated: boolean;
-  isConversationComplete: boolean;
-};
+// type StandardAiResponse = {
+//   aiMessage: string;
+//   htmlContent: string;
+//   isHtmlGenerated: boolean;
+//   isConversationComplete: boolean;
+// };
 
-function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
-  try {
-    const textContent = claudeResponse.content[0].text;
+// function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
+//   try {
+//     const textContent = claudeResponse.content[0].text;
 
-    console.log("#################################");
-    console.log("Claude Response:", textContent);
-    console.log("#################################");
+//     console.log("#################################");
+//     console.log("Claude Response:", textContent);
+//     console.log("#################################");
 
-    const parsedContent = JSON.parse(textContent);
+//     const parsedContent = JSON.parse(textContent);
 
-    return {
-      aiMessage: parsedContent.aiMessage || "",
-      htmlContent: parsedContent.htmlContent || "",
-      isHtmlGenerated: parsedContent.isHtmlGenerated || false,
-      isConversationComplete: parsedContent.isConversationComplete || false,
-    };
-  } catch (error) {
-    console.error("Failed to parse Claude response:", error);
+//     return {
+//       aiMessage: parsedContent.aiMessage || "",
+//       htmlContent: parsedContent.htmlContent || "",
+//       isHtmlGenerated: parsedContent.isHtmlGenerated || false,
+//       isConversationComplete: parsedContent.isConversationComplete || false,
+//     };
+//   } catch (error) {
+//     console.error("Failed to parse Claude response:", error);
 
-    return {
-      aiMessage: "عذرًا، حدث خطأ في النظام.",
-      htmlContent: "",
-      isHtmlGenerated: false,
-      isConversationComplete: false,
-    };
-  }
-}
+//     return {
+//       aiMessage: "عذرًا، حدث خطأ في النظام.",
+//       htmlContent: "",
+//       isHtmlGenerated: false,
+//       isConversationComplete: false,
+//     };
+//   }
+// }
 
-export function registerHtmlAiRoute(router: Router) {
-  const htmlAiRoutes = Router();
+// export function registerHtmlAiRoute(router: Router) {
+//   const htmlAiRoutes = Router();
 
-  htmlAiRoutes.post("/", async (req: Request, res: Response) => {
-    const { message, history, studentId } = req.body;
+//   htmlAiRoutes.post("/", async (req: Request, res: Response) => {
+//     const { message, history, studentId } = req.body;
 
-    if (!message || !Array.isArray(history)) {
-      return res.status(400).json({ error: "Missing message or history" });
-    }
+//     if (!message || !Array.isArray(history)) {
+//       return res.status(400).json({ error: "Missing message or history" });
+//     }
 
-    const isMessageSafe = await isContentSafe(message);
+//     const isMessageSafe = await isContentSafe(message);
 
-    if (!isMessageSafe) {
-      return res.status(200).json({
-        content: JSON.stringify({
-          aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
-          htmlContent: "",
-          isHtmlGenerated: false,
-          isConversationComplete: false,
-        }),
-      });
-    }
+//     if (!isMessageSafe) {
+//       return res.status(200).json({
+//         content: JSON.stringify({
+//           aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
+//           htmlContent: "",
+//           isHtmlGenerated: false,
+//           isConversationComplete: false,
+//         }),
+//       });
+//     }
 
-    logStudentHtmlMessage(studentId, message);
+//     logStudentHtmlMessage(studentId, message);
 
-    const messages: ClaudeMessage[] = [
-      {
-        role: "assistant",
-        content: HTML_CLAUDE_AI_SYSTEM_PROMPT,
-      },
-    ];
+//     const messages: ClaudeMessage[] = [
+//       {
+//         role: "assistant",
+//         content: HTML_CLAUDE_AI_SYSTEM_PROMPT,
+//       },
+//     ];
 
-    const historyMessages: ClaudeMessage[] = history.map((msg: any) => ({
-      role: msg.role === "assistant" ? "assistant" : "user",
-      content:
-        msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
-    }));
+//     const historyMessages: ClaudeMessage[] = history.map((msg: any) => ({
+//       role: msg.role === "assistant" ? "assistant" : "user",
+//       content:
+//         msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
+//     }));
 
-    messages.push(...historyMessages);
+//     messages.push(...historyMessages);
 
-    messages.push({
-      role: "assistant",
-      content: `
-                Reminder: Please reply using only the following valid JSON format: 
-                {
-                  "aiMessage": "Your friendly, Saudi-style message to the student in Arabic",
-                  "htmlContent": "Complete HTML game code (only when generating/editing code, otherwise empty string)",
-                  "isHtmlGenerated": true/false (true only when htmlContent contains code),
-                  "isConversationComplete": true/false (true only when student explicitly says they're done)
-                }
-      `.trim(),
-    });
+//     messages.push({
+//       role: "assistant",
+//       content: `
+//                 Reminder: Please reply using only the following valid JSON format:
+//                 {
+//                   "aiMessage": "Your friendly, Saudi-style message to the student in Arabic",
+//                   "htmlContent": "Complete HTML game code (only when generating/editing code, otherwise empty string)",
+//                   "isHtmlGenerated": true/false (true only when htmlContent contains code),
+//                   "isConversationComplete": true/false (true only when student explicitly says they're done)
+//                 }
+//       `.trim(),
+//     });
 
-    try {
-      const response = await anthropic.messages.create({
-        model: CLAUDE_MODEL,
-        max_tokens: 4000,
-        temperature: 0.1,
-        system: HTML_CLAUDE_AI_SYSTEM_PROMPT,
-        messages: messages,
-      });
+//     try {
+//       const response = await anthropic.messages.create({
+//         model: CLAUDE_MODEL,
+//         max_tokens: 4000,
+//         temperature: 0.1,
+//         system: HTML_CLAUDE_AI_SYSTEM_PROMPT,
+//         messages: messages,
+//       });
 
-      const standardResponse = parseClaudeResponse(response);
+//       const standardResponse = parseClaudeResponse(response);
 
-      console.log("####################################");
-      console.log("Standard Response:", standardResponse);
-      console.log("####################################");
+//       console.log("####################################");
+//       console.log("Standard Response:", standardResponse);
+//       console.log("####################################");
 
-      return res.status(200).json({
-        content: JSON.stringify(standardResponse),
-      });
-    } catch (error) {
-      console.error("Error generating AI chat:", error);
+//       return res.status(200).json({
+//         content: JSON.stringify(standardResponse),
+//       });
+//     } catch (error) {
+//       console.error("Error generating AI chat:", error);
 
-      return res.status(500).json({ error: "AI generation failed" });
-    }
-  });
+//       return res.status(500).json({ error: "AI generation failed" });
+//     }
+//   });
 
-  router.use("/html-ai", htmlAiRoutes);
-}
+//   router.use("/html-ai", htmlAiRoutes);
+// }
 
 // import { Router, Request, Response } from "express";
 // import Anthropic from "@anthropic-ai/sdk";
@@ -224,7 +224,6 @@ export function registerHtmlAiRoute(router: Router) {
 //   router.use("/html-ai", htmlAiRoutes);
 // }
 
-/*
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
 import { isContentSafe } from "server/services/ai-moderation";
@@ -312,4 +311,3 @@ export function registerHtmlAiRoute(router: Router) {
   });
   router.use("/html-ai", htmlAiRoutes);
 }
-*/

@@ -117,6 +117,8 @@ export class HtmlProjectRepository {
       conditions.push(ilike(students.schoolName, `%${filters.schoolName}%`));
     }
 
+    conditions.push(sql`${students.id} IS NOT NULL`);
+
     return conditions;
   }
 
