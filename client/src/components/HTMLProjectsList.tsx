@@ -78,6 +78,32 @@ export default function HtmlProjectsList() {
     fetchProjectsAndStudents();
   }, []);
 
+  // useEffect(() => {
+  //   async function fetchProjectsAndStudents() {
+  //     try {
+  //       const res = await fetch("/api/html-projects/submissions");
+
+  //       if (!res.ok) throw new Error("فشل في تحميل المشاريع");
+
+  //       const projectData: HtmlProject[] = await res.json();
+
+  //       // Extract unique user IDs
+
+  //       console.log("############################");
+  //       console.log("projectData: ", projectData);
+  //       console.log("############################");
+
+  //       setProjects(projectData);
+  //     } catch (err: any) {
+  //       setError(err.message || "حدث خطأ ما");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+
+  //   fetchProjectsAndStudents();
+  // }, []);
+
   const goToHtmlGenerator = () => {
     setLocation("/missions/ai-html-generator");
   };

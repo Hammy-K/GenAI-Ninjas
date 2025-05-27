@@ -19,6 +19,7 @@ import IntroMission from "@/pages/intro-mission";
 import LovableSubmissionsPage from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
+import { ResetIntro } from "@/components/ResetIntro";
 import { DebugPanel } from "@/components/debug/DebugPanel";
 import { AuthProvider } from "./contexts/AuthContext";
 import HtmlProjectsList from "./components/HTMLProjectsList";
@@ -86,6 +87,7 @@ function Router() {
       {/* <Route path="/missions/html-generator-v2/submissions" component={HtmlGeneratorV2SubmissionsPage} /> */}
 
       <Route path="/reset" component={ResetSession} />
+      <Route path="/reset-intro" component={ResetIntro} />
       <Route component={NotFound} />
     </Switch>
   );

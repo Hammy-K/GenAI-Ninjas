@@ -58,6 +58,9 @@ export default function AiHtmlGenerator() {
   );
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [lastSavedHtmlContent, setLastSavedHtmlContent] = useState<
+    string | undefined
+  >(undefined);
 
   const getAiMessagesFromLocatStorage = () => {
     return localStorage.getItem("aiMessages");
@@ -97,19 +100,8 @@ export default function AiHtmlGenerator() {
   }, []);
 
   useEffect(() => {
-    // Cookies.set("aiMessages", JSON.stringify(messages));
     setAiMessagesToLocalStorage(messages);
-    // Cookies.set("aiHtmlContent", htmlContent || "");
     setAiHtmlContentToLocalStorage(htmlContent || "");
-
-    console.log("####################################");
-    console.log(
-      "Storage Messages: ",
-      getAiMessagesFromLocatStorage(),
-      " \n Storage aiHtmlContent: ",
-      getAiHtmlContentFromLocatStorage(),
-    );
-    console.log("####################################");
   }, [messages, htmlContent]);
 
   const handleTriggerConversationCompleted = () => {
@@ -232,6 +224,14 @@ export default function AiHtmlGenerator() {
       return;
     }
 
+    // check if content has changed since last save
+    if (htmlContent === lastSavedHtmlContent && projectId) {
+      setOpenShareProjectDialog(() => true);
+      handleTriggerConfetti();
+
+      return;
+    }
+
     setIsProjectSaving(true);
 
     try {
@@ -244,6 +244,8 @@ export default function AiHtmlGenerator() {
       const projectId = await saveProject(htmlContent, studentId);
 
       setProjectId(() => projectId);
+
+      setLastSavedHtmlContent(() => htmlContent);
 
       setOpenShareProjectDialog(() => true);
 
@@ -261,14 +263,22 @@ export default function AiHtmlGenerator() {
         return;
       }
 
+      // only save if content has changed since last save
+      if (htmlContent === lastSavedHtmlContent) {
+        return;
+      }
+
       const studentId = Cookies.get("studentId");
 
       if (!studentId) {
+        console.error("No student ID found in cookies");
         return;
       }
 
       try {
-        await saveProject(htmlContent, studentId);
+        const savedProjectId = await saveProject(htmlContent, studentId);
+        setLastSavedHtmlContent(() => htmlContent);
+        setProjectId(savedProjectId);
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
@@ -282,9 +292,10 @@ export default function AiHtmlGenerator() {
   const startNewProject = () => {
     setMessages([welcomeMessage]);
     setHtmlContent(undefined);
-    // Cookies.remove("aiMessages");
+    setLastSavedHtmlContent(undefined);
+    setProjectId(undefined);
+
     removeAiMessagesFromLocalStorage();
-    // Cookies.remove("aiHtmlContent");
     removeAiHtmlContentFromLocalStorage();
 
     toast({
