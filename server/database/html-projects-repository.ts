@@ -1,7 +1,18 @@
 import { db } from "../db";
 import { htmlProjects } from "../../shared/schema";
 import { students } from "../schemas/students";
-import { and, or, ilike, eq, desc, asc, count, SQL, sql } from "drizzle-orm";
+import {
+  and,
+  or,
+  ilike,
+  eq,
+  desc,
+  asc,
+  count,
+  SQL,
+  sql,
+  inArray,
+} from "drizzle-orm";
 import type {
   NormalizedPaginationParams,
   PaginatedResponse,
@@ -189,6 +200,48 @@ export class HtmlProjectRepository {
         eq(htmlProjects.userId, sql`(${students.id})::text` as SQL),
       )
       .where(whereClause);
+  }
+
+  async findProjectsByIds(
+    projectIds: string[],
+  ): Promise<HtmlProjectWithStudent[]> {
+    if (!projectIds || projectIds.length === 0) {
+      return [];
+    }
+
+    const result = await db
+      .select({
+        // HTML Project fields
+        id: htmlProjects.id,
+        projectId: htmlProjects.projectId,
+        html: htmlProjects.html,
+        firebaseUid: htmlProjects.firebaseUid,
+        userId: htmlProjects.userId,
+        createdAt: htmlProjects.createdAt,
+        updatedAt: htmlProjects.updatedAt,
+        // Student fields (nested object)
+        student: {
+          id: students.id,
+          fullName: students.fullName,
+          schoolName: students.schoolName,
+          phoneNumber: students.phoneNumber,
+          createdAt: students.createdAt,
+        },
+      })
+      .from(htmlProjects)
+      .leftJoin(
+        students,
+        eq(htmlProjects.userId, sql`(${students.id})::text` as SQL),
+      )
+      .where(
+        and(
+          inArray(htmlProjects.projectId, projectIds),
+          sql`${students.id} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(htmlProjects.createdAt));
+
+    return result as HtmlProjectWithStudent[];
   }
 
   // Keep existing method for backward compatibility
