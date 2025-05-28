@@ -19,11 +19,11 @@ const resources = {
       menu: "القائمة",
 
       // Progress stages
-      stage1: "👋",
-      stage2: "د. بنجي",
-      stage3: "الأوامر",
-      stage4: "الصور",
-      stage5: "معرض الصور",
+      stage1: "الأوامر",
+      stage2: "الصور",
+      stage3: "معرض الصور",
+      stage4: "",
+      stage5: "",
       stage6: "الموقع",
       stage7: "التسليم",
       stage8: "🎉",

@@ -117,7 +117,7 @@ export default function Dashboard() {
   // Navigation handlers
   const handleStartMission = (missionNumber: number) => {
     if (missionNumber === 1) {
-      navigate("/mission1");
+      navigate("/intro-mission");
     } else if (missionNumber === 2 && isMission1Complete) {
       // Future implementation: navigate('/mission2');
       console.log("Mission 2 would be started");
