@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "../ui/button";
-import { Database } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 
 export default function HTMLProjectsPageHeader() {
   const [location, setLocation] = useLocation();
@@ -30,7 +30,7 @@ export default function HTMLProjectsPageHeader() {
           className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold"
           onClick={goToHtmlGenerator}
         >
-          <Database className="h-5 w-5" />
+          <Gamepad2 className="h-5 w-5" />
           <span>العودة الى تصميم الالعاب</span>
         </Button>
       </div>

@@ -69,13 +69,13 @@ export default function HtmlProjectsList({ search }: Props) {
       ) : projects.length === 0 ? (
         <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
       ) : (
-        <div className="flex flex-col items-center">
+        <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>
-          <div className="flex justify-between gap-4 mt-6 w-full px-36">
+          <div className="flex justify-between gap-4 mt-6 w-full">
             <Button
               disabled={queryParams.page === 1}
               onClick={() =>
@@ -85,7 +85,8 @@ export default function HtmlProjectsList({ search }: Props) {
               السابق
             </Button>
             <span className="self-center">
-              الصفحة {pagination.page} من {pagination.totalPages}
+              الصفحة {pagination.page} من {pagination.totalPages} (
+              {pagination.total} مشروع)
             </span>
             <Button
               disabled={queryParams.page === pagination.totalPages}

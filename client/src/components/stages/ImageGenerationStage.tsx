@@ -27,6 +27,7 @@ import penguinAvatar from "@/assets/Group 26087843.png";
 import { validateInput } from "@/lib/inputFilter";
 import { trackStageProgress } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import penguinPngPath from "@assets/Penguin.png";
 
 // Define the component props
 interface ImageGenerationStageProps {
@@ -514,7 +515,7 @@ export function ImageGenerationStage({
       if (state.generationCount === 0) {
         // This is the first image generation, so award XP
         onEarnXp(30, "first_image_generated");
-        
+
         // Track this specific event
         trackStageProgress("image_generation", "first_image_generated", {
           image_url_length: imageUrl.length,
@@ -526,12 +527,12 @@ export function ImageGenerationStage({
         generation_count: state.generationCount + 1,
         image_url_length: imageUrl.length,
       });
-
     } catch (error) {
       console.error("Error generating image:", error);
 
       // Create an error message
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
 
       // First update to clear loading state
       setState((prev) => ({
@@ -562,56 +563,48 @@ export function ImageGenerationStage({
 
   return (
     <div className="image-generation-stage min-h-screen flex flex-col">
-      <div className="py-6 border-b bg-white">
+      <div className="">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-medium text-center flex items-center justify-center gap-2">
             <Wand2 className="h-6 w-6 text-purple-500" />
             صمم صور باستخدام الذكاء الاصطناعي
           </h1>
           <p className="text-center text-muted-foreground mt-2">
-            تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين
-            شارك ابداعك.
+            تخيل أي شي... و خل الذكاء الاصطناعي يرسمه لك في ثواني! و بعدين شارك
+            ابداعك.
           </p>
-          
+
           {/* Image generation counter with visual indicator */}
           <div className="flex flex-col items-center justify-center mt-3">
-            <div className="text-sm text-muted-foreground bg-muted inline-flex items-center px-3 py-1 rounded-full mb-2">
-              <Wand2 className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+            <div className="text-sm text-muted-foreground inline-flex items-center px-3 py-1 mb-2">
+              <Wand2 className="h-3.5 w-3.5 mx-1.5 text-amber-500" />
               <span>
-                الصور المتبقية:{" "}
+                الصور المتبقية
                 <span className="font-bold">
-                  {Math.max(0, MAX_GENERATIONS - state.generationCount)}
-                </span>{" "}
+                  {" "}
+                  {Math.max(0, MAX_GENERATIONS - state.generationCount)}{" "}
+                </span>
                 من <span>{MAX_GENERATIONS}</span>
               </span>
-            </div>
-            {/* Visual progress bar for generations */}
-            <div className="w-full max-w-xs bg-muted rounded-full h-2.5 mb-1">
-              <div
-                className="bg-primary h-2.5 rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.max(0, ((MAX_GENERATIONS - state.generationCount) / MAX_GENERATIONS) * 100)}%`,
-                }}
-              ></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content Area - Two Columns Layout */}
-      <div className="flex-grow p-4">
+      <div className="py-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row h-[calc(100vh-250px)]">
             {/* Left Column: Image Preview - 70% width */}
-            <div className="w-full md:w-[70%] h-full mb-4 md:mb-0 md:pr-2">
-              <div className="bg-gray-100 border rounded-t px-4 py-2 flex items-center">
+            <div className="w-full md:w-[70%] h-full mb-4 md:mb-0 bg-white rounded-md">
+              <div className="p-4 border-b border-b-gray-100">
                 <span className="font-medium text-sm">معاينة الصورة</span>
               </div>
 
-              <div className="flex-grow bg-white h-full border-x border-b rounded-b p-4 flex flex-col items-center justify-center">
+              <div className="h-full rounded-b p-4 flex flex-col items-center justify-center">
                 {state.generatedImageUrl ? (
                   <div className="flex flex-col items-center">
-                    <div className="mb-4 overflow-hidden rounded border shadow-sm">
+                    <div className="mb-4 overflow-hidden rounded  shadow-sm">
                       <img
                         src={`/api/ai/image-proxy?url=${encodeURIComponent(state.generatedImageUrl)}`}
                         alt="صورة منشأة بالذكاء الاصطناعي"
@@ -621,7 +614,7 @@ export function ImageGenerationStage({
                     <div className="flex gap-2 mt-4">
                       <Button
                         onClick={handleDownloadImage}
-                        variant="outline"
+                        variant="default"
                         size="sm"
                         className="flex items-center gap-1 text-xs"
                       >
@@ -662,7 +655,11 @@ export function ImageGenerationStage({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
-                    <Image className="w-16 h-16 mb-2 text-gray-300" />
+                    <img
+                      src={penguinPngPath}
+                      alt="د. بنجي"
+                      className="h-20 w-auto mb-5"
+                    />
                     <p>ستظهر الصورة التي أنشأها الذكاء الاصطناعي هنا</p>
                     <p className="text-xs mt-2">دردش مع د. بنجي لإنشاء صورة</p>
                   </div>
@@ -672,7 +669,7 @@ export function ImageGenerationStage({
 
             {/* Right Column: Chat Thread - 30% width */}
             <div className="w-full md:w-[30%] h-full md:pl-2 flex flex-col">
-              <div className="rounded-t bg-gray-100 border-t border-r border-l px-4 py-3 flex items-center">
+              <div className="rounded-t-md border-b border-b-gray-100 bg-white p-4 flex items-center">
                 <div className="flex items-center">
                   <img
                     src={penguinAvatar}
@@ -684,8 +681,8 @@ export function ImageGenerationStage({
               </div>
 
               {/* Chat Messages Area */}
-              <div className="flex-grow border-x overflow-hidden relative">
-                <ScrollArea className="h-[calc(100vh-400px)]">
+              <div className="flex-grow border-x border-x-gray-100 bg-white overflow-hidden flex-col">
+                <ScrollArea className="h-[calc(100vh-700px)]">
                   <div className="p-4 space-y-4">
                     {state.messages.map((msg, i) => (
                       <div
@@ -739,7 +736,7 @@ export function ImageGenerationStage({
               </div>
 
               {/* Input Area */}
-              <div className="border-x border-b rounded-b p-3">
+              <div className="bg-white border-t border-t-gray-100 rounded-b-md p-3">
                 {state.error && (
                   <Alert variant="destructive" className="mb-3 py-2">
                     <AlertCircle className="h-3 w-3" />
@@ -758,7 +755,7 @@ export function ImageGenerationStage({
                     }
                     placeholder="صف الصورة التي تريد إنشاءها بالتفصيل..."
                     disabled={state.isLoading}
-                    className="text-sm resize-none bg-white rtl:text-right"
+                    className="text-sm resize-none bg-white rtl:text-right border border-gray-200 rounded-md"
                     rows={3}
                     dir="auto"
                   />
@@ -787,25 +784,32 @@ export function ImageGenerationStage({
       </div>
 
       {/* Footer with Navigation */}
-      <div className="bg-white border-t py-4 mt-6">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="">
+        <div className="max-w-6xl mx-auto">
           <div className="flex justify-between">
-            <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button onClick={onBack}>
+              <ArrowRight className="h-4 w-4" />
               <span>للخلف</span>
             </Button>
-            <Button 
-              onClick={onComplete} 
-              size="lg"
-              disabled={state.generationCount === 0 || state.sharingStatus !== "shared"}
-              className={state.generationCount === 0 || state.sharingStatus !== "shared" ? "relative" : ""}
-              variant={state.generationCount > 0 && state.sharingStatus === "shared" ? "default" : "outline"}
+            <Button
+              onClick={onComplete}
+              disabled={
+                state.generationCount === 0 || state.sharingStatus !== "shared"
+              }
+              className={
+                state.generationCount === 0 || state.sharingStatus !== "shared"
+                  ? "relative"
+                  : ""
+              }
             >
-              {state.generationCount === 0 || state.sharingStatus !== "shared" ? (
-                <div className="absolute -top-8 right-0 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
-                  {state.generationCount === 0 ? "قم بإنشاء صورة أولاً" : "شارك صورتك في المعرض"}
+              {/* {state.generationCount === 0 ||
+              state.sharingStatus !== "shared" ? (
+                <div className="absolute -top-6 right-2 bg-amber-100 text-amber-800 text-xs py-1 px-2 rounded whitespace-nowrap">
+                  {state.generationCount === 0
+                    ? "قم بإنشاء صورة أولاً"
+                    : "شارك صورتك في المعرض"}
                 </div>
-              ) : null}
+              ) : null} */}
               <span>المتابعة</span>
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Button>

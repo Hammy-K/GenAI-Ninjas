@@ -30,6 +30,7 @@ import { registerStudentsRoutes } from "./routes/students";
 import { registerFeedbackRoutes } from "./routes/feedback";
 import { registerHtmlAiRoute } from "./routes/html-ai";
 import { registerTranscribeRoute } from "./routes/ai-transcribe";
+import { registerGoogleDriveVideosRoutes } from "./routes/google-drive-videos";
 
 /**
  * Legacy function for server-side prompt logging
@@ -419,6 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerFeedbackRoutes(apiRouter);
   registerHtmlAiRoute(apiRouter);
   registerTranscribeRoute(apiRouter);
+  registerGoogleDriveVideosRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

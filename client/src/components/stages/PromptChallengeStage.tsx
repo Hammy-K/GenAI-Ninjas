@@ -197,8 +197,8 @@ export function PromptChallengeStage({
 
   return (
     <div className="prompt-challenge-stage">
-      <div className="max-w-3xl mx-auto">
-        <Card className="mb-6">
+      <div className="">
+        <Card className="bg-white border-0">
           <CardHeader>
             <div className="flex justify-between items-center mb-2">
               <CountdownTimer
@@ -233,69 +233,89 @@ export function PromptChallengeStage({
               </Alert>
             )}
 
-            {/* Examples Section with Check/X Icons */}
-            <div className="bg-neutral-50 rounded-lg border p-4 mb-6">
-              <h3 className="font-bold text-lg mb-3 text-center">
+            {/* Compact Examples Section */}
+            <div className="py-3 mb-4">
+              <h3 className="font-semibold text-base mb-2 text-center text-gray-700 mb-5">
                 أمثلة على الأوامر
               </h3>
 
-              <div className="flex items-center mb-3 bg-red-50 p-3 rounded-lg border border-red-200">
-                <div className="ml-3 bg-red-100 p-2 rounded-full">
-                  <X className="h-5 w-5 text-red-500" />
+              <div className="flex gap-2">
+                <div className="flex-1 flex items-start gap-2 bg-red-50 p-2 rounded-md">
+                  <div className="bg-red-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <X className="h-3 w-3 text-red-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-red-600 leading-tight">
+                      {badPromptExample}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      غير واضح وغير محدد
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-red-600">{badPromptExample}</p>
-                  <p className="text-sm text-red-600 mt-1">
-                    غير واضح وغير محدد
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center bg-green-50 p-3 rounded-lg border border-green-200">
-                <div className="ml-3 bg-green-100 p-2 rounded-full">
-                  <Check className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="font-bold text-green-600">
-                    {goodPromptExample}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">
-                    واضح، محدد، ويحتوي على تفاصيل مفيدة
-                  </p>
+                <div className="flex-1 flex items-start gap-2 bg-green-50 p-2 rounded-md">
+                  <div className="bg-green-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-green-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-green-600 leading-tight">
+                      {goodPromptExample}
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      واضح، محدد، ويحتوي على تفاصيل مفيدة
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Challenge Section */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3">حسّن هذا البرومبت:</h3>
+            <div className="mb-6 border border-gray-200 rounded-lg p-5">
+              <div className="p-4 mb-5">
+                {/* Instruction - Centered */}
+                <div className="text-center mb-4">
+                  <h3 className="font-semibold text-base text-gray-700">
+                    حسّن هذا البرومبت
+                  </h3>
+                </div>
 
-              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
-                <p className="font-medium">{weakPrompt}</p>
+                {/* Prompt Content - Centered */}
+                <div className="flex justify-center">
+                  <div className="w-full max-w-xs">
+                    <div className="bg-amber-50 p-2 rounded-md">
+                      <p className="text-sm font-medium text-amber-800 leading-relaxed text-center">
+                        {weakPrompt}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <Textarea
                 placeholder="أعد كتابة البرومبت ليكون أكثر تحديداً وتفصيلاً"
                 value={state.improvedPrompt}
                 onChange={(e) => setImprovedPrompt(e.target.value)}
-                className="min-h-[100px] mb-4 bg-white text-sm rtl:text-right"
+                className="min-h-[100px] mb-4 text-sm rtl:text-right bg-gray-50 border-0 rounded-md"
                 dir="auto"
               />
 
-              <Button
-                onClick={handleSubmitImprovement}
-                disabled={isAnalyzing || !state.improvedPrompt.trim()}
-                className="w-full"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    جاري التحليل...
-                  </>
-                ) : (
-                  "تحليل البرومبت"
-                )}
-              </Button>
+              <div className="w-full flex justify-center">
+                <Button
+                  onClick={handleSubmitImprovement}
+                  disabled={isAnalyzing || !state.improvedPrompt.trim()}
+                  className="w-full max-w-xl"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      جاري التحليل...
+                    </>
+                  ) : (
+                    "تحليل البرومبت"
+                  )}
+                </Button>
+              </div>
             </div>
 
             {error && (
@@ -309,10 +329,8 @@ export function PromptChallengeStage({
             {/* Results Section */}
             {state.analysis && (
               <div
-                className={`p-4 rounded-lg border mb-6 ${
-                  state.analysis.score >= 7
-                    ? "bg-green-50 border-green-200"
-                    : "bg-amber-50 border-amber-200"
+                className={`p-4 rounded-lg mb-6 ${
+                  state.analysis.score >= 7 ? "bg-green-50" : "bg-amber-50"
                 }`}
               >
                 <div className="flex items-center mb-3">
@@ -369,7 +387,7 @@ export function PromptChallengeStage({
 
             {/* Goal Description */}
             {!state.analysis && (
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-6 text-center">
+              <div className="bg-blue-50 p-3 rounded-lg mb-6 text-center">
                 <p className="text-sm text-blue-700">
                   هدفك هو الحصول على تقييم 7/10 أو أعلى للانتقال للمرحلة
                   التالية. كلما كان البرومبت أكثر تفصيلاً وتحديداً، كلما كانت
@@ -379,27 +397,31 @@ export function PromptChallengeStage({
             )}
           </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button onClick={onBack} variant="outline" size="lg">
-              <ArrowRight className="ml-2 h-4 w-4" />
-              <span>للخلف</span>
-            </Button>
-
-            <Button
-              onClick={onComplete}
-              size="lg"
-              disabled={!(state.analysis && state.analysis.score >= 7)} // Disable until score is 7 or higher
-              className={
-                state.analysis && state.analysis.score >= 7
-                  ? "bg-green-600 hover:bg-green-700"
-                  : ""
-              }
-            >
-              <span>المتابعة</span>
-              <ArrowLeft className="ml-2 h-4 w-4" />
-            </Button>
-          </CardFooter>
+          {/* <CardFooter className="flex justify-between"></CardFooter> */}
         </Card>
+
+        <div className="flex justify-between mt-4">
+          <Button
+            onClick={() => (window.location.href = "/")}
+            className="flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md"
+          >
+            <ArrowRight className="h-4 w-4" />
+            <span>للخلف</span>
+          </Button>
+
+          <Button
+            onClick={onComplete}
+            disabled={!(state.analysis && state.analysis.score >= 7)} // Disable until score is 7 or higher
+            className={
+              state.analysis && state.analysis.score >= 7
+                ? "bg-green-600 hover:bg-green-700"
+                : ""
+            }
+          >
+            <span>المتابعة</span>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

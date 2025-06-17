@@ -257,7 +257,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllGalleryImages(): Promise<GalleryImage[]> {
-    return db.select().from(galleryImages).orderBy(desc(galleryImages.likes));
+    return db
+      .select()
+      .from(galleryImages)
+      .orderBy(desc(galleryImages.createdAt));
+  }
+
+  async deleteGalleryImage(imageId: number): Promise<void> {
+    await db.delete(galleryLikes).where(eq(galleryLikes.imageId, imageId));
+    await db.delete(galleryImages).where(eq(galleryImages.id, imageId));
   }
 
   async getGalleryImage(id: number): Promise<GalleryImage | undefined> {
@@ -571,12 +579,12 @@ export class DatabaseStorage implements IStorage {
       firebaseUid: project.firebaseUid,
       userId: project.userId,
     };
-    
+
     // Add timestamps if provided
     if (project.createdAt) {
       cleanProject.createdAt = project.createdAt;
     }
-    
+
     if (project.updatedAt) {
       cleanProject.updatedAt = project.updatedAt;
     }

@@ -1,11 +1,11 @@
-import { ProgressBar } from "@/components/layout/ProgressBar";
+import { ProgressBarV2 } from "@/components/layout/ProgressBarV2";
 import { PromptChallengeStage } from "@/components/stages/PromptChallengeStage";
-import { ImageGenerationStage } from "@/components/stages/ImageGenerationStage";
-import { SimpleGalleryStage as GalleryExplorationStage } from "@/components/stages/SimpleGalleryStage";
+import { ImageGenerationStageV2 } from "@/components/stages/ImageGenerationStageV2";
 import { useQuest } from "@/hooks/useQuest";
 import { useEffect } from "react";
 import { useRoute } from "wouter";
 import { trackStageProgress } from "@/lib/firebase";
+import { SimpleGalleryStageV2 } from "@/components/SimpleGalleryStage/SimpleGalleryStageV2";
 
 // 🚀 Mission 1: minimal 3-step flow
 // 3. Prompt Engineering
@@ -117,16 +117,22 @@ export default function Mission1() {
         );
       case 4:
         return (
-          <ImageGenerationStage
+          <ImageGenerationStageV2
             onComplete={goToNextStage}
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
             onBack={goToPrevStageWithScroll}
           />
+          // <ImageGenerationStage
+          //   onComplete={goToNextStage}
+          //   onEarnXp={earnXp}
+          //   onUnlockBadge={unlockBadge}
+          //   onBack={goToPrevStageWithScroll}
+          // />
         );
       case 5:
         return (
-          <GalleryExplorationStage
+          <SimpleGalleryStageV2
             onComplete={() => completeMission(1)}
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
@@ -146,13 +152,13 @@ export default function Mission1() {
   };
 
   // Map internal stage numbers (3,4,5) → progress positions (1,2,3)
-  const progressPosition = currentStage-2; // 3→1, 4→2, 5→3
+  const progressPosition = currentStage - 2; // 3→1, 4→2, 5→3
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50 text-neutral-700 font-tajawal">
-      <ProgressBar currentStage={progressPosition} totalStages={3} />
+    <div className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal p-4">
+      <ProgressBarV2 currentStage={progressPosition} totalStages={3} />
 
-      <main className="flex-grow p-4 md:p-6">{renderStage()}</main>
+      <main className="flex-grow">{renderStage()}</main>
     </div>
   );
 }

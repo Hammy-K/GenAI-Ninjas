@@ -4,16 +4,14 @@ import { Message, AiResponse } from "./types";
  * Parses the raw AI response content into a structured AiResponse object,
  * falling back to defaults where necessary.
  */
-function parseAiResponse(rawContent: string): AiResponse {
+function parseAiResponse(response: any): AiResponse {
   try {
-    const parsed = JSON.parse(rawContent);
-
     return {
       role: "assistant",
-      aiMessage: parsed.aiMessage || "",
-      htmlContent: parsed.htmlContent || undefined,
-      isHtmlGenerated: parsed.isHtmlGenerated ?? false,
-      isConversationComplete: parsed.isConversationComplete ?? false,
+      aiMessage: response.aiMessage || "",
+      htmlContent: response.htmlContent || undefined,
+      isHtmlGenerated: response.isHtmlGenerated ?? false,
+      isConversationComplete: response.isConversationComplete ?? false,
     };
   } catch (error) {
     console.error("Failed to parse AI response:", error);
@@ -29,6 +27,14 @@ function parseAiResponse(rawContent: string): AiResponse {
   }
 }
 
+// Available endpoints:
+const HTML_AI_API_ENDPOINTS = {
+  anthropicClaudeSonnet4: "/api/html-ai/anthropic/claude-sonnet-4",
+  anthropicClaudeSonnet3_7: "/api/html-ai/anthropic/claude-sonnet-3-7",
+  anthropicSmartClaude: "/api/html-ai/anthropic/smart-claude",
+  openaiGpt4_1_mini: "/api/html-ai/openai/gpt-4-1-mini",
+};
+
 /**
  * Calls the AI backend with user message and message history,
  * returning a structured AiResponse object.
@@ -39,7 +45,7 @@ export const callAiApi = async (
   studentId: string,
 ): Promise<AiResponse> => {
   try {
-    const response = await fetch("/api/html-ai", {
+    const response = await fetch(HTML_AI_API_ENDPOINTS.anthropicClaudeSonnet4, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,13 +53,13 @@ export const callAiApi = async (
       body: JSON.stringify({
         message: userMessage,
         history: messageHistory.map(({ role, content }) => ({ role, content })),
-        studentId: studentId,
+        userId: studentId,
       }),
     });
 
     const data = await response.json();
 
-    const aiResponse = parseAiResponse(data.content);
+    const aiResponse = parseAiResponse(data);
 
     return aiResponse;
   } catch (error) {
@@ -86,6 +92,7 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     }
 
     const data = await response.json();
+
     const transcription = data.text;
 
     return transcription;

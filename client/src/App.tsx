@@ -26,6 +26,9 @@ import HtmlProjectsList from "./components/HTMLProjectsList";
 import { HTMLStandalone } from "./components/stages/HTMLStandalone";
 import AiHtmlGenerator from "./components/AiHtmlGenerator/AiHtmlGenerator";
 import HTMLProjectsPage from "./components/HTMLProjectsList/HTMLProjectsPage";
+import VideoPage from "./components/VideoGallery/VideoPage";
+import VideoPlayer from "./components/VideoGallery/VideoPlayer";
+import GalleryManagerPage from "./pages/admin/GalleryManagerPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -70,6 +73,9 @@ function Router() {
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
       />
+      <Route path="/missions/videos" component={VideoPage} />
+      <Route path="/missions/videos/:videoId" component={VideoPlayer} />
+
       {/* <Route
         path="/missions/html-projects/submissions"
         component={HtmlProjectsList}
@@ -89,6 +95,7 @@ function Router() {
 
       <Route path="/reset" component={ResetSession} />
       <Route path="/reset-intro" component={ResetIntro} />
+      {/* <Route path="/admin/gallery" component={GalleryManagerPage} /> */}
       <Route component={NotFound} />
     </Switch>
   );

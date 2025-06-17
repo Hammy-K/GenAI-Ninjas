@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateInput } from "@/lib/inputFilter";
 import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGeneratorIntroCard";
+import IntroMissionCard from "@/components/Dashboard/IntroMissionCard";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -400,7 +401,7 @@ export default function Dashboard() {
       {/* Profile information form (shown only on first visit) */}
       {showProfileForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
+          <Card className="w-full max-w-md p-6 bg-white">
             <h2 className="text-xl font-bold text-center mb-4">مرحباً بك!</h2>
             <p className="text-sm text-gray-600 mb-6 text-center">
               فضلاً أدخل معلوماتك الأساسية لبدء الرحلة التعليمية
@@ -418,7 +419,7 @@ export default function Dashboard() {
 
             {showCaptcha ? (
               /* CAPTCHA Screen */
-              <div className="text-center space-y-6">
+              <div className="text-center">
                 <div>
                   <h3 className="text-lg font-bold mb-2">
                     اضغط على القلب 💜 قبل ما تبدأ
@@ -441,18 +442,14 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setShowCaptcha(false)}
-                >
+                <Button className="mt-6" onClick={() => setShowCaptcha(false)}>
                   العودة للنموذج
                 </Button>
               </div>
             ) : (
               /* Main Form */
               <form onSubmit={handleProfileSubmit}>
-                <div className="space-y-4">
+                <div>
                   <div>
                     <Label htmlFor="studentName">اسمك</Label>
                     <Input
@@ -460,19 +457,19 @@ export default function Dashboard() {
                       value={studentName}
                       onChange={(e) => setStudentName(e.target.value)}
                       placeholder="الاسم الكامل"
-                      className="mt-1"
+                      className="mt-1 bg-white border-gray-300 rounded-lg"
                       required
                     />
                   </div>
 
-                  <div>
+                  <div className="my-2">
                     <Label htmlFor="studentGrade">الصف الدراسي</Label>
                     <Input
                       id="studentGrade"
                       value={studentGrade}
                       onChange={(e) => setStudentGrade(e.target.value)}
                       placeholder="مثال: الصف التاسع"
-                      className="mt-1"
+                      className="mt-1 bg-white border-gray-300 rounded-lg"
                       required
                     />
                   </div>
@@ -483,11 +480,11 @@ export default function Dashboard() {
                       value={schoolName}
                       onChange={(e) => setSchoolName(e.target.value)}
                       placeholder="اسم المدرسة"
-                      className="mt-1"
+                      className="mt-1 bg-white border-gray-300 rounded-lg"
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full mt-10">
                     بدء الرحلة
                   </Button>
                 </div>
@@ -506,10 +503,9 @@ export default function Dashboard() {
             <div className="w-full md:w-2/3">
               <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
-                <div
+                {/* <div
                   className={`relative mb-8 min-h-[145px] bg-gradient-to-r from-purple-50 to-indigo-50 p-5 pb-7 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? "collapsed" : ""}`}
                 >
-                  {/* Penguin Avatar positioned at top-left corner */}
                   <div className="absolute top-4 left-10">
                     <img
                       src={penguinAvatar}
@@ -518,7 +514,6 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  {/* Right-aligned content with margin to accommodate avatar */}
                   <div className="text-right ml-16 min-h-[120px] flex flex-col">
                     <h2 className="text-xl font-bold text-purple-700">
                       المهمة التعريفية
@@ -547,7 +542,13 @@ export default function Dashboard() {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </div> */}
+
+                <IntroMissionCard
+                  isComplete={isMission1Complete}
+                  showStreamContent={showStreamContent}
+                  onStartMission={() => handleStartMission(1)}
+                />
 
                 <AIGameGeneratorIntroCard />
 
@@ -837,7 +838,6 @@ export default function Dashboard() {
                 {/* Edit profile button */}
                 {studentName && studentGrade && schoolName && (
                   <Button
-                    variant="outline"
                     className="w-full mt-4 text-sm"
                     onClick={() => setShowProfileForm(true)}
                   >

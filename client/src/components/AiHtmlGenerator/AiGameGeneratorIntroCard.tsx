@@ -1,5 +1,5 @@
 import React from "react";
-import { Gamepad2, Sparkles, Zap, ArrowRight, ArrowLeft } from "lucide-react";
+import { Gamepad2, Sparkles, Zap, ArrowLeft } from "lucide-react";
 
 export default function AIGameGeneratorIntroCard() {
   const handleGenerateClick = () => {
@@ -95,18 +95,16 @@ export default function AIGameGeneratorIntroCard() {
   //         </div>
   //       </div>
 
-  //       <button
-  //         onClick={handleGenerateClick}
-  //         className="group bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-gray-900 font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-3 text-lg"
-  //       >
-  //         <Sparkles className="w-5 h-5 group-hover:animate-spin" />
-  //         ابدأ إنشاء لعبتك الآن
-  //         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-  //       </button>
-
-  //       <p className="text-xs text-purple-200 mt-3 opacity-80">
-  //         * لا يتطلب خبرة برمجية مسبقة
-  //       </p>
+  //       <div className="w-full flex justify-end">
+  //         <button
+  //           onClick={handleGenerateClick}
+  //           className="group bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-gray-900 font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-3 text-lg"
+  //         >
+  //           <Sparkles className="w-5 h-5 group-hover:animate-spin" />
+  //           ابدأ إنشاء لعبتك الآن
+  //           <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+  //         </button>
+  //       </div>
   //     </div>
 
   //     {/* Decorative elements */}

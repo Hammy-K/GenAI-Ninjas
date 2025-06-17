@@ -3,7 +3,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, ArrowRight, AlertCircle, Heart, Search, Loader2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  Heart,
+  Search,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useXpTracker } from "@/hooks/useXpTracker";
 import { trackStageProgress } from "@/lib/firebase";
@@ -38,7 +46,7 @@ export function SimpleGalleryStage({
   const [nameFilter, setNameFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
   const [likedImageIds, setLikedImageIds] = useState<Set<number>>(new Set());
-  
+
   // Debounce name filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -73,7 +81,11 @@ export function SimpleGalleryStage({
       // Handle both the new API format and old API format
       const data = await response.json();
       let galleryImages = [];
-      
+
+      console.log("##################################");
+      console.log("Gallery Images Data:", data);
+      console.log("##################################");
+
       if (Array.isArray(data)) {
         galleryImages = data; // Old API format
       } else if (data.images && Array.isArray(data.images)) {
@@ -86,13 +98,16 @@ export function SimpleGalleryStage({
   });
 
   // Filter images by student name if filter is provided
-  const filteredImages = debouncedFilter 
-    ? images.filter(image => 
-        image.studentName && 
-        image.studentName.toLowerCase().includes(debouncedFilter.toLowerCase())
+  const filteredImages = debouncedFilter
+    ? images.filter(
+        (image) =>
+          image.studentName &&
+          image.studentName
+            .toLowerCase()
+            .includes(debouncedFilter.toLowerCase()),
       )
     : images;
-    
+
   // Sort images by most liked
   const sortedImages = [...filteredImages].sort((a, b) => b.likes - a.likes);
 
@@ -160,7 +175,7 @@ export function SimpleGalleryStage({
       console.error("Error liking image:", error);
     },
   });
-  
+
   // Mutation for unliking an image
   const unlikeMutation = useMutation({
     mutationFn: async (imageId: number) => {
@@ -198,32 +213,32 @@ export function SimpleGalleryStage({
     // Image already liked - unlike it
     if (likedImageIds.has(imageId)) {
       // Remove from liked images set
-      setLikedImageIds(prev => {
+      setLikedImageIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(imageId);
         return newSet;
       });
-      
+
       // Call API to unlike the image
       unlikeMutation.mutate(imageId);
-      
+
       // Show toast
       toast({
         title: "تم إلغاء الإعجاب",
         description: "تم إلغاء إعجابك بالصورة",
         variant: "default",
       });
-      
+
       return;
     }
-    
+
     // Add to liked images set for a new like
-    setLikedImageIds(prev => {
+    setLikedImageIds((prev) => {
       const newSet = new Set(prev);
       newSet.add(imageId);
       return newSet;
     });
-    
+
     // Call API to like the image
     likeMutation.mutate(imageId);
   };
@@ -237,7 +252,7 @@ export function SimpleGalleryStage({
 
   return (
     <div className="gallery-exploration-stage">
-      <Card className="mb-6">
+      <Card className="mb-4 border-0 bg-white">
         <CardHeader>
           <CardTitle className="text-2xl md:text-3xl text-center">
             استكشف معرض الصور
@@ -250,12 +265,12 @@ export function SimpleGalleryStage({
               اضغط على زر الإعجاب للصور المفضلة لديك!
             </p>
           </div>
-          
+
           {/* Search filter */}
           <div className="relative mb-6">
-            <div className="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-1 focus-within:ring-primary focus-within:border-primary">
+            <div className="flex items-center rounded-md px-3 py-2 shadow-sm focus-within:ring-1 focus-within:ring-primary focus-within:border-primary">
               <Search className="h-4 w-4 text-muted-foreground mr-2" />
-              <Input 
+              <Input
                 type="text"
                 placeholder="ابحث باسم الطالب..."
                 value={nameFilter}
@@ -305,25 +320,30 @@ export function SimpleGalleryStage({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedImages
                 .filter(
-                  (image) => image.imageUrl && image.imageUrl.trim() !== ""
+                  (image) => image.imageUrl && image.imageUrl.trim() !== "",
                 )
                 .map((image) => (
                   <div
                     key={image.id}
-                    className="bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    className="bg-card rounded-lg overflow-hidden "
                   >
                     <div className="aspect-square relative overflow-hidden">
                       <img
-                        src={image.imageUrl.startsWith('/generated-images/') || image.imageUrl.startsWith('/api/ai/image-proxy')
-                          ? image.imageUrl
-                          : image.imageUrl.startsWith('http') 
-                            ? `/api/ai/image-proxy?url=${encodeURIComponent(image.imageUrl)}`
-                            : image.imageUrl}
+                        src={
+                          image.imageUrl.startsWith("/generated-images/") ||
+                          image.imageUrl.startsWith("/api/ai/image-proxy")
+                            ? image.imageUrl
+                            : image.imageUrl.startsWith("http")
+                              ? `/api/ai/image-proxy?url=${encodeURIComponent(image.imageUrl)}`
+                              : image.imageUrl
+                        }
                         alt={`صورة بواسطة ${image.studentName}`}
                         className="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
                         onLoad={() => console.log(`Image loaded: ${image.id}`)}
                         onError={(e) => {
-                          console.log(`Image error loading: ${image.id}, URL: ${image.imageUrl}`);
+                          console.log(
+                            `Image error loading: ${image.id}, URL: ${image.imageUrl}`,
+                          );
                           // Hide the card if image fails to load
                           const card = e.currentTarget.closest(".bg-card");
                           if (card) card.classList.add("hidden");
@@ -336,14 +356,21 @@ export function SimpleGalleryStage({
                       </div>
                       <div className="mt-3 flex justify-end">
                         <Button
-                          variant={likedImageIds.has(image.id) ? "default" : "outline"}
                           size="sm"
-                          className={`flex items-center gap-2 ${likedImageIds.has(image.id) ? "bg-pink-100 hover:bg-pink-200 border-pink-200" : ""}`}
+                          className={`flex items-center gap-2 ${likedImageIds.has(image.id) ? "bg-red-300 hover:bg-red-200 border-red-200" : ""}`}
                           onClick={() => handleLike(image.id)}
-                          disabled={likeMutation.isPending || unlikeMutation.isPending}
-                          title={likedImageIds.has(image.id) ? "إلغاء الإعجاب" : "أعجبني"}
+                          disabled={
+                            likeMutation.isPending || unlikeMutation.isPending
+                          }
+                          title={
+                            likedImageIds.has(image.id)
+                              ? "إلغاء الإعجاب"
+                              : "أعجبني"
+                          }
                         >
-                          <Heart className={`h-4 w-4 ${likedImageIds.has(image.id) ? "fill-red-500 text-red-500" : ""}`} />
+                          <Heart
+                            className={`h-4 w-4 ${likedImageIds.has(image.id) ? "fill-red-500 text-red-500" : ""}`}
+                          />
                           <span>{image.likes}</span>
                         </Button>
                       </div>
@@ -352,26 +379,19 @@ export function SimpleGalleryStage({
                 ))}
             </div>
           )}
-
-          <div className="flex justify-between mt-8">
-            <Button
-              onClick={onBack}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <ArrowRight className="h-4 w-4" />
-              للخلف
-            </Button>
-            <Button
-              onClick={handleComplete}
-              className="flex items-center gap-2"
-            >
-              المتابعة
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-between">
+        <Button onClick={onBack} className="flex items-center gap-2">
+          <ArrowRight className="h-4 w-4" />
+          للخلف
+        </Button>
+        <Button onClick={handleComplete} className="flex items-center gap-2">
+          المتابعة
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
