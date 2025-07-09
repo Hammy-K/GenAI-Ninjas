@@ -17,8 +17,20 @@ import {
 export function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
   try {
     const textContent = claudeResponse.content[0].text;
-
-    const parsedContent = JSON.parse(textContent);
+    
+    // Try to parse the content - handle potential double-encoding
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(textContent);
+      
+      // If the result is a string, try parsing again (double-encoded case)
+      if (typeof parsedContent === 'string') {
+        parsedContent = JSON.parse(parsedContent);
+      }
+    } catch (parseError) {
+      console.error("JSON parsing failed:", parseError);
+      throw parseError;
+    }
 
     return {
       aiMessage: parsedContent.aiMessage || "",
@@ -53,12 +65,10 @@ export async function handleAnthropicRequest(
 
   if (!isMessageSafe) {
     return res.status(200).json({
-      content: JSON.stringify({
-        aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
-        htmlContent: "",
-        isHtmlGenerated: false,
-        isConversationComplete: false,
-      }),
+      aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
+      htmlContent: "",
+      isHtmlGenerated: false,
+      isConversationComplete: false,
     });
   }
 

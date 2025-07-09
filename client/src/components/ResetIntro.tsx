@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-export function ResetIntro() {
+export default function ResetIntro() {
   const [, navigate] = useLocation();
   const [isResetting, setIsResetting] = useState(false);
 

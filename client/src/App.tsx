@@ -19,7 +19,7 @@ import IntroMission from "@/pages/intro-mission";
 import LovableSubmissionsPage from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
-import { ResetIntro } from "@/components/ResetIntro";
+import ResetIntro from "@/components/ResetIntro";
 import { DebugPanel } from "@/components/debug/DebugPanel";
 import { AuthProvider } from "./contexts/AuthContext";
 import HtmlProjectsList from "./components/HTMLProjectsList";
