@@ -20,7 +20,7 @@ cur = conn.cursor()
 cur.execute("""
  WITH student_info AS (
   SELECT
-    id   AS user_id,
+    id  AS user_id,
     phone_number,
     full_name,
     school_name
