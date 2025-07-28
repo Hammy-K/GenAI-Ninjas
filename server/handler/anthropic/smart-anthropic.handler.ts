@@ -1,285 +1,134 @@
 import { Request, Response } from "express";
 import {
   anthropic,
-  ANTHROPIC_MAX_TOKENS,
-  ANTHROPIC_TEMPERATURE,
+  ANTHROPIC_CONFIG,
 } from "server/config/ai-config/anthropic/anthropic.config";
-import { parseClaudeResponse } from "./anthropic.handler";
-import { AiRequestBody } from "server/types/ai-types/common";
 import { isContentSafe } from "server/services/ai-moderation";
 import { logStudentHtmlMessage } from "server/services/student-html-message";
-import { ANTHROPIC_OUTPUT_REMINDER_PROMPT } from "server/templates/prompts/anthropic/anthropic-output-reminder.prompt";
+import { createHtmlAiRequestLogs } from "server/services/html-ai-request-logs";
 import { HTML_ANTHROPIC_AI_SYSTEM_PROMPT } from "server/templates/prompts/anthropic/anthropic.prompt";
+import { ANTHROPIC_OUTPUT_REMINDER_PROMPT } from "server/templates/prompts/anthropic/anthropic-output-reminder.prompt";
+import {
+  AiRequestBody,
+  StandardAiResponse,
+} from "server/types/ai-types/common";
 import { ClaudeMessage } from "server/types/ai-types/anthropic/claude";
+import { MessageCreateParamsNonStreaming } from "@anthropic-ai/sdk/resources/index.mjs";
 
-type ClaudeTryResult =
-  | {
-      success: true;
-      data: any;
-    }
-  | {
-      success: false;
-      status: number;
-      model: string;
-      retryAfter?: number;
-      retryUntil?: number;
-      error: any;
-      headers: Record<string, string>;
-    };
-
-function isNonRetryable(status: number) {
-  return [400, 401, 403, 404, 413].includes(status);
-}
-
-function parseRetryAfter(headers: Record<string, string>): number | undefined {
-  const raw = headers["retry-after"];
-
-  if (!raw) return undefined;
-
-  const seconds = parseInt(raw, 10);
-
-  if (isNaN(seconds) || seconds <= 0) return undefined;
-
-  return Math.min(seconds, 120); // Max 2 minutes
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function tryClaudeModelOnce(
-  req: Request,
-  model: string,
-): Promise<ClaudeTryResult> {
+function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
   try {
-    const { message, history, userId }: AiRequestBody = req.body;
+    const textContent = claudeResponse.content?.[0]?.text ?? "";
 
-    if (!message || !Array.isArray(history)) {
-      console.error("Missing message or history in tryClaudeModelOnce");
+    let parsed = textContent;
 
-      return {
-        success: true,
-        data: {
-          aiMessage: "عذرًا، حدث خطأ في النظام.",
-          htmlContent: "",
-          isHtmlGenerated: false,
-          isConversationComplete: false,
-        },
-      };
+    try {
+      parsed = JSON.parse(parsed);
+
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    } catch (_) {
+      console.error("Failed to double-parse Claude output");
     }
-
-    const isMessageSafe = await isContentSafe(message);
-
-    if (!isMessageSafe) {
-      return {
-        success: true,
-        data: {
-          aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
-          htmlContent: "",
-          isHtmlGenerated: false,
-          isConversationComplete: false,
-        },
-      };
-    }
-
-    logStudentHtmlMessage(userId, message);
-
-    const messages: ClaudeMessage[] = [
-      {
-        role: "assistant",
-        content: HTML_ANTHROPIC_AI_SYSTEM_PROMPT,
-      },
-    ];
-
-    const historyMessages: ClaudeMessage[] = history.map((msg: any) => ({
-      role: msg.role === "assistant" ? "assistant" : "user",
-      content:
-        msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
-    }));
-
-    messages.push(...historyMessages);
-
-    messages.push({
-      role: "assistant",
-      content: ANTHROPIC_OUTPUT_REMINDER_PROMPT,
-    });
-
-    const response = await anthropic.messages.create({
-      model: model,
-      max_tokens: ANTHROPIC_MAX_TOKENS,
-      temperature: ANTHROPIC_TEMPERATURE,
-      system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT,
-      messages: messages,
-    });
-
-    console.log("#############################");
-    console.log(`[${model}] Request succeeded try claude once: [${response}] `);
-    console.log("#############################");
 
     return {
-      success: true,
-      data: response,
+      aiMessage: parsed.aiMessage || "",
+      htmlContent: parsed.htmlContent || "",
+      isHtmlGenerated: parsed.isHtmlGenerated || false,
+      isConversationComplete: parsed.isConversationComplete || false,
     };
-  } catch (err: any) {
-    const status = err?.statusCode || err?.response?.status || 500;
-    const headers = err?.response?.headers || {};
-    const retryAfter = parseRetryAfter(headers);
-    const retryUntil = retryAfter ? Date.now() + retryAfter * 1000 : undefined;
-
-    console.error(`[${model}] Request failed:`, {
-      status,
-      retryAfter,
-      retryUntil,
-      error: err?.message || err,
-    });
+  } catch (error) {
+    console.error("Failed to parse Claude response:", error);
 
     return {
-      success: false,
-      status,
-      model,
-      retryAfter,
-      retryUntil,
-      error: err,
-      headers,
+      aiMessage:
+        "عذرًا، حدث خطأ في النظام. الرجاء إعادة المحاولة بعد لحظات، فقد يكون السبب ضغطًا مؤقتًا على الخدمة.",
+      htmlContent: "",
+      isHtmlGenerated: false,
+      isConversationComplete: false,
     };
   }
 }
 
-export async function handleAnthropicSmartRequest(
-  req: Request,
-  res: Response,
-  primaryModel: string,
-  secondaryModel: string,
-) {
-  const startTime = Date.now();
-  const MAX_TOTAL_TIME = 2 * 60 * 1000;
+export async function handleSmartAnthropicRequest(req: Request, res: Response) {
+  const { message, history, userId }: AiRequestBody = req.body;
 
-  function checkTimeout() {
-    if (Date.now() - startTime > MAX_TOTAL_TIME) {
-      console.error("Request timeout - exceeded maximum processing time.");
-
-      throw new Error("Request timeout - exceeded maximum processing time.");
-    }
+  if (!message || !Array.isArray(history)) {
+    return res.status(400).json({ error: "Missing message or history" });
   }
 
-  try {
-    checkTimeout();
-    const primary = await tryClaudeModelOnce(req, primaryModel);
+  const isMessageSafe = await isContentSafe(message);
 
-    if (primary.success) {
-      const standardResponse = parseClaudeResponse(primary.data);
+  if (!isMessageSafe) {
+    return res.status(200).json({
+      aiMessage: "عذرًا، لا يمكن استخدام هذا المحتوى.",
+      htmlContent: "",
+      isHtmlGenerated: false,
+      isConversationComplete: false,
+    });
+  }
 
-      return res.json(standardResponse);
-    }
+  logStudentHtmlMessage(userId, message);
 
-    console.log("Trying secondary model:", secondaryModel);
+  const baseMessages: ClaudeMessage[] = [
+    { role: "assistant", content: HTML_ANTHROPIC_AI_SYSTEM_PROMPT },
+    ...history.map(
+      (msg: any): ClaudeMessage => ({
+        role: msg.role === "assistant" ? "assistant" : "user",
+        content:
+          msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
+      }),
+    ),
+    { role: "assistant", content: ANTHROPIC_OUTPUT_REMINDER_PROMPT },
+  ];
 
-    checkTimeout();
-    const secondary = await tryClaudeModelOnce(req, secondaryModel);
+  for (const model of ANTHROPIC_CONFIG.FALLBACK_ORDER) {
+    try {
+      const requestTime = new Date();
 
-    if (secondary.success) {
-      const standardResponse = parseClaudeResponse(secondary.data);
+      // TODO: the system prompt is sent twice, once in the baseMessages and once here
+      const anthropicRequestBody: MessageCreateParamsNonStreaming = {
+        model,
+        max_tokens: ANTHROPIC_CONFIG.MAX_TOKENS,
+        temperature: ANTHROPIC_CONFIG.TEMPERATURE,
+        system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT,
+        messages: baseMessages,
+      };
 
-      return res.json(standardResponse);
-    }
+      const response = await anthropic.messages.create(anthropicRequestBody);
 
-    const bothNonRetryable =
-      isNonRetryable(primary.status) && isNonRetryable(secondary.status);
+      const responseTime = new Date();
 
-    if (bothNonRetryable) {
-      console.error(
-        "Both models returned non-retryable errors. Returning 500.",
-      );
+      const { input_tokens, output_tokens } = response.usage;
 
-      return res.status(500).json({
-        error: "Both models returned non-retryable errors",
-        details: { primary, secondary },
+      createHtmlAiRequestLogs({
+        studentId: userId,
+        modelUsed: model,
+        inputTokens: input_tokens,
+        outputTokens: output_tokens,
+        requestTime,
+        responseTime,
+        rawRequest: JSON.stringify(req.body),
+        rawResponse: JSON.stringify(response),
       });
-    }
 
-    // Filter out stale retry times and validate they're in the future
-    const retryables = [primary, secondary]
-      .filter((r) => r.retryUntil && r.retryUntil > Date.now())
-      .filter((r) => r.retryUntil! - Date.now() < MAX_TOTAL_TIME);
+      // Accept only successful completions
+      if (response.stop_reason === "end_turn") {
+        const parsedResponse = parseClaudeResponse(response);
 
-    if (retryables.length === 0) {
-      console.error("No retryable models. Returning 500.");
-
-      return res.status(500).json({
-        error: "No retryable models",
-        details: { primaryError: primary.error, secondary: secondary.error },
-      });
-    }
-
-    // Choose the model with shortest retry wait
-    retryables.sort((a, b) => a.retryUntil! - b.retryUntil!);
-
-    const chosen = retryables[0];
-
-    const now = Date.now();
-
-    const waitTime = Math.max(0, chosen.retryUntil! - now);
-
-    const jitter = chosen.retryAfter ? 0 : Math.random() * 2000;
-
-    const finalWaitTime = waitTime + jitter;
-
-    console.log(
-      `⏳ Waiting ${finalWaitTime}ms for model ${chosen.model} retry...`,
-    );
-
-    checkTimeout();
-    await sleep(finalWaitTime);
-
-    console.log(`Retrying model: ${chosen.model}`);
-
-    checkTimeout();
-    const retry = await tryClaudeModelOnce(req, chosen.model);
-
-    if (retry.success) {
-      console.log("Retry succeeded");
-
-      const standardResponse = parseClaudeResponse(retry.data);
-
-      return res.json(standardResponse);
-    }
-
-    const otherModel =
-      chosen.model === primaryModel ? secondaryModel : primaryModel;
-
-    const otherRetry = retryables.find((r) => r.model === otherModel);
-
-    if (otherRetry && otherRetry.retryUntil) {
-      const otherWait = Math.max(0, otherRetry.retryUntil - Date.now());
-
-      console.log(`Retrying other model ${otherModel} after ${otherWait}ms`);
-
-      checkTimeout();
-      await sleep(otherWait);
-
-      checkTimeout();
-      const finalTry = await tryClaudeModelOnce(req, otherModel);
-
-      if (finalTry.success) {
-        console.log("Fallback retry succeeded");
-
-        const standardResponse = parseClaudeResponse(finalTry.data);
-
-        return res.json(standardResponse);
+        return res.status(200).json(parsedResponse);
       }
 
-      console.error("Fallback retry failed:", finalTry);
+      // else try next model...
+      console.warn(
+        `Model [${model}] ended with stop_reason [${response.stop_reason}] — trying next.`,
+      );
+    } catch (err: any) {
+      console.error(`Model [${model}] failed with error:`, err.message);
+      // fall through to try next model
     }
-
-    console.error("All retries failed");
-
-    return res.status(500).json({
-      error: "All retries failed",
-      details: { primary, secondary },
-    });
-  } catch (error) {
-    console.error("Error generating AI chat:", error);
-
-    return res.status(500).json({ error: "AI generation failed" });
   }
+
+  // ✅ If all fallbacks fail
+  return res.status(500).json({
+    error: "All fallback models failed to generate a valid response.",
+  });
 }

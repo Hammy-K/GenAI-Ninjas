@@ -1,11 +1,9 @@
 import { Request, Response, Router } from "express";
-import {
-  ANTHROPIC_CLAUDE_SONNET_3_7_MODEL,
-  ANTHROPIC_CLAUDE_SONNET_4_MODEL,
-} from "server/config/ai-config/anthropic/anthropic.config";
+import { ANTHROPIC_CONFIG } from "server/config/ai-config/anthropic/anthropic.config";
+
 import { OPENAI_GPT_4_1_MINI_MODEL } from "server/config/ai-config/openai/openai.config";
 import { handleAnthropicRequest } from "server/handler/anthropic/anthropic.handler";
-import { handleAnthropicSmartRequest } from "server/handler/anthropic/smart-anthropic.handler";
+import { handleSmartAnthropicRequest } from "server/handler/anthropic/smart-anthropic.handler";
 import { handleOpenAIRequest } from "server/handler/openai/openai.handler";
 
 export function registerHtmlAiRoute(router: Router): void {
@@ -18,7 +16,7 @@ export function registerHtmlAiRoute(router: Router): void {
       return await handleAnthropicRequest(
         req,
         res,
-        ANTHROPIC_CLAUDE_SONNET_4_MODEL,
+        ANTHROPIC_CONFIG.MODELS.CLAUDE_SONNET_4,
       );
     },
   );
@@ -30,21 +28,16 @@ export function registerHtmlAiRoute(router: Router): void {
       return await handleAnthropicRequest(
         req,
         res,
-        ANTHROPIC_CLAUDE_SONNET_3_7_MODEL,
+        ANTHROPIC_CONFIG.MODELS.CLAUDE_SONNET_3_7,
       );
     },
   );
 
-  // Register Anthropic smart claude switching between sonnet 3.7 and 4
+  // Register Anthropic smart claude switching between sonnet 4, 3.7, 3.5 and haiku 3.5
   htmlAiRoutes.post(
     "/anthropic/smart-claude",
     async (req: Request, res: Response) => {
-      return await handleAnthropicSmartRequest(
-        req,
-        res,
-        ANTHROPIC_CLAUDE_SONNET_4_MODEL,
-        ANTHROPIC_CLAUDE_SONNET_3_7_MODEL,
-      );
+      return await handleSmartAnthropicRequest(req, res);
     },
   );
 

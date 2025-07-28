@@ -45,7 +45,7 @@ export const callAiApi = async (
   studentId: string,
 ): Promise<AiResponse> => {
   try {
-    const response = await fetch(HTML_AI_API_ENDPOINTS.anthropicClaudeSonnet4, {
+    const response = await fetch(HTML_AI_API_ENDPOINTS.anthropicSmartClaude, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
