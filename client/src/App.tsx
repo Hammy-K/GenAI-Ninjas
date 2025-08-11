@@ -58,7 +58,7 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/:prefix(ffm)?/" component={Dashboard} />
       <Route path="/mission1" component={Mission1} />
       <Route path="/mission1/stage/:stageName" component={Mission1} />
       <Route path="/game/mission:id" component={GameMission} />
@@ -84,7 +84,7 @@ function Router() {
       {/* Standalone HTML Generator */}
       <Route path="/missions/html-generator" component={HTMLGeneratorWrapper} />
       <Route
-        path="/missions/html-generator/submissions"
+        path="/:prefix(ffm)?/missions/html-generator/submissions"
         component={HTMLProjectsPage}
       />
       <Route path="/missions/ai-html-generator" component={AiHtmlGenerator} />

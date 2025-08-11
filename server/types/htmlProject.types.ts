@@ -6,6 +6,7 @@ export interface HtmlProject {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  organization: string | null;
 }
 
 export interface HtmlProjectWithStudent extends HtmlProject {

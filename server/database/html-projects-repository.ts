@@ -50,21 +50,6 @@ export class HtmlProjectRepository {
 
     const orderByClause = this.buildOrderByClause(validatedSortBy, sortOrder);
 
-    console.log("###############################################");
-    console.log("page: ", page);
-    console.log("limit: ", limit);
-    console.log("search: ", search);
-    console.log("sortBy: ", sortBy);
-    console.log("sortOrder: ", sortOrder);
-    console.log("filters: ", filters);
-    console.log("###############################################");
-    console.log("whereClause: ", whereClause);
-    console.log("orderByClause: ", orderByClause);
-    console.log("limit: ", limit);
-    console.log("offset: ", offset);
-    console.log("page: ", page);
-    console.log("###############################################");
-
     const [data, totalResult] = await Promise.all([
       this.executeSelectQuery(whereClause, orderByClause, limit, offset),
       this.executeCountQuery(whereClause),
@@ -166,6 +151,7 @@ export class HtmlProjectRepository {
         userId: htmlProjects.userId,
         createdAt: htmlProjects.createdAt,
         updatedAt: htmlProjects.updatedAt,
+        organization: htmlProjects.organization,
         // Student fields (nested object)
         student: {
           id: students.id,
@@ -219,6 +205,7 @@ export class HtmlProjectRepository {
         userId: htmlProjects.userId,
         createdAt: htmlProjects.createdAt,
         updatedAt: htmlProjects.updatedAt,
+        organization: htmlProjects.organization,
         // Student fields (nested object)
         student: {
           id: students.id,

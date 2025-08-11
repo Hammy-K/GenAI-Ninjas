@@ -30,9 +30,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateInput } from "@/lib/inputFilter";
 import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGeneratorIntroCard";
 import IntroMissionCard from "@/components/Dashboard/IntroMissionCard";
+import AIVideoIntroCard from "@/components/VideoGallery/AiVideosIntroCard";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
+  const organization = useOrganization();
   const {
     xp,
     currentStage,
@@ -552,6 +555,8 @@ export default function Dashboard() {
 
                 <AIGameGeneratorIntroCard />
 
+                <AIVideoIntroCard />
+
                 {/* Stream Content Container - Changes based on state */}
                 <div className="min-h-[400px] content-container">
                   {/* Always render both states, use CSS to control visibility */}
@@ -755,7 +760,17 @@ export default function Dashboard() {
             <div className="w-full md:w-1/3 md:sticky md:top-4 self-start">
               <Card className="border border-gray-100 rounded-xl p-5">
                 {/* Profile picture */}
-                <div className="flex justify-center mb-5">
+                <div className="flex flex-col w-full justify-center items-center mb-5">
+                  {!organization.isMain && (
+                    <div className="w-52 h-20 my-2 rounded-lg">
+                      <img
+                        src={organization.logo}
+                        alt={`${organization.name} logo`}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+
                   <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
                     <User className="w-10 h-10 text-purple-400" />
                   </div>

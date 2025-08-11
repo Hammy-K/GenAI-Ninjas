@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ProjectWithStudent } from "@/types/html-projects-types";
 import LoadingSpinner from "../LoadingSpinner";
 import ProjectCard from "../ProjectCard";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const FEATURED_PROJECT_IDS = [
   "project_1748334063133_oyv2wi",
@@ -19,15 +20,24 @@ const FEATURED_PROJECT_IDS = [
   "project_1748158532698_uih297",
 ];
 
+
+const FFM_FEATURED_PROJECT_IDS = [];
+
 export default function FeaturedProjectsList() {
   const [projects, setProjects] = useState<ProjectWithStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const organization = useOrganization();
+
+  console.log("------------------");
+  console.log(organization);
+  console.log("------------------");
 
   useEffect(() => {
     async function fetchFeaturedProjects() {
       try {
         setLoading(true);
+
         const res = await fetch("/api/html-projects/featured", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -35,7 +45,9 @@ export default function FeaturedProjectsList() {
         });
 
         if (!res.ok) throw new Error("فشل في تحميل المشاريع المميزة");
+
         const response = await res.json();
+
         setProjects(response.data);
       } catch (err: any) {
         setError(err.message || "حدث خطأ ما");
