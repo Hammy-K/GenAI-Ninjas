@@ -26,7 +26,7 @@ export default function AIGameGeneratorIntroCard() {
           </div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-purple-800">
-              توليد لعبتك الأولة مع د. بنجي
+              توليد لعبتك الأولى مع د. بنجي
             </h2>
             <Sparkles className="w-5 h-5 text-purple-600 animate-spin" />
           </div>

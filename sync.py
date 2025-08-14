@@ -28,6 +28,12 @@ cur.execute("""
   where phone_number is not null
   and phone_number != '0536391122'
   and phone_number != ''
+  and lower(full_name) not like '%test%'
+  and lower(school_name) not like '%test%'
+  and lower(full_name) not like '%noon%'
+  and lower(full_name) not like '%shoeb%'
+  and lower(school_name) not like '%noon%'
+  
 ),
 
 html_messages AS (
@@ -138,6 +144,11 @@ WHERE rn = 1
   where phone_number is not null
   and phone_number != '0536391122'
   and phone_number != ''
+  and lower(full_name) not like '%test%'
+  and lower(school_name) not like '%test%'
+  and lower(full_name) not like '%noon%'
+  and lower(school_name) not like '%noon%'
+  and lower(full_name) not like '%shoeb%'
 )
 
 SELECT 
