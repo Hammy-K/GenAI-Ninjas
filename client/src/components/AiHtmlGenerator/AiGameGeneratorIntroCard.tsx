@@ -1,10 +1,20 @@
 import React from "react";
 import { Gamepad2, Sparkles, Zap, ArrowLeft } from "lucide-react";
+import { useOrganization } from "@/hooks/useOrganization";
+
+const AiGameGeneratorPath = "/missions/ai-html-generator";
 
 export default function AIGameGeneratorIntroCard() {
+  const organization = useOrganization();
+
   const handleGenerateClick = () => {
     const currentUrl = window.location.origin;
-    window.open(`${currentUrl}/missions/ai-html-generator`, "_blank");
+
+    const destinationUrl = organization.isMain
+      ? `${currentUrl}${AiGameGeneratorPath}`
+      : `${currentUrl}/${organization.name}${AiGameGeneratorPath}`;
+
+    window.open(destinationUrl, "_blank");
   };
 
   return (
@@ -16,7 +26,7 @@ export default function AIGameGeneratorIntroCard() {
           </div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-purple-800">
-              مولد الألعاب بالذكاء الاصطناعي
+              توليد لعبتك الأولة مع د. بنجي
             </h2>
             <Sparkles className="w-5 h-5 text-purple-600 animate-spin" />
           </div>

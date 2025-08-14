@@ -32,6 +32,8 @@ import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGenerat
 import IntroMissionCard from "@/components/Dashboard/IntroMissionCard";
 import AIVideoIntroCard from "@/components/VideoGallery/AiVideosIntroCard";
 import { useOrganization } from "@/hooks/useOrganization";
+import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevelopmentMission/ApplicationDevelopmentMissionCard";
+import ApplicationDevelopmentMissionIntroCard from "@/components/ApplicationDevelopmentMission/ApplicaitonDevelopmentMissionIntroCard";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -121,7 +123,11 @@ export default function Dashboard() {
   // Navigation handlers
   const handleStartMission = (missionNumber: number) => {
     if (missionNumber === 1) {
-      navigate("/intro-mission");
+      const destinationUrl = organization.isMain
+        ? "/intro-mission"
+        : `/${organization.name}/intro-mission`;
+
+      navigate(destinationUrl);
     } else if (missionNumber === 2 && isMission1Complete) {
       // Future implementation: navigate('/mission2');
       console.log("Mission 2 would be started");
@@ -557,13 +563,15 @@ export default function Dashboard() {
 
                 <AIVideoIntroCard />
 
+                {organization.isMain && (
+                  <ApplicationDevelopmentMissionIntroCard />
+                )}
+
                 {/* Stream Content Container - Changes based on state */}
-                <div className="min-h-[400px] content-container">
-                  {/* Always render both states, use CSS to control visibility */}
+                {/* <div className="min-h-[400px] content-container">
                   <div
                     className={`stream-grid ${showStreamContent ? "content-active" : ""}`}
                   >
-                    {/* Stream Selection Grid */}
                     <div
                       className={`${showStreamContent ? "opacity-0 pointer-events-none absolute" : "opacity-100"} transition-all duration-500`}
                     >
@@ -582,7 +590,6 @@ export default function Dashboard() {
                                 : "border-purple-200 hover:border-purple-300"
                             } ${selectedStream === stream.id ? "selected" : ""}`}
                           >
-                            {/* Status badge - only visible in selected state */}
                             <div
                               className={`absolute top-2 left-2 stream-status flex items-center ${selectedStream === stream.id ? "opacity-100" : "opacity-0"}`}
                             >
@@ -592,15 +599,12 @@ export default function Dashboard() {
                               </span>
                             </div>
 
-                            {/* Icon */}
                             {stream.icon}
 
-                            {/* Title */}
                             <h3 className="text-lg font-bold text-center mt-4 mb-2">
                               {stream.title}
                             </h3>
 
-                            {/* Lock Status */}
                             <div className="flex justify-center items-center">
                               {stream.isLocked ? (
                                 <div className="flex items-center text-gray-500 text-sm">
@@ -619,11 +623,9 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Selected Stream Content */}
                     <div
                       className={`${!showStreamContent ? "opacity-0 pointer-events-none absolute" : "opacity-100"} transition-all duration-500`}
                     >
-                      {/* Back Button Bar */}
                       <div className="flex items-center mb-6">
                         <Button
                           variant="ghost"
@@ -635,18 +637,14 @@ export default function Dashboard() {
                         </Button>
                       </div>
 
-                      {/* Stream-specific journey content */}
                       {selectedStream === "games" && (
                         <div className="p-6 space-y-6">
                           <h2 className="text-xl font-semibold text-center mb-8">
                             رحلة تعلم تطوير الألعاب
                           </h2>
 
-                          {/* Puzzle-style learning journey with uniform styling */}
                           <div className="relative max-w-3xl mx-auto">
-                            {/* 2x4 grid of mission tiles */}
                             <div className="grid grid-cols-4 gap-5">
-                              {/* Row 1 */}
                               <div className="relative">
                                 <Link
                                   href="/missions/game-dev"
@@ -671,7 +669,6 @@ export default function Dashboard() {
                                     <Lock className="h-5 w-5 text-gray-400" />
                                   </div>
                                 </div>
-                                {/* Removing link to Mission 2 as requested */}
                               </div>
 
                               <div className="relative">
@@ -698,7 +695,6 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {/* Row 2 */}
                               <div className="relative">
                                 <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎨</div>
@@ -752,7 +748,7 @@ export default function Dashboard() {
                       )}
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 

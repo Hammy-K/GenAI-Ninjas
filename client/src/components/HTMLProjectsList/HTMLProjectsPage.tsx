@@ -12,7 +12,7 @@ export default function HtmlProjectsPage() {
 
   return (
     <div className="bg-[#f5f2e8]">
-      <div className="p-6 font-sans max-w-7xl mx-auto min-h-screen">
+      <div className="px-6 pb-6 font-sans max-w-7xl mx-auto min-h-screen">
         <HTMLProjectsPageHeader />
 
         <ProjectTabs activeTab={activeTab} onTabChange={setActiveTab} />

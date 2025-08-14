@@ -7,6 +7,7 @@ export interface HtmlProject {
   createdAt: Date;
   updatedAt: Date;
   organization: string | null;
+  isFeatured: boolean | null;
 }
 
 export interface HtmlProjectWithStudent extends HtmlProject {

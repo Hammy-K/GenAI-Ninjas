@@ -31,6 +31,7 @@ import { ProjectShareDialog } from "./ProjectShareDialog";
 import { toast } from "@/hooks/use-toast";
 import NewProjectDialog from "./NewProjectDialog";
 import { Textarea } from "../ui/textarea";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const welcomeMessage: Message = {
   role: "assistant",
@@ -61,6 +62,8 @@ export default function AiHtmlGenerator() {
   const [lastSavedHtmlContent, setLastSavedHtmlContent] = useState<
     string | undefined
   >(undefined);
+
+  const organization = useOrganization();
 
   const getAiMessagesFromLocatStorage = () => {
     return localStorage.getItem("aiMessages");
@@ -211,11 +214,11 @@ export default function AiHtmlGenerator() {
   }, [messages]);
 
   const goToSubmissions = () => {
-    window.open(
-      "/missions/html-generator/submissions",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const desitinationUrl = organization.isMain
+      ? "/missions/html-generator/submissions"
+      : `/${organization.name}/missions/html-generator/submissions`;
+
+    window.open(desitinationUrl, "_blank", "noopener,noreferrer");
   };
 
   const saveAndShareProject = async () => {
@@ -241,7 +244,11 @@ export default function AiHtmlGenerator() {
         throw new Error("No student ID found in cookies");
       }
 
-      const projectId = await saveProject(htmlContent, studentId);
+      const projectId = await saveProject(
+        htmlContent,
+        studentId,
+        organization.name,
+      );
 
       setProjectId(() => projectId);
 
@@ -276,7 +283,11 @@ export default function AiHtmlGenerator() {
       }
 
       try {
-        const savedProjectId = await saveProject(htmlContent, studentId);
+        const savedProjectId = await saveProject(
+          htmlContent,
+          studentId,
+          organization.name,
+        );
         setLastSavedHtmlContent(() => htmlContent);
         setProjectId(savedProjectId);
       } catch (error) {

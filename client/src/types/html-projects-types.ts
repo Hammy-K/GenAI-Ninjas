@@ -6,6 +6,8 @@ type HtmlProject = {
   userId: string | null;
   createdAt: string;
   updatedAt: string;
+  organization: string | null;
+  isFeatured: boolean | null;
 };
 
 type Student = {

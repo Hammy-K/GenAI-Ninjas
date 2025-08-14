@@ -7,7 +7,7 @@ interface Props {
 
 export default function SearchInput({ value, onChange }: Props) {
   return (
-    <div className="mb-6 max-w-md mx-auto">
+    <div className="mb-6 max-w-sm mx-auto">
       <input
         type="text"
         placeholder="ابحث باسم الطالب أو المدرسة ..."

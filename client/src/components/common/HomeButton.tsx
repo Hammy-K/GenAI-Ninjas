@@ -1,9 +1,14 @@
 import React from "react";
 import { Home } from "lucide-react";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export default function HomeButton() {
+  const organization = useOrganization();
+
   const handleClick = () => {
-    window.location.href = "/";
+    const destinationUrl = organization.isMain ? "/" : `/${organization.name}`;
+
+    window.location.href = destinationUrl;
   };
 
   return (

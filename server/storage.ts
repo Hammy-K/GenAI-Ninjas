@@ -578,6 +578,7 @@ export class DatabaseStorage implements IStorage {
       html: project.html,
       firebaseUid: project.firebaseUid,
       userId: project.userId,
+      organization: project.organization || "main",
     };
 
     // Add timestamps if provided
@@ -588,6 +589,13 @@ export class DatabaseStorage implements IStorage {
     if (project.updatedAt) {
       cleanProject.updatedAt = project.updatedAt;
     }
+
+    console.log("###############################");
+    console.log(
+      "Creating HTML project with organization:",
+      cleanProject.organization,
+    );
+    console.log("###############################");
 
     const [newProject] = await db
       .insert(htmlProjects)

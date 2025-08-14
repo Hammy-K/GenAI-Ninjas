@@ -22,7 +22,7 @@ export default function ProjectCard({ project }: Props) {
         className="w-full h-2/3 border-0"
         style={{ pointerEvents: "none" }}
       />
-      <div className="p-3 bg-[#fafafa] border-t text-sm z-20">
+      <div className="p-3 bg-[#fafafa] text-sm z-20">
         <p className="font-semibold text-lg text-center">
           👤 {project.student?.fullName || "طالب غير معروف"}
         </p>
@@ -31,7 +31,14 @@ export default function ProjectCard({ project }: Props) {
         </p>
         <p className="text-gray-500 text-xs text-center">
           🗓️ تاريخ المشروع:{" "}
-          {new Date(project.createdAt).toLocaleDateString("ar-EG")}
+          {new Date(project.createdAt).toLocaleTimeString("ar-EG", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          })}
         </p>
       </div>
     </div>

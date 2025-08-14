@@ -154,7 +154,8 @@ export const htmlProjects = pgTable("html_projects", {
   // Note: screenshotUrl removed as it doesn't exist in the current database
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  organization: text("organization"),
+  organization: text("organization").default("main"),
+  isFeatured: boolean("is_featured").default(false),
 });
 
 // Define insert schemas

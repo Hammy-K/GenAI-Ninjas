@@ -15,7 +15,20 @@ export function registerHTMLProjectsRoutes(router: Router) {
         // Get all projects using the storage interface
         // const submissions = await storage.getAllHtmlProjects();
 
-        const { page, limit, search, sortBy, sortOrder, filters } = req.query;
+        const {
+          page,
+          limit,
+          search,
+          sortBy,
+          sortOrder,
+          filters,
+          organization,
+        } = req.query;
+
+        const organizationFilter =
+          typeof organization === "string" && organization.trim()
+            ? organization.trim()
+            : "main";
 
         const submissions =
           await new HtmlProjectRepository().findAllProjectsWithPagination({
@@ -24,7 +37,9 @@ export function registerHTMLProjectsRoutes(router: Router) {
             search,
             sortBy,
             sortOrder: sortOrder === "desc" ? "desc" : "asc",
-            filters: {},
+            filters: {
+              organization: organizationFilter,
+            },
           });
 
         // Set content type to JSON explicitly
@@ -65,30 +80,53 @@ export function registerHTMLProjectsRoutes(router: Router) {
 
   htmlProjectsRouter.post("/featured", async (req: Request, res: Response) => {
     try {
-      const { projectIds } = req.body;
-
-      if (!projectIds || !Array.isArray(projectIds)) {
-        return res.status(400).json({
-          error: "Project IDs array is required",
-        });
-      }
+      const organization = req.body.organization || "main";
 
       const featuredProjects =
-        await new HtmlProjectRepository().findProjectsByIds(projectIds);
+        await new HtmlProjectRepository().findFeaturedProjectsByOrganization(
+          organization,
+        );
 
-      res.setHeader("Content-Type", "application/json");
-      return res.status(200).json({
+      res.status(200).json({
         data: featuredProjects,
         count: featuredProjects.length,
       });
     } catch (error) {
       console.error("Error fetching featured HTML projects:", error);
-      return res.status(500).json({
+
+      res.status(500).json({
         error: "Failed to fetch featured projects",
         details: error instanceof Error ? error.message : String(error),
       });
     }
   });
+
+  // htmlProjectsRouter.post("/featured", async (req: Request, res: Response) => {
+  //   try {
+  //     const { projectIds } = req.body;
+
+  //     if (!projectIds || !Array.isArray(projectIds)) {
+  //       return res.status(400).json({
+  //         error: "Project IDs array is required",
+  //       });
+  //     }
+
+  //     const featuredProjects =
+  //       await new HtmlProjectRepository().findProjectsByIds(projectIds);
+
+  //     res.setHeader("Content-Type", "application/json");
+  //     return res.status(200).json({
+  //       data: featuredProjects,
+  //       count: featuredProjects.length,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching featured HTML projects:", error);
+  //     return res.status(500).json({
+  //       error: "Failed to fetch featured projects",
+  //       details: error instanceof Error ? error.message : String(error),
+  //     });
+  //   }
+  // });
 
   router.use("/html-projects", htmlProjectsRouter);
 }

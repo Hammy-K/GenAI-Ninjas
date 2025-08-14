@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Home, ImageIcon } from "lucide-react";
 import { useLocation } from "wouter";
+import { useOrganization } from "@/hooks/useOrganization";
 import logoImage from "../../assets/logo.png";
-// import { useOrganization } from "@/hooks/useOrganization";
 import MCITWhiteLogo from "@/assets/MCIT-white-logo.png";
 
 interface HeaderProps {
@@ -13,10 +13,12 @@ export function Header({ xp }: HeaderProps) {
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
 
-  // const organization = useOrganization();
+  const organization = useOrganization();
 
   const handleHomeClick = () => {
-    navigate("/");
+    const destinationUrl = organization.isMain ? "/" : `/${organization.name}/`;
+
+    navigate(destinationUrl);
   };
 
   const handleGalleryClick = () => {

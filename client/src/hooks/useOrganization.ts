@@ -12,8 +12,8 @@ const ORG_MAP: Record<string, OrganizationInfo> = {
     name: "ffm",
     logo: FFMLogo,
   },
-  general: {
-    name: "general",
+  main: {
+    name: "main",
     isMain: true,
   },
 } as const;
@@ -25,7 +25,7 @@ export function useOrganization(): OrganizationInfo {
   const org =
     firstSegment && firstSegment in ORG_MAP
       ? ORG_MAP[firstSegment]
-      : ORG_MAP.general;
+      : ORG_MAP.main;
 
   return {
     ...org,

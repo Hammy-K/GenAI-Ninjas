@@ -60,6 +60,7 @@ import { Footer } from "../layout/Footer";
 import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
 import Cookies from "js-cookie";
 import { Label } from "@radix-ui/react-label";
+import { useOrganization } from "@/hooks/useOrganization";
 
 interface HTMLGeneratorStageProps {
   onComplete: () => void;

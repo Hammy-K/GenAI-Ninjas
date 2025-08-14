@@ -113,6 +113,10 @@ export class HtmlProjectRepository {
       conditions.push(ilike(students.schoolName, `%${filters.schoolName}%`));
     }
 
+    if (filters.organization) {
+      conditions.push(eq(htmlProjects.organization, filters.organization));
+    }
+
     conditions.push(sql`${students.id} IS NOT NULL`);
 
     return conditions;
@@ -152,6 +156,7 @@ export class HtmlProjectRepository {
         createdAt: htmlProjects.createdAt,
         updatedAt: htmlProjects.updatedAt,
         organization: htmlProjects.organization,
+        isFeatured: htmlProjects.isFeatured,
         // Student fields (nested object)
         student: {
           id: students.id,
@@ -206,6 +211,7 @@ export class HtmlProjectRepository {
         createdAt: htmlProjects.createdAt,
         updatedAt: htmlProjects.updatedAt,
         organization: htmlProjects.organization,
+        isFeatured: htmlProjects.isFeatured,
         // Student fields (nested object)
         student: {
           id: students.id,
@@ -234,5 +240,44 @@ export class HtmlProjectRepository {
   // Keep existing method for backward compatibility
   async getAllHtmlProjects(): Promise<HtmlProject[]> {
     return db.select().from(htmlProjects).orderBy(desc(htmlProjects.createdAt));
+  }
+
+  async findFeaturedProjectsByOrganization(
+    organization: string = "main",
+  ): Promise<HtmlProjectWithStudent[]> {
+    const result = await db
+      .select({
+        id: htmlProjects.id,
+        projectId: htmlProjects.projectId,
+        html: htmlProjects.html,
+        firebaseUid: htmlProjects.firebaseUid,
+        userId: htmlProjects.userId,
+        createdAt: htmlProjects.createdAt,
+        updatedAt: htmlProjects.updatedAt,
+        organization: htmlProjects.organization,
+        isFeatured: htmlProjects.isFeatured,
+        student: {
+          id: students.id,
+          fullName: students.fullName,
+          schoolName: students.schoolName,
+          phoneNumber: students.phoneNumber,
+          createdAt: students.createdAt,
+        },
+      })
+      .from(htmlProjects)
+      .leftJoin(
+        students,
+        eq(htmlProjects.userId, sql`(${students.id})::text` as SQL),
+      )
+      .where(
+        and(
+          eq(htmlProjects.isFeatured, true),
+          eq(htmlProjects.organization, organization),
+          sql`${students.id} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(htmlProjects.createdAt));
+
+    return result as HtmlProjectWithStudent[];
   }
 }

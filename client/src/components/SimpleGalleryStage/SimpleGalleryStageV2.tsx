@@ -18,6 +18,7 @@ import SearchInput from "./SearchInput";
 import LoadingSpinner from "../LoadingSpinner";
 import GalleryGrid from "./GalleryGrid";
 import ImageModal from "./ImageModal";
+import { useOrganization } from "@/hooks/useOrganization";
 
 interface GalleryExplorationStageProps {
   onComplete: () => void;
@@ -64,6 +65,8 @@ export function SimpleGalleryStageV2({
   });
 
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  const organization = useOrganization();
 
   useEffect(() => {
     trackStageProgress("gallery_exploration", "started");
@@ -251,7 +254,9 @@ export function SimpleGalleryStageV2({
   };
 
   const handleStageComplete = () => {
-    window.location.href = "/";
+    const destinationUrl = organization.isMain ? "/" : `/${organization.name}`;
+
+    window.location.href = destinationUrl;
   };
 
   const handleComplete = () => {

@@ -4,6 +4,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { ProjectWithStudent } from "@/types/html-projects-types";
 import ProjectCard from "./ProjectCard";
 import LoadingSpinner from "./LoadingSpinner";
+import { useOrganization } from "@/hooks/useOrganization";
+import { FolderOpen } from "lucide-react";
 
 interface Props {
   search: string;
@@ -13,6 +15,7 @@ export default function HtmlProjectsList({ search }: Props) {
   const [projects, setProjects] = useState<ProjectWithStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const organization = useOrganization();
   const [queryParams, setQueryParams] = useState({
     page: 1,
     limit: 30,
@@ -36,7 +39,7 @@ export default function HtmlProjectsList({ search }: Props) {
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/html-projects/submissions?page=${queryParams.page}&limit=${queryParams.limit}&search=${encodeURIComponent(debouncedSearch)}&sortBy=${queryParams.sortBy}&sortOrder=${queryParams.sortOrder}`,
+          `/api/html-projects/submissions?page=${queryParams.page}&limit=${queryParams.limit}&search=${encodeURIComponent(debouncedSearch)}&sortBy=${queryParams.sortBy}&sortOrder=${queryParams.sortOrder}&organization=${encodeURIComponent(organization.name)}`,
         );
 
         if (!res.ok) throw new Error("فشل في تحميل المشاريع");
@@ -67,7 +70,17 @@ export default function HtmlProjectsList({ search }: Props) {
       ) : error ? (
         <p className="text-center text-red-500 bg-[#f5f2e8]">خطأ: {error}</p>
       ) : projects.length === 0 ? (
-        <p className="text-center text-gray-500 p-8">لا توجد مشاريع حالياً</p>
+        <div className="flex flex-col items-center justify-center py-12 px-6">
+          <div className="mb-4">
+            <FolderOpen className="w-16 h-16 text-gray-300" strokeWidth={1} />
+          </div>
+          <p className="text-gray-500 text-lg font-medium mb-1">
+            لا توجد مشاريع
+          </p>
+          <p className="text-gray-400 text-sm text-center max-w-sm">
+            هنا ستعرض مشاريع الطلاب
+          </p>
+        </div>
       ) : (
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
