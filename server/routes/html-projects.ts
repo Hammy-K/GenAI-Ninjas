@@ -3,6 +3,8 @@ import { storage } from "../storage";
 import { htmlProjects } from "@shared/schema";
 import { HtmlProjectRepository } from "../database/html-projects-repository";
 import { NormalizedPaginationParams } from "server/types/pagination.types";
+import { verifyAdmin } from "server/controller/auth.controller";
+import { exportHtmlProjectsHandler } from "server/controller/html-projects.controller";
 
 export function registerHTMLProjectsRoutes(router: Router) {
   const htmlProjectsRouter = Router();
@@ -57,6 +59,8 @@ export function registerHTMLProjectsRoutes(router: Router) {
       }
     },
   );
+
+  htmlProjectsRouter.get("/export", verifyAdmin, exportHtmlProjectsHandler);
 
   // Get a single project by ID
   htmlProjectsRouter.get("/:projectId", async (req: Request, res: Response) => {

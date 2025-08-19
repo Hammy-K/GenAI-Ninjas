@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useOrganization } from "@/hooks/useOrganization";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -6,6 +7,7 @@ import { useLocation } from "wouter";
 export function ResetSession() {
   const [, navigate] = useLocation();
   const [isResetting, setIsResetting] = useState(false);
+  const organization = useOrganization();
 
   const resetAllLocalStorage = () => {
     setIsResetting(true);
@@ -21,7 +23,12 @@ export function ResetSession() {
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        navigate("/missions/ai-html-generator");
+        const destinationUrl = organization.isMain
+          ? "/missions/ai-html-generator"
+          : `/${organization.name}/missions/ai-html-generator`;
+
+        navigate(destinationUrl);
+
         window.location.reload(); // Force a full reload
       }, 500);
     } catch (error) {

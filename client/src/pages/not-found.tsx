@@ -11,8 +11,8 @@ export default function NotFound() {
       <div className="text-center space-y-8 max-w-lg mx-4">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-2xl font-bold text-gray-800">noon</span>
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center">
+            <span className="text-4xl font-bold text-gray-800">noon</span>
           </div>
         </div>
 
@@ -21,7 +21,7 @@ export default function NotFound() {
           <h1 className="text-8xl font-bold text-gray-800 tracking-tight">
             404
           </h1>
-          <div className="w-24 h-1 bg-yellow-400 mx-auto rounded-full"></div>
+          <div className="w-24 h-1 mx-auto rounded-full"></div>
         </div>
 
         {/* Message */}

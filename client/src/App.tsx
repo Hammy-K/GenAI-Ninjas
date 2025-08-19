@@ -47,6 +47,7 @@ import ExternalApisPlayground from "./components/ApplicationDevelopmentMission/m
 import OpenAIPlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/OpenaiPlayground";
 import PersistencePlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/PersistancePlayground";
 import AuthPersonalizationPlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/AuthPersonalizationPlayground";
+import AdminApp from "./pages/admin/AdminApp";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -198,6 +199,12 @@ function Router() {
       <Route path="/reset" component={ResetSession} />
       <Route path="/reset-intro" component={ResetIntro} />
       {/* <Route path="/admin/gallery" component={GalleryManagerPage} /> */}
+
+      {/* ########################## admin routes ############################# */}
+      <Route path="/admin/:rest*" component={AdminApp} />
+      <Route path="/admin" component={AdminApp} />
+      {/* ########################## admin routes ############################# */}
+
       <Route component={NotFound} />
     </Switch>
   );
