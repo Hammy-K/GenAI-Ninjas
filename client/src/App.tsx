@@ -48,6 +48,7 @@ import OpenAIPlayground from "./components/ApplicationDevelopmentMission/mission
 import PersistencePlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/PersistancePlayground";
 import AuthPersonalizationPlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/AuthPersonalizationPlayground";
 import AdminApp from "./pages/admin/AdminApp";
+import GenaiSchoolTrainingPage from "./pages/GenaiSchoolTrainingPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -203,6 +204,13 @@ function Router() {
       {/* ########################## admin routes ############################# */}
       <Route path="/admin/:rest*" component={AdminApp} />
       <Route path="/admin" component={AdminApp} />
+      {/* ########################## admin routes ############################# */}
+
+      {/* ########################## admin routes ############################# */}
+      <Route
+        path="/genai-school-training-registeration"
+        component={GenaiSchoolTrainingPage}
+      />
       {/* ########################## admin routes ############################# */}
 
       <Route component={NotFound} />

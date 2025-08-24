@@ -34,6 +34,7 @@ import AIVideoIntroCard from "@/components/VideoGallery/AiVideosIntroCard";
 import { useOrganization } from "@/hooks/useOrganization";
 import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevelopmentMission/ApplicationDevelopmentMissionCard";
 import ApplicationDevelopmentMissionIntroCard from "@/components/ApplicationDevelopmentMission/ApplicaitonDevelopmentMissionIntroCard";
+import { StudentService } from "@/services/student.service";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -64,10 +65,16 @@ export default function Dashboard() {
     return localStorage.getItem("schoolName") || "";
   });
 
+  const [phoneNumber, setPhoneNumber] = useState<string>(() => {
+    return localStorage.getItem("phoneNumber") || "";
+  });
+
   const [formError, setFormError] = useState<string>("");
   const [showProfileForm, setShowProfileForm] = useState<boolean>(
     !studentName || !studentGrade || !schoolName,
   );
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // CAPTCHA state
   const [showCaptcha, setShowCaptcha] = useState<boolean>(false);
@@ -89,13 +96,19 @@ export default function Dashboard() {
     if (studentName) {
       localStorage.setItem("studentName", studentName);
     }
+
     if (studentGrade) {
       localStorage.setItem("studentGrade", studentGrade);
     }
+
     if (schoolName) {
       localStorage.setItem("schoolName", schoolName);
     }
-  }, [studentName, studentGrade, schoolName]);
+
+    if (phoneNumber) {
+      localStorage.setItem("phoneNumber", phoneNumber);
+    }
+  }, [studentName, studentGrade, schoolName, phoneNumber]);
 
   // Track mission completion status
   const isMission1Complete = isMissionCompleted(1);
@@ -165,7 +178,7 @@ export default function Dashboard() {
   };
 
   // Handle emoji click for CAPTCHA
-  const handleEmojiClick = (emoji: string) => {
+  const handleEmojiClick = async (emoji: string) => {
     if (emoji === targetEmoji) {
       setCaptchaPassed(true);
 
@@ -173,6 +186,8 @@ export default function Dashboard() {
       localStorage.setItem("studentName", studentName);
       localStorage.setItem("studentGrade", studentGrade);
       localStorage.setItem("schoolName", schoolName);
+      localStorage.setItem("phoneNumber", phoneNumber);
+
       setShowProfileForm(false);
       setShowCaptcha(false);
     } else {
@@ -183,7 +198,7 @@ export default function Dashboard() {
   };
 
   // Handle form submission
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Reset any previous errors
@@ -205,8 +220,30 @@ export default function Dashboard() {
       return;
     }
 
-    //If all validations pass, show the CAPTCHA
-    setShowCaptcha(true);
+    const phoneRegex = /^05\d{8}$/;
+
+    if (!phoneRegex.test(phoneNumber.trim())) {
+      setFormError("الرجاء إدخال رقم جوال صحيح يبدأ بـ 05 ويحتوي على 10 أرقام");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      await StudentService.saveStudentAndSetCookie({
+        fullName: studentName,
+        schoolName: schoolName,
+        phoneNumber: phoneNumber,
+      });
+
+      //If all validations pass, show the CAPTCHA
+      setShowCaptcha(true);
+    } catch (error: any) {
+      setFormError("عذراً، حدث خطأ. يُرجى التسجيل مرة أخرى أو تحديث الصفحة.");
+      console.error("Error saving student data: ", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Animation cleanup effect - removed as it was causing issues with streams display
@@ -482,7 +519,7 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  <div>
+                  <div className="my-2">
                     <Label htmlFor="schoolName">اسم المدرسة</Label>
                     <Input
                       id="schoolName"
@@ -493,8 +530,23 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full mt-10">
-                    بدء الرحلة
+                  <div>
+                    <Label htmlFor="phoneNumber">رقم الجوال</Label>
+                    <Input
+                      id="phoneNumber"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="mt-1 bg-white border-gray-300 rounded-lg"
+                      placeholder="مثال: 0555321542"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full mt-10"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "جاري الحفظ..." : "بدء الرحلة"}
                   </Button>
                 </div>
               </form>

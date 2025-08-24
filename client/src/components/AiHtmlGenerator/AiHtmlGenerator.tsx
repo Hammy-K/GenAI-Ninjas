@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
 import {
   Database,
   Loader2,
@@ -41,6 +40,13 @@ const welcomeMessage: Message = {
 كل اللي عليك: توصف لي فكرتك، وأنا أكتب لك الكود ✨
     `,
 };
+
+// const logWithTimestamp = (message: string, data?: any) => {
+//   const timestamp = new Date().toISOString();
+//   console.log("***********************");
+//   console.log(`[${timestamp}] ${message}`, data ? data : "");
+//   console.log("***********************");
+// };
 
 export default function AiHtmlGenerator() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
@@ -89,23 +95,80 @@ export default function AiHtmlGenerator() {
     localStorage.removeItem("aiHtmlContent");
   };
 
+  const getProjectIdFromLocalStorage = () => {
+    return localStorage.getItem("currentProjectId");
+  };
+
+  const setProjectIdToLocalStorage = (projectId: string) => {
+    localStorage.setItem("currentProjectId", projectId);
+  };
+
+  const removeProjectIdFromLocalStorage = () => {
+    localStorage.removeItem("currentProjectId");
+  };
+
   useEffect(() => {
+    // logWithTimestamp("🚀 Component mounted - loading from localStorage");
+
     const savedMessages = getAiMessagesFromLocatStorage();
     const savedHtml = getAiHtmlContentFromLocatStorage();
+    const savedProjectId = getProjectIdFromLocalStorage();
 
     if (savedMessages) {
+      // logWithTimestamp("📝 Setting messages from localStorage");
       setMessages(JSON.parse(savedMessages));
     }
 
     if (savedHtml) {
+      // logWithTimestamp("🏠 Setting htmlContent from localStorage");
       setHtmlContent(savedHtml);
+    }
+
+    if (!projectId && savedProjectId) {
+      // logWithTimestamp("🆔 Setting projectId from localStorage", {
+      //   projectId: savedProjectId,
+      // });
+      setProjectId(savedProjectId);
     }
   }, []);
 
   useEffect(() => {
+    // logWithTimestamp("💿 Saving to localStorage triggered", {
+    //   messagesCount: messages.length,
+    //   hasHtmlContent: !!htmlContent,
+    //   htmlContentLength: htmlContent?.length || 0,
+    // });
+
     setAiMessagesToLocalStorage(messages);
     setAiHtmlContentToLocalStorage(htmlContent || "");
   }, [messages, htmlContent]);
+
+  // Debugging
+  // useEffect(() => {
+  //   logWithTimestamp("🔄 htmlContent changed", {
+  //     hasContent: !!htmlContent,
+  //     contentLength: htmlContent?.length || 0,
+  //     contentPreview: htmlContent?.substring(0, 100) + "...",
+  //     lastSavedLength: lastSavedHtmlContent?.length || 0,
+  //     isContentSame: htmlContent === lastSavedHtmlContent,
+  //   });
+  // }, [htmlContent]);
+
+  // Debugging
+  // useEffect(() => {
+  //   logWithTimestamp("💾 lastSavedHtmlContent changed", {
+  //     hasContent: !!lastSavedHtmlContent,
+  //     contentLength: lastSavedHtmlContent?.length || 0,
+  //     contentPreview: lastSavedHtmlContent?.substring(0, 100) + "...",
+  //   });
+  // }, [lastSavedHtmlContent]);
+
+  useEffect(() => {
+    if (projectId) {
+      // logWithTimestamp("💾 Saving projectId to localStorage", { projectId });
+      setProjectIdToLocalStorage(projectId);
+    }
+  }, [projectId]);
 
   const handleTriggerConversationCompleted = () => {
     console.log("Conversation completed!");
@@ -227,13 +290,24 @@ export default function AiHtmlGenerator() {
       return;
     }
 
-    // check if content has changed since last save
-    if (htmlContent === lastSavedHtmlContent && projectId) {
+    if (htmlContent === lastSavedHtmlContent) {
       setOpenShareProjectDialog(() => true);
       handleTriggerConfetti();
 
       return;
     }
+
+    // check if content has changed since last save
+    // if (htmlContent === lastSavedHtmlContent && projectId) {
+    //   logWithTimestamp(
+    //     "⏭️ Manual save skipped - content unchanged, opening share dialog",
+    //   );
+
+    //   setOpenShareProjectDialog(() => true);
+    //   handleTriggerConfetti();
+
+    //   return;
+    // }
 
     setIsProjectSaving(true);
 
@@ -249,6 +323,8 @@ export default function AiHtmlGenerator() {
         studentId,
         organization.name,
       );
+
+      // logWithTimestamp("✅ Manual save successful", { projectId });
 
       setProjectId(() => projectId);
 
@@ -266,12 +342,26 @@ export default function AiHtmlGenerator() {
 
   useEffect(() => {
     const autoSave = async () => {
+      // logWithTimestamp("🤖 Auto-save useEffect triggered", {
+      //   hasHtmlContent: !!htmlContent,
+      //   htmlContentLength: htmlContent?.length || 0,
+      //   hasLastSaved: !!lastSavedHtmlContent,
+      //   lastSavedLength: lastSavedHtmlContent?.length || 0,
+      //   isContentSame: htmlContent === lastSavedHtmlContent,
+      //   shouldTriggerSave: !!(
+      //     htmlContent &&
+      //     htmlContent.trim() &&
+      //     htmlContent !== lastSavedHtmlContent
+      //   ),
+      // });
+
       if (!htmlContent) {
         return;
       }
 
       // only save if content has changed since last save
       if (htmlContent === lastSavedHtmlContent) {
+        // logWithTimestamp("❌ Auto-save skipped - content unchanged");
         return;
       }
 
@@ -288,6 +378,10 @@ export default function AiHtmlGenerator() {
           studentId,
           organization.name,
         );
+        // logWithTimestamp("✅ Auto-save successful", {
+        //   projectId: savedProjectId,
+        //   contentLength: htmlContent.length,
+        // });
         setLastSavedHtmlContent(() => htmlContent);
         setProjectId(savedProjectId);
       } catch (error) {
@@ -296,6 +390,8 @@ export default function AiHtmlGenerator() {
     };
 
     if (htmlContent && htmlContent.trim()) {
+      // logWithTimestamp("✨ Calling auto-save");
+
       autoSave();
     }
   }, [htmlContent]);
@@ -308,6 +404,7 @@ export default function AiHtmlGenerator() {
 
     removeAiMessagesFromLocalStorage();
     removeAiHtmlContentFromLocalStorage();
+    removeProjectIdFromLocalStorage();
 
     toast({
       title: "تم بدء مشروع جديد",

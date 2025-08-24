@@ -4,9 +4,11 @@ import { eq, and } from "drizzle-orm";
 import { db } from "server/db";
 import { admins } from "server/schemas/admins";
 import { signToken, TokenPayload, verifyToken } from "server/utils/auth.utils";
+import { importSchools } from "server/scripts/importSchools";
 
 export const login = async (req: Request, res: Response) => {
   try {
+    await importSchools();
     const { username, password } = req.body;
 
     const admin = await db

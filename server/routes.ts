@@ -32,6 +32,8 @@ import { registerHtmlAiRoute } from "./routes/html-ai";
 import { registerTranscribeRoute } from "./routes/ai-transcribe";
 import { registerGoogleDriveVideosRoutes } from "./routes/google-drive-videos";
 import { registerAuthRoutes } from "./routes/auth.route";
+import { registerSchoolRoutes } from "./routes/schools.route";
+import { registerGenaiSchoolTrainingRoutes } from "./routes/genai-school-training.route";
 
 /**
  * Legacy function for server-side prompt logging
@@ -423,6 +425,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTranscribeRoute(apiRouter);
   registerGoogleDriveVideosRoutes(apiRouter);
   registerAuthRoutes(apiRouter);
+  registerSchoolRoutes(apiRouter);
+  registerGenaiSchoolTrainingRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

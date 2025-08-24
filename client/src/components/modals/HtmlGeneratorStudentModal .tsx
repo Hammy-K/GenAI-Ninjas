@@ -17,6 +17,9 @@ export default function HtmlGeneratorStudentModal() {
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [schoolName, setSchoolName] = useState("");
+  const [studentGrade, setStudentGrade] = useState<string>(() => {
+    return localStorage.getItem("studentGrade") || "";
+  });
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,6 +37,7 @@ export default function HtmlGeneratorStudentModal() {
     setIsValid(
       fullName.trim() !== "" &&
         schoolName.trim() !== "" &&
+        studentGrade.trim() !== "" &&
         /^05\d{8}$/.test(phoneNumber.trim()),
     );
   }, [fullName, schoolName, phoneNumber]);
@@ -69,6 +73,11 @@ export default function HtmlGeneratorStudentModal() {
 
       Cookies.set("studentId", data.id, { expires: 3 });
 
+      localStorage.setItem("studentName", fullName);
+      localStorage.setItem("studentGrade", studentGrade);
+      localStorage.setItem("schoolName", schoolName);
+      localStorage.setItem("phoneNumber", phoneNumber);
+
       toast({
         title: "🎉 أهلاً بك!",
         description: `يا ${fullName} من ${schoolName}، تم تسجيلك بنجاح في النظام.`,
@@ -103,7 +112,7 @@ export default function HtmlGeneratorStudentModal() {
               id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="col-span-3 bg-white"
+              className="col-span-3 bg-white border-gray-300 rounded-lg"
               placeholder="...."
               required
             />
@@ -116,8 +125,21 @@ export default function HtmlGeneratorStudentModal() {
               id="schoolName"
               value={schoolName}
               onChange={(e) => setSchoolName(e.target.value)}
-              className="col-span-3 bg-white"
+              className="col-span-3 bg-white border-gray-300 rounded-lg"
               placeholder="...."
+              required
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="studentGrade" className="text-right">
+              الصف الدراسي
+            </Label>
+            <Input
+              id="studentGrade"
+              value={studentGrade}
+              onChange={(e) => setStudentGrade(e.target.value)}
+              className="col-span-3 bg-white border-gray-300 rounded-lg"
+              placeholder="مثال: الصف التاسع"
               required
             />
           </div>
@@ -129,7 +151,7 @@ export default function HtmlGeneratorStudentModal() {
               id="phoneNumber"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              className="col-span-3 bg-white"
+              className="col-span-3 bg-white border-gray-300 rounded-lg"
               placeholder="مثال: 0555321542"
               required
             />
