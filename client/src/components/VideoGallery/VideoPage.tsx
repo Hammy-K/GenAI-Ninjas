@@ -11,7 +11,7 @@ export default function VideoPage() {
     <div className="min-h-screen bg-[#f5f2e8] font-sans">
       <Header xp={xp} />
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-8 rounded-2xl border border-purple-200 shadow-2xl transform  transition-all duration-300 relative overflow-hidden">
           {/* Animated background elements */}
           {/* <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div> */}

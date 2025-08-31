@@ -6,24 +6,44 @@ const welcomeProps: PlaygroundWelcomeCardProps = {
   rtl: true,
   title: <>تخزين الحالة محليًا (بدون باكند)</>,
   description: (
-    <>تتبع مدخلات وخيارات المستخدم داخل الجلسة باستخدام state أو localStorage.</>
+    <>
+      تتبع مدخلات وخيارات المستخدم داخل الجلسة باستخدام state أو localStorage.
+    </>
   ),
   cardHeading: <>اجعل التطبيق يتذكّرك</>,
   cardLead: <>state فوري + حفظ اختياري في المتصفح</>,
   bullets: [
     { icon: "🧠", text: <>في الذاكرة: useState / useReducer لإدارة القيم</> },
-    { icon: "💾", text: <>في المتصفح: localStorage / sessionStorage مع serialize/deserialize</> },
-    { icon: "🔄", text: <>المزامنة: استرجاع عند التحميل وتحديث عند التغيير (debounce اختياري)</> },
-    { icon: "⚠️", text: <>الخصوصية: تجنّب البيانات الحساسة وحدّد مدة صلاحية إن لزم</> },
+    {
+      icon: "💾",
+      text: (
+        <>في المتصفح: localStorage / sessionStorage مع serialize/deserialize</>
+      ),
+    },
+    {
+      icon: "🔄",
+      text: (
+        <>المزامنة: استرجاع عند التحميل وتحديث عند التغيير (debounce اختياري)</>
+      ),
+    },
+    {
+      icon: "⚠️",
+      text: <>الخصوصية: تجنّب البيانات الحساسة وحدّد مدة صلاحية إن لزم</>,
+    },
   ],
-  formula: <>state داخل الجلسة + تخزين متصفح اختياري = تجربة تتذكّر المستخدم 🔒</>,
+  formula: (
+    <>state داخل الجلسة + تخزين متصفح اختياري = تجربة تتذكّر المستخدم 🔒</>
+  ),
   questionIntro: (
     <>
       <span className="inline-block ml-2">👉</span> فكّر الآن:
     </>
   ),
   question: (
-    <>ما المفاتيح التي تريد حفظها؟ ما القيم الافتراضية؟ أين الحفظ (ذاكرة فقط/LocalStorage)؟ ومتى تُستعاد؟ وهل تريد مسحًا تلقائيًا؟</>
+    <>
+      ما المفاتيح التي تريد حفظها؟ ما القيم الافتراضية؟ أين الحفظ (ذاكرة
+      فقط/LocalStorage)؟ ومتى تُستعاد؟ وهل تريد مسحًا تلقائيًا؟
+    </>
   ),
 };
 
@@ -34,6 +54,7 @@ export default function LocalStatePlayground() {
     <AiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={""}
     />
   );
 }

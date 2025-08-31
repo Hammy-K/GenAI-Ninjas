@@ -1,18 +1,11 @@
+import { Concept } from "../../playground/config/types";
 import { FrontendConceptCard } from "./FrontendConceptCard";
 
 interface ConceptCardProps {
   weekRange: string;
   title: string;
   description: string;
-  concepts: {
-    Icon: any;
-    title: string;
-    description: string;
-    examples: string[];
-    color: string;
-    isCompleted?: boolean;
-    url: string;
-  }[];
+  concepts: Concept[];
   color: string;
 }
 

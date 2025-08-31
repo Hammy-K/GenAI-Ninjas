@@ -19,6 +19,7 @@ export function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
 
     // Try to parse the content - handle potential double-encoding
     let parsedContent;
+
     try {
       parsedContent = JSON.parse(textContent);
 
@@ -28,6 +29,8 @@ export function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
       }
     } catch (parseError) {
       console.error("JSON parsing failed:", parseError);
+      console.log("ClaudeResponse: ", claudeResponse.content[0].text);
+
       throw parseError;
     }
 

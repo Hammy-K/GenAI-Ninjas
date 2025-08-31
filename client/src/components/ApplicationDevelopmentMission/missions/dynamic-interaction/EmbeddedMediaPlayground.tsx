@@ -11,10 +11,19 @@ const welcomeProps: PlaygroundWelcomeCardProps = {
   cardHeading: <>ابدأ بإضافة وسيط</>,
   cardLead: <>فيديو/صوت + حركة خفيفة = تجربة أغنى</>,
   bullets: [
-    { icon: "🎬", text: <>فيديو: تضمين YouTube عبر iframe مع تحكّم (تشغيل/إيقاف/كتم)</> },
+    {
+      icon: "🎬",
+      text: <>فيديو: تضمين YouTube عبر iframe مع تحكّم (تشغيل/إيقاف/كتم)</>,
+    },
     { icon: "🎧", text: <>صوت: عنصر صوت بخصائص controls و preload مناسبة</> },
-    { icon: "✨", text: <>حركة بسيطة: تلاشي/انزلاق عند الدخول أو التبديل بين الأقسام</> },
-    { icon: "♿", text: <>الوصولية: تسميات واضحة، وتجنّب التشغيل التلقائي دون كتم</> },
+    {
+      icon: "✨",
+      text: <>حركة بسيطة: تلاشي/انزلاق عند الدخول أو التبديل بين الأقسام</>,
+    },
+    {
+      icon: "♿",
+      text: <>الوصولية: تسميات واضحة، وتجنّب التشغيل التلقائي دون كتم</>,
+    },
   ],
   formula: <>وسائط مناسبة + تحكّم واضح + وصولية = تجربة جذّابة 🔥</>,
   questionIntro: (
@@ -23,7 +32,10 @@ const welcomeProps: PlaygroundWelcomeCardProps = {
     </>
   ),
   question: (
-    <>ما نوع الوسيط المطلوب (فيديو/صوت/حركة)؟ وما المصدر/الرابط؟ وما الضبط المطلوب (autoplay/muted/loop/controls)؟ وأين تُطبّق الحركة؟</>
+    <>
+      ما نوع الوسيط المطلوب (فيديو/صوت/حركة)؟ وما المصدر/الرابط؟ وما الضبط
+      المطلوب (autoplay/muted/loop/controls)؟ وأين تُطبّق الحركة؟
+    </>
   ),
 };
 
@@ -34,6 +46,7 @@ export default function EmbeddedMediaPlayground() {
     <AiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={""}
     />
   );
 }

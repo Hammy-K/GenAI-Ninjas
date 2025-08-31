@@ -4,7 +4,7 @@ import { Message, AiResponse } from "./types";
  * Parses the raw AI response content into a structured AiResponse object,
  * falling back to defaults where necessary.
  */
-function parseAiResponse(response: any): AiResponse {
+export function parseAiResponse(response: any): AiResponse {
   try {
     return {
       role: "assistant",

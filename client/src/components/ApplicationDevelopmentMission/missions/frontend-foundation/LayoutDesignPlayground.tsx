@@ -1,6 +1,7 @@
 import React from "react";
-import AiPlayground from "../../playground/AiPlayground";
 import { PlaygroundWelcomeCardProps } from "../../playground/PlaygroundWelcomeCard";
+import { FRONTEND_FOUNDATION_PROMPTS } from "../../playground/config/concepts.config";
+import AppDevAiPlayground from "../../playground/AiPlayground";
 
 const welcomeProps: PlaygroundWelcomeCardProps = {
   rtl: true,
@@ -60,9 +61,12 @@ const aiWelcomeMessage =
 
 export default function LayoutDesignPlayground() {
   return (
-    <AiPlayground
+    <AppDevAiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={FRONTEND_FOUNDATION_PROMPTS.layoutDesign}
+      mission="layout-design"
+      mainMission="frontend-foundation"
     />
   );
 }

@@ -11,10 +11,22 @@ const welcomeProps: PlaygroundWelcomeCardProps = {
   cardHeading: <>ابدأ بتنظيم الشاشات</>,
   cardLead: <>تبويبات + حالة نشطة + محتوى لكل تبويب</>,
   bullets: [
-    { icon: "🧭", text: <>بنية التبويبات: الصفحة الرئيسية | ملفي | الإعدادات</> },
-    { icon: "🔗", text: <>طريقة التنقّل: أزرار/روابط مع حالة نشطة (Active State)</> },
-    { icon: "✨", text: <>الحيوية: انتقالات خفيفة عند التبديل (تلاشي/انزلاق)</> },
-    { icon: "🧠", text: <>الحالة: احتفظ ببيانات كل تبويب أثناء التنقّل (اختياري)</> },
+    {
+      icon: "🧭",
+      text: <>بنية التبويبات: الصفحة الرئيسية | ملفي | الإعدادات</>,
+    },
+    {
+      icon: "🔗",
+      text: <>طريقة التنقّل: أزرار/روابط مع حالة نشطة (Active State)</>,
+    },
+    {
+      icon: "✨",
+      text: <>الحيوية: انتقالات خفيفة عند التبديل (تلاشي/انزلاق)</>,
+    },
+    {
+      icon: "🧠",
+      text: <>الحالة: احتفظ ببيانات كل تبويب أثناء التنقّل (اختياري)</>,
+    },
   ],
   formula: <>شاشات واضحة + حالة نشطة محكمة = تجربة سلسة 🔥</>,
   questionIntro: (
@@ -22,9 +34,11 @@ const welcomeProps: PlaygroundWelcomeCardProps = {
       <span className="inline-block ml-2">👉</span> فكّر الآن:
     </>
   ),
-  question: <>
-    ما هي التبويبات المطلوبة؟ ما التبويب الافتراضي؟ وما المحتوى داخل كل تبويب؟
-  </>,
+  question: (
+    <>
+      ما هي التبويبات المطلوبة؟ ما التبويب الافتراضي؟ وما المحتوى داخل كل تبويب؟
+    </>
+  ),
 };
 
 const aiWelcomeMessage = `
@@ -42,6 +56,7 @@ export default function NavigationPlayground() {
     <AiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={""}
     />
   );
 }

@@ -52,6 +52,7 @@ export default function MultiInputsPlayground() {
     <AiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={""}
     />
   );
 }

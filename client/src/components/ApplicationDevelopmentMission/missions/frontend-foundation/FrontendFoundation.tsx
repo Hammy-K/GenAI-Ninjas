@@ -1,101 +1,11 @@
 import { Header } from "@/components/layout/Header";
 import { useQuest } from "@/hooks/useQuest";
-import {
-  CheckCircle,
-  Code,
-  GitBranch,
-  Mouse,
-  Palette,
-  Shuffle,
-  Target,
-  Image,
-  ArrowRight,
-} from "lucide-react";
+import { CheckCircle, Code, Target, ArrowRight } from "lucide-react";
 import { FrontendMissionTrack } from "./FrontendMissionTrack";
+import { FRONTEND_FOUNDATION_CONCEPTS } from "../../playground/config/concepts.config";
 
 export default function FrontendFoundation() {
   const { xp } = useQuest();
-
-  const concepts = [
-    {
-      Icon: Code,
-      title: "المدخلات والمخرجات",
-      description: "المستخدم يكتب شيئاً ← يرى استجابة فورية",
-      examples: [
-        "مولد الأسماء: اكتب اسمك ← احصل على لقب",
-        "حاسبة النصائح: أدخل المبلغ ← احصل على النصيحة",
-        "مترجم المزاج: اكتب مشاعرك ← احصل على لون",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/inputs-outputs",
-    },
-    {
-      Icon: Mouse,
-      title: "الأزرار والأحداث",
-      description: "الزر يحفز إجراءً (إظهار رسالة، تغيير الشاشة، إلخ)",
-      examples: [
-        "زر 'اكتشف اليوم': انقر ← اعرض نشاطاً عشوائياً",
-        "زر 'غيّر الثيم': انقر ← بدّل بين الفاتح والداكن",
-        "زر 'ابدأ اللعبة': انقر ← انتقل لشاشة اللعب",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/buttons-events",
-    },
-    {
-      Icon: Shuffle,
-      title: "الاختيار العشوائي من قائمة",
-      description: "انقر ← يختار عشوائياً من خيارات محددة مسبقاً",
-      examples: [
-        "عجلة القرارات: قائمة خيارات ← اختيار عشوائي",
-        "مولد الاقتباسات: مجموعة اقتباسات ← عرض واحد",
-        "اقتراح الوجبات: قائمة طعام ← وجبة اليوم",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/random-selection",
-    },
-    {
-      Icon: GitBranch,
-      title: "المنطق الشرطي (if/else)",
-      description: "المدخل يحدد مسار المخرج",
-      examples: [
-        "اختبار الشخصية: إجابات مختلفة ← نتائج مختلفة",
-        "توصيات الطقس: درجة الحرارة ← نصيحة الملابس",
-        "مستوى الصعوبة: العمر ← أسئلة مناسبة",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/conditional-logic",
-    },
-    {
-      Icon: Palette,
-      title: "التخطيط والتصميم (CSS)",
-      description: "استخدام الأقسام، الحاويات، الخطوط، الألوان",
-      examples: [
-        "ثيمات ملونة: أزرق مهدئ، أحمر طاقة، أخضر طبيعي",
-        "تخطيطات مختلفة: شبكة، عمود واحد، بطاقات",
-        "خطوط متنوعة: عربي أنيق، إنجليزي حديث",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/layout-design",
-    },
-    {
-      Icon: Image,
-      title: "الصور الديناميكية",
-      description: "بناءً على المدخل أو ضغط الزر، غيّر الصورة",
-      examples: [
-        "معرض الحالة المزاجية: مزاج ← صورة معبرة",
-        "مولد الشخصيات: اسم ← أفاتار مناسب",
-        "خلفيات تفاعلية: وقت اليوم ← منظر طبيعي",
-      ],
-      color: "#3B82F6",
-      isCompleted: false,
-      url: "/missions/app-development/frontend-foundation/dynamic-images",
-    },
-  ];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f5f2e8" }}>
@@ -153,7 +63,7 @@ export default function FrontendFoundation() {
           weekRange="3-5"
           title="المفاهيم الأساسية المستفادة"
           description="هذه هي اللبنات الأساسية لكل تطبيق ويب تفاعلي. كل مفهوم يبني على السابق ليخلق تجربة مستخدم رائعة."
-          concepts={concepts}
+          concepts={FRONTEND_FOUNDATION_CONCEPTS}
           color="#3B82F6"
         />
 

@@ -49,6 +49,9 @@ import PersistencePlayground from "./components/ApplicationDevelopmentMission/mi
 import AuthPersonalizationPlayground from "./components/ApplicationDevelopmentMission/missions/backend-ai-integration/AuthPersonalizationPlayground";
 import AdminApp from "./pages/admin/AdminApp";
 import GenaiSchoolTrainingPage from "./pages/GenaiSchoolTrainingPage";
+import FrontendSubmissionsPage from "./pages/missions/application-development/frontend/FrontendSubmissionsPage";
+import FrontendProjectViewerPage from "./pages/missions/application-development/frontend/FrontendProjectViewerPage";
+import ClientReset from "./components/ClientReset";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -130,6 +133,17 @@ function Router() {
         path="/missions/app-development/frontend-foundation/dynamic-images"
         component={DynamicImagesPlayground}
       />
+
+      <Route
+        path="/missions/app-development/frontend-foundation/submissions"
+        component={FrontendSubmissionsPage}
+      />
+
+      <Route
+        path="/missions/app-development/frontend-foundation/projects/:projectId"
+        component={FrontendProjectViewerPage}
+      />
+
       <Route
         path="/missions/app-development/dynamic-interaction-media"
         component={DynamicInteractionMedia}
@@ -199,6 +213,8 @@ function Router() {
       {/* <Route path="/missions/html-generator-v2/submissions" component={HtmlGeneratorV2SubmissionsPage} /> */}
       <Route path="/reset" component={ResetSession} />
       <Route path="/reset-intro" component={ResetIntro} />
+      <Route path="/full-reset" component={ClientReset} />
+
       {/* <Route path="/admin/gallery" component={GalleryManagerPage} /> */}
 
       {/* ########################## admin routes ############################# */}

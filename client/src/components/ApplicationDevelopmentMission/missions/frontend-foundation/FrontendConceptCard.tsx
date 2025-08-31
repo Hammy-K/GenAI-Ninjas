@@ -2,16 +2,7 @@ import React from "react";
 import { CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useOrganization } from "@/hooks/useOrganization";
-
-interface FrontendConceptPropsType {
-  Icon: any;
-  title: string;
-  description: string;
-  examples: string[];
-  color: string;
-  isCompleted?: boolean;
-  url: string;
-}
+import { Concept } from "../../playground/config/types";
 
 export const FrontendConceptCard = ({
   Icon,
@@ -21,7 +12,7 @@ export const FrontendConceptCard = ({
   color,
   isCompleted = false,
   url,
-}: FrontendConceptPropsType) => {
+}: Concept) => {
   const [location, navigate] = useLocation();
   const organization = useOrganization();
 

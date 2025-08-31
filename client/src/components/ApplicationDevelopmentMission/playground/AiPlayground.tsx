@@ -19,16 +19,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@/assets/Group 26087843.png";
 import confetti from "canvas-confetti";
 import Cookies from "js-cookie";
-// import { saveProject } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
-import {
-  callAiApi,
-  transcribeAudio,
-} from "@/components/AiHtmlGenerator/ai-html-api";
+import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/HtmlGeneratorStudentModal ";
-import { ProjectShareDialog } from "@/components/AiHtmlGenerator/ProjectShareDialog";
 import NewProjectDialog from "@/components/AiHtmlGenerator/NewProjectDialog";
 import { Button } from "@/components/ui/button";
 import PlaygroundWelcomeCard, {
@@ -36,16 +31,28 @@ import PlaygroundWelcomeCard, {
 } from "./PlaygroundWelcomeCard";
 import ChatMessage from "@/components/AiHtmlGenerator/ChatMessage";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  callAppDevCodeGenApi,
+  saveAppDevProject,
+} from "./callAppDevCodeGenApi";
+import { MAIN_MISSION, MissionSlug } from "./config/types";
+import { AppDevProjectShareDialog } from "./AppDevProjectShareDialog";
 
-interface AiPlaygroundProps {
+interface AppDevAiPlaygroundProps {
   aiWelcomeMessage: string;
   playgroundWelcomeCardProps: PlaygroundWelcomeCardProps;
+  systemPrompt: string;
+  mission: MissionSlug;
+  mainMission: MAIN_MISSION;
 }
 
-export default function AiPlayground({
+export default function AppDevAiPlayground({
   aiWelcomeMessage,
   playgroundWelcomeCardProps,
-}: AiPlaygroundProps) {
+  systemPrompt,
+  mission,
+  mainMission,
+}: AppDevAiPlaygroundProps) {
   const welcomeMessage: Message = {
     role: "assistant",
     content: aiWelcomeMessage,
@@ -71,35 +78,66 @@ export default function AiPlayground({
     string | undefined
   >(undefined);
 
+  const missionAiMessagesKey = `${mission}AiMessages`;
+  const missionAiHtmlContentKey = `${mission}AiHtmlContent`;
+  const missionProjectIdKey = `${mission}ProjectId`;
+  const missionLastSavedHtmlContentKey = `${mission}LastSavedHtmlContent`;
+
   const organization = useOrganization();
 
   const getAiMessagesFromLocatStorage = () => {
-    return localStorage.getItem("aiMessages");
+    return localStorage.getItem(missionAiMessagesKey);
   };
 
   const setAiMessagesToLocalStorage = (messages: Message[]) => {
-    localStorage.setItem("aiMessages", JSON.stringify(messages));
+    localStorage.setItem(missionAiMessagesKey, JSON.stringify(messages));
   };
 
   const getAiHtmlContentFromLocatStorage = () => {
-    return localStorage.getItem("aiHtmlContent");
+    return localStorage.getItem(missionAiHtmlContentKey);
   };
 
   const setAiHtmlContentToLocalStorage = (htmlContent: string) => {
-    localStorage.setItem("aiHtmlContent", htmlContent);
+    localStorage.setItem(missionAiHtmlContentKey, htmlContent);
   };
 
   const removeAiMessagesFromLocalStorage = () => {
-    localStorage.removeItem("aiMessages");
+    localStorage.removeItem(missionAiMessagesKey);
   };
 
   const removeAiHtmlContentFromLocalStorage = () => {
-    localStorage.removeItem("aiHtmlContent");
+    localStorage.removeItem(missionAiHtmlContentKey);
+  };
+
+  const getProjectIdFromLocalStorage = () => {
+    return localStorage.getItem(missionProjectIdKey);
+  };
+
+  const setProjectIdToLocalStorage = (projectId: string) => {
+    localStorage.setItem(missionProjectIdKey, projectId);
+  };
+
+  const removeProjectIdFromLocalStorage = () => {
+    localStorage.removeItem(missionProjectIdKey);
+  };
+
+  const getLastSavedHtmlContentFromLocalStorage = () => {
+    return localStorage.getItem(missionLastSavedHtmlContentKey);
+  };
+
+  const setLastSavedHtmlContentToLocalStorage = (html: string) => {
+    localStorage.setItem(missionLastSavedHtmlContentKey, html);
+  };
+
+  const removeLastSavedHtmlContentFromLocalStorage = () => {
+    localStorage.removeItem(missionLastSavedHtmlContentKey);
   };
 
   useEffect(() => {
     const savedMessages = getAiMessagesFromLocatStorage();
     const savedHtml = getAiHtmlContentFromLocatStorage();
+    const savedProjectId = getProjectIdFromLocalStorage();
+    const savedLastSavedHtml = getLastSavedHtmlContentFromLocalStorage();
 
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
@@ -108,12 +146,32 @@ export default function AiPlayground({
     if (savedHtml) {
       setHtmlContent(savedHtml);
     }
+
+    if (!projectId && savedProjectId) {
+      setProjectId(savedProjectId);
+    }
+
+    if (savedLastSavedHtml) {
+      setLastSavedHtmlContent(savedLastSavedHtml);
+    }
   }, []);
 
   useEffect(() => {
     setAiMessagesToLocalStorage(messages);
     setAiHtmlContentToLocalStorage(htmlContent || "");
   }, [messages, htmlContent]);
+
+  useEffect(() => {
+    if (projectId) {
+      setProjectIdToLocalStorage(projectId);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (lastSavedHtmlContent !== undefined) {
+      setLastSavedHtmlContentToLocalStorage(lastSavedHtmlContent);
+    }
+  }, [lastSavedHtmlContent]);
 
   const handleTriggerConversationCompleted = () => {
     console.log("Conversation completed!");
@@ -163,10 +221,11 @@ export default function AiPlayground({
 
       const studentId = Cookies.get("studentId");
 
-      const response: AiResponse = await callAiApi(
+      const response: AiResponse = await callAppDevCodeGenApi(
         userMessage,
         newMessages,
         studentId ?? "",
+        systemPrompt,
       );
 
       const assistantMsg: Message = {
@@ -218,14 +277,14 @@ export default function AiPlayground({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    // handleTriggerConfetti();
   }, [messages]);
 
   const goToSubmissions = () => {
-    // const desitinationUrl = organization.isMain
-    //   ? "/missions/html-generator/submissions"
-    //   : `/${organization.name}/missions/html-generator/submissions`;
-    // window.open(desitinationUrl, "_blank", "noopener,noreferrer");
+    const desitinationUrl = organization.isMain
+      ? `/missions/app-development/${mainMission}/submissions`
+      : `/${organization.name}/missions/app-development/${mainMission}/submissions`;
+
+    window.open(desitinationUrl, "_blank", "noopener,noreferrer");
   };
 
   const saveAndShareProject = async () => {
@@ -235,7 +294,7 @@ export default function AiPlayground({
     }
 
     // check if content has changed since last save
-    if (htmlContent === lastSavedHtmlContent && projectId) {
+    if (htmlContent === lastSavedHtmlContent) {
       setOpenShareProjectDialog(() => true);
       handleTriggerConfetti();
 
@@ -251,13 +310,14 @@ export default function AiPlayground({
         throw new Error("No student ID found in cookies");
       }
 
-      // const projectId = await saveProject(
-      //   htmlContent,
-      //   studentId,
-      //   organization.name,
-      // );
+      const projectId = await saveAppDevProject({
+        htmlContent,
+        studentId,
+        organization: organization.name,
+        mission,
+      });
 
-      // setProjectId(() => projectId);
+      setProjectId(() => projectId!);
 
       setLastSavedHtmlContent(() => htmlContent);
 
@@ -290,13 +350,16 @@ export default function AiPlayground({
       }
 
       try {
-        // const savedProjectId = await saveProject(
-        //   htmlContent,
-        //   studentId,
-        //   organization.name,
-        // );
+        const savedProjectId = await saveAppDevProject({
+          htmlContent,
+          studentId,
+          organization: organization.name,
+          mission,
+        });
+
         setLastSavedHtmlContent(() => htmlContent);
-        // setProjectId(savedProjectId);
+
+        setProjectId(savedProjectId!);
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
@@ -315,6 +378,8 @@ export default function AiPlayground({
 
     removeAiMessagesFromLocalStorage();
     removeAiHtmlContentFromLocalStorage();
+    removeProjectIdFromLocalStorage();
+    removeLastSavedHtmlContentFromLocalStorage();
 
     toast({
       title: "تم بدء مشروع جديد",
@@ -408,11 +473,11 @@ export default function AiPlayground({
         >
           <HtmlGeneratorStudentModal />
 
-          <ProjectShareDialog
+          <AppDevProjectShareDialog
             onClose={() => {
               setOpenShareProjectDialog(() => false);
             }}
-            projectId={projectId ?? ""}
+            shareUrl={`${window.location.origin}/app-development/projects/${projectId}`}
             open={openShareProjectDialog}
           />
 
@@ -523,7 +588,7 @@ export default function AiPlayground({
                             </div>
                           </div>
                         ) : (
-                          <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto h-full bg-gray-50 rounded">
+                          <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto max-h-96 bg-gray-50 rounded">
                             <code>{htmlContent}</code>
                           </pre>
                         )

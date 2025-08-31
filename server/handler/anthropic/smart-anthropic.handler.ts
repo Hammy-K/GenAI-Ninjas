@@ -15,7 +15,7 @@ import {
 import { ClaudeMessage } from "server/types/ai-types/anthropic/claude";
 import { MessageCreateParamsNonStreaming } from "@anthropic-ai/sdk/resources/index.mjs";
 
-function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
+export function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
   try {
     const textContent = claudeResponse.content?.[0]?.text ?? "";
 

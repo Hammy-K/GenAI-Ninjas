@@ -1,6 +1,7 @@
 import React from "react";
-import AiPlayground from "../../playground/AiPlayground";
 import { PlaygroundWelcomeCardProps } from "../../playground/PlaygroundWelcomeCard";
+import { FRONTEND_FOUNDATION_PROMPTS } from "../../playground/config/concepts.config";
+import AppDevAiPlayground from "../../playground/AiPlayground";
 
 const welcomeProps: PlaygroundWelcomeCardProps = {
   rtl: true,
@@ -54,9 +55,12 @@ if العمر &lt; 12 ⇒ 'سهل' | if 12–17 ⇒ 'متوسط' | else ⇒ 'ص�
 
 export default function ConditionalLogicPlayground() {
   return (
-    <AiPlayground
+    <AppDevAiPlayground
       aiWelcomeMessage={aiWelcomeMessage}
       playgroundWelcomeCardProps={welcomeProps}
+      systemPrompt={FRONTEND_FOUNDATION_PROMPTS.conditionalLogic}
+      mission="conditional-logic"
+      mainMission="frontend-foundation"
     />
   );
 }

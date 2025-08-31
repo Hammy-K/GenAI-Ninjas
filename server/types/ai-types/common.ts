@@ -9,4 +9,5 @@ export type AiRequestBody = {
   message: string;
   history: any[];
   userId: string;
+  systemPrompt?: string;
 };
