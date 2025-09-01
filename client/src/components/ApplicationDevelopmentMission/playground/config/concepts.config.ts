@@ -6,7 +6,7 @@ import {
   Palette,
   Image as ImageIcon,
 } from "lucide-react";
-import type { Concept } from "./types";
+import type { Concept, MissionTutorials } from "./types";
 
 export const FRONTEND_FOUNDATION_PROMPTS = {
   inputsOutputs: `
@@ -144,3 +144,27 @@ export const FRONTEND_FOUNDATION_CONCEPTS: Concept[] = [
     systemPrompt: FRONTEND_FOUNDATION_PROMPTS.dynamicImages,
   },
 ];
+
+export const MISSION_TUTORIALS: MissionTutorials = {
+  "inputs-outputs": {
+    videoId: "j0Py0Pw9LiM",
+    name: "المدخلات والمخرجات",
+    description: "شرح لطريقة إدخال البيانات والحصول على مخرجات مباشرة",
+  },
+  "buttons-events": {
+    videoId: "j0Py0Pw9LiM",
+    name: "الأزرار والأحداث",
+  },
+  "random-selection": {
+    videoId: "j0Py0Pw9LiM",
+  },
+  "conditional-logic": {
+    videoId: "j0Py0Pw9LiM",
+  },
+  "layout-design": {
+    videoId: "j0Py0Pw9LiM",
+  },
+  "dynamic-images": {
+    videoId: "j0Py0Pw9LiM",
+  },
+};

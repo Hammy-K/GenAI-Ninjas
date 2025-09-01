@@ -1,7 +1,10 @@
 import React from "react";
 import AiPlayground from "../../playground/AiPlayground";
 import { PlaygroundWelcomeCardProps } from "../../playground/PlaygroundWelcomeCard";
-import { FRONTEND_FOUNDATION_PROMPTS } from "../../playground/config/concepts.config";
+import {
+  FRONTEND_FOUNDATION_PROMPTS,
+  MISSION_TUTORIALS,
+} from "../../playground/config/concepts.config";
 
 const welcomeProps: PlaygroundWelcomeCardProps = {
   rtl: true,
@@ -71,6 +74,7 @@ export default function DynamicImagesPlayground() {
       systemPrompt={FRONTEND_FOUNDATION_PROMPTS.dynamicImages}
       mission="dynamic-images"
       mainMission="frontend-foundation"
+      youtubeTutorialVideoId={MISSION_TUTORIALS["dynamic-images"].videoId}
     />
   );
 }

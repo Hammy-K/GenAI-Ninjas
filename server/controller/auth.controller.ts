@@ -8,7 +8,6 @@ import { importSchools } from "server/scripts/importSchools";
 
 export const login = async (req: Request, res: Response) => {
   try {
-    await importSchools();
     const { username, password } = req.body;
 
     const admin = await db

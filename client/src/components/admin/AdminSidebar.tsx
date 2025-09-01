@@ -1,12 +1,13 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard,
-  FolderOpenDot,
   Image as ImageIcon,
   Settings,
   Gamepad2,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminAuth } from "@/hooks/auth/useAdminAuth";
 
 type NavItem = {
   href: string;
@@ -27,9 +28,13 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function AdminSidebar({ className }: { className?: string }) {
   const [location] = useLocation();
+  const { logout } = useAdminAuth();
 
   return (
-    <aside className={cn("w-64", className)} aria-label="شريط التنقل الجانبي">
+    <aside
+      className={cn("w-64 flex flex-col justify-between", className)}
+      aria-label="شريط التنقل الجانبي"
+    >
       <nav className="p-3 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active =
@@ -53,6 +58,16 @@ export default function AdminSidebar({ className }: { className?: string }) {
           );
         })}
       </nav>
+
+      <div className="p-3 border-t border-gray-100">
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-red-500"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>تسجيل الخروج</span>
+        </button>
+      </div>
     </aside>
   );
 }

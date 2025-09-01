@@ -1,6 +1,9 @@
 import React from "react";
 import { PlaygroundWelcomeCardProps } from "../../playground/PlaygroundWelcomeCard";
-import { FRONTEND_FOUNDATION_PROMPTS } from "../../playground/config/concepts.config";
+import {
+  FRONTEND_FOUNDATION_PROMPTS,
+  MISSION_TUTORIALS,
+} from "../../playground/config/concepts.config";
 import AppDevAiPlayground from "../../playground/AiPlayground";
 
 const welcomeProps: PlaygroundWelcomeCardProps = {
@@ -61,6 +64,7 @@ export default function ConditionalLogicPlayground() {
       systemPrompt={FRONTEND_FOUNDATION_PROMPTS.conditionalLogic}
       mission="conditional-logic"
       mainMission="frontend-foundation"
+      youtubeTutorialVideoId={MISSION_TUTORIALS["conditional-logic"].videoId}
     />
   );
 }

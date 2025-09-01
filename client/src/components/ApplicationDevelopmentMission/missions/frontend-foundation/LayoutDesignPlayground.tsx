@@ -1,6 +1,9 @@
 import React from "react";
 import { PlaygroundWelcomeCardProps } from "../../playground/PlaygroundWelcomeCard";
-import { FRONTEND_FOUNDATION_PROMPTS } from "../../playground/config/concepts.config";
+import {
+  FRONTEND_FOUNDATION_PROMPTS,
+  MISSION_TUTORIALS,
+} from "../../playground/config/concepts.config";
 import AppDevAiPlayground from "../../playground/AiPlayground";
 
 const welcomeProps: PlaygroundWelcomeCardProps = {
@@ -67,6 +70,7 @@ export default function LayoutDesignPlayground() {
       systemPrompt={FRONTEND_FOUNDATION_PROMPTS.layoutDesign}
       mission="layout-design"
       mainMission="frontend-foundation"
+      youtubeTutorialVideoId={MISSION_TUTORIALS["layout-design"].videoId}
     />
   );
 }

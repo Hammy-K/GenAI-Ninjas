@@ -37,6 +37,9 @@ import {
 } from "./callAppDevCodeGenApi";
 import { MAIN_MISSION, MissionSlug } from "./config/types";
 import { AppDevProjectShareDialog } from "./AppDevProjectShareDialog";
+import { getTutorialSeen } from "../YoutubeTutorials/tutorialSeenStore";
+import YoutubeTutorialGateScreen from "../YoutubeTutorials/YoutubeTutorialGateScreen";
+import YoutubeTutorialModal from "../YoutubeTutorials/YoutubeTutorialModal";
 
 interface AppDevAiPlaygroundProps {
   aiWelcomeMessage: string;
@@ -44,6 +47,7 @@ interface AppDevAiPlaygroundProps {
   systemPrompt: string;
   mission: MissionSlug;
   mainMission: MAIN_MISSION;
+  youtubeTutorialVideoId: string;
 }
 
 export default function AppDevAiPlayground({
@@ -52,6 +56,7 @@ export default function AppDevAiPlayground({
   systemPrompt,
   mission,
   mainMission,
+  youtubeTutorialVideoId,
 }: AppDevAiPlaygroundProps) {
   const welcomeMessage: Message = {
     role: "assistant",
@@ -77,13 +82,20 @@ export default function AppDevAiPlayground({
   const [lastSavedHtmlContent, setLastSavedHtmlContent] = useState<
     string | undefined
   >(undefined);
+  const organization = useOrganization();
+
+  // youtube tutorial
+  const [showYoutubeTutorialGate, setShowYoutubeTutorialGate] = useState(
+    !getTutorialSeen({ org: organization.name, mainMission, mission }),
+  );
+
+  const [openYoutubeTutorialModal, setYoutubeTutorialOpenModal] =
+    useState(false);
 
   const missionAiMessagesKey = `${mission}AiMessages`;
   const missionAiHtmlContentKey = `${mission}AiHtmlContent`;
   const missionProjectIdKey = `${mission}ProjectId`;
   const missionLastSavedHtmlContentKey = `${mission}LastSavedHtmlContent`;
-
-  const organization = useOrganization();
 
   const getAiMessagesFromLocatStorage = () => {
     return localStorage.getItem(missionAiMessagesKey);
@@ -487,6 +499,34 @@ export default function AppDevAiPlayground({
               setOpenNewProjectDialog(() => false);
             }}
             onConfirmed={startNewProject}
+          />
+
+          {showYoutubeTutorialGate && (
+            <YoutubeTutorialGateScreen
+              org={organization.name}
+              mainMission={mainMission}
+              mission={mission}
+              videoId={youtubeTutorialVideoId}
+              title="🎥 شرح سريع للمهمة"
+              description="شاهد هذا الفيديو القصير لتفهم الفكرة قبل أن تبدأ."
+              onDismiss={() => setShowYoutubeTutorialGate(false)}
+            />
+          )}
+
+          <button
+            onClick={() => setYoutubeTutorialOpenModal(true)}
+            className="fixed bottom-4 left-4 px-4 py-2 rounded-full shadow bg-purple-600 text-white hover:bg-purple-700 transition"
+          >
+            🎥 عرض الشرح
+          </button>
+
+          {/* Reopen modal */}
+          <YoutubeTutorialModal
+            open={openYoutubeTutorialModal}
+            onClose={() => setYoutubeTutorialOpenModal(false)}
+            videoId={youtubeTutorialVideoId}
+            title="شرح المهمة"
+            description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت."
           />
 
           <div className="flex-1">

@@ -13,6 +13,7 @@ function AdminIndexRedirect() {
   useEffect(() => {
     navigate("/admin/dashboard");
   }, [navigate]);
+
   return null;
 }
 

@@ -25,3 +25,13 @@ export type MAIN_MISSION =
   | "dynamic-interaction-media"
   | "backend-ai-integration"
   | "masterpiece-creation";
+
+export type MissionTutorial = {
+  videoId: string;
+  name?: string;
+  description?: string;
+};
+
+export type MissionTutorials = Record<MissionSlug, MissionTutorial>;
+
+

@@ -1,4 +1,10 @@
 import {
+  deleteCookie,
+  getCookie,
+  setCookie,
+  TOKEN_COOKIE,
+} from "@/utils/cookie.utils";
+import {
   createContext,
   useCallback,
   useEffect,
@@ -20,12 +26,9 @@ export const AdminAuthContext = createContext<AdminAuthState>({
   username: null,
   isAuthed: false,
   isLoading: true,
-  // noop defaults
   login: async () => {},
   logout: () => {},
 });
-
-const STORAGE_KEY = "admin_auth_token_v1";
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
@@ -33,18 +36,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.token) {
-          setToken(parsed.token);
-          setUsername(parsed.username ?? null);
-        }
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    const t = getCookie(TOKEN_COOKIE);
+
+    setToken(t);
+
+    setIsLoading(false);
   }, []);
 
   const login = useCallback(
@@ -61,15 +57,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data?.error || "Invalid credentials");
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setToken(data.token);
-      setUsername(data.username ?? null);
+      const t = data.token as string;
+      const u = (data.username as string) ?? null;
+
+      setCookie(TOKEN_COOKIE, t, 86400);
+
+      setToken(t);
+
+      setUsername(u);
     },
     [],
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    deleteCookie(TOKEN_COOKIE);
     setToken(null);
     setUsername(null);
   }, []);
