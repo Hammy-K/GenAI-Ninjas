@@ -30,52 +30,63 @@ export default function YoutubeTutorialGateScreen({
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center"
-      role=""
-      aria-modal="true"
+      className="fixed inset-0 z-[60] bg-white flex flex-col"
       dir="rtl"
+      role="dialog"
+      aria-modal="true"
     >
-      <div className="relative w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl border border-gray-200">
-        <div className="p-5 md:p-6 border-b border-gray-100">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {title}
-          </h2>
-          {description && <p className="mt-2 text-gray-600">{description}</p>}
-        </div>
+      {/* Header */}
+      <div className="shrink-0 border-b border-gray-200 p-2 md:p-2 mx-auto flex items-center flex-col">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
+        {description && <p className="mt-2 text-gray-600">{description}</p>}
+      </div>
 
-        <div className="p-5 md:p-6">
-          <YouTubeTutorialPlayer videoId={videoId} />
-          <ul className="mt-4 text-sm text-gray-600 list-disc pr-5 space-y-1">
+      {/* Body (scrollable when needed, but video height capped by viewport) */}
+      <div className="grow min-h-0 overflow-auto p-5 md:p-6">
+        <div className="flex flex-col items-center gap-4">
+          {/* 
+            Width constraint ensures aspect-video height ≤ ~62vh.
+            You can adjust 62vh up/down to fit your header/footer.
+          */}
+          <div
+            className="w-full max-w-5xl"
+            style={{ width: "min(100%, calc(62vh * 16 / 9))" }}
+          >
+            <YouTubeTutorialPlayer
+              videoId={videoId}
+              title="Tutorial"
+              // you can optionally pass a className for extra styling if needed
+              // className="rounded-2xl"
+            />
+          </div>
+
+          <ul className="mt-2 text-sm text-gray-600 list-disc pr-5 space-y-1 max-w-3xl">
             <li>الفيديو قصير ويساعدك على فهم فكرة المهمة بسرعة.</li>
             <li>يمكنك دائمًا إعادة مشاهدة الشرح من الزر العائم لاحقًا.</li>
           </ul>
         </div>
+      </div>
 
-        <div className="p-5 md:p-6 pt-0 flex flex-col md:flex-row gap-3 justify-between">
-          <div className="text-xs text-gray-500">
-            المهمة: <span className="font-medium">{mission}</span> · البرنامج:{" "}
-            <span className="font-medium">{mainMission}</span> · المؤسسة:{" "}
-            <span className="font-medium">{org}</span>
-          </div>
+      {/* Footer / actions */}
+      <div className="shrink-0 p-4 md:p-2 pt-0 flex flex-col gap-3">
+        <div className="flex items-center gap-2 w-full justify-center">
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
+          >
+            {primaryCtaText}
+          </button>
 
-          <div className="flex items-center gap-2">
-            {showSkip && (
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
-              >
-                {secondaryCtaText}
-              </button>
-            )}
+          {showSkip && (
             <button
               type="button"
               onClick={handleDismiss}
-              className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
             >
-              {primaryCtaText}
+              {secondaryCtaText}
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

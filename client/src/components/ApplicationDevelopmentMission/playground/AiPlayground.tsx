@@ -508,7 +508,7 @@ export default function AppDevAiPlayground({
               mission={mission}
               videoId={youtubeTutorialVideoId}
               title="🎥 شرح سريع للمهمة"
-              description="شاهد هذا الفيديو القصير لتفهم الفكرة قبل أن تبدأ."
+              description="شاهد هذا الفيديو القصير لتفهم الفكرة قبل أن تبدأ"
               onDismiss={() => setShowYoutubeTutorialGate(false)}
             />
           )}
@@ -526,7 +526,7 @@ export default function AppDevAiPlayground({
             onClose={() => setYoutubeTutorialOpenModal(false)}
             videoId={youtubeTutorialVideoId}
             title="شرح المهمة"
-            description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت."
+            description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت"
           />
 
           <div className="flex-1">

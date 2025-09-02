@@ -16,6 +16,7 @@ import HTMLGeneratorV2 from "@/pages/missions/html-generator-v2";
 import HtmlGeneratorV2SubmissionsPage from "@/pages/missions/html-generator-v2/submissions";
 import LovableMission from "@/pages/lovable-mission";
 import IntroMission from "@/pages/intro-mission";
+import PromptEngineering from "@/pages/prompt-engineering";
 import LovableSubmissionsPage from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
@@ -85,6 +86,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/ffm/" component={Dashboard} />
       <Route path="/intro-mission" component={IntroMission} />
+      <Route path="/prompt-engineering" component={PromptEngineering} />
       <Route path="/ffm/intro-mission" component={IntroMission} />
       <Route path="/missions/ai-html-generator" component={AiHtmlGenerator} />
       <Route
