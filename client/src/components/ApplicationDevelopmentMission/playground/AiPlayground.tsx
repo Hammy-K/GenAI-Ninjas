@@ -473,6 +473,20 @@ export default function AppDevAiPlayground({
     }
   };
 
+  if (showYoutubeTutorialGate) {
+    return (
+      <YoutubeTutorialGateScreen
+        org={organization.name}
+        mainMission={mainMission}
+        mission={mission}
+        videoId={youtubeTutorialVideoId}
+        title="🎥 شرح سريع للمهمة"
+        description="شاهد هذا الفيديو القصير لتفهم الفكرة قبل أن تبدأ"
+        onDismiss={() => setShowYoutubeTutorialGate(false)}
+      />
+    );
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col text-foreground font-tajawal"
@@ -500,18 +514,6 @@ export default function AppDevAiPlayground({
             }}
             onConfirmed={startNewProject}
           />
-
-          {showYoutubeTutorialGate && (
-            <YoutubeTutorialGateScreen
-              org={organization.name}
-              mainMission={mainMission}
-              mission={mission}
-              videoId={youtubeTutorialVideoId}
-              title="🎥 شرح سريع للمهمة"
-              description="شاهد هذا الفيديو القصير لتفهم الفكرة قبل أن تبدأ"
-              onDismiss={() => setShowYoutubeTutorialGate(false)}
-            />
-          )}
 
           <button
             onClick={() => setYoutubeTutorialOpenModal(true)}

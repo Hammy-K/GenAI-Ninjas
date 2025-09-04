@@ -53,6 +53,8 @@ import GenaiSchoolTrainingPage from "./pages/GenaiSchoolTrainingPage";
 import FrontendSubmissionsPage from "./pages/missions/application-development/frontend/FrontendSubmissionsPage";
 import FrontendProjectViewerPage from "./pages/missions/application-development/frontend/FrontendProjectViewerPage";
 import ClientReset from "./components/ClientReset";
+import VideosHomePage from "./video-gallery/pages/VideosHomePage";
+import VideoPlayerPage from "./video-gallery/pages/VideoPlayerPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -201,8 +203,16 @@ function Router() {
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
       />
-      <Route path="/missions/videos" component={VideoPage} />
-      <Route path="/missions/videos/:videoId" component={VideoPlayer} />
+
+      {/* <Route path="/missions/videos" component={VideoPage} />
+      <Route path="/missions/videos/:videoId" component={VideoPlayer} /> */}
+
+      <Route path="/missions/videos" component={VideosHomePage} />
+      <Route
+        path="/missions/videos/:categorySlug/:videoSlug"
+        component={VideoPlayerPage}
+      />
+
       {/* <Route
         path="/missions/html-projects/submissions"
         component={HtmlProjectsList}
