@@ -55,6 +55,7 @@ import FrontendProjectViewerPage from "./pages/missions/application-development/
 import ClientReset from "./components/ClientReset";
 import VideosHomePage from "./video-gallery/pages/VideosHomePage";
 import VideoPlayerPage from "./video-gallery/pages/VideoPlayerPage";
+import AppBuilderActivity from "./pages/AppBuilderActivity";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -198,6 +199,7 @@ function Router() {
       <Route path="/app-builder" component={AppBuilderStream} />
       <Route path="/missions/empty" component={EmptyMission} />
       <Route path="/missions/game-dev" component={GameDevMission} />
+      <Route path="/missions/app-builder-activity" component={AppBuilderActivity} />
       <Route path="/missions/lovable" component={LovableMission} />
       <Route
         path="/missions/lovable/submissions"
