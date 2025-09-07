@@ -1,0 +1,25 @@
+Build a **fully functional, interactive web page** that runs as a standalone activity with **no navigation bars, headers, footers, or unrelated elements**. 
+The page should **teach students the concept of an app as a digital LEGO set**, where they can **drag and drop building blocks** to assemble their own app. 
+NO DONT CHANGE ANYTHING IN THE EXISTING CODE BASE.
+JUST Deliver this as a **ready-to-run FRONTEND ACTIVITY** that can be opened directly in a browser.
+
+Requirements:
+
+1. **Canvas Area:** A central area where students can drag blocks from a side “toolbox.”
+2. **Toolbox Blocks:**
+   - **UI Blocks:** buttons, text boxes, images
+   - **Logic Blocks:** triggers (onClick, onHover), basic conditional actions
+   - **AI Blocks:** simulated AI suggestions (e.g., chatbot bubble, recommendation system)
+3. **Drag & Drop:** Students can drag blocks from the toolbox into the canvas and arrange them visually.
+4. **Define Block Behavior:** When a student drops a block, a popup or inline editor allows them to configure its behavior:
+   - For UI: label, color, size, Buttons, Text fields / input boxes, Images
+   - For Logic: click triggers an alert, changes a text, or moves another block
+   - For AI: display sample AI-generated message based on a prompt
+   - Gamified Feedback: Confetti or small animation when they “submit” their mini-app
+5. **Instant Preview:** The canvas updates in real-time as blocks are configured, showing how the app will behave.
+6. **Gamified Feedback:** Every time a student successfully adds and configures a block, show an animation or badge for “Superpower unlocked.”
+7. **Standalone Interaction:** The page should be fully interactive in a browser without any external navigation or links. Everything should be focused on this activity only.
+8. **Instructions Panel:** A minimal instructions panel on the side that guides the student: 
+   - “Drag blocks to build your app. Click a block to configure it. Watch your app come alive!”
+9. **Responsive:** The activity works on a tablet (Galaxy A9+) and desktop.
+10. **Polished Look:** Fun, colorful, engaging style suitable for teenagers. Use subtle animations for drag-and-drop and feedback.

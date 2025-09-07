@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital LEGO App Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .instructions-panel {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .instructions-panel h2 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instructions-panel p {
+            color: #718096;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .progress-indicator {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #48bb78, #38b2ac);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .toolbox {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .toolbox h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .block-category {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #a0aec0;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .block {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 12px;
+            cursor: grab;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .block:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .block.ui-block {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        .block.logic-block {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        }
+
+        .block.ai-block {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #4a5568;
+        }
+
+        .canvas-area {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: auto;
+            min-height: 500px;
+        }
+
+        .canvas-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .canvas-header h1 {
+            color: #4a5568;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .canvas-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            min-height: 400px;
+            padding: 20px;
+            position: relative;
+            background: rgba(247, 250, 252, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.01);
+        }
+
+        .dropped-block {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .dropped-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .dropped-block.ui-block {
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .dropped-block.logic-block {
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .dropped-block.ai-block {
+            border-left: 4px solid #a8edea;
+        }
+
+        .block-content {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .block-label {
+            font-size: 12px;
+            color: #a0aec0;
+            background: #f7fafc;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .configure-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .configure-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h3 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #48bb78, #38b2ac);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+            transform: translateX(300px);
+            transition: transform 0.5s ease;
+            z-index: 1001;
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+        }
+
+        .achievement h4 {
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .achievement p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            pointer-events: none;
+            z-index: 1002;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #a0aec0;
+            padding: 50px 20px;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .instructions-panel,
+            .toolbox {
+                width: 100%;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+
+            .canvas-area {
+                flex: 1;
+                min-height: 300px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="instructions-panel">
+            <h2>🎯 Mission</h2>
+            <p>Build your first app using digital LEGO blocks!</p>
+            <div class="progress-indicator">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p><strong>Steps:</strong></p>
+            <p>1. Drag blocks from the toolbox</p>
+            <p>2. Drop them in the canvas</p>
+            <p>3. Click ⚙️ to configure</p>
+            <p>4. Watch your app come to life!</p>
+            <div id="achievements">
+                <p style="margin-top: 15px; font-weight: bold; color: #48bb78;">🏆 Achievements:</p>
+                <div id="achievementsList"></div>
+            </div>
+        </div>
+
+        <div class="toolbox">
+            <h3>🧰 Block Toolbox</h3>
+            
+            <div class="block-category">
+                <div class="category-title">UI Elements</div>
+                <div class="block ui-block" draggable="true" data-type="button">
+                    🔘 Button
+                </div>
+                <div class="block ui-block" draggable="true" data-type="textbox">
+                    📝 Text Box
+                </div>
+                <div class="block ui-block" draggable="true" data-type="image">
+                    🖼️ Image
+                </div>
+                <div class="block ui-block" draggable="true" data-type="heading">
+                    📰 Heading
+                </div>
+            </div>
+
+            <div class="block-category">
+                <div class="category-title">Logic & Actions</div>
+                <div class="block logic-block" draggable="true" data-type="onclick">
+                    👆 Click Trigger
+                </div>
+                <div class="block logic-block" draggable="true" data-type="condition">
+                    🔀 If/Then
+                </div>
+                <div class="block logic-block" draggable="true" data-type="timer">
+                    ⏱️ Timer
+                </div>
+            </div>
+
+            <div class="block-category">
+                <div class="category-title">AI Powers</div>
+                <div class="block ai-block" draggable="true" data-type="chatbot">
+                    🤖 AI Chat
+                </div>
+                <div class="block ai-block" draggable="true" data-type="recommendation">
+                    💡 Smart Tips
+                </div>
+                <div class="block ai-block" draggable="true" data-type="generator">
+                    ✨ Content Magic
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <div class="canvas-header">
+                <h1>🎨 Your App Canvas</h1>
+                <p>Drag blocks here to build your amazing app!</p>
+            </div>
+            <div class="drop-zone" id="dropZone">
+                <div class="empty-state" id="emptyState">
+                    <h3>Ready to Build? 🚀</h3>
+                    <p>Drag your first block from the toolbox to get started.<br>Watch the magic happen as you build!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div class="modal" id="configModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Configure Block</h3>
+            <div id="modalForm"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="saveConfiguration()">💾 Save</button>
+                <button class="btn btn-secondary" onclick="closeModal()">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div class="achievement" id="achievementNotification">
+        <h4 id="achievementTitle">🎉 Superpower Unlocked!</h4>
+        <p id="achievementText">You're becoming an app builder!</p>
+    </div>
+
+    <script>
+        let draggedBlock = null;
+        let currentConfigBlock = null;
+        let blocksAdded = 0;
+        let achievementsUnlocked = [];
+
+        const achievements = [
+            { id: 'first_block', title: 'First Block Master', description: 'Added your first block!' },
+            { id: 'ui_expert', title: 'UI Designer', description: 'Added 3 UI blocks!' },
+            { id: 'logic_guru', title: 'Logic Wizard', description: 'Added a logic block!' },
+            { id: 'ai_pioneer', title: 'AI Pioneer', description: 'Added an AI block!' },
+            { id: 'app_builder', title: 'App Builder', description: 'Built an app with 5+ blocks!' }
+        ];
+
+        // Drag and Drop functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+        });
+
+        function initializeDragAndDrop() {
+            const blocks = document.querySelectorAll('.block[draggable="true"]');
+            const dropZone = document.getElementById('dropZone');
+
+            blocks.forEach(block => {
+                block.addEventListener('dragstart', handleDragStart);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        function handleDragStart(e) {
+            draggedBlock = e.target;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.closest('.drop-zone').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            if (!e.target.closest('.drop-zone').contains(e.relatedTarget)) {
+                e.target.closest('.drop-zone').classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropZone = e.target.closest('.drop-zone');
+            dropZone.classList.remove('drag-over');
+
+            if (draggedBlock) {
+                createDroppedBlock(draggedBlock.dataset.type, e.clientX, e.clientY);
+                draggedBlock.style.opacity = '1';
+                draggedBlock = null;
+            }
+        }
+
+        function createDroppedBlock(type, x, y) {
+            const dropZone = document.getElementById('dropZone');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            const droppedBlock = document.createElement('div');
+            droppedBlock.className = `dropped-block ${getBlockCategory(type)}-block`;
+            droppedBlock.dataset.type = type;
+            droppedBlock.dataset.id = Date.now();
+
+            const content = getDefaultBlockContent(type);
+            droppedBlock.innerHTML = `
+                <div class="block-content">${content.display}</div>
+                <div class="block-label">${content.label}</div>
+                <button class="configure-btn" onclick="openConfigModal('${droppedBlock.dataset.id}')">⚙️</button>
+            `;
+
+            dropZone.appendChild(droppedBlock);
+            
+            // Add click functionality based on type
+            if (type === 'button' || type === 'onclick') {
+                droppedBlock.addEventListener('click', () => {
+                    if (content.action) {
+                        executeBlockAction(content.action);
+                    } else {
+                        showAlert('Button clicked! Configure this button to add custom actions.');
+                    }
+                });
+            }
+
+            // Animate in
+            droppedBlock.style.transform = 'scale(0)';
+            droppedBlock.style.opacity = '0';
+            setTimeout(() => {
+                droppedBlock.style.transform = 'scale(1)';
+                droppedBlock.style.opacity = '1';
+                droppedBlock.style.transition = 'all 0.5s ease';
+            }, 10);
+
+            blocksAdded++;
+            updateProgress();
+            checkAchievements(type);
+            showConfetti();
+        }
+
+        function getBlockCategory(type) {
+            const uiBlocks = ['button', 'textbox', 'image', 'heading'];
+            const logicBlocks = ['onclick', 'condition', 'timer'];
+            const aiBlocks = ['chatbot', 'recommendation', 'generator'];
+
+            if (uiBlocks.includes(type)) return 'ui';
+            if (logicBlocks.includes(type)) return 'logic';
+            if (aiBlocks.includes(type)) return 'ai';
+            return 'ui';
+        }
+
+        function getDefaultBlockContent(type) {
+            const defaults = {
+                button: { display: '🔘 Click Me!', label: 'Button', action: null },
+                textbox: { display: '📝 Enter text here...', label: 'Text Input', action: null },
+                image: { display: '🖼️ [Your Image]', label: 'Image Placeholder', action: null },
+                heading: { display: '📰 Your Amazing Title', label: 'Heading', action: null },
+                onclick: { display: '👆 Click Action Ready', label: 'Click Trigger', action: 'alert("Action triggered!")' },
+                condition: { display: '🔀 If condition then...', label: 'Logic Gate', action: null },
+                timer: { display: '⏱️ Timer: 5 seconds', label: 'Timer Block', action: null },
+                chatbot: { display: '🤖 "Hi! How can I help you today?"', label: 'AI Chatbot', action: null },
+                recommendation: { display: '💡 Smart suggestion appears here', label: 'AI Recommendations', action: null },
+                generator: { display: '✨ AI-generated content will appear here', label: 'Content Generator', action: null }
+            };
+            return defaults[type] || defaults.button;
+        }
+
+        function openConfigModal(blockId) {
+            const block = document.querySelector(`[data-id="${blockId}"]`);
+            const type = block.dataset.type;
+            currentConfigBlock = block;
+
+            const modal = document.getElementById('configModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalForm = document.getElementById('modalForm');
+
+            modalTitle.textContent = `Configure ${type.charAt(0).toUpperCase() + type.slice(1)} Block`;
+            modalForm.innerHTML = generateConfigForm(type, block);
+
+            modal.style.display = 'block';
+        }
+
+        function generateConfigForm(type, block) {
+            const content = block.querySelector('.block-content').textContent;
+            
+            switch (type) {
+                case 'button':
+                    return `
+                        <div class="form-group">
+                            <label>Button Text:</label>
+                            <input type="text" id="buttonText" value="${content.replace('🔘 ', '')}" placeholder="Click Me!">
+                        </div>
+                        <div class="form-group">
+                            <label>Button Color:</label>
+                            <select id="buttonColor">
+                                <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="red">Red</option>
+                                <option value="purple">Purple</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Click Action:</label>
+                            <select id="clickAction">
+                                <option value="alert">Show Alert</option>
+                                <option value="confetti">Show Confetti</option>
+                                <option value="change_text">Change Text</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Custom Message:</label>
+                            <input type="text" id="customMessage" placeholder="Hello from your button!">
+                        </div>
+                    `;
+
+                case 'textbox':
+                    return `
+                        <div class="form-group">
+                            <label>Placeholder Text:</label>
+                            <input type="text" id="placeholderText" value="${content.replace('📝 ', '')}" placeholder="Enter text here...">
+                        </div>
+                        <div class="form-group">
+                            <label>Input Type:</label>
+                            <select id="inputType">
+                                <option value="text">Text</option>
+                                <option value="email">Email</option>
+                                <option value="password">Password</option>
+                                <option value="number">Number</option>
+                            </select>
+                        </div>
+                    `;
+
+                case 'heading':
+                    return `
+                        <div class="form-group">
+                            <label>Heading Text:</label>
+                            <input type="text" id="headingText" value="${content.replace('📰 ', '')}" placeholder="Your Amazing Title">
+                        </div>
+                        <div class="form-group">
+                            <label>Heading Size:</label>
+                            <select id="headingSize">
+                                <option value="h1">Large (H1)</option>
+                                <option value="h2">Medium (H2)</option>
+                                <option value="h3">Small (H3)</option>
+                            </select>
+                        </div>
+                    `;
+
+                case 'chatbot':
+                    return `
+                        <div class="form-group">
+                            <label>AI Personality:</label>
+                            <select id="aiPersonality">
+                                <option value="friendly">Friendly Helper</option>
+                                <option value="professional">Professional Assistant</option>
+                                <option value="funny">Funny Companion</option>
+                                <option value="wise">Wise Mentor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Welcome Message:</label>
+                            <textarea id="welcomeMessage" placeholder="Hi! How can I help you today?"></textarea>
+                        </div>
+                    `;
+
+                case 'recommendation':
+                    return `
+                        <div class="form-group">
+                            <label>Recommendation Type:</label>
+                            <select id="recommendationType">
+                                <option value="tips">Helpful Tips</option>
+                                <option value="products">Product Suggestions</option>
+                                <option value="learning">Learning Resources</option>
+                                <option value="entertainment">Entertainment</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Context:</label>
+                            <input type="text" id="recommendationContext" placeholder="Based on user preferences...">
+                        </div>
+                    `;
+
+                default:
+                    return `
+                        <div class="form-group">
+                            <label>Block Content:</label>
+                            <textarea id="blockContent" placeholder="Customize your block content...">${content}</textarea>
+                        </div>
+                    `;
+            }
+        }
+
+        function saveConfiguration() {
+            if (!currentConfigBlock) return;
+
+            const type = currentConfigBlock.dataset.type;
+            const content = currentConfigBlock.querySelector('.block-content');
+
+            switch (type) {
+                case 'button':
+                    const buttonText = document.getElementById('buttonText').value;
+                    const buttonColor = document.getElementById('buttonColor').value;
+                    const clickAction = document.getElementById('clickAction').value;
+                    const customMessage = document.getElementById('customMessage').value;
+                    
+                    content.innerHTML = `🔘 ${buttonText}`;
+                    content.style.color = getColorCode(buttonColor);
+                    
+                    // Store action for later execution
+                    currentConfigBlock.dataset.action = clickAction;
+                    currentConfigBlock.dataset.message = customMessage || 'Button clicked!';
+                    break;
+
+                case 'textbox':
+                    const placeholderText = document.getElementById('placeholderText').value;
+                    content.innerHTML = `📝 ${placeholderText}`;
+                    break;
+
+                case 'heading':
+                    const headingText = document.getElementById('headingText').value;
+                    const headingSize = document.getElementById('headingSize').value;
+                    content.innerHTML = `📰 ${headingText}`;
+                    content.style.fontSize = headingSize === 'h1' ? '20px' : headingSize === 'h2' ? '16px' : '14px';
+                    content.style.fontWeight = 'bold';
+                    break;
+
+                case 'chatbot':
+                    const personality = document.getElementById('aiPersonality').value;
+                    const welcomeMessage = document.getElementById('welcomeMessage').value;
+                    content.innerHTML = `🤖 "${welcomeMessage || getPersonalityMessage(personality)}"`;
+                    break;
+
+                case 'recommendation':
+                    const recType = document.getElementById('recommendationType').value;
+                    const context = document.getElementById('recommendationContext').value;
+                    content.innerHTML = `💡 ${getRecommendationText(recType)} ${context ? '- ' + context : ''}`;
+                    break;
+
+                default:
+                    const blockContent = document.getElementById('blockContent').value;
+                    content.innerHTML = blockContent;
+                    break;
+            }
+
+            // Add click handler for buttons
+            if (type === 'button') {
+                currentConfigBlock.onclick = () => {
+                    executeBlockAction(currentConfigBlock.dataset.action, currentConfigBlock.dataset.message);
+                };
+            }
+
+            showAchievement('Configuration Master', 'You configured a block like a pro!');
+            closeModal();
+        }
+
+        function getColorCode(color) {
+            const colors = {
+                blue: '#667eea',
+                green: '#48bb78',
+                red: '#ff6b6b',
+                purple: '#764ba2'
+            };
+            return colors[color] || colors.blue;
+        }
+
+        function getPersonalityMessage(personality) {
+            const messages = {
+                friendly: 'Hi there! I\'m here to help you with anything you need!',
+                professional: 'Good day. How may I assist you today?',
+                funny: 'Hey! Ready for some fun? What can I help you with? 😄',
+                wise: 'Greetings, young apprentice. What wisdom do you seek?'
+            };
+            return messages[personality] || messages.friendly;
+        }
+
+        function getRecommendationText(type) {
+            const texts = {
+                tips: 'Here\'s a helpful tip for you:',
+                products: 'You might like this product:',
+                learning: 'Recommended learning resource:',
+                entertainment: 'For your entertainment:'
+            };
+            return texts[type] || texts.tips;
+        }
+
+        function executeBlockAction(action, message) {
+            switch (action) {
+                case 'alert':
+                    showAlert(message || 'Hello from your app!');
+                    break;
+                case 'confetti':
+                    showConfetti();
+                    showAlert(message || 'Confetti time! 🎉');
+                    break;
+                case 'change_text':
+                    showAlert(`Text changed: ${message || 'New text content!'}`);
+                    break;
+                default:
+                    if (action) {
+                        try {
+                            eval(action);
+                        } catch (e) {
+                            showAlert('Action executed!');
+                        }
+                    }
+                    break;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none';
+            currentConfigBlock = null;
+        }
+
+        function updateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progress = Math.min((blocksAdded / 5) * 100, 100);
+            progressBar.style.width = progress + '%';
+        }
+
+        function checkAchievements(blockType) {
+            const uiBlocks = document.querySelectorAll('.dropped-block.ui-block').length;
+            const logicBlocks = document.querySelectorAll('.dropped-block.logic-block').length;
+            const aiBlocks = document.querySelectorAll('.dropped-block.ai-block').length;
+
+            if (blocksAdded === 1 && !achievementsUnlocked.includes('first_block')) {
+                unlockAchievement('first_block');
+            }
+
+            if (uiBlocks >= 3 && !achievementsUnlocked.includes('ui_expert')) {
+                unlockAchievement('ui_expert');
+            }
+
+            if (logicBlocks >= 1 && !achievementsUnlocked.includes('logic_guru')) {
+                unlockAchievement('logic_guru');
+            }
+
+            if (aiBlocks >= 1 && !achievementsUnlocked.includes('ai_pioneer')) {
+                unlockAchievement('ai_pioneer');
+            }
+
+            if (blocksAdded >= 5 && !achievementsUnlocked.includes('app_builder')) {
+                unlockAchievement('app_builder');
+            }
+        }
+
+        function unlockAchievement(achievementId) {
+            const achievement = achievements.find(a => a.id === achievementId);
+            if (achievement && !achievementsUnlocked.includes(achievementId)) {
+                achievementsUnlocked.push(achievementId);
+                showAchievement(achievement.title, achievement.description);
+                updateAchievementsList();
+            }
+        }
+
+        function updateAchievementsList() {
+            const achievementsList = document.getElementById('achievementsList');
+            achievementsList.innerHTML = achievementsUnlocked.map(id => {
+                const achievement = achievements.find(a => a.id === id);
+                return `<div style="font-size: 10px; margin: 2px 0; color: #48bb78;">✅ ${achievement.title}</div>`;
+            }).join('');
+        }
+
+        function showAchievement(title, description) {
+            const notification = document.getElementById('achievementNotification');
+            document.getElementById('achievementTitle').textContent = `🎉 ${title}!`;
+            document.getElementById('achievementText').textContent = description;
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    confetti.animate([
+                        { transform: 'translateY(-10vh) rotate(0deg)', opacity: 1 },
+                        { transform: 'translateY(100vh) rotate(360deg)', opacity: 0 }
+                    ], {
+                        duration: 2000 + Math.random() * 1000,
+                        easing: 'ease-out'
+                    }).onfinish = () => {
+                        confetti.remove();
+                    };
+                }, i * 50);
+            }
+        }
+
+        function showAlert(message) {
+            // Custom alert that fits the theme
+            const alertDiv = document.createElement('div');
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 1003;
+                text-align: center;
+                color: #4a5568;
+                font-weight: bold;
+                border: 3px solid #667eea;
+            `;
+            alertDiv.textContent = message;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 2000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('configModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Welcome message
+        setTimeout(() => {
+            showAchievement('Welcome Builder', 'Ready to create your first digital LEGO app?');
+        }, 1000);
+    </script>
+</body>
+</html>
