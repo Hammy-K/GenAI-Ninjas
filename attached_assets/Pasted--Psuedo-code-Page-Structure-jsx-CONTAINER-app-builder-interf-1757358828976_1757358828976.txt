@@ -1,0 +1,439 @@
+- Psuedo-code
+    - **Page Structure**
+        
+        ```jsx
+        CONTAINER: app-builder-interface
+          HEADER: top-bar
+            ELEMENT: timer (clean countdown)
+            ELEMENT: session-status ("Building with Pengy...")
+          
+          MAIN: chat-layout
+            SECTION: conversation-area
+              ELEMENT: message-history (scrollable chat)
+              ELEMENT: input-section (textarea + send)
+            
+            SIDEBAR: progress-panel
+              ELEMENT: idea-card (evolving summary)
+              ELEMENT: progress-indicator (organic milestones)
+        ```
+        
+    - **AI-Conversation State Management**
+        
+        ```jsx
+        CONVERSATION_STATE: {
+          sessionId: generateUUID(),
+          phase: 'welcome' | 'ideation' | 'refinement' | 'building' | 'submission' | 'complete',
+          messageHistory: [],
+          ideaData: {
+            type: null,          // study/social/game/creative/utility
+            problem: null,       // what problem it solves
+            audience: null,      // who uses it
+            coreFeature: null,   // main functionality
+            userFlow: null,      // how someone uses it
+            style: null          // design preference
+          },
+          completeness: 0,       // 0-100 based on filled ideaData
+          readyToBuild: false,
+          timeStarted: timestamp,
+          buildingStarted: null
+        }
+        ```
+        
+    - **PENGY_SYSTEM_PROMPT**
+        
+        ```jsx
+        PENGY_SYSTEM_PROMPT: `
+        You are Pengy, a helpful AI assistant guiding high school students in Saudi Arabia to build their first app in 30 minutes.
+        
+        Your personality:
+        - Friendly and encouraging, but not overly hyped
+        - Ask ONE clear question at a time
+        - Keep responses to 1-2 sentences
+        - Help students think through their ideas logically
+        - Guide toward simple, buildable concepts
+        
+        Current conversation context:
+        - Phase: {phase}
+        - What we know: {ideaData}
+        - Completeness: {completeness}%
+        - Time remaining: {timeRemaining}
+        
+        Your goal: Help them define a clear app concept that can be built in 15 minutes on Lovable.dev.
+        
+        Guidelines:
+        - If idea is too complex, suggest simpler version
+        - If idea is vague, ask clarifying questions
+        - When you have type + problem + audience + core feature, summarize and ask if ready to build
+        - Keep conversation focused and moving forward
+        
+        Personality Traits:
+        - Enthusiastic but realistic: "That's awesome! Let's make sure we can build it today..."
+        - Collaborative: "Let's figure this out together..."
+        - Time-conscious: "This is just your first app, so let's focus on..."
+        - Encouraging: "This is going to be so cool when it's done!"
+        `
+        ```
+        
+    - **Header Status Updates**
+        
+        ```jsx
+        FUNCTION: updateAIStatus(conversationState)
+          statusText = {
+            'welcome': "Let's build an app!",
+            'ideation': "Exploring your idea...",
+            'refinement': "Shaping your concept...", 
+            'ready': "Ready to build!",
+            'building': "You're building!",
+            'submission': "Almost done!",
+            'celebration': "App published! 🎉"
+          }
+          
+          document.getElementById('aiStatus').textContent = statusText[state.phase]
+        ```
+        
+    - **Step 0: Welcome**
+        
+        ```jsx
+        FUNCTION: initializeConversation()
+          DISPLAY: welcome message from Pengy
+          
+        PENGY_OPENING: "Hi! I'm Pengy, and I'll help you build your first app today. What's something you deal with regularly that you wish there was an app for? Or maybe you have a fun app idea already?"
+        
+        USER_INPUT: natural language response
+        
+        FUNCTION: processUserResponse(message)
+          REQUEST: callAI({
+            systemPrompt: PENGY_SYSTEM_PROMPT,
+            userMessage: message,
+            context: CONVERSATION_STATE
+          })
+          
+          RESPONSE: aiResponse
+          
+          PARSE: extractIdeaElements(aiResponse, message)
+          UPDATE: CONVERSATION_STATE.ideaData
+          UPDATE: CONVERSATION_STATE.completeness
+          
+          DISPLAY: aiResponse
+          UPDATE: ideaCard(CONVERSATION_STATE.ideaData)
+          UPDATE: progressIndicator(CONVERSATION_STATE.completeness)
+        ```
+        
+    - **Step 1: Idea Generation**
+        
+        ```jsx
+        FUNCTION: developIdea()
+          WHILE CONVERSATION_STATE.completeness < 80:
+            
+            PENGY_STRATEGY: ask targeted questions based on missing data
+            
+            IF missing ideaData.problem:
+              PENGY_FOCUS: "What specific problem would this solve for people?"
+              
+            IF missing ideaData.audience:
+              PENGY_FOCUS: "Who would use this - friends, classmates, or a wider group?"
+              
+            IF missing ideaData.coreFeature:
+              PENGY_FOCUS: "What's the main thing people would do in your app?"
+              
+            IF missing ideaData.userFlow:
+              PENGY_FOCUS: "Walk me through it - someone opens your app, then what?"
+            
+            USER_RESPONSE: natural language input
+            
+            PROCESS: 
+              aiResponse = callAI(userInput, context)
+              extractedData = parseIdeaElements(aiResponse, userInput)
+              updateConversationState(extractedData)
+              updateUI(completeness, ideaData)
+              
+            IF ideaSeemsTooComplex(extractedData):
+              PENGY_SUGGEST: simpler version while keeping core value
+              
+            IF ideaIsVague(extractedData):
+              PENGY_ASK: specific clarifying question
+        ```
+        
+    - **Step 2: Readiness Check**
+        
+        ```jsx
+        FUNCTION: checkReadiness()
+          WHEN CONVERSATION_STATE.completeness >= 80:
+            
+            PENGY_SUMMARY: generate clear concept summary
+            DISPLAY: "Here's what I understand we're building:"
+            
+            IDEA_SUMMARY_CARD:
+              "📱 App: {generateAppName(ideaData)}
+               🎯 Problem: {ideaData.problem}
+               👥 For: {ideaData.audience}  
+               ⚡ Main feature: {ideaData.coreFeature}
+               📱 User flow: {ideaData.userFlow}"
+            
+            PENGY_CONFIRMATION: "Does this capture your idea? Ready to build it?"
+            
+            QUICK_OPTIONS: ["Yes, let's build!" | "Let me adjust something"]
+            
+            IF userConfirms():
+              TRANSITION: moveToBuilding()
+            ELSE:
+              CONTINUE: developIdea() with user adjustments
+        ```
+        
+    - **Step 3: Build Generation**
+        
+        ```jsx
+        FUNCTION: moveToBuilding()
+          UPDATE: CONVERSATION_STATE.phase = 'building'
+          UPDATE: CONVERSATION_STATE.buildingStarted = timestamp
+          
+          PENGY_MESSAGE: "Perfect! Generating your Lovable prompt now..."
+          
+          PROCESS: generateLovablePrompt(CONVERSATION_STATE.ideaData)
+          
+          LOVABLE_PROMPT: create detailed, buildable prompt from ideaData
+          
+          PENGY_INSTRUCTION: 
+            "I'm opening Lovable.dev with your custom prompt. Here's what to focus on:
+             • Test your app frequently using the preview
+             • Make small changes and test again  
+             • You have limited free tokens - use them wisely
+             • Focus on core functionality over design details
+             • Paste your app URL here when it's working"
+          
+          ACTION: window.open(lovableURL + encodedPrompt)
+          
+          DISPLAY: buildingSupportInterface()
+        ```
+        
+    - **Step 4: Build Support**
+        
+        ```jsx
+        FUNCTION: buildingSupportInterface()
+          DISPLAY: URL input field for completed app
+          DISPLAY: timer showing time remaining
+          
+          SUPPORT_MESSAGES: contextual based on time elapsed
+            EVERY 3_MINUTES: 
+              IF timeElapsed < 5: "How's it going? Remember to test early!"
+              IF timeElapsed 5-10: "Making good progress? Focus on core features."
+              IF timeElapsed 10-13: "Time to wrap up - get it working and publish!"
+              IF timeElapsed > 13: "Last couple minutes - focus on publishing!"
+          
+          WHEN userPastesURL(url):
+            VALIDATE: checkURLFormat(url)
+            PENGY_RESPONSE: "Great! Let me check your app... Looks good! Ready to submit?"
+            TRANSITION: moveToSubmission()
+            
+          IF userAsksQuestion(question):
+            PENGY_HELP: provide specific, actionable guidance
+        ```
+        
+    - **Step 5: Submission**
+        
+        ```jsx
+        FUNCTION: moveToSubmission()
+          UPDATE: CONVERSATION_STATE.phase = 'submission'
+          
+          PENGY_MESSAGE: "Almost done! I need a few details to add your app to the showcase:"
+          
+          COLLECT_SEQUENTIALLY:
+            PENGY_ASK: "What's your name?"
+            USER_INPUT: name
+            
+            PENGY_ASK: "What should we call your app?"
+            USER_INPUT: appTitle
+            
+            PENGY_ASK: "Student ID? (just hit enter to skip)"
+            USER_INPUT: studentId (optional)
+          
+          FINAL_SUBMISSION:
+            PENGY_MESSAGE: "Submitting your app to the class gallery..."
+            PROCESS: submitToShowcase(submissionData)
+            TRANSITION: celebration()
+        ```
+        
+    - **Step 6: Completion**
+        
+        ```jsx
+        FUNCTION: celebration()
+          UPDATE: CONVERSATION_STATE.phase = 'complete'
+          
+          PENGY_MESSAGE: "Done! Your app is now live in the class gallery. Well done building your first app!"
+          
+          DISPLAY: appShowcaseCard with:
+            - Link to their live app
+            - Simple sharing options
+            - Gallery of other student apps
+          
+          PENGY_CLOSING: "Thanks for building with me today. You're officially an app creator now!"
+        ```
+        
+    - **Step 7: Success & Showcase**
+        
+        ```jsx
+        DISPLAY: "🎉 Congratulations! Your app is live!"
+        DISPLAY: Student's app in an embedded iframe
+        DISPLAY: "Share your app:" + socialShareButtons
+        
+        DISPLAY: "Live Gallery - Apps Built Today"
+        COMPONENT: LiveGallery
+          FETCH: /api/submitted-apps (refresh every 30 seconds)
+          FOR EACH app in submittedApps:
+            DISPLAY: AppCard(title, studentName, url, thumbnail)
+            
+        DISPLAY: "Vote for your favorites!"
+        VOTING_SECTION:
+          CATEGORY: "Most Creative"
+          CATEGORY: "Most Useful"
+          FOR EACH category:
+            DISPLAY: Grid of submitted apps
+            BUTTON: Vote → onClick: submitVote(appId, category)
+        
+        DISPLAY: Real-time vote counts
+        DISPLAY: "Thanks for participating! Check back for final results."
+        ```
+        
+    - **Core AI Processing**
+        
+        ```jsx
+        FUNCTION: callAI(userMessage, conversationState)
+          
+          REQUEST: {
+            model: "gpt-4" | "claude-3",
+            messages: [
+              {role: "system", content: generateSystemPrompt(conversationState)},
+              ...conversationState.messageHistory,
+              {role: "user", content: userMessage}
+            ],
+            temperature: 0.7,
+            max_tokens: 150
+          }
+          
+          RESPONSE: aiResponseText
+          
+          PARALLEL_PROCESSING:
+            extractedIdea = extractIdeaElements(aiResponseText, userMessage)
+            completeness = calculateCompleteness(extractedIdea)
+            phase = determinePhase(completeness, conversationState)
+          
+          RETURN: {
+            response: aiResponseText,
+            extractedIdea: extractedIdea,
+            completeness: completeness,
+            suggestedPhase: phase
+          }
+        ```
+        
+    - **Idea Extraction Pipeline**
+        
+        ```jsx
+        FUNCTION: extractIdeaElements(aiResponse, userMessage)
+          
+          EXTRACTION_PROMPT: `
+          Based on this conversation:
+          User: "${userMessage}"
+          AI: "${aiResponse}"
+          
+          Extract any mentioned app details:
+          {
+            "type": "study|social|game|creative|utility|null",
+            "problem": "what problem it solves or null", 
+            "audience": "who uses it or null",
+            "coreFeature": "main functionality or null",
+            "userFlow": "how someone uses it or null"
+          }
+          
+          Only include explicitly mentioned information.`
+          
+          RESULT: structuredData
+          MERGE: with existing CONVERSATION_STATE.ideaData
+          RETURN: updatedIdeaData
+        ```
+        
+    - **Progress Calculation**
+        
+        ```jsx
+        FUNCTION: calculateCompleteness(ideaData)
+          weights = {
+            type: 20,
+            problem: 25, 
+            audience: 20,
+            coreFeature: 25,
+            userFlow: 10
+          }
+          
+          completeness = 0
+          FOR each field in ideaData:
+            IF field is not null:
+              completeness += weights[field]
+              
+          RETURN: completeness
+        ```
+        
+    - **Idea Card Evolution**
+        
+        ```jsx
+        FUNCTION: updateIdeaCard(ideaData, completeness)
+          
+          CARD_DISPLAY:
+            IF completeness < 20:
+              SHOW: "Starting to understand your idea..."
+              
+            IF completeness 20-60:
+              SHOW: partially filled card with known details
+              
+            IF completeness 60-80:
+              SHOW: mostly complete card with "Almost ready..."
+              
+            IF completeness >= 80:
+              SHOW: complete card with "Ready to build! ✓"
+              
+          UPDATE: visual progress indicator
+          UPDATE: any empty fields show as "..."
+        ```
+        
+    - **Conversation Management**
+        
+        ```jsx
+        FUNCTION: handleUserInput(message)
+          
+          VALIDATE: message is not empty
+          
+          DISPLAY: addUserMessage(message)
+          DISPLAY: showTypingIndicator()
+          
+          PROCESS: aiResult = callAI(message, CONVERSATION_STATE)
+          
+          UPDATE: CONVERSATION_STATE with aiResult
+          
+          DISPLAY: hideTypingIndicator()
+          DISPLAY: addPengyMessage(aiResult.response)
+          DISPLAY: updateIdeaCard(aiResult.extractedIdea, aiResult.completeness)
+          
+          IF phaseTransitionNeeded(aiResult):
+            EXECUTE: transitionToPhase(aiResult.suggestedPhase)
+        ```
+        
+    - **AI Service Fallbacks**
+        
+        ```jsx
+        FUNCTION: handleAIFailure(error, context)
+          
+          FALLBACK_RESPONSES = {
+            'ideation': [
+              "Tell me more about your idea.",
+              "What problem would this solve?", 
+              "Who would use this app?"
+            ],
+            'refinement': [
+              "How would someone use this?",
+              "What's the main thing it would do?",
+              "Walk me through using your app."
+            ]
+          }
+          
+          response = selectContextualFallback(context.phase)
+          DISPLAY: addPengyMessage(response)
+          LOG: error for debugging
+        ```
