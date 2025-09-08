@@ -777,10 +777,10 @@ Keep it simple and functional - this is a 30-minute build focusing on core funct
                       if (navigator.share) {
                         navigator.share({
                           title: conversationState.submissionData.appTitle || 'My App',
-                          url: conversationState.appUrl
+                          url: conversationState.appUrl || ''
                         });
                       } else {
-                        navigator.clipboard.writeText(conversationState.appUrl);
+                        navigator.clipboard.writeText(conversationState.appUrl || '');
                         alert('App URL copied to clipboard!');
                       }
                     }}
