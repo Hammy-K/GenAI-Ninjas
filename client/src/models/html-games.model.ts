@@ -1,4 +1,5 @@
 import { HtmlGamesExportParams } from "@/types/admin/html-games.types";
+import Cookies from "js-cookie";
 
 export class HtmlGamesModel {
   private static readonly BASE_URL = "/api/html-projects";
@@ -12,9 +13,7 @@ export class HtmlGamesModel {
       }
     });
 
-    const adminAuth = JSON.parse(
-      localStorage.getItem("admin_auth_token_v1") ?? "",
-    ).token;
+    const adminAuth = Cookies.get("admin_token");
 
     const response = await fetch(`${this.BASE_URL}/export?${searchParams}`, {
       method: "GET",
