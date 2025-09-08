@@ -36,6 +36,7 @@ import { registerSchoolRoutes } from "./routes/schools.route";
 import { registerGenaiSchoolTrainingRoutes } from "./routes/genai-school-training.route";
 import { registerAppDevFrontendRoutes } from "./routes/app-dev-frontend.route";
 import { registerGenAiRoutes } from "./routes/genai.routes";
+import { registerLovableActivityRoutes } from "./routes/lovable-activity";
 
 /**
  * Legacy function for server-side prompt logging
@@ -431,6 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGenaiSchoolTrainingRoutes(apiRouter);
   registerAppDevFrontendRoutes(apiRouter);
   registerGenAiRoutes(apiRouter);
+  registerLovableActivityRoutes(apiRouter, openai);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
