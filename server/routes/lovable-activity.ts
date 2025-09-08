@@ -174,7 +174,7 @@ export function registerLovableActivityRoutes(router: Router, openai: OpenAI) {
     try {
       const { id } = req.params;
       const { category } = req.body;
-      const sessionId = req.session?.id || req.ip; // Use session ID or IP as voter identifier
+      const sessionId = req.session?.id || req.ip || 'anonymous'; // Use session ID or IP as voter identifier
 
       if (!category || (category !== 'creative' && category !== 'useful')) {
         return res.status(400).json({
@@ -210,7 +210,7 @@ export function registerLovableActivityRoutes(router: Router, openai: OpenAI) {
 
       logEvent("lovable_app_vote", submission.appTitle, {
         category,
-        voter_session: sessionId,
+        voter_session: sessionId || 'anonymous',
         app_id: id,
         total_creative_votes: submission.votes.creative,
         total_useful_votes: submission.votes.useful
