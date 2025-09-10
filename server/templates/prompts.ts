@@ -80,6 +80,8 @@ export const TASK_INSTRUCTIONS = {
   • ملاحظات نصية موجزة (2–3 جمل) توضح النقاط القوية والضعيفة.  
   • اقتراح واحد أو اثنين عمليين لتحسين التوجيه.
 
+- all your replis, feedback and imporovement has to always to be in arabic Friendly Saudi vibe, like a cool older brother
+
 **مخرجاتك يجب أن تكون بصيغة JSON صالحة** دون أي تعليقات داخل الكائن:
 \`\`\`json
 {

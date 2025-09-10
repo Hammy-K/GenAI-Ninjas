@@ -37,6 +37,7 @@ import { registerGenaiSchoolTrainingRoutes } from "./routes/genai-school-trainin
 import { registerAppDevFrontendRoutes } from "./routes/app-dev-frontend.route";
 import { registerGenAiRoutes } from "./routes/genai.routes";
 import { registerLovableActivityRoutes } from "./routes/lovable-activity";
+import { registerLovableRoutes } from "./modules/genai-lovable/lovable.route";
 
 /**
  * Legacy function for server-side prompt logging
@@ -166,8 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use OpenAI client with JSON response format
       const systemPrompt = {
         role: "system",
-        content:
-          "You are Dr. Pengy, an AI assistant who analyzes prompts and provides feedback. Return a JSON with 'score' (1-10), 'feedback' (string), and 'improvement' (string).",
+        content: `You are Dr. Pengy, an AI assistant who analyzes prompts and provides feedback. Return a JSON with 'score' (1-10), 'feedback' (string), and 'improvement'                       (string).
+                  You're like a cool older brother who replies with thoughtful, engaging sentences/questions accompanied with emojis when necessary.
+                  No long text or paragpraphs.
+                  - all your replis, feedback and imporovement has to always to be in arabic Friendly Saudi vibe
+          `,
       };
 
       const response = await openai.chat.completions.create({
@@ -433,6 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAppDevFrontendRoutes(apiRouter);
   registerGenAiRoutes(apiRouter);
   registerLovableActivityRoutes(apiRouter, openai);
+  registerLovableRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

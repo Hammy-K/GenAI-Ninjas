@@ -2,16 +2,24 @@
  * AI Text Generation Routes
  * Handles all text-based AI operations including chat, completions, and HTML generation
  */
-import { Router, Request, Response } from 'express';
-import { Session } from 'express-session';
-import OpenAI from 'openai';
-import { logEvent, logError, createAssistantService } from '../services';
-import { validateChatHistory, validatePrompt, moderateContentMiddleware } from '../middleware/validation';
-import { buildSystemPrompt, trimMessageHistory, FEW_SHOT_EXAMPLES } from '../templates/prompts';
-import { v4 as uuidv4 } from 'uuid';
+import { Router, Request, Response } from "express";
+import { Session } from "express-session";
+import OpenAI from "openai";
+import { logEvent, logError, createAssistantService } from "../services";
+import {
+  validateChatHistory,
+  validatePrompt,
+  moderateContentMiddleware,
+} from "../middleware/validation";
+import {
+  buildSystemPrompt,
+  trimMessageHistory,
+  FEW_SHOT_EXAMPLES,
+} from "../templates/prompts";
+import { v4 as uuidv4 } from "uuid";
 
 // Session tracking for TryAI Assistant
-const TRYAI_SESSION_PREFIX = 'tryai_';
+const TRYAI_SESSION_PREFIX = "tryai_";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const GPT_MODEL = "gpt-4o";
@@ -24,152 +32,172 @@ interface RequestWithTryAISession extends Request {
   body: any & {
     firebaseUid?: string;
     deviceId?: string;
-  }
+  };
 }
 
 export function registerAITextRoutes(router: Router, openai: OpenAI) {
   // Create an instance of the Assistant service
   const assistantService = createAssistantService(openai);
-  
+
   // Apply common middleware to all routes
   const aiRoutes = Router();
   aiRoutes.use(validateChatHistory);
   aiRoutes.use(moderateContentMiddleware(openai));
 
   // Text generation endpoint
-  aiRoutes.post("/generate", validatePrompt, async (req: Request, res: Response) => {
-    try {
-      const { prompt, messageHistory = [], maxTokens = 1000 } = req.body;
-      
-      // Log the text generation request (with truncated prompt)
-      logEvent('text_generation', prompt, {
-        message_history_length: messageHistory.length,
-        prompt_length: prompt.length,
-        max_tokens: maxTokens
-      });
+  aiRoutes.post(
+    "/generate",
+    validatePrompt,
+    async (req: Request, res: Response) => {
+      try {
+        const { prompt, messageHistory = [], maxTokens = 1000 } = req.body;
 
-      // Build the system prompt using our template
-      const systemPrompt = {
-        role: "system",
-        content: buildSystemPrompt('DR_PENGY', 'GENERAL_CONVERSATION')
-      };
+        // Log the text generation request (with truncated prompt)
+        logEvent("text_generation", prompt, {
+          message_history_length: messageHistory.length,
+          prompt_length: prompt.length,
+          max_tokens: maxTokens,
+        });
 
-      // Trim message history to reduce token usage
-      const trimmedHistory = trimMessageHistory(messageHistory, 5);
+        // Build the system prompt using our template
+        const systemPrompt = {
+          role: "system",
+          content: buildSystemPrompt("DR_PENGY", "GENERAL_CONVERSATION"),
+        };
 
-      // Construct the messages array for OpenAI
-      const messages = [
-        systemPrompt,
-        ...trimmedHistory,
-        { role: "user", content: prompt },
-      ];
+        // Trim message history to reduce token usage
+        const trimmedHistory = trimMessageHistory(messageHistory, 5);
 
-      // Call OpenAI with consistent parameters
-      const response = await openai.chat.completions.create({
-        model: GPT_MODEL,
-        messages,
-        max_tokens: maxTokens,
-        temperature: 0.7,
-        top_p: 0.9,
-      });
+        // Construct the messages array for OpenAI
+        const messages = [
+          systemPrompt,
+          ...trimmedHistory,
+          { role: "user", content: prompt },
+        ];
 
-      // Log successful text generation
-      logEvent('text_generation_success', prompt, {
-        model: GPT_MODEL,
-        response_length: response.choices[0].message.content?.length || 0,
-        conversation_turns: messageHistory.length + 1
-      });
+        // Call OpenAI with consistent parameters
+        const response = await openai.chat.completions.create({
+          model: GPT_MODEL,
+          messages,
+          max_tokens: maxTokens,
+          temperature: 0.7,
+          top_p: 0.9,
+        });
 
-      return res.json({ text: response.choices[0].message.content });
-    } catch (error) {
-      logError('text_generation', error instanceof Error ? error : 'Unknown error');
-      return res.status(500).json({ error: "Failed to generate text" });
-    }
-  });
+        // Log successful text generation
+        logEvent("text_generation_success", prompt, {
+          model: GPT_MODEL,
+          response_length: response.choices[0].message.content?.length || 0,
+          conversation_turns: messageHistory.length + 1,
+        });
+
+        return res.json({ text: response.choices[0].message.content });
+      } catch (error) {
+        logError(
+          "text_generation",
+          error instanceof Error ? error : "Unknown error",
+        );
+        return res.status(500).json({ error: "Failed to generate text" });
+      }
+    },
+  );
 
   // Prompt analysis endpoint
-  aiRoutes.post("/analyze-prompt", validatePrompt, async (req: Request, res: Response) => {
-    try {
-      const { prompt, messageHistory = [] } = req.body;
-
-      // Log the prompt analysis request
-      logEvent('prompt_analysis', prompt, {
-        message_history_length: messageHistory.length,
-        prompt_length: prompt.length
-      });
-
-      // Include few-shot examples for better results
-      const fewShotExamples = FEW_SHOT_EXAMPLES.PROMPT_ENGINEERING;
-      
-      // Build the system prompt specifically for prompt analysis
-      const systemPrompt = {
-        role: "system",
-        content: buildSystemPrompt('DR_PENGY', 'PROMPT_ANALYSIS')
-      };
-
-      // Include message history, few-shot examples, and the current prompt
-      const messages = [
-        systemPrompt,
-        ...fewShotExamples,
-        ...messageHistory,
-        { role: "user", content: prompt }
-      ];
-
-      const response = await openai.chat.completions.create({
-        model: GPT_MODEL,
-        messages,
-        temperature: 0.5, // Lower temperature for more consistent evaluations
-        response_format: { type: "json_object" },
-      });
-
-      // Safely parse the JSON response
-      let result;
+  aiRoutes.post(
+    "/analyze-prompt",
+    validatePrompt,
+    async (req: Request, res: Response) => {
       try {
-        const messageContent = response.choices[0].message.content || "{}";
-        result = JSON.parse(messageContent);
-        
-        // Validate that we have all required fields with correct types
-        if (typeof result.score !== 'number' || !result.score) {
-          result.score = 8; // Default to a favorable score
-        }
-        
-        if (!result.feedback || typeof result.feedback !== 'string') {
-          result.feedback = "توجيه رائع! استمر بالعمل الجيد.";
-        }
-        
-        if (!result.improvement || typeof result.improvement !== 'string') {
-          result.improvement = "يمكنك إضافة المزيد من التفاصيل لتحسين النتائج.";
-        }
-        
-        // Ensure score is within range
-        result.score = Math.max(1, Math.min(10, Math.round(result.score)));
-        
-      } catch (parseError) {
-        logError('prompt_analysis_parse', parseError instanceof Error ? parseError : 'Unknown error', {
-          response_content: response.choices[0].message.content
+        const { prompt, messageHistory = [] } = req.body;
+
+        // Log the prompt analysis request
+        logEvent("prompt_analysis", prompt, {
+          message_history_length: messageHistory.length,
+          prompt_length: prompt.length,
         });
-        
-        // Provide a robust fallback structure if parsing fails
-        result = {
-          score: 8,
-          feedback: "توجيه جيد! استمر بالعمل الرائع.",
-          improvement: "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل."
+
+        // Include few-shot examples for better results
+        const fewShotExamples = FEW_SHOT_EXAMPLES.PROMPT_ENGINEERING;
+
+        // Build the system prompt specifically for prompt analysis
+        const systemPrompt = {
+          role: "system",
+          content: buildSystemPrompt("DR_PENGY", "PROMPT_ANALYSIS"),
         };
+
+        // Include message history, few-shot examples, and the current prompt
+        const messages = [
+          systemPrompt,
+          ...fewShotExamples,
+          ...messageHistory,
+          systemPrompt,
+          { role: "user", content: prompt },
+        ];
+
+        const response = await openai.chat.completions.create({
+          model: GPT_MODEL,
+          messages,
+          temperature: 0.5, // Lower temperature for more consistent evaluations
+          response_format: { type: "json_object" },
+        });
+
+        // Safely parse the JSON response
+        let result;
+        try {
+          const messageContent = response.choices[0].message.content || "{}";
+          result = JSON.parse(messageContent);
+
+          // Validate that we have all required fields with correct types
+          if (typeof result.score !== "number" || !result.score) {
+            result.score = 8; // Default to a favorable score
+          }
+
+          if (!result.feedback || typeof result.feedback !== "string") {
+            result.feedback = "توجيه رائع! استمر بالعمل الجيد.";
+          }
+
+          if (!result.improvement || typeof result.improvement !== "string") {
+            result.improvement =
+              "يمكنك إضافة المزيد من التفاصيل لتحسين النتائج.";
+          }
+
+          // Ensure score is within range
+          result.score = Math.max(1, Math.min(10, Math.round(result.score)));
+        } catch (parseError) {
+          logError(
+            "prompt_analysis_parse",
+            parseError instanceof Error ? parseError : "Unknown error",
+            {
+              response_content: response.choices[0].message.content,
+            },
+          );
+
+          // Provide a robust fallback structure if parsing fails
+          result = {
+            score: 8,
+            feedback: "توجيه جيد! استمر بالعمل الرائع.",
+            improvement:
+              "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل.",
+          };
+        }
+
+        // Log the analysis result with score
+        logEvent("prompt_analysis_result", prompt, {
+          score: result.score,
+          passed_threshold: result.score >= 7,
+          model: GPT_MODEL,
+        });
+
+        return res.json(result);
+      } catch (error) {
+        logError(
+          "prompt_analysis",
+          error instanceof Error ? error : "Unknown error",
+        );
+        return res.status(500).json({ error: "Failed to analyze prompt" });
       }
-      
-      // Log the analysis result with score
-      logEvent('prompt_analysis_result', prompt, {
-        score: result.score,
-        passed_threshold: result.score >= 7,
-        model: GPT_MODEL
-      });
-      
-      return res.json(result);
-    } catch (error) {
-      logError('prompt_analysis', error instanceof Error ? error : 'Unknown error');
-      return res.status(500).json({ error: "Failed to analyze prompt" });
-    }
-  });
+    },
+  );
 
   // HTML generation endpoint with chat history
   aiRoutes.post("/generate-html", async (req: Request, res: Response) => {
@@ -177,33 +205,34 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       const { messageHistory = [] } = req.body;
 
       // Make sure we have at least one user message
-      const userMessages = messageHistory.filter((msg: any) => msg.role === 'user');
+      const userMessages = messageHistory.filter(
+        (msg: any) => msg.role === "user",
+      );
       if (userMessages.length === 0) {
-        return res.status(400).json({ error: "At least one user message is required in messageHistory" });
+        return res.status(400).json({
+          error: "At least one user message is required in messageHistory",
+        });
       }
 
       // Get the latest user message for logging
       const latestUserMessage = userMessages[userMessages.length - 1];
 
       // Log the HTML generation request
-      logEvent('html_generation', latestUserMessage.content, {
-        message_history_length: messageHistory.length
+      logEvent("html_generation", latestUserMessage.content, {
+        message_history_length: messageHistory.length,
       });
 
       // Build the system prompt for HTML generation
       const systemPrompt = {
         role: "system",
-        content: buildSystemPrompt('DR_PENGY', 'HTML_GENERATION')
+        content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION"),
       };
 
       // Trim message history to reduce tokens
       const trimmedHistory = trimMessageHistory(messageHistory, 4);
 
       // Always start with the system prompt, then include message history
-      const messages = [
-        systemPrompt,
-        ...trimmedHistory
-      ];
+      const messages = [systemPrompt, ...trimmedHistory, systemPrompt];
 
       // Use specific parameters for consistent, high-quality code
       const response = await openai.chat.completions.create({
@@ -216,16 +245,16 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
 
       // Extract HTML from the response
       let generatedHTML = response.choices[0].message.content || "";
-      
+
       // Extract code blocks
       const htmlPattern = /```html\s([\s\S]*?)```/;
       const htmlMatch = generatedHTML.match(htmlPattern);
-      
+
       if (htmlMatch && htmlMatch[1]) {
         generatedHTML = htmlMatch[1].trim();
       } else {
         // Try to fix if missing proper HTML doctype
-        const doctypeIndex = generatedHTML.indexOf('<!DOCTYPE html>');
+        const doctypeIndex = generatedHTML.indexOf("<!DOCTYPE html>");
         if (doctypeIndex >= 0) {
           generatedHTML = generatedHTML.substring(doctypeIndex);
         } else {
@@ -246,18 +275,22 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
 </html>`;
 
           // Log the HTML generation failure
-          logEvent('html_generation_parsing_failed', latestUserMessage.content, {
-            model: GPT_MODEL,
-            response_length: response.choices[0].message.content?.length || 0
-          });
+          logEvent(
+            "html_generation_parsing_failed",
+            latestUserMessage.content,
+            {
+              model: GPT_MODEL,
+              response_length: response.choices[0].message.content?.length || 0,
+            },
+          );
         }
       }
 
       // Log successful HTML generation with metrics
-      logEvent('html_generation_success', latestUserMessage.content, {
+      logEvent("html_generation_success", latestUserMessage.content, {
         model: GPT_MODEL,
         html_size: generatedHTML.length,
-        html_type: generatedHTML.includes('<script') ? 'interactive' : 'static'
+        html_type: generatedHTML.includes("<script") ? "interactive" : "static",
       });
 
       // Return the complete response with the assistant's message
@@ -265,64 +298,81 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
         html: generatedHTML,
         message: {
           role: "assistant",
-          content: "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
+          content:
+            "لقد بنيت فكرتك! جربها وأخبرني إذا كنت ترغب في إجراء أي تغييرات.",
         },
       });
     } catch (error) {
-      logError('html_generation', error instanceof Error ? error : 'Unknown error');
+      logError(
+        "html_generation",
+        error instanceof Error ? error : "Unknown error",
+      );
       return res.status(500).json({ error: "Failed to generate HTML" });
     }
   });
 
   // TryAI Assistant endpoint
-  aiRoutes.post("/try-ai-assistant", validatePrompt, async (req: RequestWithTryAISession, res: Response) => {
-    try {
-      const { prompt, messageHistory = [], firebaseUid, deviceId, studentId } = req.body;
-      
-      // Log the TryAI assistant request
-      logEvent('tryai_assistant', prompt, {
-        message_history_length: messageHistory.length,
-        prompt_length: prompt.length,
-        firebase_uid: firebaseUid || null,
-        device_id: deviceId || null
-      });
+  aiRoutes.post(
+    "/try-ai-assistant",
+    validatePrompt,
+    async (req: RequestWithTryAISession, res: Response) => {
+      try {
+        const {
+          prompt,
+          messageHistory = [],
+          firebaseUid,
+          deviceId,
+          studentId,
+        } = req.body;
 
-      // Get or create session ID for this user to maintain thread history
-      let sessionId = req.session.tryaiSessionId;
-      if (!sessionId) {
-        sessionId = `${TRYAI_SESSION_PREFIX}${uuidv4()}`;
-        req.session.tryaiSessionId = sessionId;
+        // Log the TryAI assistant request
+        logEvent("tryai_assistant", prompt, {
+          message_history_length: messageHistory.length,
+          prompt_length: prompt.length,
+          firebase_uid: firebaseUid || null,
+          device_id: deviceId || null,
+        });
+
+        // Get or create session ID for this user to maintain thread history
+        let sessionId = req.session.tryaiSessionId;
+        if (!sessionId) {
+          sessionId = `${TRYAI_SESSION_PREFIX}${uuidv4()}`;
+          req.session.tryaiSessionId = sessionId;
+        }
+
+        // Generate text using the TryAI Assistant API
+        const response = await assistantService.generateText(
+          prompt,
+          messageHistory,
+          sessionId,
+          studentId,
+          firebaseUid,
+          deviceId,
+        );
+
+        // Log successful text generation
+        logEvent("tryai_assistant_success", prompt, {
+          response_length: response.text.length,
+          conversation_turns: messageHistory.length + 1,
+          has_error: !!response.error,
+          firebase_uid: firebaseUid || null,
+          device_id: deviceId || null,
+        });
+
+        return res.json(response);
+      } catch (error) {
+        logError(
+          "tryai_assistant",
+          error instanceof Error ? error : "Unknown error",
+        );
+        return res.status(500).json({
+          error: "Failed to generate response",
+          text: "حدث خطأ أثناء التواصل مع د. بنجي. هل يمكنك إعادة صياغة السؤال بشكل مختلف؟",
+        });
       }
-      
-      // Generate text using the TryAI Assistant API
-      const response = await assistantService.generateText(
-        prompt, 
-        messageHistory, 
-        sessionId, 
-        studentId,
-        firebaseUid,
-        deviceId
-      );
-      
-      // Log successful text generation
-      logEvent('tryai_assistant_success', prompt, {
-        response_length: response.text.length,
-        conversation_turns: messageHistory.length + 1,
-        has_error: !!response.error,
-        firebase_uid: firebaseUid || null,
-        device_id: deviceId || null
-      });
-      
-      return res.json(response);
-    } catch (error) {
-      logError('tryai_assistant', error instanceof Error ? error : 'Unknown error');
-      return res.status(500).json({ 
-        error: "Failed to generate response",
-        text: "حدث خطأ أثناء التواصل مع د. بنجي. هل يمكنك إعادة صياغة السؤال بشكل مختلف؟"
-      });
-    }
-  });
+    },
+  );
 
   // Mount all AI text routes to the main router
-  router.use('/ai/text', aiRoutes);
+  router.use("/ai/text", aiRoutes);
 }

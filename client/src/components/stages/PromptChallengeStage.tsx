@@ -95,7 +95,7 @@ export function PromptChallengeStage({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState("");
 
-  const weakPrompt = "صمم لي صورة";
+  const weakPrompt = "صمم لي لعبة";
   const goodPromptExample =
     "أبغى لعبة بسيطة فيها شخصية تقفز وتتخطى عقبات زي Flappy Bird، بألوان زاهية ومناسبة للأطفال";
   const badPromptExample = "سوي لي تطبيق";
@@ -399,29 +399,6 @@ export function PromptChallengeStage({
 
           {/* <CardFooter className="flex justify-between"></CardFooter> */}
         </Card>
-
-        <div className="flex justify-between mt-4">
-          <Button
-            onClick={() => (window.location.href = "/")}
-            className="flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md"
-          >
-            <ArrowRight className="h-4 w-4" />
-            <span>للخلف</span>
-          </Button>
-
-          <Button
-            onClick={onComplete}
-            disabled={!(state.analysis && state.analysis.score >= 7)} // Disable until score is 7 or higher
-            className={
-              state.analysis && state.analysis.score >= 7
-                ? "bg-green-600 hover:bg-green-700"
-                : ""
-            }
-          >
-            <span>المتابعة</span>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     </div>
   );
