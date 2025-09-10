@@ -200,15 +200,6 @@ export function PromptChallengeStage({
       <div className="">
         <Card className="bg-white border-0">
           <CardHeader>
-            <div className="flex justify-between items-center mb-2">
-              <CountdownTimer
-                stageId={STAGE_ID}
-                minutes={STAGE_TIME_LIMIT}
-                onTimeUp={handleTimeUp}
-                isExpired={isStageTimerExpired(STAGE_ID)}
-              />
-            </div>
-
             <div className="flex justify-center mb-3">
               <img src={penguinPngPath} alt="د. بنجي" className="h-20 w-auto" />
             </div>
