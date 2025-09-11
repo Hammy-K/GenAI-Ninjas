@@ -1,6 +1,6 @@
 import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
-export const lovableSubmissions = pgTable("lovable_submissions", {
+export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
   id: serial("id").primaryKey(),
 
   studentName: text("student_name").notNull(),

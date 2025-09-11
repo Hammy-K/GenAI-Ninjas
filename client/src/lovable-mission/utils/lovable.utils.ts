@@ -39,7 +39,7 @@ export function mapProgressToChips(p: LovableProgressFlags): {
 } {
   return {
     welcome: p.welcomeDone ? "active" : "idle",
-    ideation: p.ideationOngoing ? "pulse" : p.welcomeDone ? "idle" : "idle",
+    ideation: p.ideationOngoing ? "active" : p.welcomeDone ? "idle" : "idle",
     ready: p.readyDone ? "active" : "idle",
     building: p.buildingOngoing ? "active" : "idle",
   };

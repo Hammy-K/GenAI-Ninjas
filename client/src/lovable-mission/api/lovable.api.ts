@@ -72,3 +72,32 @@ async function safeJson(res: Response) {
     return null;
   }
 }
+
+export async function fetchSubmissions(params?: {
+  search?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: "createdAt" | "updatedAt";
+  orderDirection?: "asc" | "desc";
+  signal?: AbortSignal;
+}) {
+  const qs = new URLSearchParams();
+
+  if (params?.search) qs.set("search", params.search);
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  if (params?.orderBy) qs.set("orderBy", params.orderBy);
+  if (params?.orderDirection) qs.set("orderDirection", params.orderDirection);
+
+  const res = await fetch(`${BASE}/submissions?${qs.toString()}`, {
+    method: "GET",
+    signal: params?.signal,
+  });
+
+  if (!res.ok) {
+    const err = await safeJson(res);
+    throw new Error(err?.error ?? "تعذر تحميل المشاريع");
+  }
+
+  return safeJson(res);
+}

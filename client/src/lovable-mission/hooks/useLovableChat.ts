@@ -20,13 +20,19 @@ const DEFAULT_FLAGS: LovableProgressFlags = {
   buildingOngoing: false,
 };
 
+const WELCOME_MSG: ChatMessage = {
+  role: "assistant",
+  content:
+    "مرحباً! أنا بينجي، وسأساعدك في بناء تطبيقك الأول اليوم. ما هو الشيء الذي تتعامل معه باستمرار وتتمنى لو كان له تطبيق؟ أو ربما لديك بالفعل فكرة تطبيق ممتعة؟",
+};
+
 export function useLovableChat() {
   // localStorage-backed states
   const {
     state: history,
     setState: setHistory,
     reset: resetHistory,
-  } = useLocalStorageSync<ChatMessage[]>(LS_KEYS.history, []);
+  } = useLocalStorageSync<ChatMessage[]>(LS_KEYS.history, [WELCOME_MSG]);
 
   const {
     state: lastResponse,
@@ -45,7 +51,13 @@ export function useLovableChat() {
   const abortRef = useRef<AbortController | null>(null);
 
   const progress = useMemo<LovableProgressFlags>(() => {
-    return lastResponse?.progress ?? DEFAULT_FLAGS;
+    const base = lastResponse?.progress ?? DEFAULT_FLAGS;
+
+    return {
+      ...base,
+      ideationOngoing:
+        base.readyDone || base.buildingOngoing ? true : base.ideationOngoing,
+    };
   }, [lastResponse]);
 
   const append = useCallback(
@@ -107,9 +119,9 @@ export function useLovableChat() {
   ]);
 
   const openLovable = useCallback(() => {
-    const link = lastResponse?.lovablePromptLink;
+    // const link = lastResponse?.lovablePromptLink;
 
-    const url = link || "https://lovable.dev";
+    const url = "https://lovable.dev";
 
     try {
       window.open(url, "_blank", "noopener,noreferrer");
@@ -129,7 +141,7 @@ export function useLovableChat() {
   );
 
   const resetAll = useCallback(() => {
-    resetHistory([]);
+    resetHistory([WELCOME_MSG]);
     resetLastResponse(null);
     resetDraft("");
   }, [resetDraft, resetHistory, resetLastResponse]);

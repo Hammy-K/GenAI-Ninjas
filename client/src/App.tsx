@@ -17,7 +17,7 @@ import HtmlGeneratorV2SubmissionsPage from "@/pages/missions/html-generator-v2/s
 import LovableMission from "@/pages/lovable-mission";
 import IntroMission from "@/pages/intro-mission";
 import PromptEngineering from "@/pages/prompt-engineering";
-import LovableSubmissionsPage from "@/pages/lovable-submissions";
+// import LovableSubmissionsPage  from "@/pages/lovable-submissions";
 import ResetInstructions from "@/pages/reset-instructions";
 import { ResetSession } from "@/components/ResetSession";
 import ResetIntro from "@/components/ResetIntro";
@@ -58,6 +58,7 @@ import VideoPlayerPage from "./video-gallery/pages/VideoPlayerPage";
 import AppBuilderActivity from "./pages/AppBuilderActivity";
 import LovablesActivity from "./pages/LovablesActivity";
 import LovableMissionPage from "./lovable-mission/LovableMissionPage";
+import LovableSubmissionsPage from "./lovable-mission/submissions/LovableSubmissionsPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {

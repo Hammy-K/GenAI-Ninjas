@@ -9,7 +9,7 @@ export function ProgressChips({ progress }: Props) {
   const chips = mapProgressToChips(progress);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 m-auto my-4">
       {Object.entries(chips).map(([key, state]) => (
         <span
           key={key}
@@ -29,8 +29,8 @@ export function ProgressChips({ progress }: Props) {
 }
 
 const labelMap: Record<string, string> = {
-  welcome: "Welcome",
-  ideation: "Ideation",
-  ready: "Ready",
-  building: "Building",
+  welcome: "مرحبا",
+  ideation: "توليد الأفكار",
+  ready: "جاهز",
+  building: "جاري البناء",
 };

@@ -8,7 +8,8 @@ export const LOVABLE_FALLBACK_URL = "https://lovable.dev";
 
 export const LABELS = {
   openLovable: "افتح Lovable",
-  submitProject: "إرسال المشروع",
+  submitProject: "تسليم المشروع",
   copied: "تم النسخ",
   copyFailed: "تعذر النسخ",
+  restart: "البدء من جديد",
 };

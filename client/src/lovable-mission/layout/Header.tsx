@@ -8,12 +8,12 @@ interface HeaderProps {
 
 export function Header({ progress }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between py-3 border-b border-gray-200">
+    <header className="flex items-center justify-between py-3">
       {/* Left side: small Noon title */}
-      <div className="text-lg font-bold">Noon Lovable Mission</div>
+      {/* <div className="text-lg font-bold">Noon Lovable Mission</div> */}
 
       {/* Center: progress chips */}
-      <ProgressChips progress={progress} />
+      {/* <ProgressChips progress={progress} /> */}
 
       {/* Right: actions (placeholder for buttons) */}
       <ActionsBar />

@@ -1,16 +1,16 @@
 import { db } from "server/db";
 import { and, or, ilike, eq, isNull, desc, asc, count, sql } from "drizzle-orm";
-import { lovableSubmissions } from "./lovable-submissions.schema";
+import { lovableSubmissionsV2 } from "./lovable-submissions.schema";
 import {
   FindOptions,
   normalizeLimitOffset,
   PaginatedResult,
 } from "server/types/common.types";
 
-export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
-export type NewLovableSubmission = typeof lovableSubmissions.$inferInsert;
+export type LovableSubmission = typeof lovableSubmissionsV2.$inferSelect;
+export type NewLovableSubmission = typeof lovableSubmissionsV2.$inferInsert;
 
-export interface LovableSubmissionWhere {
+export interface LovableSubmissionWhere extends Record<string, unknown> {
   id?: number;
   studentName?: string;
   noonCode?: string;
@@ -28,52 +28,53 @@ function col(
 ) {
   switch (key) {
     case "id":
-      return lovableSubmissions.id;
+      return lovableSubmissionsV2.id;
     case "studentName":
-      return lovableSubmissions.studentName;
+      return lovableSubmissionsV2.studentName;
     case "noonCode":
-      return lovableSubmissions.noonCode;
+      return lovableSubmissionsV2.noonCode;
     case "projectTitle":
-      return lovableSubmissions.projectTitle;
+      return lovableSubmissionsV2.projectTitle;
     case "projectLink":
-      return lovableSubmissions.projectLink;
+      return lovableSubmissionsV2.projectLink;
     case "createdAt":
-      return lovableSubmissions.createdAt;
+      return lovableSubmissionsV2.createdAt;
     case "updatedAt":
-      return lovableSubmissions.updatedAt;
+      return lovableSubmissionsV2.updatedAt;
     default:
-      return lovableSubmissions.createdAt;
+      return lovableSubmissionsV2.createdAt;
   }
 }
 
 function buildWhere(opts?: LovableSubmissionFindOptions) {
   const conditions: any[] = [];
 
-  if (!opts?.withDeleted) conditions.push(isNull(lovableSubmissions.deletedAt));
+  if (!opts?.withDeleted)
+    conditions.push(isNull(lovableSubmissionsV2.deletedAt));
 
   const w = opts?.where;
   if (w) {
-    if (w.id !== undefined) conditions.push(eq(lovableSubmissions.id, w.id));
+    if (w.id !== undefined) conditions.push(eq(lovableSubmissionsV2.id, w.id));
 
     if (w.studentName)
       conditions.push(
-        ilike(lovableSubmissions.studentName, `%${w.studentName}%`),
+        ilike(lovableSubmissionsV2.studentName, `%${w.studentName}%`),
       );
 
     if (w.noonCode)
-      conditions.push(eq(lovableSubmissions.noonCode, w.noonCode));
+      conditions.push(eq(lovableSubmissionsV2.noonCode, w.noonCode));
 
     if (w.projectTitle)
       conditions.push(
-        ilike(lovableSubmissions.projectTitle, `%${w.projectTitle}%`),
+        ilike(lovableSubmissionsV2.projectTitle, `%${w.projectTitle}%`),
       );
 
     if (w.projectLink)
-      conditions.push(eq(lovableSubmissions.projectLink, w.projectLink));
+      conditions.push(eq(lovableSubmissionsV2.projectLink, w.projectLink));
   }
 
   if (opts?.ids && opts.ids.length > 0) {
-    conditions.push(sql`${lovableSubmissions.id} = ANY(${opts.ids})`);
+    conditions.push(sql`${lovableSubmissionsV2.id} = ANY(${opts.ids})`);
   }
 
   const search = opts?.search?.trim();
@@ -81,8 +82,8 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
   if (search) {
     conditions.push(
       or(
-        ilike(lovableSubmissions.studentName, `%${search}%`),
-        ilike(lovableSubmissions.projectTitle, `%${search}%`),
+        ilike(lovableSubmissionsV2.studentName, `%${search}%`),
+        ilike(lovableSubmissionsV2.projectTitle, `%${search}%`),
       ),
     );
   }
@@ -94,7 +95,10 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
 
 export const LovableSubmissionsModel = {
   async create(data: NewLovableSubmission): Promise<LovableSubmission> {
-    const [row] = await db.insert(lovableSubmissions).values(data).returning();
+    const [row] = await db
+      .insert(lovableSubmissionsV2)
+      .values(data)
+      .returning();
     return row;
   },
 
@@ -103,9 +107,9 @@ export const LovableSubmissionsModel = {
     data: Partial<NewLovableSubmission>,
   ): Promise<LovableSubmission | null> {
     const [row] = await db
-      .update(lovableSubmissions)
+      .update(lovableSubmissionsV2)
       .set({ ...data, updatedAt: sql`now()` })
-      .where(eq(lovableSubmissions.id, id))
+      .where(eq(lovableSubmissionsV2.id, id))
       .returning();
 
     return row ?? null;
@@ -116,15 +120,17 @@ export const LovableSubmissionsModel = {
     opts?: { hard?: boolean },
   ): Promise<{ success: boolean }> {
     if (opts?.hard) {
-      await db.delete(lovableSubmissions).where(eq(lovableSubmissions.id, id));
+      await db
+        .delete(lovableSubmissionsV2)
+        .where(eq(lovableSubmissionsV2.id, id));
 
       return { success: true };
     }
 
     await db
-      .update(lovableSubmissions)
+      .update(lovableSubmissionsV2)
       .set({ deletedAt: sql`now()`, updatedAt: sql`now()` })
-      .where(eq(lovableSubmissions.id, id));
+      .where(eq(lovableSubmissionsV2.id, id));
 
     return { success: true };
   },
@@ -137,7 +143,7 @@ export const LovableSubmissionsModel = {
 
     const [row] = await db
       .select()
-      .from(lovableSubmissions)
+      .from(lovableSubmissionsV2)
       .where(where)
       .limit(1);
 
@@ -163,12 +169,12 @@ export const LovableSubmissionsModel = {
 
     const [{ total }] = await db
       .select({ total: count() })
-      .from(lovableSubmissions)
+      .from(lovableSubmissionsV2)
       .where(where);
 
     const rows = await db
       .select()
-      .from(lovableSubmissions)
+      .from(lovableSubmissionsV2)
       .where(where)
       .orderBy(orderDir)
       .offset(offset)

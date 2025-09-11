@@ -1,43 +1,45 @@
+import { Button } from "@/components/ui/button";
 import { MouseEvent } from "react";
+import { Heart } from "lucide-react";
 
 type Props = {
   promptLink?: string;
-  ready: boolean; // isReadyToGoToLovable
-  onOpen?: () => void; // call to set buildingOngoing=true, analytics, etc
+  onOpen?: () => void;
   className?: string;
 };
 
-export function LovableButton({
-  promptLink,
-  ready,
-  onOpen,
-  className,
-}: Props) {
+export function LovableButton({ promptLink, onOpen, className }: Props) {
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (!ready) return;
 
     const url = promptLink || "https://lovable.dev";
+
     try {
       window.open(url, "_blank", "noopener,noreferrer");
-    } catch {}
+    } catch {
+      // no-op
+    }
+
     onOpen?.();
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleClick}
-      disabled={!ready}
-      className={`rounded-md px-3 py-2 text-sm font-medium ${
-        ready
-          ? "bg-purple-600 text-white hover:bg-purple-700"
-          : "bg-gray-200 text-gray-500 cursor-not-allowed"
-      } ${className ?? ""}`}
-      title={ready ? "افتح Lovable" : "ليست جاهزة بعد"}
-      aria-disabled={!ready}
+      className={`
+        relative inline-flex items-center justify-center gap-2
+        px-6 py-3 text-base font-semibold
+         shadow-md
+        bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600
+        hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700
+        text-white transition-all duration-200
+        ${className ?? ""}
+      `}
+      title="افتح Lovable"
     >
-      افتح Lovable
-    </button>
+      <Heart className="h-4 w-4 fill-current" />
+      <span>افتح Lovable</span>
+    </Button>
   );
 }
