@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
   id: serial("id").primaryKey(),
@@ -7,6 +7,8 @@ export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
   noonCode: text("noon_code"),
   projectTitle: text("project_title").notNull(),
   projectLink: text("project_link").notNull(),
+
+  isFeatured: boolean("is_featured").notNull().default(false),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

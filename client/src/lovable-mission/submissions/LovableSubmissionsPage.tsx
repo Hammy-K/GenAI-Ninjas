@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import LovableProjectsPageHeader from "./LovableProjectsPageHeader";
-import LovableFeaturedList from "./LovableFeaturedList";
+import LovableViewSwitch from "./LovableViewSwitch";
+import LovableSubmissionsList from "./LovableSubmissionsList";
 
 export default function LovableSubmissionsPage() {
   const [, navigate] = useLocation();
+  const [view, setView] = useState<"featured" | "all">("featured");
 
   return (
     <div
@@ -12,11 +15,18 @@ export default function LovableSubmissionsPage() {
     >
       <LovableProjectsPageHeader
         title="📂 مشاريع Lovable"
-        subtitle="تصفح المشاريع المنشورة من الطلاب"
+        subtitle="استعرض المشاريع المنشورة"
         onGoHome={() => navigate("/missions/lovable")}
       />
 
-      <LovableFeaturedList />
+      <div className="flex justify-center w-full my-2">
+        <div className="w-fit">
+          <LovableViewSwitch view={view} onChange={setView} />
+          {/* optional search box could go here */}
+        </div>
+      </div>
+
+      <LovableSubmissionsList view={view} />
     </div>
   );
 }

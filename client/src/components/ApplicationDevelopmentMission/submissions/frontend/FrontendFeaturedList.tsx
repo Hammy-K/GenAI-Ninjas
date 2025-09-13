@@ -2,6 +2,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { FolderOpen } from "lucide-react";
 import { FrontendSubMission } from "./FrontendProjectsTab";
 import { useFrontendProjects } from "@/hooks/useFrontendProjects";
+import ProjectCard from "./FrontendProjectCard";
 
 type Props = {
   organization: string;

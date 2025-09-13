@@ -16,6 +16,7 @@ export interface LovableSubmissionWhere extends Record<string, unknown> {
   noonCode?: string;
   projectTitle?: string;
   projectLink?: string;
+  isFeatured?: boolean;
 }
 
 export type LovableSubmissionFindOptions =
@@ -37,6 +38,8 @@ function col(
       return lovableSubmissionsV2.projectTitle;
     case "projectLink":
       return lovableSubmissionsV2.projectLink;
+    case "isFeatured":
+      return lovableSubmissionsV2.isFeatured;
     case "createdAt":
       return lovableSubmissionsV2.createdAt;
     case "updatedAt":
@@ -71,6 +74,10 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
 
     if (w.projectLink)
       conditions.push(eq(lovableSubmissionsV2.projectLink, w.projectLink));
+
+    if (w.isFeatured !== undefined) {
+      conditions.push(eq(lovableSubmissionsV2.isFeatured, w.isFeatured));
+    }
   }
 
   if (opts?.ids && opts.ids.length > 0) {
