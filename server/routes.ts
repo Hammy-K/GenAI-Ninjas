@@ -38,6 +38,7 @@ import { registerAppDevFrontendRoutes } from "./routes/app-dev-frontend.route";
 import { registerGenAiRoutes } from "./routes/genai.routes";
 import { registerLovableActivityRoutes } from "./routes/lovable-activity";
 import { registerLovableRoutes } from "./modules/genai-lovable/lovable.route";
+import { registerAiChatRoutes } from "./modules/ai-chat/ai-chat.route";
 
 /**
  * Legacy function for server-side prompt logging
@@ -504,6 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGenAiRoutes(apiRouter);
   registerLovableActivityRoutes(apiRouter, openai);
   registerLovableRoutes(apiRouter);
+  registerAiChatRoutes(apiRouter);
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

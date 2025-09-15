@@ -35,8 +35,8 @@ export default function LovableProjectsPageHeader({
             className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold"
             onClick={onGoHome}
           >
-            <Home className="h-5 w-5" />
-            الرئيسية
+            {/* <Home className="h-5 w-5" /> */}
+            رجوع
           </Button>
         </div>
       </div>

@@ -18,7 +18,7 @@ export default function LovableSubmissionsPage() {
       <LovableProjectsPageHeader
         title="📂 مشاريع Lovable"
         subtitle="استعرض المشاريع المنشورة"
-        onGoHome={() => navigate("/")}
+        onGoHome={() => navigate("/missions/lovable")}
       />
 
       <div className="flex justify-center w-full my-2">

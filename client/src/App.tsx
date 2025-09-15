@@ -59,6 +59,7 @@ import AppBuilderActivity from "./pages/AppBuilderActivity";
 import LovablesActivity from "./pages/LovablesActivity";
 import LovableMissionPage from "./lovable-mission/LovableMissionPage";
 import LovableSubmissionsPage from "./lovable-mission/submissions/LovableSubmissionsPage";
+import VideoGeneratorChatMissionPage from "./video-generator/video-generator-chat/VideoGeneratorChatMissionPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -194,6 +195,17 @@ function Router() {
         component={AuthPersonalizationPlayground}
       />
       {/* ################################# Application Development Routes ########################## */}
+      {/* VideoGeneratorChatMissionPage */}
+
+      {/* ################################# Video Generation Routes ########################## */}
+
+      <Route
+        path="/missions/video-generation/chat"
+        component={VideoGeneratorChatMissionPage}
+      />
+
+      {/* ################################# Video Generation Routes ########################## */}
+
       <Route path="/mission1" component={Mission1} />
       <Route path="/mission1/stage/:stageName" component={Mission1} />
       <Route path="/game/mission:id" component={GameMission} />
