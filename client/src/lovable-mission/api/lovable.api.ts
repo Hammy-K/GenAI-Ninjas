@@ -83,13 +83,20 @@ export async function fetchSubmissions(params?: {
   signal?: AbortSignal;
 }) {
   const qs = new URLSearchParams();
+
   if (params?.search) qs.set("search", params.search);
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.offset) qs.set("offset", String(params.offset));
+
+  if (params?.limit !== undefined && params?.limit !== null)
+    qs.set("limit", String(params.limit));
+
+  if (params?.offset !== undefined && params?.offset !== null)
+    qs.set("offset", String(params.offset));
+
   if (params?.orderBy) qs.set("orderBy", params.orderBy);
   if (params?.orderDirection) qs.set("orderDirection", params.orderDirection);
+
   if (params?.featured !== undefined)
-    qs.set("featured", String(params.featured));
+    qs.set("isFeatured", String(params.featured));
 
   const res = await fetch(`/api/genai/lovable/submissions?${qs.toString()}`, {
     method: "GET",
@@ -98,7 +105,6 @@ export async function fetchSubmissions(params?: {
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-
     throw new Error(err?.error ?? "تعذر تحميل المشاريع");
   }
 

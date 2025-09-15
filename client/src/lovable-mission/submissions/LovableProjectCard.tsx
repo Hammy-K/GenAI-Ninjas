@@ -95,10 +95,9 @@ export default function LovableProjectCard({ project }: Props) {
           </p>
         </div>
 
-        <div className="mt-3 flex justify-center text-xs text-gray-500">
-          <ExternalLink className="w-4 h-4 mr-1" />
+        {/* <div className="mt-3 flex justify-center text-xs text-gray-500">
           <Button>فتح المشروع</Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

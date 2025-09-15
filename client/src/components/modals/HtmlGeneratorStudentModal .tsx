@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast, useToast } from "@/hooks/use-toast";
+import { SchoolSelect } from "../common/SelectSchool";
 
 export default function HtmlGeneratorStudentModal() {
   const [open, setOpen] = useState(false);
@@ -25,9 +26,20 @@ export default function HtmlGeneratorStudentModal() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const { toast } = useToast();
+  const [schoolSelect, setSchoolSelect] = useState<{
+    id: number | "other" | null;
+    label: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (schoolName === "مدرسة أخرى") {
+      setSchoolName("");
+    }
+  }, [schoolName]);
 
   useEffect(() => {
     const studentId = Cookies.get("studentId");
+
     if (!studentId) {
       setOpen(true);
     }
@@ -37,6 +49,7 @@ export default function HtmlGeneratorStudentModal() {
     setIsValid(
       fullName.trim() !== "" &&
         schoolName.trim() !== "" &&
+        schoolName.trim() !== "مدرسة أخرى" &&
         studentGrade.trim() !== "" &&
         /^05\d{8}$/.test(phoneNumber.trim()),
     );
@@ -117,7 +130,8 @@ export default function HtmlGeneratorStudentModal() {
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+
+          {/* <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="schoolName" className="text-right">
               اسم المدرسة
             </Label>
@@ -129,7 +143,47 @@ export default function HtmlGeneratorStudentModal() {
               placeholder="...."
               required
             />
+          </div> */}
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="fullName" className="text-right">
+              اسم المدرسة
+            </Label>
+            <SchoolSelect
+              onChange={(value) => {
+                setSchoolSelect(value);
+                setSchoolName(value.label);
+                console.log("school name", schoolName);
+              }}
+              value={schoolSelect}
+              showLabel={false}
+              className="w-full col-span-3"
+            />
+
+            {schoolSelect !== null && schoolSelect.id === "other" && (
+              <>
+                <div className="col-span-1" />
+
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800 text-sm col-span-3">
+                  لقد اخترت <strong>مدرسة أخرى</strong>. فضلاً اكتب اسم المدرسة
+                  بشكل واضح أدناه.
+                </div>
+
+                <div className="col-span-1" />
+                {/* <Label htmlFor="schoolName">اسم المدرسة</Label> */}
+
+                <Input
+                  id="schoolName"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  placeholder="اسم المدرسة"
+                  className="bg-white border-gray-300 rounded-lg col-span-3"
+                  required
+                />
+              </>
+            )}
           </div>
+
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="studentGrade" className="text-right">
               الصف الدراسي
@@ -143,6 +197,7 @@ export default function HtmlGeneratorStudentModal() {
               required
             />
           </div>
+
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="phoneNumber" className="text-right">
               رقم الجوال

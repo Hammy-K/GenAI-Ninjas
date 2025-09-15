@@ -5,6 +5,7 @@ import { FolderOpen } from "lucide-react";
 import { fetchSubmissions } from "../api/lovable.api";
 import { toastError } from "../ui/Toast";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type LovableSubmission = {
   id: number;
@@ -20,17 +21,41 @@ type Props = {
   search?: string;
 };
 
+type ApiResponse = {
+  rows: LovableSubmission[];
+  count: number;
+  limit: number;
+  offset: number;
+};
+
 export default function LovableSubmissionsList({ view, search = "" }: Props) {
   const [rows, setRows] = useState<LovableSubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const limit = 30;
 
-  const offset = useMemo(() => (page - 1) * limit, [page, limit]);
+  // pagination state (client)
+  const [page, setPage] = useState(1);
+  const clientLimit = 30;
+
+  // server meta (echoed back from API)
+  const [serverCount, setServerCount] = useState(0);
+  const [serverLimit, setServerLimit] = useState(clientLimit);
+  const [serverOffset, setServerOffset] = useState(0);
+
+  const offset = useMemo(() => (page - 1) * clientLimit, [page]);
+
+  // derive helpers from the 4 fields we have: count, limit, offset, rows
+  const total = serverCount;
+  const perPage = serverLimit || clientLimit;
+  const currentPage = Math.floor(serverOffset / (perPage || 1)) + 1;
+  const totalPages = Math.max(1, Math.ceil((total || 0) / (perPage || 1)));
+  const canPrev = currentPage > 1;
+  const canNext = currentPage < totalPages;
+
+  const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
     setPage(1);
-  }, [view, search]);
+  }, [view, debouncedSearch]);
 
   useEffect(() => {
     let aborted = false;
@@ -38,16 +63,21 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
     (async () => {
       setLoading(true);
       try {
-        const json = await fetchSubmissions({
-          search: search || undefined,
-          limit,
+        const json = (await fetchSubmissions({
+          search: debouncedSearch || undefined,
+          limit: clientLimit,
           offset,
           orderBy: "createdAt",
           orderDirection: "desc",
           featured: view === "featured",
-        });
+        })) as ApiResponse;
 
-        if (!aborted) setRows(json?.rows ?? []);
+        if (!aborted) {
+          setRows(json?.rows ?? []);
+          setServerCount(json?.count ?? 0);
+          setServerLimit(json?.limit ?? clientLimit);
+          setServerOffset(json?.offset ?? offset);
+        }
       } catch {
         if (!aborted) toastError("تعذر تحميل المشاريع");
       } finally {
@@ -58,7 +88,7 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
     return () => {
       aborted = true;
     };
-  }, [view, search, limit, offset]);
+  }, [view, debouncedSearch, clientLimit, offset]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -85,47 +115,22 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
         ))}
       </div>
 
-      <div className="flex justify-between gap-4 mt-6 w-full">
+      <div className="flex justify-between items-center gap-4 mt-6 w-full">
         <Button
-          disabled={page === 1}
+          disabled={!canPrev}
           onClick={() => setPage((x) => Math.max(1, x - 1))}
         >
           السابق
         </Button>
 
-        {/* <span className="self-center">
-          الصفحة {pagination.page} من {pagination.totalPages} (
-          {pagination.total} مشروع)
-        </span> */}
-        <span className="text-sm text-gray-600">صفحة {page}</span>
+        <span className="self-center text-sm text-gray-600">
+          الصفحة {currentPage} من {totalPages} ({total} مشروع)
+        </span>
 
-        <Button
-          disabled={rows.length < limit}
-          onClick={() => setPage((x) => x + 1)}
-        >
+        <Button disabled={!canNext} onClick={() => setPage((x) => x + 1)}>
           التالي
         </Button>
       </div>
-
-      {/* <div className="flex justify-between items-center">
-        <button
-          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-          disabled={page === 1}
-          onClick={() => setPage((x) => Math.max(1, x - 1))}
-        >
-          السابق
-        </button>
-
-        <span className="text-sm text-gray-600">صفحة {page}</span>
-
-        <button
-          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-          disabled={rows.length < limit}
-          onClick={() => setPage((x) => x + 1)}
-        >
-          التالي
-        </button>
-      </div> */}
     </div>
   );
 }

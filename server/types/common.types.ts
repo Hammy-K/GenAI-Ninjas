@@ -27,6 +27,7 @@ export interface FindOptions<
   offset?: number;
   /** include soft-deleted rows */
   withDeleted?: boolean;
+  isFeatured?: boolean;
 }
 
 export function normalizeLimitOffset(

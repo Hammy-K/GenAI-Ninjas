@@ -96,6 +96,7 @@ export function registerLovableSubmissionsRoutes(router: Router): void {
       const limit = req.query.limit ? Number(req.query.limit) : undefined;
       const offset = req.query.offset ? Number(req.query.offset) : undefined;
       const search = (req.query.search as string) || undefined;
+      const isFeatured = req.query.isFeatured === "true";
 
       const out = await LovableSubmissionsController.find({
         search,
@@ -103,6 +104,7 @@ export function registerLovableSubmissionsRoutes(router: Router): void {
         offset,
         orderBy,
         orderDirection,
+        isFeatured,
       });
 
       res.json(out);

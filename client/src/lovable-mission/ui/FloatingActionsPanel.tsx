@@ -86,10 +86,10 @@ export function FloatingActionsPanel({
             type="button"
             variant="outline"
             onClick={onViewSubmissions}
-            className="w-full gap-2 text-gray-700 border-gray-200 bg-gray-50"
+            className="w-full gap-2 text-gray-700 border-gray-200 bg-gray-50 hover:text-white"
           >
             <FolderOpen className="w-4 h-4" />
-            عرض التسليمات
+            عرض المشاريع
           </Button>
         </div>
       </section>

@@ -6,9 +6,15 @@ type Props = {
   value: { id: number | "other" | null; label: string } | null;
   onChange: (v: { id: number | "other" | null; label: string }) => void;
   className?: string; // control grid span from parent
+  showLabel?: boolean;
 };
 
-export function SchoolSelect({ value, onChange, className }: Props) {
+export function SchoolSelect({
+  value,
+  onChange,
+  className,
+  showLabel = true,
+}: Props) {
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
   const { data, isFetching } = useSchoolsSearch(input);
@@ -29,9 +35,11 @@ export function SchoolSelect({ value, onChange, className }: Props) {
 
   return (
     <div className={`relative ${className ?? ""}`} ref={boxRef} dir="rtl">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        المدرسة
-      </label>
+      {showLabel && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          المدرسة
+        </label>
+      )}
 
       <div className="relative">
         <input

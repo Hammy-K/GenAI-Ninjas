@@ -35,6 +35,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevelopmentMission/ApplicationDevelopmentMissionCard";
 import ApplicationDevelopmentMissionIntroCard from "@/components/ApplicationDevelopmentMission/ApplicaitonDevelopmentMissionIntroCard";
 import { StudentService } from "@/services/student.service";
+import { SchoolSelect } from "@/components/common/SelectSchool";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -75,6 +76,10 @@ export default function Dashboard() {
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schoolSelect, setSchoolSelect] = useState<{
+    id: number | "other" | null;
+    label: string;
+  } | null>(null);
 
   // CAPTCHA state
   const [showCaptcha, setShowCaptcha] = useState<boolean>(false);
@@ -224,6 +229,11 @@ export default function Dashboard() {
 
     if (!phoneRegex.test(phoneNumber.trim())) {
       setFormError("الرجاء إدخال رقم جوال صحيح يبدأ بـ 05 ويحتوي على 10 أرقام");
+      return;
+    }
+
+    if (!schoolName.trim() || schoolName === "مدرسة أخرى") {
+      setFormError("الرجاء إدخال اسم المدرسة");
       return;
     }
 
@@ -519,7 +529,7 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  <div className="my-2">
+                  {/* <div className="my-2">
                     <Label htmlFor="schoolName">اسم المدرسة</Label>
                     <Input
                       id="schoolName"
@@ -529,7 +539,38 @@ export default function Dashboard() {
                       className="mt-1 bg-white border-gray-300 rounded-lg"
                       required
                     />
+                  </div> */}
+
+                  <div className="my-2">
+                    <SchoolSelect
+                      onChange={(value) => {
+                        setSchoolSelect(value);
+                        setSchoolName(value.label);
+                        console.log("school name", schoolName);
+                      }}
+                      value={schoolSelect}
+                    />
+
+                    {schoolSelect !== null && schoolSelect.id === "other" && (
+                      <>
+                        <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800 text-sm my-2">
+                          لقد اخترت <strong>مدرسة أخرى</strong>. فضلاً اكتب اسم
+                          المدرسة بشكل واضح أدناه.
+                        </div>
+
+                        <Label htmlFor="schoolName">اسم المدرسة</Label>
+                        <Input
+                          id="schoolName"
+                          value={schoolName}
+                          onChange={(e) => setSchoolName(e.target.value)}
+                          placeholder="اسم المدرسة"
+                          className="mt-1 bg-white border-gray-300 rounded-lg"
+                          required
+                        />
+                      </>
+                    )}
                   </div>
+
                   <div>
                     <Label htmlFor="phoneNumber">رقم الجوال</Label>
                     <Input

@@ -12,6 +12,7 @@ export type NewLovableSubmission = typeof lovableSubmissionsV2.$inferInsert;
 
 export interface LovableSubmissionWhere extends Record<string, unknown> {
   id?: number;
+  search?: string;
   studentName?: string;
   noonCode?: string;
   projectTitle?: string;
@@ -55,28 +56,11 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
   if (!opts?.withDeleted)
     conditions.push(isNull(lovableSubmissionsV2.deletedAt));
 
-  const w = opts?.where;
-  if (w) {
-    if (w.id !== undefined) conditions.push(eq(lovableSubmissionsV2.id, w.id));
+  if (opts) {
+    // if (opts?.ids !== undefined) conditions.push(eq(lovableSubmissionsV2.id, w.id));
 
-    if (w.studentName)
-      conditions.push(
-        ilike(lovableSubmissionsV2.studentName, `%${w.studentName}%`),
-      );
-
-    if (w.noonCode)
-      conditions.push(eq(lovableSubmissionsV2.noonCode, w.noonCode));
-
-    if (w.projectTitle)
-      conditions.push(
-        ilike(lovableSubmissionsV2.projectTitle, `%${w.projectTitle}%`),
-      );
-
-    if (w.projectLink)
-      conditions.push(eq(lovableSubmissionsV2.projectLink, w.projectLink));
-
-    if (w.isFeatured !== undefined) {
-      conditions.push(eq(lovableSubmissionsV2.isFeatured, w.isFeatured));
+    if (opts.isFeatured !== undefined) {
+      conditions.push(eq(lovableSubmissionsV2.isFeatured, opts.isFeatured));
     }
   }
 
@@ -91,9 +75,17 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
       or(
         ilike(lovableSubmissionsV2.studentName, `%${search}%`),
         ilike(lovableSubmissionsV2.projectTitle, `%${search}%`),
+        ilike(lovableSubmissionsV2.noonCode, `%${search}%`),
       ),
     );
   }
+
+  conditions.push(
+    or(
+      isNull(lovableSubmissionsV2.studentName),
+      sql`lower(${lovableSubmissionsV2.studentName}) NOT LIKE 'noon%'`,
+    ),
+  );
 
   if (conditions.length === 0) return undefined;
 
