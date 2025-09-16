@@ -93,6 +93,7 @@ export async function fetchSubmissions(params?: {
     qs.set("offset", String(params.offset));
 
   if (params?.orderBy) qs.set("orderBy", params.orderBy);
+
   if (params?.orderDirection) qs.set("orderDirection", params.orderDirection);
 
   if (params?.featured !== undefined)

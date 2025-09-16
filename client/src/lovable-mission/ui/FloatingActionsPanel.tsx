@@ -35,7 +35,7 @@ export function FloatingActionsPanel({
           id="progress-title"
           className="text-lg font-semibold text-gray-900 mb-3 text-center"
         >
-          التقدم
+          خطوات المشروع
         </h2>
         <ProgressDisplay progress={progress} />
       </section>
@@ -49,7 +49,7 @@ export function FloatingActionsPanel({
           id="quick-actions-title"
           className="text-sm font-semibold text-gray-900 mb-3 text-center"
         >
-          الإجراءات السريعة
+          اطلع بفكرتك مع بنجي و بعدين:
         </h2>
         <div className="grid gap-2">
           <LovableButton
@@ -69,7 +69,7 @@ export function FloatingActionsPanel({
           id="submission-title"
           className="text-sm font-semibold text-gray-900 mb-3 text-center"
         >
-          التسليم
+          سلم مشروعك
         </h2>
 
         <div className="grid gap-2">

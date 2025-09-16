@@ -22,7 +22,7 @@ export function ResetProjectControl({ onReset, label = "إعادة البدء" }
     <Button
       type="button"
       onClick={handleClick}
-      className="bg-orange-300 text-black hover:bg-orange-700 hover:text-white w-full"
+      className="border-2 border-red-500 bg-white text-red-600 hover:bg-red-500 hover:text-white w-full"
     >
       <RotateCcw className="w-4 h-4" />
       {label}

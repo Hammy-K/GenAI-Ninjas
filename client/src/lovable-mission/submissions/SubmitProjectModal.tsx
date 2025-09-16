@@ -56,7 +56,9 @@ export function SubmitProjectModal({
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
+
     if (!studentName.trim()) e.studentName = "الاسم مطلوب";
+
     if (!projectTitle.trim()) e.projectTitle = "عنوان المشروع مطلوب";
 
     if (!projectLink.trim()) {
@@ -64,11 +66,11 @@ export function SubmitProjectModal({
     } else {
       try {
         const url = new URL(projectLink);
-        // const ok =
-        //   url.protocol === "https:" &&
-        //   (url.hostname.endsWith("lovable.app") ||
-        //     url.hostname.endsWith("lovable.dev"));
-        const ok = url.protocol === "https:";
+
+        const ok =
+          url.protocol === "https:" &&
+          (projectLink.startsWith("https://lovable.dev/projects") ||
+            projectLink.includes("lovable.app"));
 
         if (!ok) e.projectLink = "الرجاء إدخال رابط صالح من Lovable";
       } catch {
@@ -81,6 +83,7 @@ export function SubmitProjectModal({
 
   const firstErrorMessage = useMemo(() => {
     const keys = Object.keys(errors);
+
     return keys.length ? errors[keys[0]] : null;
   }, [errors]);
 
@@ -90,6 +93,7 @@ export function SubmitProjectModal({
     // UX: allow click but block submit with a toast if invalid
     if (firstErrorMessage) {
       onToast?.({ type: "error", message: firstErrorMessage });
+
       return;
     }
 

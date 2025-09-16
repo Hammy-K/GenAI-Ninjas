@@ -1,11 +1,21 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { LovableProgressFlags } from "../types/lovable.types";
 
 interface ProgressDisplayProps {
   progress: LovableProgressFlags;
+  videoUrl?: string;
+  videoTitle?: string;
 }
 
-export function ProgressDisplay({ progress }: ProgressDisplayProps) {
-  // Steps mapped to flags (order matters)
+export function ProgressDisplay({
+  progress,
+  videoUrl = "https://www.youtube.com/embed/WkBfskJllwI?si=RBxG95JOGcBwoLgW", // Replace with your actual video URL
+  videoTitle = "خطوات المشروع",
+}: ProgressDisplayProps) {
+  const [isEnlarged, setIsEnlarged] = useState(false);
+
+  // Calculate progress percentage for display
   const steps = [
     { key: "welcomeDone", label: "الترحيب" },
     { key: "ideationOngoing", label: "توليد الأفكار" },
@@ -13,97 +23,121 @@ export function ProgressDisplay({ progress }: ProgressDisplayProps) {
     { key: "buildingOngoing", label: "بدء البناء" },
   ] as const;
 
-  // status per step
   const isDone = (k: keyof LovableProgressFlags) => Boolean(progress?.[k]);
   const completedCount = steps.filter((s) => isDone(s.key)).length;
   const totalSteps = steps.length;
-
-  // current step = first not-done; if all done, the last step is current
-  const currentIndex = Math.min(
-    steps.findIndex((s) => !isDone(s.key)) === -1
-      ? totalSteps - 1
-      : steps.findIndex((s) => !isDone(s.key)),
-    totalSteps - 1,
-  );
-
   const pct = Math.round((completedCount / totalSteps) * 100);
 
+  const handleVideoClick = () => {
+    setIsEnlarged(true);
+  };
+
+  const handleCloseVideo = () => {
+    setIsEnlarged(false);
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setIsEnlarged(false);
+    }
+  };
+
   return (
-    <div dir="rtl" className="space-y-4">
-      {/* Progress bar */}
-      <div
-        aria-hidden="true"
-        className="flex items-center justify-between text-xs text-gray-600"
-      >
-        <span>
-          الخطوة {currentIndex + 1} من {totalSteps}
-        </span>
-        <span>{pct}%</span>
-      </div>
-      <div
-        className="h-2 w-full rounded-full bg-gray-100 overflow-hidden"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`التقدم العام: ${pct}%`}
-      >
-        <div
-          className="h-full bg-indigo-600 transition-[width] duration-300"
-          style={{ width: `${pct}%` }}
-        />
+    <>
+      {/* Compact Video Display */}
+      <div dir="rtl" className="space-y-3">
+        {/* Video Container */}
+        <div className="relative">
+          <div
+            onClick={handleVideoClick}
+            className="relative aspect-video w-full rounded-lg overflow-hidden cursor-pointer group border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            {/* Video Iframe */}
+            <iframe
+              src={videoUrl}
+              title={videoTitle}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ pointerEvents: "none" }} // Prevent interaction in compact mode
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Stepper */}
-      <ol className="space-y-2" role="list" aria-label="مراحل التقدم">
-        {steps.map((s, idx) => {
-          const completed = isDone(s.key);
-          const current = idx === currentIndex && !completed;
-          const pending = !completed && !current;
-
-          return (
-            <li
-              key={s.key}
-              className="flex items-center justify-between gap-3"
-              aria-current={current ? "step" : undefined}
+      {/* Enlarged Video Modal */}
+      {isEnlarged &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
+            style={{
+              zIndex: 2147483647, // Maximum safe integer for z-index
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              isolation: "isolate", // Creates new stacking context
+            }}
+            onClick={handleBackdropClick}
+          >
+            <div
+              className="relative w-full max-w-6xl mx-auto"
+              style={{ zIndex: 2147483647 }}
             >
-              <div className="flex items-center gap-2">
-                <span
-                  className={[
-                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                    completed &&
-                      "bg-green-100 text-green-800 ring-1 ring-green-200",
-                    current &&
-                      "bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200",
-                    pending && "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-hidden="true"
+              {/* Close Button */}
+              <button
+                onClick={handleCloseVideo}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
+                aria-label="إغلاق الفيديو"
+                style={{ zIndex: 2147483647 }}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={3}
                 >
-                  {idx + 1}
-                </span>
-                <span
-                  className={[
-                    "text-sm",
-                    completed && "text-gray-700",
-                    current && "text-gray-900 font-medium",
-                    pending && "text-gray-500",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {s.label}
-                </span>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Enlarged Video */}
+              <div
+                className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl"
+                style={{
+                  zIndex: 2147483646,
+                  position: "relative",
+                  isolation: "isolate",
+                }}
+              >
+                <iframe
+                  src={videoUrl}
+                  title={videoTitle}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ zIndex: 2147483645 }}
+                />
               </div>
 
-              <span aria-hidden="true" className="text-sm">
-                {completed ? "✅" : current ? "🔄" : "⏳"}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+              {/* Video Info */}
+              <div className="text-center mt-4" style={{ zIndex: 2147483644 }}>
+                <h3 className="text-white text-lg font-semibold">
+                  {videoTitle}
+                </h3>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

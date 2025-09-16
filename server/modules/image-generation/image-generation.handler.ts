@@ -13,10 +13,19 @@ export async function handleImageGeneration(req: Request, res: Response) {
   const body = req.body as Partial<ImageGenRequest> | undefined;
 
   const promptError = validatePrompt(body?.prompt);
- 
+
   if (promptError) {
-    const payload: ImageGenError = { ok: false, error: promptError };
-  
+    let arMsg = "مدخلات البرومبت غير صالحة.";
+
+    if (promptError === "Prompt must be a string.")
+      arMsg = "نص البرومبت غير صالح.";
+
+    if (promptError === "Prompt is required.") arMsg = "البرومبت مطلوب.";
+
+    if (promptError === "Prompt is too short.") arMsg = "البرومبت قصير جدًا.";
+
+    const payload: ImageGenError = { ok: false, error: arMsg };
+
     return res.status(400).json(payload);
   }
 
@@ -26,20 +35,27 @@ export async function handleImageGeneration(req: Request, res: Response) {
 
   try {
     const safe = await isContentSafe(prompt);
-    
+
     if (!safe) {
       const payload: ImageGenError = {
         ok: false,
         error: "المحتوى المرسل مرفوض.",
       };
-      
+
       return res.status(400).json(payload);
     }
-  } catch (err) {
-    console.warn(
-      "[image-gen] moderation failed, continuing:",
-      (err as any)?.message ?? err,
+  } catch (err: any) {
+    console.error(
+      "[image-gen] فشل التحقق من سلامة المحتوى:",
+      err?.message ?? err,
     );
+
+    const payload: ImageGenError = {
+      ok: false,
+      error: "حدث خطأ أثناء التحقق من المحتوى. حاول مرة أخرى لاحقًا.",
+    };
+
+    return res.status(500).json(payload);
   }
 
   try {
@@ -57,8 +73,9 @@ export async function handleImageGeneration(req: Request, res: Response) {
     ) {
       const payload: ImageGenError = {
         ok: false,
-        error: "No image returned from provider.",
+        error: "لم يتم استلام صورة من المزود.",
       };
+
       return res.status(502).json(payload);
     }
 
@@ -74,12 +91,14 @@ export async function handleImageGeneration(req: Request, res: Response) {
     if (!images.length) {
       const payload: ImageGenError = {
         ok: false,
-        error: "Image payload malformed.",
+        error: "تنسيق الصورة المستلمة غير صالح.",
       };
+
       return res.status(502).json(payload);
     }
 
     const payload: ImageGenSuccess = { ok: true, images };
+
     return res.status(200).json(payload);
   } catch (err: any) {
     console.error("[image-gen] OpenAI Images API error:", err?.message ?? err);
@@ -87,6 +106,7 @@ export async function handleImageGeneration(req: Request, res: Response) {
       ok: false,
       error: "فشل توليد الصورة. حاول مرة أخرى لاحقًا.",
     };
+
     return res.status(500).json(payload);
   }
 }

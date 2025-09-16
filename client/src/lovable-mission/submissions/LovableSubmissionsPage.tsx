@@ -12,7 +12,7 @@ export default function LovableSubmissionsPage() {
 
   return (
     <div
-      className="px-48 mx-auto bg-[#f5f2e8] text-foreground font-tajawal h-screen"
+      className="px-48 mx-auto bg-[#f5f2e8] text-foreground font-tajawal"
       dir="rtl"
     >
       <LovableProjectsPageHeader

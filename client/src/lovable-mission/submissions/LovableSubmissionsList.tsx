@@ -94,7 +94,7 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-6">
+      <div className="flex flex-col items-center justify-center py-12 px-6 h-screen">
         <div className="mb-4">
           <FolderOpen className="w-16 h-16 text-gray-300" strokeWidth={1} />
         </div>
@@ -108,7 +108,7 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rows.map((p) => (
           <LovableProjectCard key={p.id} project={p} />
