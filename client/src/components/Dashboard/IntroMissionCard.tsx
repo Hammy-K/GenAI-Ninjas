@@ -22,7 +22,7 @@ export default function IntroMissionCard({
   if (vibrant) {
     return (
       <div
-        className={`relative mb-8 min-h-[200px] bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-8 rounded-2xl border border-purple-200 shadow-2xl transform hover:scale-[1.02] transition-all duration-300 overflow-hidden ${
+        className={`relative mb-8 min-h-[200px] bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-800 p-8 rounded-2xl border border-purple-200 shadow-2xl transform hover:scale-[1.02] transition-all duration-300 overflow-hidden ${
           showStreamContent ? "collapsed" : ""
         }`}
       >

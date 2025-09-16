@@ -30,6 +30,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateInput } from "@/lib/inputFilter";
 import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGeneratorIntroCard";
 import IntroMissionCard from "@/components/Dashboard/IntroMissionCard";
+import AIAppBuilderIntroCard from "@/components/Dashboard/AIAppBuilderIntroCard";
 import AIVideoIntroCard from "@/components/VideoGallery/AiVideosIntroCard";
 import { useOrganization } from "@/hooks/useOrganization";
 import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevelopmentMission/ApplicationDevelopmentMissionCard";
@@ -653,6 +654,8 @@ export default function Dashboard() {
                 />
 
                 <AIGameGeneratorIntroCard />
+
+                <AIAppBuilderIntroCard />
 
                 <AIVideoIntroCard />
 
