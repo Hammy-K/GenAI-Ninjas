@@ -33,8 +33,8 @@ export function SubmitRow({
   }, [size]);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
+      {/* <div className="flex items-center gap-2">
         <label className="text-sm text-gray-700">الحجم:</label>
         <select
           value={size}
@@ -50,14 +50,14 @@ export function SubmitRow({
         </select>
 
         <span className="ml-3 text-sm text-gray-500">{label}</span>
-      </div>
+      </div> */}
 
       <div className="flex items-center gap-3">
         {!hasResult ? (
           <button
             onClick={onSubmit}
             disabled={disabled}
-            className="rounded-md bg-purple-600 text-white px-4 py-2 text-sm disabled:opacity-50"
+            className="rounded-md bg-purple-600 text-white px-8 py-2 text-lg disabled:opacity-50"
           >
             توليد
           </button>

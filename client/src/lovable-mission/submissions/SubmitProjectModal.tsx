@@ -59,6 +59,8 @@ export function SubmitProjectModal({
 
     if (!studentName.trim()) e.studentName = "الاسم مطلوب";
 
+    if (!noonCode.trim()) e.noonCode = "كود نون مطلوب";
+
     if (!projectTitle.trim()) e.projectTitle = "عنوان المشروع مطلوب";
 
     if (!projectLink.trim()) {
@@ -105,7 +107,7 @@ export function SubmitProjectModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentName: studentName.trim(),
-          noonCode: noonCode.trim() || undefined,
+          noonCode: noonCode.trim(),
           projectTitle: projectTitle.trim(),
           projectLink: projectLink.trim(),
         }),
@@ -162,7 +164,7 @@ export function SubmitProjectModal({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="noonCode">كود نون (اختياري)</Label>
+            <Label htmlFor="noonCode">كود نون</Label>
             <Input
               id="noonCode"
               value={noonCode}
@@ -170,6 +172,10 @@ export function SubmitProjectModal({
               placeholder="مثال: N1234"
               className="bg-white border-gray-300 rounded-lg"
             />
+
+            {attempted && errors.noonCode && (
+              <p className="text-red-600 text-xs">{errors.noonCode}</p>
+            )}
           </div>
 
           <div className="grid gap-2">

@@ -52,7 +52,7 @@ export function useImageGeneration(initialPrompt = "") {
 
       const body: ImageGenRequest = {
         prompt,
-        size,
+        size: '1024x1024',
         n: opts?.n ?? 1,
       };
 

@@ -40,6 +40,7 @@ import { registerLovableActivityRoutes } from "./routes/lovable-activity";
 import { registerLovableRoutes } from "./modules/genai-lovable/lovable.route";
 import { registerAiChatRoutes } from "./modules/ai-chat/ai-chat.route";
 import { registerImageGenerationRoutes } from "./modules/image-generation/image-generation.route";
+import { registerAudioTtsRoutes } from "./modules/audio-tts/audio-tts.routes";
 
 /**
  * Legacy function for server-side prompt logging
@@ -508,6 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerLovableRoutes(apiRouter);
   registerAiChatRoutes(apiRouter);
   registerImageGenerationRoutes(apiRouter);
+  registerAudioTtsRoutes(apiRouter);
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
 

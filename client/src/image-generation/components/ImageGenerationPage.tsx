@@ -54,6 +54,7 @@ export function ImageGenerationPage() {
           {uiState === "idle" && (
             <>
               <Instructions />
+
               <div className="mt-6">
                 <PromptInput
                   value={prompt}
@@ -65,6 +66,7 @@ export function ImageGenerationPage() {
                   // forward ref if you want to focus from hook/page
                 />
               </div>
+
               <div className="mt-4">
                 <SubmitRow
                   disabled={isLoading}

@@ -2,7 +2,7 @@ import React from "react";
 import { Smartphone, Bot, Code, ArrowLeft } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 
-const AiAppBuilderPath = "/missions/ai-app-builder";
+const AiAppBuilderPath = "/missions/lovable";
 
 export default function AIAppBuilderIntroCard() {
   const organization = useOrganization();

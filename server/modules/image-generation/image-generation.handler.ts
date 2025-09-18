@@ -60,11 +60,12 @@ export async function handleImageGeneration(req: Request, res: Response) {
 
   try {
     const result = await openai.images.generate({
-      model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
+      model: "gpt-image-1",
       prompt,
       n,
       size,
-    } as any);
+      quality: "medium",
+    });
 
     if (
       !result?.data ||
