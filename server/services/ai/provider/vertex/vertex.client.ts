@@ -157,7 +157,7 @@ class VertexAIClient {
     const accessToken = await this.getAccessToken();
 
     // Poll the operation status
-    const statusEndpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/${operationName}`;
+    const statusEndpoint = `https://${this.config.location}-aiplatform.googleapis.com/${operationName}`;
 
     try {
       const response = await fetch(statusEndpoint, {
