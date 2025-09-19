@@ -97,14 +97,12 @@ class VertexAIClient {
     const payload = {
       instances: [
         {
-          text: request.prompt,
-        },
-      ],
-      parameters: {
-        aspectRatio: request.aspectRatio,
-        durationSeconds: 8,
-        sampleCount: 1,
-      },
+          prompt: request.prompt,
+          videoDuration: "8s",
+          aspectRatio: request.aspectRatio,
+          sampleCount: 1
+        }
+      ]
     };
 
     try {
