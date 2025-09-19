@@ -88,7 +88,7 @@ class VertexAIClient {
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResponse> {
     const accessToken = await this.getAccessToken();
     
-    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast:generateContent`;
+    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast-generate-preview:predictLongRunning`;
 
     const payload = {
       contents: [{
