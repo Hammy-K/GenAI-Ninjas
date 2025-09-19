@@ -203,5 +203,47 @@ export function registerVideoFlowRoutes(): Router {
     }
   });
 
+  /**
+   * Check video generation job status
+   */
+  router.get('/status/:jobId', async (req: Request, res: Response) => {
+    try {
+      // Check authentication
+      if (!req.session.user || !req.session.facilitator) {
+        return res.status(401).json({ error: 'Not authenticated or facilitator not selected' });
+      }
+
+      const { jobId } = req.params;
+      
+      if (!jobId) {
+        const response: GenerateVideoResponse = {
+          jobId: '',
+          status: 'failed',
+          error: 'Job ID is required',
+        };
+        return res.status(400).json(response);
+      }
+
+      // Check status using Vertex AI client
+      const result = await vertexAIClient.checkJobStatus(jobId);
+
+      // Increment usage if video just completed
+      if (result.status === 'completed' && !usageService.hasExceededLimit(req.session.user.uid)) {
+        usageService.incrementUsage(req.session.user.uid);
+      }
+
+      const response: GenerateVideoResponse = result;
+      res.json(response);
+    } catch (error) {
+      console.error('Video status check error:', error);
+      const response: GenerateVideoResponse = {
+        jobId: req.params.jobId || '',
+        status: 'failed',
+        error: 'Status check failed',
+      };
+      res.status(500).json(response);
+    }
+  });
+
   return router;
 }

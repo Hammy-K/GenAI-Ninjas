@@ -35,6 +35,7 @@ export function SceneCard({
 }: SceneCardProps) {
   const [videoResult, setVideoResult] = useState<GenerateVideoResponse | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
   const queryClient = useQueryClient();
 
   const isSceneValid = scene.description.length >= 10 && scene.voiceover.length >= 5;
@@ -48,6 +49,49 @@ export function SceneCard({
 
   const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
 
+  // Polling effect for video status
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    if (videoResult?.status === 'processing' && videoResult.jobId && !isPolling) {
+      setIsPolling(true);
+      
+      const pollStatus = async () => {
+        try {
+          const statusResult = await videoFlowApi.checkStatus(videoResult.jobId);
+          setVideoResult(statusResult);
+
+          if (statusResult.status === 'completed') {
+            onComplete(true);
+            setIsPolling(false);
+            // Invalidate usage query to update remaining count
+            queryClient.invalidateQueries({ queryKey: ['video-flow', 'usage'] });
+          } else if (statusResult.status === 'failed') {
+            setGenerationError(statusResult.error || 'فشل في إنشاء الفيديو');
+            onComplete(false);
+            setIsPolling(false);
+          }
+        } catch (error) {
+          console.error('Status polling error:', error);
+          setGenerationError('خطأ في التحقق من حالة الفيديو');
+          setIsPolling(false);
+        }
+      };
+
+      // Start polling immediately
+      pollStatus();
+      
+      // Then poll every 5 seconds
+      pollInterval = setInterval(pollStatus, 5000);
+    }
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [videoResult?.status, videoResult?.jobId, isPolling, onComplete, queryClient]);
+
   // Generate video mutation
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
@@ -56,6 +100,8 @@ export function SceneCard({
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
       setGenerationError(null);
+      setIsPolling(false); // Reset polling state
+      
       if (data.status === 'completed') {
         onComplete(true);
         // Invalidate usage query to update remaining count
@@ -63,6 +109,7 @@ export function SceneCard({
       } else if (data.status === 'failed') {
         onComplete(false);
       }
+      // For 'processing' status, the useEffect will handle polling
     },
     onError: (error: any) => {
       const errorMessage = error?.message || 'حدث خطأ غير متوقع';

@@ -74,4 +74,11 @@ export const videoFlowApi = {
   async generateVideo(request: GenerateVideoRequest): Promise<GenerateVideoResponse> {
     return makeVideoFlowRequest<GenerateVideoResponse>('POST', '/generate', request);
   },
+
+  /**
+   * Check video generation job status
+   */
+  async checkStatus(jobId: string): Promise<GenerateVideoResponse> {
+    return makeVideoFlowRequest<GenerateVideoResponse>('GET', `/status/${encodeURIComponent(jobId)}`);
+  },
 };
