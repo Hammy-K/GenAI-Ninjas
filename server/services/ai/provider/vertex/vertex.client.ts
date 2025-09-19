@@ -98,7 +98,6 @@ class VertexAIClient {
         }]
       }],
       generationConfig: {
-        aspectRatio: request.aspectRatio,
         temperature: 0.7,
         maxOutputTokens: 1024,
       }
