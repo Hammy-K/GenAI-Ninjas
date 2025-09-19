@@ -21,9 +21,9 @@ class FirebaseAdminService {
       }
 
       // Get service account from environment
-      const serviceAccountJson = process.env.VERTEX_AI_SERVICE_ACCOUNT_JSON;
+      const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       if (!serviceAccountJson) {
-        console.error('VERTEX_AI_SERVICE_ACCOUNT_JSON not found - Firebase Admin verification disabled');
+        console.error('FIREBASE_SERVICE_ACCOUNT_JSON not found - Firebase Admin verification disabled');
         return;
       }
 
