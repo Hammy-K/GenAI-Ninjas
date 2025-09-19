@@ -92,11 +92,13 @@ class VertexAIClient {
 
     const payload = {
       instances: [{
-        prompt: request.prompt,
-        videoDuration: "8s",
+        text: request.prompt
+      }],
+      parameters: {
         aspectRatio: request.aspectRatio,
+        durationSeconds: 8,
         sampleCount: 1
-      }]
+      }
     };
 
     try {
@@ -184,18 +186,28 @@ class VertexAIClient {
         }
         
         // Extract video URL from response
-        if (result.response && result.response.generatedVideos && result.response.generatedVideos[0]) {
-          const videoData = result.response.generatedVideos[0];
-          return {
-            jobId: operationName,
-            status: 'completed',
-            videoUrl: videoData.videoUri || videoData.gcsUri,
-          };
+        if (result.response && result.response.predictions && result.response.predictions[0]) {
+          const prediction = result.response.predictions[0];
+          const videoUrl = prediction.gcsUri || prediction.mediaUri || prediction.outputUri || prediction.content?.uri;
+          
+          if (videoUrl) {
+            return {
+              jobId: operationName,
+              status: 'completed',
+              videoUrl: videoUrl,
+            };
+          } else {
+            return {
+              jobId: operationName,
+              status: 'failed',
+              error: 'No video URL found in response',
+            };
+          }
         } else {
           return {
             jobId: operationName,
             status: 'failed',
-            error: 'No video generated in response',
+            error: 'No predictions found in response',
           };
         }
       } else {
