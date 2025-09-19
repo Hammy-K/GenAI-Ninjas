@@ -1,0 +1,45 @@
+Add a new AI video generation flow 'client/src/video-generator/'
+
+CRITICAL CONSTRAINTS:
+- DO NOT modify existing code
+- DO NOT EDIT OR CHANGE ANYTHING IN THE CURRENT APP  
+- CREATE NEW FILES ONLY
+- Keep all new code isolated in separate files
+- Use existing tech stack setup
+- API keys server-side only
+- No changes to existing routes, components, or APIs
+
+NEW FILES TO CREATE:
+- New route: client/src/video-generator/
+- Re-use existing React components wherever possible, create new ones only if necessary
+- New API endpoints (separate from existing ones)
+- New facilitators.json data file structure: {facilitator_name, student_email, api_key}
+
+COMPLETE USER FLOW:
+1. **Sign-in**: Student visits website and clicks "Sign in with Google"
+2. **Authentication**: Google verifies identity and sends secure token to backend server
+3. **Facilitator Match**: Server extracts student email from token, looks up facilitators.json to find facilitator name and corresponding API key
+4. **Facilitator Confirmation**: Student confirms correct facilitator OR selects different one from dropdown
+5. **Scene Creation**: Progressive scene builder UI where student creates 3 scenes using collapsible/expandable cards:
+   - Scene Description (visual elements, setting, action)
+   - Voice Over Script (narrator dialogue for this scene)
+   - Aspect ratio choice (9:16 or 16:9)
+6. **Video Generation**: Combine scene description + voiceover script into single prompt for Vertex AI API (Veo 3 Fast model)
+7. **Video Rendering**: Display generated video with integrated voiceover, play functionality and download option
+8. **Usage Limits**: Maximum 3 scenes per user session/account
+
+UI/UX REQUIREMENTS:
+- Progressive scene builder with expandable cards
+- Visual progress indicator (●●○ showing current scene)
+- Previous scenes collapse but remain editable
+- Next scene unlocks only after current scene completion
+- Final review page showing all 3 completed videos
+
+TECHNICAL REQUIREMENTS:
+- Google OAuth integration
+- Server-side facilitator lookup logic
+- Vertex AI Veo 3 Fast model integration (handles both video + speech generation)
+- Prompt engineering: combine visual description + voiceover script for Veo 3
+- Video streaming/download functionality
+- User limit tracking (3 scenes maximum)
+- Secure API key management (server-side only)
