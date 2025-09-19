@@ -41,6 +41,7 @@ import { registerLovableRoutes } from "./modules/genai-lovable/lovable.route";
 import { registerAiChatRoutes } from "./modules/ai-chat/ai-chat.route";
 import { registerImageGenerationRoutes } from "./modules/image-generation/image-generation.route";
 import { registerAudioTtsRoutes } from "./modules/audio-tts/audio-tts.routes";
+import { registerVideoFlowRoutes } from "./modules/video-flow/video-flow.route";
 
 /**
  * Legacy function for server-side prompt logging
@@ -70,6 +71,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(
     "/generated-images",
     express.static("server/public/generated-images"),
+  );
+
+  // Serve generated videos from the server
+  app.use(
+    "/generated-videos",
+    express.static("server/public/generated-videos"),
   );
 
   // Add a utility endpoint to clear session data (temporary, for debugging)
@@ -510,6 +517,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAiChatRoutes(apiRouter);
   registerImageGenerationRoutes(apiRouter);
   registerAudioTtsRoutes(apiRouter);
+  
+  // Register video flow routes
+  apiRouter.use("/video-flow", registerVideoFlowRoutes());
+  
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
 
