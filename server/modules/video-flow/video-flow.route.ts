@@ -12,6 +12,7 @@ import { firebaseAdminService } from '../../services/auth/firebase-admin.service
 import { facilitatorService } from '../../services/facilitator/facilitator.service';
 import { usageService } from '../../services/usage/usage.service';
 import { veoService } from '../../services/ai/provider/vertex/veo.service';
+import { vertexAIClient } from '../../services/ai/provider/vertex/vertex.client';
 
 // Extend Express Request type to include our session user data
 declare module 'express-session' {
