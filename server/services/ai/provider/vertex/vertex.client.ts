@@ -91,16 +91,12 @@ class VertexAIClient {
     const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast-generate-preview:predictLongRunning`;
 
     const payload = {
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: request.prompt
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-      }
+      instances: [{
+        prompt: request.prompt,
+        videoDuration: "8s",
+        aspectRatio: request.aspectRatio,
+        sampleCount: 1
+      }]
     };
 
     try {
