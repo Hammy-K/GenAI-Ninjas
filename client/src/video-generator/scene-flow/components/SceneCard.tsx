@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Lock, CheckCircle, Loader2, Play, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock, CheckCircle, Loader2, Play, Download, AlertTriangle } from 'lucide-react';
 import { videoFlowApi } from '../api/video-flow.api';
 import { VideoPlayerCard } from './VideoPlayerCard';
 import type { Scene, AspectRatio, GenerateVideoResponse } from '@shared/video-flow.schema';
@@ -34,15 +34,28 @@ export function SceneCard({
   'data-testid': testId,
 }: SceneCardProps) {
   const [videoResult, setVideoResult] = useState<GenerateVideoResponse | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const isSceneValid = scene.description.length >= 10 && scene.voiceover.length >= 5;
 
+  // Get usage data to enforce limits
+  const { data: usage } = useQuery({
+    queryKey: ['video-flow', 'usage'],
+    queryFn: videoFlowApi.getUsage,
+    refetchInterval: 5000,
+  });
+
+  const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
+
   // Generate video mutation
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
+    retry: 1, // Retry once for network errors
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
+      setGenerationError(null);
       if (data.status === 'completed') {
         onComplete(true);
         // Invalidate usage query to update remaining count
@@ -51,10 +64,17 @@ export function SceneCard({
         onComplete(false);
       }
     },
+    onError: (error: any) => {
+      const errorMessage = error?.message || 'حدث خطأ غير متوقع';
+      setGenerationError(errorMessage);
+      setVideoResult(null);
+      onComplete(false);
+    },
   });
 
   const handleGenerate = () => {
-    if (isSceneValid) {
+    if (isSceneValid && !isAtUsageLimit) {
+      setGenerationError(null);
       generateVideoMutation.mutate({ scene });
     }
   };
@@ -200,12 +220,24 @@ export function SceneCard({
                   </RadioGroup>
                 </div>
 
+                {/* Usage Limit Warning */}
+                {isAtUsageLimit && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      <span className="text-yellow-800 text-sm font-medium">
+                        تم استنفاد الحد المسموح من الفيديوهات
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Generate Button */}
                 <div className="pt-4">
                   <Button
                     onClick={handleGenerate}
-                    disabled={!isSceneValid || generateVideoMutation.isPending}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    disabled={!isSceneValid || generateVideoMutation.isPending || isAtUsageLimit}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-400"
                     data-testid={`button-generate-${sceneNumber}`}
                   >
                     {generateVideoMutation.isPending ? (
@@ -213,6 +245,8 @@ export function SceneCard({
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         جاري إنشاء الفيديو...
                       </>
+                    ) : isAtUsageLimit ? (
+                      '🚫 تم استنفاد الحد المسموح'
                     ) : (
                       `🎬 إنشاء فيديو المشهد ${sceneNumber}`
                     )}
@@ -229,11 +263,28 @@ export function SceneCard({
                 )}
 
                 {/* Generation Error */}
-                {generateVideoMutation.error && (
+                {generationError && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-700 text-sm">
-                      ❌ خطأ في إنشاء الفيديو: {generateVideoMutation.error.message}
-                    </p>
+                    <div className="flex items-start space-x-2 space-x-reverse">
+                      <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-red-700 text-sm font-medium">
+                          خطأ في إنشاء الفيديو:
+                        </p>
+                        <p className="text-red-600 text-sm mt-1">
+                          {generationError}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleGenerate}
+                          disabled={!isSceneValid || generateVideoMutation.isPending || isAtUsageLimit}
+                          className="mt-2"
+                        >
+                          🔄 إعادة المحاولة
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

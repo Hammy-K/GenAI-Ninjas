@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useVideoFlowAuth } from '../hooks/useVideoFlowAuth';
+import { useVideoFlowContext } from '../contexts/VideoFlowContext';
 import { Loader2, User, CheckCircle } from 'lucide-react';
 
 interface FacilitatorSelectStepProps {
@@ -16,8 +16,10 @@ export function FacilitatorSelectStep({ userEmail, onComplete }: FacilitatorSele
     confirmFacilitator, 
     isConfirmingFacilitator, 
     facilitatorError,
-    hasFacilitator 
-  } = useVideoFlowAuth();
+    hasFacilitator,
+    isFacilitatorsLoading,
+    facilitatorsError
+  } = useVideoFlowContext();
 
   // Auto-advance when facilitator is confirmed
   useEffect(() => {
@@ -103,12 +105,27 @@ export function FacilitatorSelectStep({ userEmail, onComplete }: FacilitatorSele
         </Select>
       </div>
 
+      {/* Loading Facilitators */}
+      {isFacilitatorsLoading && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center">
+            <Loader2 className="h-5 w-5 text-blue-600 mr-2 animate-spin" />
+            <span className="text-blue-800">جاري تحميل قائمة المعلمين...</span>
+          </div>
+        </div>
+      )}
+
       {/* Error Display */}
-      {facilitatorError && (
+      {(facilitatorError || facilitatorsError) && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-700 text-sm">
-            ❌ خطأ في تأكيد المعلم: {facilitatorError.message}
+            ❌ خطأ: {facilitatorError?.message || facilitatorsError?.message}
           </p>
+          {facilitatorsError && (
+            <p className="text-red-600 text-xs mt-1">
+              تحقق من تسجيل الدخول وحاول مرة أخرى
+            </p>
+          )}
         </div>
       )}
 

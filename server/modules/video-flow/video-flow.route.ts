@@ -89,6 +89,8 @@ export function registerVideoFlowRoutes(): Router {
     const response: FacilitatorsResponse = {
       facilitators: facilitatorInfo.facilitators,
       matchedFacilitatorName: facilitatorInfo.matchedFacilitatorName || undefined,
+      confirmedFacilitatorName: req.session.facilitator?.name || undefined,
+      userEmail: req.session.user.email,
     };
     res.json(response);
   });

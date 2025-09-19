@@ -37,6 +37,8 @@ export const FacilitatorConfirmRequestZ = z.object({
 export const FacilitatorsResponseZ = z.object({
   facilitators: z.array(z.object({ name: z.string() })),
   matchedFacilitatorName: z.string().optional(),
+  confirmedFacilitatorName: z.string().optional(),
+  userEmail: z.string().optional(),
 });
 
 // Video generation requests/responses

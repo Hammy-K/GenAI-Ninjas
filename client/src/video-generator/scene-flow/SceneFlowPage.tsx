@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useVideoFlowAuth } from './hooks/useVideoFlowAuth';
+import { VideoFlowProvider, useVideoFlowContext } from './contexts/VideoFlowContext';
 import { GoogleSignInStep } from './components/GoogleSignInStep';
 import { FacilitatorSelectStep } from './components/FacilitatorSelectStep';
 import { SceneBuilderStep } from './components/SceneBuilderStep';
@@ -8,9 +8,9 @@ import { ProgressIndicator } from './components/ProgressIndicator';
 
 export type FlowStep = 'signin' | 'facilitator' | 'scenes' | 'review';
 
-export default function SceneFlowPage() {
+function SceneFlowContent() {
   const [currentStep, setCurrentStep] = useState<FlowStep>('signin');
-  const { user, isAuthenticated, facilitator } = useVideoFlowAuth();
+  const { user, isAuthenticated, facilitator } = useVideoFlowContext();
 
   // Auto-advance through steps based on auth state
   const handleStepComplete = (nextStep: FlowStep) => {
@@ -80,5 +80,13 @@ export default function SceneFlowPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SceneFlowPage() {
+  return (
+    <VideoFlowProvider>
+      <SceneFlowContent />
+    </VideoFlowProvider>
   );
 }

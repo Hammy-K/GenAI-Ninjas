@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn';
-import { useVideoFlowAuth } from '../hooks/useVideoFlowAuth';
+import { useVideoFlowContext } from '../contexts/VideoFlowContext';
 import { Loader2 } from 'lucide-react';
 
 interface GoogleSignInStepProps {
@@ -15,7 +15,7 @@ export function GoogleSignInStep({ onComplete }: GoogleSignInStepProps) {
     isAuthenticating, 
     authError, 
     isAuthenticated 
-  } = useVideoFlowAuth();
+  } = useVideoFlowContext();
 
   // Auto-advance when authenticated
   useEffect(() => {
