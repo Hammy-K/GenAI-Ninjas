@@ -61,6 +61,7 @@ import LovableMissionPage from "./lovable-mission/LovableMissionPage";
 import LovableSubmissionsPage from "./lovable-mission/submissions/LovableSubmissionsPage";
 import VideoGeneratorChatMissionPage from "./video-generator/video-generator-chat/VideoGeneratorChatMissionPage";
 import { ImageGenerationPage } from "./image-generation/components/ImageGenerationPage";
+import SceneFlowPage from "./video-generator/scene-flow/SceneFlowPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -208,6 +209,11 @@ function Router() {
       <Route
         path="/missions/video-generation/generate-image"
         component={ImageGenerationPage}
+      />
+
+      <Route
+        path="/missions/video-generation/scene-flow"
+        component={SceneFlowPage}
       />
 
       {/* ################################# Video Generation Routes ########################## */}
