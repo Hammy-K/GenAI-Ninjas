@@ -117,24 +117,20 @@ class VertexAIClient {
 
       const result = await response.json();
       
-      // Generate a unique job ID
+      // Extract operation name from long-running operation response
+      if (!result.name) {
+        throw new Error('No operation name returned from Vertex AI');
+      }
+
+      const operationName = result.name;
       const jobId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // For now, we'll simulate the video generation process
-      // In a real implementation, this would be an async operation
-      if (result.candidates && result.candidates[0]) {
-        return {
-          jobId,
-          status: 'completed',
-          videoUrl: `/generated-videos/${jobId}.mp4`,
-        };
-      } else {
-        return {
-          jobId,
-          status: 'failed',
-          error: 'No video content generated',
-        };
-      }
+      // Store operation name for polling
+      // For now, return processing status and let polling handle completion
+      return {
+        jobId: operationName, // Use operation name as job ID for tracking
+        status: 'processing',
+      };
       
     } catch (error) {
       console.error('Video generation failed:', error);
@@ -148,16 +144,76 @@ class VertexAIClient {
   }
 
   /**
-   * Check the status of a video generation job
+   * Check the status of a video generation job (operation)
    */
-  async checkJobStatus(jobId: string): Promise<VideoGenerationResponse> {
-    // For now, return completed status
-    // In a real implementation, this would check the actual job status
-    return {
-      jobId,
-      status: 'completed',
-      videoUrl: `/generated-videos/${jobId}.mp4`,
-    };
+  async checkJobStatus(operationName: string): Promise<VideoGenerationResponse> {
+    const accessToken = await this.getAccessToken();
+    
+    // Poll the operation status
+    const statusEndpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/${operationName}`;
+    
+    try {
+      const response = await fetch(statusEndpoint, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Operation status check failed:', response.status, errorText);
+        return {
+          jobId: operationName,
+          status: 'failed',
+          error: `Status check failed: ${response.status}`,
+        };
+      }
+
+      const result = await response.json();
+      
+      if (result.done) {
+        // Operation completed
+        if (result.error) {
+          return {
+            jobId: operationName,
+            status: 'failed',
+            error: result.error.message || 'Video generation failed',
+          };
+        }
+        
+        // Extract video URL from response
+        if (result.response && result.response.generatedVideos && result.response.generatedVideos[0]) {
+          const videoData = result.response.generatedVideos[0];
+          return {
+            jobId: operationName,
+            status: 'completed',
+            videoUrl: videoData.videoUri || videoData.gcsUri,
+          };
+        } else {
+          return {
+            jobId: operationName,
+            status: 'failed',
+            error: 'No video generated in response',
+          };
+        }
+      } else {
+        // Still processing
+        return {
+          jobId: operationName,
+          status: 'processing',
+        };
+      }
+      
+    } catch (error) {
+      console.error('Job status check failed:', error);
+      return {
+        jobId: operationName,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 }
 
