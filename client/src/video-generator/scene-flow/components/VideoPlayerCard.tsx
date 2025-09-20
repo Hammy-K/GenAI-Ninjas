@@ -1,6 +1,7 @@
 import { Play, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { GenerateVideoResponse } from '@shared/video-flow.schema';
+import { useState, useEffect } from 'react';
 
 interface VideoPlayerCardProps {
   result: GenerateVideoResponse;
@@ -9,10 +10,39 @@ interface VideoPlayerCardProps {
 }
 
 export function VideoPlayerCard({ result, sceneNumber, 'data-testid': testId }: VideoPlayerCardProps) {
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (result.status === 'completed') {
+      if (result.videoUrl) {
+        // If we have a URL, use it directly
+        setVideoSrc(result.videoUrl);
+      } else if ((result as any).videoBase64) {
+        // Fallback: convert base64 to blob URL for backward compatibility
+        try {
+          const base64Data = (result as any).videoBase64;
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'video/mp4' });
+          const blobUrl = URL.createObjectURL(blob);
+          setVideoSrc(blobUrl);
+          
+          // Cleanup blob URL on unmount
+          return () => URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+          console.error('Failed to convert base64 to blob:', error);
+        }
+      }
+    }
+  }, [result]);
+
   const handleDownload = () => {
-    if (result.videoUrl) {
+    if (videoSrc) {
       const link = document.createElement('a');
-      link.href = result.videoUrl;
+      link.href = videoSrc;
       link.download = `scene-${sceneNumber}-${result.jobId}.mp4`;
       document.body.appendChild(link);
       link.click();
@@ -64,7 +94,7 @@ export function VideoPlayerCard({ result, sceneNumber, 'data-testid': testId }: 
       </div>
 
       {/* Video Player */}
-      {result.status === 'completed' && result.videoUrl && (
+      {result.status === 'completed' && videoSrc && (
         <div className="space-y-4">
           <video
             controls
@@ -72,7 +102,7 @@ export function VideoPlayerCard({ result, sceneNumber, 'data-testid': testId }: 
             poster="/placeholder-video-thumbnail.jpg"
             data-testid={`video-player-${sceneNumber}`}
           >
-            <source src={result.videoUrl} type="video/mp4" />
+            <source src={videoSrc} type="video/mp4" />
             متصفحك لا يدعم تشغيل الفيديو.
           </video>
 

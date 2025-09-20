@@ -1,4 +1,6 @@
 import { GoogleAuth } from "google-auth-library";
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Vertex AI client for video generation using Veo 3 Fast model
@@ -317,22 +319,56 @@ class VertexAIClient {
           result.response.videos.length > 0
         ) {
           const video = result.response.videos[0];
-          const videoUrl = video.gcsUri || video.bytesBase64Encoded;
-
-          if (videoUrl) {
+          
+          // Try GCS URI first (if accessible)
+          if (video.gcsUri) {
             return {
               jobId: operationName,
               status: "completed",
-              videoUrl: videoUrl,
-            };
-          } else {
-            console.error("Video object found but no URL:", video);
-            return {
-              jobId: operationName,
-              status: "failed",
-              error: "Video generated but no accessible URL found",
+              videoUrl: video.gcsUri,
             };
           }
+          
+          // If we have base64 data, save it as a file and return public URL
+          if (video.bytesBase64Encoded) {
+            try {
+              const videoData = Buffer.from(video.bytesBase64Encoded, 'base64');
+              const operationId = operationName.split('/').pop() || Date.now().toString();
+              const filename = `${operationId}.mp4`;
+              const filePath = path.join('server/public/generated-videos', filename);
+              
+              // Ensure directory exists
+              const dir = path.dirname(filePath);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              
+              // Write video file
+              fs.writeFileSync(filePath, videoData);
+              
+              const publicUrl = `/generated-videos/${filename}`;
+              
+              return {
+                jobId: operationName,
+                status: "completed",
+                videoUrl: publicUrl,
+              };
+            } catch (error) {
+              console.error('Failed to save video file:', error);
+              return {
+                jobId: operationName,
+                status: "failed",
+                error: "Video generated but failed to save file",
+              };
+            }
+          }
+          
+          console.error("Video object found but no URL or base64 data:", video);
+          return {
+            jobId: operationName,
+            status: "failed",
+            error: "Video generated but no accessible URL found",
+          };
         } else {
           console.error("No videos in response:", result.response);
           return {

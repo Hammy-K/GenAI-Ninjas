@@ -55,6 +55,16 @@ app.use((req, res, next) => {
     console.error("Failed to seed App Builder steps:", error);
   }
   
+  // Serve generated videos statically
+  app.use('/generated-videos', express.static('server/public/generated-videos', {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.mp4')) {
+        res.setHeader('Content-Type', 'video/mp4');
+        res.setHeader('Content-Disposition', 'inline');
+      }
+    }
+  }));
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
