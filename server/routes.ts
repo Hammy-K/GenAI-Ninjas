@@ -67,6 +67,7 @@ function logServerPrompt(
  * @returns HTTP server instance
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.use(express.json());
   // Serve generated images from the server
   app.use(
     "/generated-images",
@@ -105,11 +106,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create router for API endpoints
   const apiRouter = express.Router();
 
-  // Add a health check endpoint
+  // Add the health check endpoint to the router first
   apiRouter.get("/health", (_req, res) => {
     console.log("Health check endpoint called");
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Mount the video flow routes onto the apiRouter
+  apiRouter.use("/video-flow", registerVideoFlowRoutes());
+
+  // Mount the entire apiRouter to the main app at the '/api' path
+  app.use("/api", apiRouter);
 
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -517,10 +524,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAiChatRoutes(apiRouter);
   registerImageGenerationRoutes(apiRouter);
   registerAudioTtsRoutes(apiRouter);
-  
+
   // Register video flow routes
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
-  
+
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);
 

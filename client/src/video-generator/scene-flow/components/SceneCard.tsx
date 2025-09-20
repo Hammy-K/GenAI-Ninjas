@@ -100,7 +100,10 @@ export function SceneCard({
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
       setGenerationError(null);
-      setIsPolling(false); // Reset polling state
+      // Only reset polling state if not processing (to allow polling to start)
+      if (data.status !== 'processing') {
+        setIsPolling(false);
+      }
       
       if (data.status === 'completed') {
         onComplete(true);
