@@ -49,15 +49,27 @@ export function SceneCard({
 
   const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
 
-  // Polling effect for video status
+  // Polling effect for video status with timeout
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
+    let timeoutTimer: NodeJS.Timeout;
 
     if (videoResult?.status === 'processing' && videoResult.jobId && !isPolling) {
       setIsPolling(true);
+      const startTime = Date.now();
+      const TIMEOUT_MINUTES = 5;
+      const TIMEOUT_MS = TIMEOUT_MINUTES * 60 * 1000; // 5 minutes
       
       const pollStatus = async () => {
         try {
+          // Check for timeout
+          if (Date.now() - startTime > TIMEOUT_MS) {
+            setGenerationError(`انتهت مهلة إنشاء الفيديو (${TIMEOUT_MINUTES} دقائق). حاول مرة أخرى.`);
+            onComplete(false);
+            setIsPolling(false);
+            return;
+          }
+
           const statusResult = await videoFlowApi.checkStatus(videoResult.jobId);
           setVideoResult(statusResult);
 
@@ -83,11 +95,21 @@ export function SceneCard({
       
       // Then poll every 5 seconds
       pollInterval = setInterval(pollStatus, 5000);
+      
+      // Set up timeout timer
+      timeoutTimer = setTimeout(() => {
+        setGenerationError(`انتهت مهلة إنشاء الفيديو (${TIMEOUT_MINUTES} دقائق). حاول مرة أخرى.`);
+        onComplete(false);
+        setIsPolling(false);
+      }, TIMEOUT_MS);
     }
 
     return () => {
       if (pollInterval) {
         clearInterval(pollInterval);
+      }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
       }
     };
   }, [videoResult?.status, videoResult?.jobId, isPolling, onComplete, queryClient]);
