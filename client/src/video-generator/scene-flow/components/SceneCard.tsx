@@ -54,7 +54,7 @@ export function SceneCard({
     let pollInterval: NodeJS.Timeout;
     let timeoutTimer: NodeJS.Timeout;
 
-    if (videoResult?.status === 'processing' && videoResult.jobId && !isPolling) {
+    if (videoResult?.status === 'processing' && videoResult.jobId) {
       setIsPolling(true);
       const startTime = Date.now();
       const TIMEOUT_MINUTES = 5;
@@ -102,6 +102,9 @@ export function SceneCard({
         onComplete(false);
         setIsPolling(false);
       }, TIMEOUT_MS);
+    } else {
+      // Reset polling state when not processing
+      setIsPolling(false);
     }
 
     return () => {
@@ -112,7 +115,7 @@ export function SceneCard({
         clearTimeout(timeoutTimer);
       }
     };
-  }, [videoResult?.status, videoResult?.jobId, isPolling, onComplete, queryClient]);
+  }, [videoResult?.status, videoResult?.jobId, onComplete, queryClient]);
 
   // Generate video mutation
   const generateVideoMutation = useMutation({
