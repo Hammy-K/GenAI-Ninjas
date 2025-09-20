@@ -34,6 +34,25 @@ export function registerVideoFlowRoutes(): Router {
   const router = Router();
 
   /**
+   * GET /api/video-flow/admin/reset-credits
+   * TEMPORARY: Reset current user's video credits for testing
+   */
+  router.get("/admin/reset-credits", (req: Request, res: Response) => {
+    if (!req.session.user?.uid) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    usageService.resetUsage(req.session.user.uid);
+    const newUsage = usageService.getUsage(req.session.user.uid);
+    
+    res.json({
+      success: true,
+      message: "Video credits reset successfully",
+      usage: newUsage
+    });
+  });
+
+  /**
    * POST /api/video-flow/auth/google
    * Authenticate user with Google Firebase ID token
    */

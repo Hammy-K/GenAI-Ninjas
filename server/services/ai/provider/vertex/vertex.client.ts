@@ -320,16 +320,7 @@ class VertexAIClient {
         ) {
           const video = result.response.videos[0];
           
-          // Try GCS URI first (if accessible)
-          if (video.gcsUri) {
-            return {
-              jobId: operationName,
-              status: "completed",
-              videoUrl: video.gcsUri,
-            };
-          }
-          
-          // If we have base64 data, save it as a file and return public URL
+          // PRIORITY FIX: Try base64 data first (creates downloadable files)
           if (video.bytesBase64Encoded) {
             try {
               const videoData = Buffer.from(video.bytesBase64Encoded, 'base64');
@@ -347,6 +338,7 @@ class VertexAIClient {
               fs.writeFileSync(filePath, videoData);
               
               const publicUrl = `/generated-videos/${filename}`;
+              console.log(`Video saved successfully: ${publicUrl}`);
               
               return {
                 jobId: operationName,
@@ -355,12 +347,18 @@ class VertexAIClient {
               };
             } catch (error) {
               console.error('Failed to save video file:', error);
-              return {
-                jobId: operationName,
-                status: "failed",
-                error: "Video generated but failed to save file",
-              };
+              // Fall back to GCS URI if base64 processing fails
             }
+          }
+          
+          // Fallback: Try GCS URI (browsers can't access gs:// directly)
+          if (video.gcsUri) {
+            console.warn(`Using GCS URI - browsers may not be able to access: ${video.gcsUri}`);
+            return {
+              jobId: operationName,
+              status: "completed",
+              videoUrl: video.gcsUri,
+            };
           }
           
           console.error("Video object found but no URL or base64 data:", video);
