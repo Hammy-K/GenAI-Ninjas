@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { SceneCard } from './SceneCard';
-import { UsageTracker } from './UsageTracker';
-import type { Scene } from '@shared/video-flow.schema';
+import { useState } from "react";
+import { SceneCard } from "./SceneCard";
+import { UsageTracker } from "./UsageTracker";
+import { Button } from "@/components/ui/button";
+import { Film, CheckCircle, ArrowRight } from "lucide-react";
+import type { Scene } from "@shared/video-flow.schema";
 
 interface SceneBuilderStepProps {
   onComplete: () => void;
@@ -9,13 +11,16 @@ interface SceneBuilderStepProps {
 
 export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
   const [scenes, setScenes] = useState<Scene[]>([
-    { description: '', voiceover: '', aspectRatio: '16:9' },
-    { description: '', voiceover: '', aspectRatio: '16:9' },
-    { description: '', voiceover: '', aspectRatio: '16:9' },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
   ]);
-
   const [currentScene, setCurrentScene] = useState(0);
-  const [completedScenes, setCompletedScenes] = useState<boolean[]>([false, false, false]);
+  const [completedScenes, setCompletedScenes] = useState<boolean[]>([
+    false,
+    false,
+    false,
+  ]);
 
   const updateScene = (index: number, updatedScene: Scene) => {
     const newScenes = [...scenes];
@@ -28,13 +33,13 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
     newCompleted[index] = isComplete;
     setCompletedScenes(newCompleted);
 
-    // Auto-advance to next scene if current scene is completed
     if (isComplete && index === currentScene && index < 2) {
       setCurrentScene(index + 1);
     }
   };
 
   const allScenesCompleted = completedScenes.every(Boolean);
+  const completedCount = completedScenes.filter(Boolean).length;
 
   const handleComplete = () => {
     if (allScenesCompleted) {
@@ -43,69 +48,112 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="text-6xl mb-4">🎬</div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          إنشاء المشاهد
-        </h2>
-        <p className="text-lg text-gray-600">
-          أنشئ ثلاثة مشاهد مذهلة لفيديوهاتك
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      <div className="max-w-6xl mx-auto p-4">
+        {/* Compact Header with Usage Tracker */}
+        <div className="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 shadow-lg">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <Film className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">أنشئ مشاهدك</h2>
+              <p className="text-sm text-gray-600">
+                {completedCount} من 3 مكتمل
+              </p>
+            </div>
+          </div>
 
-      {/* Usage Tracker */}
-      <UsageTracker className="mb-8" />
+          <div className="flex items-center gap-4">
+            <UsageTracker className="border-0 bg-transparent shadow-none p-0" />
 
-      {/* Scene Progress Dots */}
-      <div className="flex justify-center items-center space-x-2 space-x-reverse mb-8">
-        {scenes.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentScene(index)}
-            className={`w-4 h-4 rounded-full transition-colors ${
-              completedScenes[index]
-                ? 'bg-green-600'
-                : index === currentScene
-                ? 'bg-blue-600'
-                : 'bg-gray-300'
-            }`}
-            aria-label={`المشهد ${index + 1}`}
-            data-testid={`scene-dot-${index + 1}`}
-          />
-        ))}
-      </div>
-
-      {/* Scene Cards */}
-      <div className="space-y-4 mb-8">
-        {scenes.map((scene, index) => (
-          <SceneCard
-            key={index}
-            sceneNumber={index + 1}
-            scene={scene}
-            isExpanded={index === currentScene}
-            isCompleted={completedScenes[index]}
-            isLocked={index > 0 && !completedScenes[index - 1]}
-            onUpdate={(updatedScene) => updateScene(index, updatedScene)}
-            onComplete={(isComplete) => markSceneComplete(index, isComplete)}
-            onExpand={() => setCurrentScene(index)}
-            data-testid={`scene-card-${index + 1}`}
-          />
-        ))}
-      </div>
-
-      {/* Complete Button */}
-      {allScenesCompleted && (
-        <div className="text-center">
-          <button
-            onClick={handleComplete}
-            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-            data-testid="button-complete-scenes"
-          >
-            🎉 مراجعة جميع الفيديوهات
-          </button>
+            {/* Compact Progress Dots */}
+            <div className="flex gap-2">
+              {scenes.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentScene(index)}
+                  className={`w-8 h-8 rounded-lg transition-all duration-200 flex items-center justify-center text-xs font-bold ${
+                    completedScenes[index]
+                      ? "bg-green-500 text-white shadow-md"
+                      : index === currentScene
+                        ? "bg-purple-500 text-white shadow-md scale-110"
+                        : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+                  }`}
+                  data-testid={`scene-dot-${index + 1}`}
+                >
+                  {completedScenes[index] ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : (
+                    index + 1
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Scene Cards - Compact Grid */}
+          {scenes.map((scene, index) => (
+            <div key={index} className="h-fit">
+              <SceneCard
+                sceneNumber={index + 1}
+                scene={scene}
+                isExpanded={index === currentScene}
+                isCompleted={completedScenes[index]}
+                isLocked={index > 0 && !completedScenes[index - 1]}
+                onUpdate={(updatedScene) => updateScene(index, updatedScene)}
+                onComplete={(isComplete) =>
+                  markSceneComplete(index, isComplete)
+                }
+                onExpand={() => setCurrentScene(index)}
+                data-testid={`scene-card-${index + 1}`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Compact Completion Section */}
+        {allScenesCompleted && (
+          <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 text-center shadow-lg">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <h3 className="text-lg font-bold text-green-800">
+                  جميع المشاهد جاهزة!
+                </h3>
+                <p className="text-sm text-green-700">
+                  يمكنك الآن مراجعة الفيديوهات
+                </p>
+              </div>
+              <Button
+                onClick={handleComplete}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl shadow-lg"
+                data-testid="button-complete-scenes"
+              >
+                <div className="flex items-center gap-2">
+                  <span>مراجعة</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Compact Progress Bar */}
+        <div className="mt-4">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500 rounded-full"
+              style={{ width: `${(completedCount / 3) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

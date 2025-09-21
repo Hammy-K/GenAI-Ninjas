@@ -35,10 +35,10 @@ export function GoogleSignInStep({ onComplete }: GoogleSignInStepProps) {
   const error = signInError || authError?.message;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-100 p-8 text-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-m border border-purple-100 p-8 text-center">
           {/* Icon */}
           <div className="mb-6">
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">

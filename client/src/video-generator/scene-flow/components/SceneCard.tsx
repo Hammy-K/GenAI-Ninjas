@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   ChevronDown,
-  ChevronRight,
   Lock,
   CheckCircle,
   Loader2,
@@ -61,7 +60,6 @@ export function SceneCard({
   const isSceneValid =
     scene.description.length >= 10 && scene.voiceover.length >= 5;
 
-  // Get usage data to enforce limits
   const { data: usage } = useQuery({
     queryKey: ["video-flow", "usage"],
     queryFn: videoFlowApi.getUsage,
@@ -70,7 +68,6 @@ export function SceneCard({
 
   const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
 
-  // Polling effect for video status with timeout
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
     let timeoutTimer: NodeJS.Timeout;
@@ -84,7 +81,7 @@ export function SceneCard({
       const pollStatus = async () => {
         try {
           if (Date.now() - startTime > TIMEOUT_MS) {
-            setGenerationError(`انتهت مهلة الإنشاء. حاول مرة أخرى.`);
+            setGenerationError(`انتهت مهلة الإنشاء`);
             onComplete(false);
             setIsPolling(false);
             return;
@@ -102,13 +99,12 @@ export function SceneCard({
               queryKey: ["video-flow", "usage"],
             });
           } else if (statusResult.status === "failed") {
-            setGenerationError(statusResult.error || "فشل في إنشاء الفيديو");
+            setGenerationError("فشل في الإنشاء");
             onComplete(false);
             setIsPolling(false);
           }
         } catch (error) {
-          console.error("Status polling error:", error);
-          setGenerationError("خطأ في التحقق من حالة الفيديو");
+          setGenerationError("خطأ في التحقق");
           setIsPolling(false);
         }
       };
@@ -117,7 +113,7 @@ export function SceneCard({
       pollInterval = setInterval(pollStatus, 5000);
 
       timeoutTimer = setTimeout(() => {
-        setGenerationError(`انتهت مهلة الإنشاء. حاول مرة أخرى.`);
+        setGenerationError(`انتهت المهلة`);
         onComplete(false);
         setIsPolling(false);
       }, TIMEOUT_MS);
@@ -126,26 +122,18 @@ export function SceneCard({
     }
 
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-      }
+      if (pollInterval) clearInterval(pollInterval);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
     };
   }, [videoResult?.status, videoResult?.jobId, onComplete, queryClient]);
 
-  // Generate video mutation
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
     retry: 1,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
       setGenerationError(null);
-      if (data.status !== "processing") {
-        setIsPolling(false);
-      }
+      if (data.status !== "processing") setIsPolling(false);
 
       if (data.status === "completed") {
         onComplete(true);
@@ -155,8 +143,7 @@ export function SceneCard({
       }
     },
     onError: (error: any) => {
-      const errorMessage = error?.message || "حدث خطأ، حاول مرة أخرى";
-      setGenerationError(errorMessage);
+      setGenerationError("حدث خطأ");
       setVideoResult(null);
       onComplete(false);
     },
@@ -184,11 +171,11 @@ export function SceneCard({
   };
 
   const getStatusIcon = () => {
-    if (isLocked) return <Lock className="w-5 h-5 text-gray-400" />;
-    if (isCompleted) return <CheckCircle className="w-5 h-5 text-green-600" />;
+    if (isLocked) return <Lock className="w-4 h-4 text-gray-400" />;
+    if (isCompleted) return <CheckCircle className="w-4 h-4 text-green-600" />;
     if (videoResult?.status === "processing")
-      return <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />;
-    return <div className="w-5 h-5 rounded-full border-2 border-purple-400" />;
+      return <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />;
+    return <div className="w-4 h-4 rounded-full border-2 border-purple-400" />;
   };
 
   const getCardStyle = () => {
@@ -203,132 +190,112 @@ export function SceneCard({
   return (
     <Collapsible open={isExpanded} onOpenChange={(open) => open && onExpand()}>
       <div
-        className={`rounded-2xl transition-all duration-300 ${getCardStyle()}`}
+        className={`rounded-xl transition-all duration-300 ${getCardStyle()}`}
         data-testid={testId}
       >
-        {/* Card Header */}
+        {/* Compact Header */}
         <CollapsibleTrigger
-          className="w-full p-6 flex items-center justify-between hover:bg-white/50 transition-all duration-200 rounded-2xl"
+          className="w-full p-3 flex items-center justify-between hover:bg-white/50 transition-all duration-200 rounded-xl"
           disabled={isLocked}
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/80 backdrop-blur-sm border border-purple-200 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-white/80 border border-purple-200 flex items-center justify-center">
               {getStatusIcon()}
             </div>
-
             <div className="text-right">
-              <h3 className="text-lg font-bold text-gray-900 mb-1">
+              <h3 className="text-sm font-bold text-gray-900">
                 المشهد {sceneNumber}
               </h3>
-
               {scene.description && (
-                <p className="text-sm text-gray-600 max-w-64 truncate">
-                  {scene.description.substring(0, 40)}...
+                <p className="text-xs text-gray-600 max-w-32 truncate">
+                  {scene.description.substring(0, 20)}...
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {videoResult?.status === "completed" && (
-              <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
-                <Play className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">جاهز</span>
+              <div className="flex items-center gap-1 bg-green-100 px-2 py-0.5 rounded-full">
+                <Play className="w-3 h-3 text-green-600" />
+                <span className="text-xs font-medium text-green-800">جاهز</span>
               </div>
             )}
 
             {videoResult?.status === "processing" && (
-              <div className="flex items-center gap-2 bg-purple-100 px-3 py-1 rounded-full">
-                <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
-                <span className="text-sm font-medium text-purple-800">
-                  جاري الإنشاء
+              <div className="flex items-center gap-1 bg-purple-100 px-2 py-0.5 rounded-full">
+                <Loader2 className="w-3 h-3 text-purple-600 animate-spin" />
+                <span className="text-xs font-medium text-purple-800">
+                  إنشاء
                 </span>
               </div>
             )}
 
             <ChevronDown
-              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
+              className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? "" : "-rotate-90"}`}
             />
           </div>
         </CollapsibleTrigger>
 
-        {/* Card Content */}
+        {/* Compact Content */}
         <CollapsibleContent>
-          <div className="px-6 pb-6">
+          <div className="px-3 pb-3">
             {isLocked ? (
-              <div className="text-center py-12 text-gray-500">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-2xl flex items-center justify-center">
-                  <Lock className="w-8 h-8 text-gray-400" />
-                </div>
-                <p className="font-medium">أكمل المشهد السابق أولاً</p>
+              <div className="text-center py-6 text-gray-500">
+                <Lock className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs">أكمل المشهد السابق</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* Scene Description */}
+              <div className="space-y-3">
+                {/* Description */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Film className="w-5 h-5 text-purple-600" />
-                    <Label
-                      htmlFor={`description-${sceneNumber}`}
-                      className="text-base font-semibold text-gray-900"
-                    >
-                      وصف المشهد
-                    </Label>
+                  <div className="flex items-center gap-1 mb-2">
+                    <Film className="w-3 h-3 text-purple-600" />
+                    <Label className="text-xs font-semibold">وصف المشهد</Label>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    صف ما تريد أن يظهر في الفيديو
-                  </p>
                   <Textarea
-                    id={`description-${sceneNumber}`}
                     value={scene.description}
                     onChange={(e) => updateField("description", e.target.value)}
-                    placeholder="مثال: منظر طبيعي جميل لشروق الشمس فوق الجبال..."
-                    rows={3}
-                    className="resize-none bg-white/80 border-purple-200 focus:border-purple-400 focus:ring-purple-500 rounded-xl"
+                    placeholder="صف ما تريد أن يظهر..."
+                    rows={2}
+                    className="text-xs resize-none"
                     data-testid={`input-description-${sceneNumber}`}
                   />
                   <div
-                    className={`text-xs mt-2 ${scene.description.length >= 10 ? "text-green-600" : "text-gray-500"}`}
+                    className={`text-xs mt-1 ${scene.description.length >= 10 ? "text-green-600" : "text-gray-500"}`}
                   >
                     {scene.description.length >= 10 ? "✓" : "○"}{" "}
-                    {scene.description.length}/10 أحرف
+                    {scene.description.length}/10
                   </div>
                 </div>
 
-                {/* Voiceover Script */}
+                {/* Voiceover */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Mic className="w-5 h-5 text-purple-600" />
-                    <Label
-                      htmlFor={`voiceover-${sceneNumber}`}
-                      className="text-base font-semibold text-gray-900"
-                    >
+                  <div className="flex items-center gap-1 mb-2">
+                    <Mic className="w-3 h-3 text-purple-600" />
+                    <Label className="text-xs font-semibold">
                       التعليق الصوتي
                     </Label>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    النص الذي سيقرأه الراوي
-                  </p>
                   <Textarea
-                    id={`voiceover-${sceneNumber}`}
                     value={scene.voiceover}
                     onChange={(e) => updateField("voiceover", e.target.value)}
-                    placeholder="مثال: في هذا المشهد الجميل، نرى روعة الطبيعة..."
+                    placeholder="النص الذي سيقرأه الراوي..."
                     rows={2}
-                    className="resize-none bg-white/80 border-purple-200 focus:border-purple-400 focus:ring-purple-500 rounded-xl"
+                    className="text-xs resize-none"
                     data-testid={`input-voiceover-${sceneNumber}`}
                   />
                   <div
-                    className={`text-xs mt-2 ${scene.voiceover.length >= 5 ? "text-green-600" : "text-gray-500"}`}
+                    className={`text-xs mt-1 ${scene.voiceover.length >= 5 ? "text-green-600" : "text-gray-500"}`}
                   >
                     {scene.voiceover.length >= 5 ? "✓" : "○"}{" "}
-                    {scene.voiceover.length}/5 أحرف
+                    {scene.voiceover.length}/5
                   </div>
                 </div>
 
                 {/* Aspect Ratio */}
                 <div>
-                  <Label className="text-base font-semibold text-gray-900 mb-3 block">
+                  <Label className="text-xs font-semibold mb-2 block">
                     الشكل
                   </Label>
                   <RadioGroup
@@ -336,98 +303,94 @@ export function SceneCard({
                     onValueChange={(value) =>
                       updateField("aspectRatio", value as AspectRatio)
                     }
-                    className="grid grid-cols-2 gap-4"
+                    className="flex gap-2"
                   >
-                    <div className="flex items-center gap-3 p-4 bg-white/80 border-2 border-purple-200 rounded-xl hover:border-purple-300 transition-colors">
+                    <div className="flex items-center gap-1 p-2 bg-white/80 border border-purple-200 rounded-lg flex-1">
                       <RadioGroupItem
                         value="16:9"
                         id={`ratio-169-${sceneNumber}`}
-                        className="text-purple-600"
+                        className="w-3 h-3"
                       />
                       <Label
                         htmlFor={`ratio-169-${sceneNumber}`}
-                        className="font-medium cursor-pointer"
+                        className="text-xs cursor-pointer"
                       >
-                        16:9 أفقي
+                        أفقي
                       </Label>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-white/80 border-2 border-purple-200 rounded-xl hover:border-purple-300 transition-colors">
+                    <div className="flex items-center gap-1 p-2 bg-white/80 border border-purple-200 rounded-lg flex-1">
                       <RadioGroupItem
                         value="9:16"
                         id={`ratio-916-${sceneNumber}`}
-                        className="text-purple-600"
+                        className="w-3 h-3"
                       />
                       <Label
                         htmlFor={`ratio-916-${sceneNumber}`}
-                        className="font-medium cursor-pointer"
+                        className="text-xs cursor-pointer"
                       >
-                        9:16 عمودي
+                        عمودي
                       </Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {/* Usage Limit Warning */}
+                {/* Usage Warning */}
                 {isAtUsageLimit && (
-                  <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                      <span className="text-yellow-800 font-medium">
-                        تم استنفاد الحد المسموح
+                  <div className="p-2 bg-yellow-50 border border-yellow-300 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-3 h-3 text-yellow-600" />
+                      <span className="text-xs text-yellow-800 font-medium">
+                        تم استنفاد الحد
                       </span>
                     </div>
                   </div>
                 )}
 
                 {/* Generate Button */}
-                <div className="pt-2">
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={
-                      !isSceneValid ||
-                      generateVideoMutation.isPending ||
-                      isAtUsageLimit
-                    }
-                    size="lg"
-                    className="w-full h-14 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                    data-testid={`button-generate-${sceneNumber}`}
-                  >
-                    {generateVideoMutation.isPending ? (
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>جاري الإنشاء...</span>
-                      </div>
-                    ) : isAtUsageLimit ? (
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5" />
-                        <span>تم استنفاد الحد المسموح</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Film className="w-5 h-5" />
-                        <span>إنشاء الفيديو</span>
-                      </div>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleGenerate}
+                  disabled={
+                    !isSceneValid ||
+                    generateVideoMutation.isPending ||
+                    isAtUsageLimit
+                  }
+                  size="sm"
+                  className="w-full h-8 rounded-lg text-xs font-semibold"
+                  data-testid={`button-generate-${sceneNumber}`}
+                >
+                  {generateVideoMutation.isPending ? (
+                    <div className="flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>إنشاء...</span>
+                    </div>
+                  ) : isAtUsageLimit ? (
+                    <span>استنفد الحد</span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Film className="w-3 h-3" />
+                      <span>إنشاء فيديو</span>
+                    </div>
+                  )}
+                </Button>
 
                 {/* Video Result */}
                 {videoResult && (
-                  <VideoPlayerCard
-                    result={videoResult}
-                    sceneNumber={sceneNumber}
-                    data-testid={`video-result-${sceneNumber}`}
-                  />
+                  <div className="pt-2">
+                    <VideoPlayerCard
+                      result={videoResult}
+                      sceneNumber={sceneNumber}
+                      data-testid={`video-result-${sceneNumber}`}
+                    />
+                  </div>
                 )}
 
-                {/* Generation Error */}
+                {/* Error */}
                 {generationError && (
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-red-700 font-medium mb-1">حدث خطأ</p>
-                        <p className="text-red-600 text-sm mb-3">
+                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-red-700 font-medium">
                           {generationError}
                         </p>
                         <Button
@@ -439,9 +402,9 @@ export function SceneCard({
                             generateVideoMutation.isPending ||
                             isAtUsageLimit
                           }
-                          className="border-red-300 text-red-700 hover:bg-red-50"
+                          className="mt-1 h-6 text-xs border-red-300 text-red-700 hover:bg-red-50"
                         >
-                          إعادة المحاولة
+                          إعادة
                         </Button>
                       </div>
                     </div>
