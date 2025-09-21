@@ -8,15 +8,19 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Setup express-session
+// Trust proxy headers from Replit infrastructure
+app.set('trust proxy', 1);
+
+// Setup express-session with proper security
 app.use(session({
   secret: process.env.SESSION_SECRET || 'ai-gallery-app-secret',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Security: don't create empty sessions
   cookie: { 
-    secure: false, // Temporarily disabled for production debugging
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: process.env.NODE_ENV === 'production', // HTTPS required in production
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Compatible with OAuth flows
   }
 }));
 
