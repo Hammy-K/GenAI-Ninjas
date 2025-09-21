@@ -305,7 +305,14 @@ export function SceneCard({
                     }
                     className="flex gap-2"
                   >
-                    <div className="flex items-center gap-1 p-2 bg-white/80 border border-purple-200 rounded-lg flex-1">
+                    <div
+                      className={`flex items-center gap-1 p-2 border-2 rounded-lg flex-1 transition-all cursor-pointer ${
+                        scene.aspectRatio === "16:9"
+                          ? "bg-purple-100 border-purple-400 shadow-md"
+                          : "bg-white/80 border-gray-300 hover:border-purple-300"
+                      }`}
+                      onClick={() => updateField("aspectRatio", "16:9")}
+                    >
                       <RadioGroupItem
                         value="16:9"
                         id={`ratio-169-${sceneNumber}`}
@@ -313,12 +320,23 @@ export function SceneCard({
                       />
                       <Label
                         htmlFor={`ratio-169-${sceneNumber}`}
-                        className="text-xs cursor-pointer"
+                        className={`text-xs cursor-pointer font-semibold ${
+                          scene.aspectRatio === "16:9"
+                            ? "text-purple-800"
+                            : "text-gray-600"
+                        }`}
                       >
                         أفقي
                       </Label>
                     </div>
-                    <div className="flex items-center gap-1 p-2 bg-white/80 border border-purple-200 rounded-lg flex-1">
+                    <div
+                      className={`flex items-center gap-1 p-2 border-2 rounded-lg flex-1 transition-all cursor-pointer ${
+                        scene.aspectRatio === "9:16"
+                          ? "bg-purple-100 border-purple-400 shadow-md"
+                          : "bg-white/80 border-gray-300 hover:border-purple-300"
+                      }`}
+                      onClick={() => updateField("aspectRatio", "9:16")}
+                    >
                       <RadioGroupItem
                         value="9:16"
                         id={`ratio-916-${sceneNumber}`}
@@ -326,7 +344,11 @@ export function SceneCard({
                       />
                       <Label
                         htmlFor={`ratio-916-${sceneNumber}`}
-                        className="text-xs cursor-pointer"
+                        className={`text-xs cursor-pointer font-semibold ${
+                          scene.aspectRatio === "9:16"
+                            ? "text-purple-800"
+                            : "text-gray-600"
+                        }`}
                       >
                         عمودي
                       </Label>
