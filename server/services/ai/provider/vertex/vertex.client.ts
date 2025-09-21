@@ -30,8 +30,9 @@ class VertexAIClient {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
 
-  constructor() {
-    this.config = {
+  constructor(customConfig?: VertexConfig) {
+    // Use custom config if provided, otherwise fall back to environment variables
+    this.config = customConfig || {
       projectId: process.env.VERTEX_AI_PROJECT_ID || "",
       location: process.env.VERTEX_AI_LOCATION || "us-central1",
       serviceAccountJson: process.env.VERTEX_AI_SERVICE_ACCOUNT_JSON || "",
@@ -39,7 +40,7 @@ class VertexAIClient {
 
     if (!this.config.projectId || !this.config.serviceAccountJson) {
       throw new Error(
-        "Missing Vertex AI configuration. Please check environment variables.",
+        "Missing Vertex AI configuration. Please provide credentials or check environment variables.",
       );
     }
 
@@ -48,7 +49,7 @@ class VertexAIClient {
     try {
       credentials = JSON.parse(this.config.serviceAccountJson);
     } catch (error) {
-      throw new Error("Invalid VERTEX_AI_SERVICE_ACCOUNT_JSON format");
+      throw new Error("Invalid service account JSON format");
     }
 
     this.auth = new GoogleAuth({
@@ -392,4 +393,13 @@ class VertexAIClient {
   }
 }
 
+// Default instance for backward compatibility (uses environment variables)
 export const vertexAIClient = new VertexAIClient();
+
+// Factory function to create client with custom credentials
+export function createVertexAIClient(config: VertexConfig): VertexAIClient {
+  return new VertexAIClient(config);
+}
+
+// Export the class for direct instantiation
+export { VertexAIClient };
