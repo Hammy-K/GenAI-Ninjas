@@ -324,6 +324,40 @@ export const insertLovableSubmissionSchema = createInsertSchema(
   },
 ).omit({ id: true, submissionDate: true });
 
+// Facilitator credential management tables
+export const facilitators = pgTable("facilitators", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // e.g., "Facilitator Ahmed", "Ms. Sarah"
+  vertexProjectId: text("vertex_project_id").notNull(), // Encrypted
+  vertexLocation: text("vertex_location").notNull().default("us-central1"), // Encrypted
+  vertexServiceAccountJson: text("vertex_service_account_json").notNull(), // Encrypted
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const studentFacilitatorAssignments = pgTable("student_facilitator_assignments", {
+  studentEmail: text("student_email").primaryKey(), // Primary key - unique student emails
+  facilitatorId: integer("facilitator_id")
+    .references(() => facilitators.id)
+    .notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  assignedBy: text("assigned_by"), // For audit trail
+});
+
+// Insert schemas for facilitator management
+export const insertFacilitatorSchema = createInsertSchema(facilitators).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudentFacilitatorAssignmentSchema = createInsertSchema(
+  studentFacilitatorAssignments,
+).omit({
+  assignedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
@@ -350,6 +384,10 @@ export type InsertLovableMissionChatHistory = z.infer<
 export type InsertLovableSubmission = z.infer<
   typeof insertLovableSubmissionSchema
 >;
+export type InsertFacilitator = z.infer<typeof insertFacilitatorSchema>;
+export type InsertStudentFacilitatorAssignment = z.infer<
+  typeof insertStudentFacilitatorAssignmentSchema
+>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -366,3 +404,5 @@ export type LovableMissionProgress = typeof lovableMissionProgress.$inferSelect;
 export type LovableMissionChatHistory =
   typeof lovableMissionChatHistory.$inferSelect;
 export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
+export type Facilitator = typeof facilitators.$inferSelect;
+export type StudentFacilitatorAssignment = typeof studentFacilitatorAssignments.$inferSelect;

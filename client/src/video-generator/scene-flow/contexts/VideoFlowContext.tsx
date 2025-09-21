@@ -49,7 +49,7 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   const isAuthenticated = !!user;
   const hasFacilitator = !!facilitator;
 
-  // Get facilitators data - always try to fetch, handle 401 gracefully
+  // Get facilitators data - only fetch when authenticated
   const { 
     data: facilitatorsData, 
     isLoading: isFacilitatorsLoading,
@@ -57,6 +57,7 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   } = useQuery({
     queryKey: ['video-flow', 'facilitators'],
     queryFn: videoFlowApi.getFacilitators,
+    enabled: isAuthenticated, // Only run when user is authenticated
     retry: (failureCount, error: any) => {
       // Don't retry on 401 (unauthorized) - user needs to sign in
       if (error?.status === 401) {
