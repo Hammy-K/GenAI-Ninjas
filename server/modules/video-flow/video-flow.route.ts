@@ -13,6 +13,7 @@ import { facilitatorService } from "../../services/facilitator/facilitator.servi
 import { usageService } from "../../services/usage/usage.service";
 import { veoService } from "../../services/ai/provider/vertex/veo.service";
 import { createVertexAIClient } from "../../services/ai/provider/vertex/vertex.client";
+import { registerAdminRoutes } from "./admin.routes";
 
 // Extend Express Request type to include our session user data
 declare module "express-session" {
@@ -32,6 +33,9 @@ declare module "express-session" {
  */
 export function registerVideoFlowRoutes(): Router {
   const router = Router();
+
+  // Register admin routes
+  router.use("/admin", registerAdminRoutes());
 
   /**
    * GET /api/video-flow/admin/reset-credits

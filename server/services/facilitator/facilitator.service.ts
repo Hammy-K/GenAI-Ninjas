@@ -299,6 +299,177 @@ class FacilitatorService {
       throw new Error('Failed to bulk assign students');
     }
   }
+
+  // ===== ADMIN METHODS =====
+
+  /**
+   * Add a facilitator (wrapper around storeFacilitatorCredentials)
+   */
+  async addFacilitator(facilitatorData: {
+    name: string;
+    projectId: string;
+    location: string;
+    serviceAccountJson: string;
+  }): Promise<number> {
+    const credentials: VertexAICredentials = {
+      projectId: facilitatorData.projectId,
+      location: facilitatorData.location,
+      serviceAccountJson: facilitatorData.serviceAccountJson,
+    };
+    
+    return await this.storeFacilitatorCredentials(facilitatorData.name, credentials, true);
+  }
+
+  /**
+   * Get all facilitators (including inactive ones) for admin use
+   */
+  async getAllFacilitators(): Promise<Array<{
+    id: number;
+    name: string;
+    projectId: string;
+    location: string;
+    isActive: boolean;
+    createdAt: Date;
+  }>> {
+    try {
+      const allFacilitators = await db
+        .select({
+          id: facilitators.id,
+          name: facilitators.name,
+          vertexProjectId: facilitators.vertexProjectId,
+          vertexLocation: facilitators.vertexLocation,
+          isActive: facilitators.isActive,
+          createdAt: facilitators.createdAt,
+        })
+        .from(facilitators);
+
+      // Decrypt project IDs and locations for admin display
+      return allFacilitators.map(f => {
+        const [projectIdIv, projectIdEncrypted] = f.vertexProjectId.split(':');
+        const [locationIv, locationEncrypted] = f.vertexLocation.split(':');
+        
+        const decryptedProjectId = encryptionService.decrypt(projectIdEncrypted, projectIdIv);
+        const decryptedLocation = encryptionService.decrypt(locationEncrypted, locationIv);
+
+        return {
+          id: f.id,
+          name: f.name,
+          projectId: decryptedProjectId,
+          location: decryptedLocation,
+          isActive: f.isActive,
+          createdAt: f.createdAt,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to get all facilitators:', error);
+      throw new Error('Failed to retrieve all facilitators');
+    }
+  }
+
+  /**
+   * Get all student assignments for admin use
+   */
+  async getAllStudentAssignments(): Promise<Array<{
+    studentEmail: string;
+    facilitatorName: string;
+    facilitatorId: number;
+    assignedAt: Date;
+  }>> {
+    try {
+      const assignments = await db
+        .select({
+          studentEmail: studentFacilitatorAssignments.studentEmail,
+          facilitatorId: studentFacilitatorAssignments.facilitatorId,
+          assignedAt: studentFacilitatorAssignments.assignedAt,
+          facilitatorName: facilitators.name,
+        })
+        .from(studentFacilitatorAssignments)
+        .innerJoin(facilitators, eq(studentFacilitatorAssignments.facilitatorId, facilitators.id));
+
+      return assignments;
+    } catch (error) {
+      console.error('Failed to get all student assignments:', error);
+      throw new Error('Failed to retrieve student assignments');
+    }
+  }
+
+  /**
+   * Assign a student to a facilitator by facilitator name
+   */
+  async assignStudentToFacilitatorByName(
+    studentEmail: string,
+    facilitatorName: string
+  ): Promise<void> {
+    try {
+      // Find facilitator by name
+      const facilitator = await db
+        .select({ id: facilitators.id })
+        .from(facilitators)
+        .where(and(eq(facilitators.name, facilitatorName), eq(facilitators.isActive, true)))
+        .limit(1);
+
+      if (facilitator.length === 0) {
+        throw new Error(`Facilitator "${facilitatorName}" not found or inactive`);
+      }
+
+      // Assign using facilitator ID
+      await this.assignStudentToFacilitator(studentEmail, facilitator[0].id);
+    } catch (error) {
+      console.error('Failed to assign student to facilitator by name:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a student assignment
+   */
+  async removeStudentAssignment(studentEmail: string): Promise<void> {
+    try {
+      await db
+        .delete(studentFacilitatorAssignments)
+        .where(eq(studentFacilitatorAssignments.studentEmail, studentEmail));
+      
+      console.log(`Removed assignment for student: ${studentEmail}`);
+    } catch (error) {
+      console.error('Failed to remove student assignment:', error);
+      throw new Error('Failed to remove student assignment');
+    }
+  }
+
+  /**
+   * Remove a facilitator and all their assignments
+   */
+  async removeFacilitator(facilitatorName: string): Promise<void> {
+    try {
+      // Find facilitator by name
+      const facilitator = await db
+        .select({ id: facilitators.id })
+        .from(facilitators)
+        .where(eq(facilitators.name, facilitatorName))
+        .limit(1);
+
+      if (facilitator.length === 0) {
+        throw new Error(`Facilitator "${facilitatorName}" not found`);
+      }
+
+      const facilitatorId = facilitator[0].id;
+
+      // Remove all assignments for this facilitator
+      await db
+        .delete(studentFacilitatorAssignments)
+        .where(eq(studentFacilitatorAssignments.facilitatorId, facilitatorId));
+
+      // Remove the facilitator
+      await db
+        .delete(facilitators)
+        .where(eq(facilitators.id, facilitatorId));
+      
+      console.log(`Removed facilitator: ${facilitatorName} and all associated assignments`);
+    } catch (error) {
+      console.error('Failed to remove facilitator:', error);
+      throw error;
+    }
+  }
 }
 
 // Singleton instance
