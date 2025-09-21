@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { videoFlowApi } from "../api/video-flow.api";
 import { VideoPlayerCard } from "./VideoPlayerCard";
+import { useVideoFlowContext } from "../contexts/VideoFlowContext"; // Add this line
 import type {
   Scene,
   AspectRatio,
@@ -56,6 +57,7 @@ export function SceneCard({
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const queryClient = useQueryClient();
+  const { saveCompletedVideo, getCompletedVideo } = useVideoFlowContext();
 
   const isSceneValid =
     scene.description.length >= 10 && scene.voiceover.length >= 5;
@@ -67,6 +69,17 @@ export function SceneCard({
   });
 
   const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
+
+  // Load saved video on mount
+  useEffect(() => {
+    const savedVideo = getCompletedVideo(sceneNumber);
+    if (savedVideo) {
+      setVideoResult(savedVideo);
+      if (savedVideo.status === "completed") {
+        onComplete(true);
+      }
+    }
+  }, [sceneNumber, getCompletedVideo, onComplete]);
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
@@ -91,6 +104,9 @@ export function SceneCard({
             videoResult.jobId,
           );
           setVideoResult(statusResult);
+
+          // Save updated status to context/localStorage
+          saveCompletedVideo(sceneNumber, statusResult);
 
           if (statusResult.status === "completed") {
             onComplete(true);
@@ -133,6 +149,10 @@ export function SceneCard({
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
       setGenerationError(null);
+
+      // Save video to context/localStorage immediately
+      saveCompletedVideo(sceneNumber, data);
+
       if (data.status !== "processing") setIsPolling(false);
 
       if (data.status === "completed") {

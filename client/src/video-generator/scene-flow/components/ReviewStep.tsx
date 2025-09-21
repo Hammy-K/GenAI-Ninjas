@@ -1,5 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  ArrowLeft,
+  Download,
+  Share2,
+  RefreshCw,
+  CheckCircle,
+  Video,
+} from "lucide-react";
 
 interface ReviewStepProps {
   onBack: () => void;
@@ -7,83 +14,142 @@ interface ReviewStepProps {
 
 export function ReviewStep({ onBack }: ReviewStepProps) {
   return (
-    <div className="text-center max-w-2xl mx-auto">
-      <div className="mb-8">
-        <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          تم إنشاء جميع الفيديوهات!
-        </h2>
-        <p className="text-lg text-gray-600">
-          مبروك! لقد أنشأت ثلاثة فيديوهات رائعة باستخدام الذكاء الاصطناعي
-        </p>
-      </div>
-
-      {/* Success Animation */}
-      <div className="mb-8 p-8 bg-green-50 border border-green-200 rounded-xl">
-        <div className="text-green-600 mb-4">
-          <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center shadow-xl">
+            <CheckCircle className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            إبداعك جاهز!
+          </h2>
+          <p className="text-gray-600">تم إنشاء جميع فيديوهاتك بنجاح</p>
         </div>
-        <h3 className="text-xl font-semibold text-green-800 mb-2">
-          مهمة مكتملة ✅
-        </h3>
-        <p className="text-green-700">
-          تم إنشاء جميع المشاهد الثلاثة بنجاح وهي جاهزة للتحميل والمشاركة
-        </p>
-      </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="text-2xl font-bold text-blue-600">3</div>
-          <div className="text-sm text-blue-800">فيديوهات منشأة</div>
+        {/* Success Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 text-center shadow-lg">
+            <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-xl flex items-center justify-center">
+              <Video className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="text-xl font-bold text-green-600">3</div>
+            <div className="text-xs text-gray-600">فيديوهات</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 text-center shadow-lg">
+            <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-xl flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="text-xl font-bold text-purple-600">100%</div>
+            <div className="text-xs text-gray-600">نجح</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 text-center shadow-lg">
+            <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-xl flex items-center justify-center">
+              <span className="text-blue-600 font-bold text-sm">AI</span>
+            </div>
+            <div className="text-xl font-bold text-blue-600">Veo</div>
+            <div className="text-xs text-gray-600">تقنية</div>
+          </div>
         </div>
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <div className="text-2xl font-bold text-purple-600">Veo 3</div>
-          <div className="text-sm text-purple-800">تقنية Vertex AI</div>
+
+        {/* Main Actions */}
+        <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-6 shadow-lg mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+            ماذا تريد أن تفعل الآن؟
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Download All */}
+            <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <Download className="w-5 h-5 text-green-600" />
+                <span className="font-semibold text-green-800">
+                  تحميل الفيديوهات
+                </span>
+              </div>
+              <p className="text-xs text-green-700 mb-3">
+                احفظ جميع فيديوهاتك على جهازك
+              </p>
+              <Button
+                size="sm"
+                className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl"
+                onClick={() => {
+                  // This would trigger download of all videos
+                  console.log("Download all videos");
+                }}
+              >
+                تحميل الكل
+              </Button>
+            </div>
+
+            {/* Share */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <Share2 className="w-5 h-5 text-blue-600" />
+                <span className="font-semibold text-blue-800">شارك إبداعك</span>
+              </div>
+              <p className="text-xs text-blue-700 mb-3">
+                شارك فيديوهاتك مع الأصدقاء
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 rounded-xl"
+                onClick={() => {
+                  // This would open share options
+                  console.log("Share videos");
+                }}
+              >
+                مشاركة
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="text-2xl font-bold text-green-600">100%</div>
-          <div className="text-sm text-green-800">معدل النجاح</div>
+
+        {/* Navigation Actions */}
+        <div className="space-y-3">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            size="lg"
+            className="w-full h-12 border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl"
+            data-testid="button-back-to-scenes"
+          >
+            <ArrowLeft className="ml-2 w-4 h-4" />
+            تعديل المشاهد
+          </Button>
+
+          <Button
+            onClick={() => window.location.reload()}
+            size="lg"
+            className="w-full h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-lg"
+            data-testid="button-start-new-session"
+          >
+            <RefreshCw className="ml-2 w-4 h-4" />
+            إنشاء فيديوهات جديدة
+          </Button>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="space-y-4">
-        <Button
-          onClick={onBack}
-          variant="outline"
-          size="lg"
-          className="w-full"
-          data-testid="button-back-to-scenes"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          العودة لتعديل المشاهد
-        </Button>
-
-        <Button
-          onClick={() => window.location.reload()}
-          size="lg"
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-          data-testid="button-start-new-session"
-        >
-          🔄 بدء جلسة جديدة
-        </Button>
-      </div>
-
-      {/* Tips */}
-      <div className="mt-8 p-4 bg-gray-50 border border-gray-200 rounded-lg text-right">
-        <h4 className="font-medium text-gray-900 mb-2">💡 نصائح:</h4>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li>• يمكنك تحميل الفيديوهات من أزرار التحميل في كل مشهد</li>
-          <li>• احفظ نسخة من النصوص المستخدمة للرجوع إليها لاحقاً</li>
-          <li>• جرب نسب عرض مختلفة (16:9 أو 9:16) للاستخدامات المختلفة</li>
-        </ul>
+        {/* Quick Tips */}
+        <div className="mt-6 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 shadow-lg">
+          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <span className="text-yellow-500">💡</span>
+            نصائح سريعة
+          </h4>
+          <div className="space-y-2 text-sm text-gray-600">
+            <div className="flex items-start gap-2">
+              <span className="text-purple-500 mt-0.5">•</span>
+              <span>يمكنك تحميل كل فيديو منفرداً من المشاهد</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-purple-500 mt-0.5">•</span>
+              <span>جرب نسب عرض مختلفة للمنصات المختلفة</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-purple-500 mt-0.5">•</span>
+              <span>احفظ النصوص المستخدمة للمشاريع القادمة</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

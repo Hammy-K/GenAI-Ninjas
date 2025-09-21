@@ -1,7 +1,17 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { videoFlowApi } from '../api/video-flow.api';
-import type { AuthResponse, FacilitatorsResponse } from '@shared/video-flow.schema';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { videoFlowApi } from "../api/video-flow.api";
+import type {
+  AuthResponse,
+  FacilitatorsResponse,
+  GenerateVideoResponse,
+} from "@shared/video-flow.schema";
 
 interface User {
   uid: string;
@@ -19,23 +29,34 @@ interface VideoFlowContextType {
   isAuthenticated: boolean;
   hasFacilitator: boolean;
   facilitatorsData: FacilitatorsResponse | undefined;
-  
+
+  // Video Management
+  completedVideos: Map<number, GenerateVideoResponse>;
+  saveCompletedVideo: (
+    sceneNumber: number,
+    videoResult: GenerateVideoResponse,
+  ) => void;
+  getCompletedVideo: (sceneNumber: number) => GenerateVideoResponse | null;
+  clearAllVideos: () => void;
+
   // Actions
   authenticateGoogle: (request: { idToken: string }) => void;
   confirmFacilitator: (request: { facilitatorName: string }) => void;
-  
+
   // Loading states
   isAuthenticating: boolean;
   isConfirmingFacilitator: boolean;
   isFacilitatorsLoading: boolean;
-  
+
   // Errors
   authError: Error | null;
   facilitatorError: Error | null;
   facilitatorsError: Error | null;
 }
 
-const VideoFlowContext = createContext<VideoFlowContextType | undefined>(undefined);
+const VideoFlowContext = createContext<VideoFlowContextType | undefined>(
+  undefined,
+);
 
 interface VideoFlowProviderProps {
   children: ReactNode;
@@ -44,18 +65,113 @@ interface VideoFlowProviderProps {
 export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
+  const [completedVideos, setCompletedVideos] = useState<
+    Map<number, GenerateVideoResponse>
+  >(new Map());
   const queryClient = useQueryClient();
 
   const isAuthenticated = !!user;
   const hasFacilitator = !!facilitator;
 
+  // Video management functions
+  const saveCompletedVideo = (
+    sceneNumber: number,
+    videoResult: GenerateVideoResponse,
+  ) => {
+    setCompletedVideos((prev) => new Map(prev.set(sceneNumber, videoResult)));
+
+    // Persist to localStorage
+    try {
+      localStorage.setItem(
+        `video_scene_${sceneNumber}`,
+        JSON.stringify(videoResult),
+      );
+      console.log(`Video ${sceneNumber} saved to localStorage`);
+    } catch (error) {
+      console.error("Failed to save video to localStorage:", error);
+    }
+  };
+
+  const getCompletedVideo = (
+    sceneNumber: number,
+  ): GenerateVideoResponse | null => {
+    // First check in-memory state
+    const inMemoryVideo = completedVideos.get(sceneNumber);
+    if (inMemoryVideo) {
+      return inMemoryVideo;
+    }
+
+    // Fallback to localStorage
+    try {
+      const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}`);
+      if (savedVideo) {
+        const parsedVideo = JSON.parse(savedVideo) as GenerateVideoResponse;
+        // Also restore to in-memory state
+        setCompletedVideos(
+          (prev) => new Map(prev.set(sceneNumber, parsedVideo)),
+        );
+        return parsedVideo;
+      }
+    } catch (error) {
+      console.error(
+        `Failed to load video ${sceneNumber} from localStorage:`,
+        error,
+      );
+    }
+
+    return null;
+  };
+
+  const clearAllVideos = () => {
+    setCompletedVideos(new Map());
+
+    // Clear from localStorage
+    try {
+      [1, 2, 3].forEach((sceneNumber) => {
+        localStorage.removeItem(`video_scene_${sceneNumber}`);
+      });
+      console.log("All videos cleared from localStorage");
+    } catch (error) {
+      console.error("Failed to clear videos from localStorage:", error);
+    }
+  };
+
+  // Load saved videos on mount
+  useEffect(() => {
+    const loadSavedVideos = () => {
+      const savedVideosMap = new Map<number, GenerateVideoResponse>();
+
+      [1, 2, 3].forEach((sceneNumber) => {
+        try {
+          const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}`);
+          if (savedVideo) {
+            const parsedVideo = JSON.parse(savedVideo) as GenerateVideoResponse;
+            savedVideosMap.set(sceneNumber, parsedVideo);
+          }
+        } catch (error) {
+          console.error(
+            `Failed to load video ${sceneNumber} from localStorage:`,
+            error,
+          );
+        }
+      });
+
+      if (savedVideosMap.size > 0) {
+        setCompletedVideos(savedVideosMap);
+        console.log(`Loaded ${savedVideosMap.size} videos from localStorage`);
+      }
+    };
+
+    loadSavedVideos();
+  }, []);
+
   // Get facilitators data - only fetch when authenticated
-  const { 
-    data: facilitatorsData, 
+  const {
+    data: facilitatorsData,
     isLoading: isFacilitatorsLoading,
-    error: facilitatorsError 
+    error: facilitatorsError,
   } = useQuery({
-    queryKey: ['video-flow', 'facilitators'],
+    queryKey: ["video-flow", "facilitators"],
     queryFn: videoFlowApi.getFacilitators,
     enabled: isAuthenticated, // Only run when user is authenticated
     retry: (failureCount, error: any) => {
@@ -75,8 +191,8 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
       // Extract user info from the response or set a placeholder
       if (!user && facilitatorsData.userEmail) {
         setUser({
-          uid: 'session-user', // Placeholder UID
-          email: facilitatorsData.userEmail
+          uid: "session-user", // Placeholder UID
+          email: facilitatorsData.userEmail,
         });
       }
 
@@ -95,11 +211,13 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
       if (data.success && data.user) {
         setUser(data.user);
         // Invalidate facilitators query to fetch fresh data
-        queryClient.invalidateQueries({ queryKey: ['video-flow', 'facilitators'] });
+        queryClient.invalidateQueries({
+          queryKey: ["video-flow", "facilitators"],
+        });
       }
     },
     onError: (error) => {
-      console.error('Google authentication failed:', error);
+      console.error("Google authentication failed:", error);
       setUser(null);
     },
   });
@@ -112,11 +230,13 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
       if (data.success) {
         setFacilitator({ name: variables.facilitatorName });
         // Invalidate facilitators query to update server state
-        queryClient.invalidateQueries({ queryKey: ['video-flow', 'facilitators'] });
+        queryClient.invalidateQueries({
+          queryKey: ["video-flow", "facilitators"],
+        });
       }
     },
     onError: (error) => {
-      console.error('Facilitator confirmation failed:', error);
+      console.error("Facilitator confirmation failed:", error);
       setFacilitator(null);
     },
   });
@@ -128,6 +248,12 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     isAuthenticated,
     hasFacilitator,
     facilitatorsData,
+
+    // Video Management
+    completedVideos,
+    saveCompletedVideo,
+    getCompletedVideo,
+    clearAllVideos,
 
     // Actions
     authenticateGoogle: authenticateGoogleMutation.mutate,
@@ -154,7 +280,9 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
 export function useVideoFlowContext() {
   const context = useContext(VideoFlowContext);
   if (context === undefined) {
-    throw new Error('useVideoFlowContext must be used within a VideoFlowProvider');
+    throw new Error(
+      "useVideoFlowContext must be used within a VideoFlowProvider",
+    );
   }
   return context;
 }
