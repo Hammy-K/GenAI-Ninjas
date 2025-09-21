@@ -13,7 +13,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'ai-gallery-app-secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
+  cookie: { 
+    secure: false, // Temporarily disabled for production debugging
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
 app.use((req, res, next) => {
