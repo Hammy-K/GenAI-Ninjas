@@ -102,31 +102,65 @@ export function registerVideoFlowRoutes(): Router {
 
   /**
    * GET /api/video-flow/facilitators
-   * Get available facilitators and matched facilitator for current user
+   * Get available facilitators and matched facilitator for current user (DATABASE-BACKED)
    */
-  router.get("/facilitators", (req: Request, res: Response) => {
+  router.get("/facilitators", async (req: Request, res: Response) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    const facilitatorInfo = facilitatorService.getFacilitatorInfo(
-      req.session.user.email,
-    );
-    const response: FacilitatorsResponse = {
-      facilitators: facilitatorInfo.facilitators,
-      matchedFacilitatorName:
-        facilitatorInfo.matchedFacilitatorName || undefined,
-      confirmedFacilitatorName: req.session.facilitator?.name || undefined,
-      userEmail: req.session.user.email,
-    };
-    res.json(response);
+    try {
+      // NEW: Get facilitators from database instead of JSON file
+      const activeFacilitators = await facilitatorService.getActiveFacilitators();
+      const facilitators = activeFacilitators.map(f => ({ name: f.name }));
+
+      // Check if student has a database assignment
+      const assignedCredentials = await facilitatorService.getCredentialsForStudent(
+        req.session.user.email
+      );
+      
+      let matchedFacilitatorName: string | undefined = undefined;
+      if (assignedCredentials) {
+        // Find the facilitator name from the database
+        const allFacilitators = await facilitatorService.getAllFacilitators();
+        const matchedFacilitator = allFacilitators.find(f => 
+          f.projectId === assignedCredentials.projectId
+        );
+        matchedFacilitatorName = matchedFacilitator?.name;
+      } else {
+        // FALLBACK: Try legacy system if no database assignment found
+        try {
+          const legacyInfo = facilitatorService.getFacilitatorInfo(req.session.user.email);
+          if (legacyInfo.facilitators.length > 0) {
+            facilitators.push(...legacyInfo.facilitators.filter(
+              lf => !facilitators.some(f => f.name === lf.name)
+            ));
+          }
+          matchedFacilitatorName = legacyInfo.matchedFacilitatorName || undefined;
+        } catch (error) {
+          // Legacy system failed (expected in production), continue with database-only
+          console.log('Legacy facilitator system not available, using database only');
+        }
+      }
+
+      const response: FacilitatorsResponse = {
+        facilitators,
+        matchedFacilitatorName,
+        confirmedFacilitatorName: req.session.facilitator?.name || undefined,
+        userEmail: req.session.user.email,
+      };
+      res.json(response);
+    } catch (error) {
+      console.error('Failed to get facilitators:', error);
+      res.status(500).json({ error: "Failed to retrieve facilitators" });
+    }
   });
 
   /**
    * POST /api/video-flow/facilitator/confirm
-   * Confirm facilitator selection and store API key in session
+   * Confirm facilitator selection and store API key in session (DATABASE-BACKED)
    */
-  router.post("/facilitator/confirm", (req: Request, res: Response) => {
+  router.post("/facilitator/confirm", async (req: Request, res: Response) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
@@ -138,23 +172,38 @@ export function registerVideoFlowRoutes(): Router {
 
     const { facilitatorName } = parseResult.data;
 
-    if (!facilitatorService.isValidFacilitator(facilitatorName)) {
-      return res.status(400).json({ error: "Invalid facilitator" });
+    try {
+      // NEW: Check if facilitator exists in database
+      const activeFacilitators = await facilitatorService.getActiveFacilitators();
+      const facilitatorExists = activeFacilitators.some(f => f.name === facilitatorName);
+      
+      if (!facilitatorExists) {
+        // FALLBACK: Try legacy system
+        try {
+          if (!facilitatorService.isValidFacilitator(facilitatorName)) {
+            return res.status(400).json({ error: "Invalid facilitator" });
+          }
+          
+          const apiKey = facilitatorService.getFacilitatorApiKey(facilitatorName);
+          if (!apiKey) {
+            return res.status(500).json({ error: "Facilitator API key not available" });
+          }
+        } catch (error) {
+          // Legacy system failed, and facilitator not in database
+          return res.status(400).json({ error: "Invalid facilitator" });
+        }
+      }
+
+      // Store facilitator name in session (works for both database and legacy)
+      req.session.facilitator = {
+        name: facilitatorName,
+      };
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Facilitator confirmation error:', error);
+      res.status(500).json({ error: "Failed to confirm facilitator" });
     }
-
-    const apiKey = facilitatorService.getFacilitatorApiKey(facilitatorName);
-    if (!apiKey) {
-      return res
-        .status(500)
-        .json({ error: "Facilitator API key not available" });
-    }
-
-    // Store facilitator name in session
-    req.session.facilitator = {
-      name: facilitatorName,
-    };
-
-    res.json({ success: true });
   });
 
   /**
