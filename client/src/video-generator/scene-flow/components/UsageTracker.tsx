@@ -11,7 +11,9 @@ export function UsageTracker({ className }: UsageTrackerProps) {
   const { data: usage, isLoading } = useQuery({
     queryKey: ["video-flow", "usage"],
     queryFn: videoFlowApi.getUsage,
-    refetchInterval: 5000,
+    refetchInterval: false,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading || !usage) {

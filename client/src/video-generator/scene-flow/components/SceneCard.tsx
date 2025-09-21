@@ -149,15 +149,14 @@ export function SceneCard({
     onSuccess: (data: GenerateVideoResponse) => {
       setVideoResult(data);
       setGenerationError(null);
-
-      // Save video to context/localStorage immediately
       saveCompletedVideo(sceneNumber, data);
 
-      if (data.status !== "processing") setIsPolling(false);
+      // Invalidate usage immediately when generation starts
+      queryClient.invalidateQueries({ queryKey: ["video-flow", "usage"] });
 
+      if (data.status !== "processing") setIsPolling(false);
       if (data.status === "completed") {
         onComplete(true);
-        queryClient.invalidateQueries({ queryKey: ["video-flow", "usage"] });
       } else if (data.status === "failed") {
         onComplete(false);
       }
