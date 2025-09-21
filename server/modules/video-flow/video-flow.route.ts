@@ -12,7 +12,7 @@ import { firebaseAdminService } from "../../services/auth/firebase-admin.service
 import { facilitatorService } from "../../services/facilitator/facilitator.service";
 import { usageService } from "../../services/usage/usage.service";
 import { veoService } from "../../services/ai/provider/vertex/veo.service";
-import { vertexAIClient } from "../../services/ai/provider/vertex/vertex.client";
+import { createVertexAIClient } from "../../services/ai/provider/vertex/vertex.client";
 
 // Extend Express Request type to include our session user data
 declare module "express-session" {
@@ -169,25 +169,15 @@ export function registerVideoFlowRoutes(): Router {
 
   /**
    * POST /api/video-flow/generate
-   * Generate a video using the Veo 3 Fast model
+   * Generate a video using the Veo 3 Fast model with student-specific facilitator credentials
    */
   router.post("/generate", async (req: Request, res: Response) => {
     try {
       // Check authentication
-      if (!req.session.user || !req.session.facilitator) {
+      if (!req.session.user) {
         return res
           .status(401)
-          .json({ error: "Not authenticated or facilitator not selected" });
-      }
-
-      // Get facilitator API key on-demand (not stored in session)
-      const facilitatorApiKey = facilitatorService.getFacilitatorApiKey(
-        req.session.facilitator.name,
-      );
-      if (!facilitatorApiKey) {
-        return res
-          .status(500)
-          .json({ error: "Facilitator API key not available" });
+          .json({ error: "Not authenticated" });
       }
 
       // Check usage limits
@@ -213,8 +203,50 @@ export function registerVideoFlowRoutes(): Router {
 
       const { scene } = parseResult.data;
 
-      // Generate video
-      const result = await veoService.generateVideo(scene, facilitatorApiKey);
+      // NEW: Get student-specific facilitator credentials
+      const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
+        req.session.user.email
+      );
+
+      if (!facilitatorCredentials) {
+        // Fallback to old system if no database credentials found
+        if (!req.session.facilitator) {
+          return res
+            .status(400)
+            .json({ error: "No facilitator assigned. Please select a facilitator first." });
+        }
+
+        const facilitatorApiKey = facilitatorService.getFacilitatorApiKey(
+          req.session.facilitator.name,
+        );
+        if (!facilitatorApiKey) {
+          return res
+            .status(500)
+            .json({ error: "Facilitator API key not available" });
+        }
+
+        // Use old system
+        const result = await veoService.generateVideo(scene, facilitatorApiKey);
+        
+        if (result.status === "completed") {
+          usageService.incrementUsage(req.session.user.uid);
+        }
+
+        const response: GenerateVideoResponse = result;
+        return res.json(response);
+      }
+
+      // NEW: Create custom VertexAI client with student's facilitator credentials
+      const customVertexClient = createVertexAIClient(facilitatorCredentials);
+      
+      // Build prompt using veoService logic
+      const prompt = veoService.buildPrompt(scene);
+      
+      // Generate video with custom client
+      const result = await customVertexClient.generateVideo({
+        prompt,
+        aspectRatio: scene.aspectRatio,
+      });
 
       // Increment usage only if generation was successful
       if (result.status === "completed") {
@@ -236,15 +268,15 @@ export function registerVideoFlowRoutes(): Router {
 
   /**
    * GET /api/video-flow/status/:jobId
-   * Check video generation job status
+   * Check video generation job status with student-specific facilitator credentials
    */
   router.get("/status/:jobId", async (req: Request, res: Response) => {
     try {
       // Check authentication
-      if (!req.session.user || !req.session.facilitator) {
+      if (!req.session.user) {
         return res
           .status(401)
-          .json({ error: "Not authenticated or facilitator not selected" });
+          .json({ error: "Not authenticated" });
       }
 
       const { jobId } = req.params;
@@ -262,8 +294,22 @@ export function registerVideoFlowRoutes(): Router {
       const decodedJobId = decodeURIComponent(jobId);
       console.log("Status check for operation:", decodedJobId);
 
-      // Check status using Vertex AI client
-      const result = await vertexAIClient.checkJobStatus(decodedJobId);
+      // NEW: Get student-specific facilitator credentials for status check
+      const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
+        req.session.user.email
+      );
+
+      let result;
+      if (facilitatorCredentials) {
+        // Use custom client with student's facilitator credentials
+        const customVertexClient = createVertexAIClient(facilitatorCredentials);
+        result = await customVertexClient.checkJobStatus(decodedJobId);
+      } else {
+        // Fallback: Use default client (this maintains backward compatibility)
+        console.warn("No facilitator credentials found for student, using default client");
+        const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
+        result = await vertexAIClient.checkJobStatus(decodedJobId);
+      }
 
       console.log("Status check result:", JSON.stringify(result, null, 2));
 
