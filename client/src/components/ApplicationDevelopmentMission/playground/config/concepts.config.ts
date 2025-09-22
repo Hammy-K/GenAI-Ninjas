@@ -147,24 +147,23 @@ export const FRONTEND_FOUNDATION_CONCEPTS: Concept[] = [
 
 export const MISSION_TUTORIALS: MissionTutorials = {
   "inputs-outputs": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "dB5NpbNESRg",
     name: "المدخلات والمخرجات",
-    description: "شرح لطريقة إدخال البيانات والحصول على مخرجات مباشرة",
   },
   "buttons-events": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "-LLPfxXaZps",
     name: "الأزرار والأحداث",
-  },
+  }, 
   "random-selection": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "aqFts5kygqE",
   },
   "conditional-logic": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "vdJv5zDU9Ts",
   },
   "layout-design": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "ONfmV-d6RXk",
   },
   "dynamic-images": {
-    videoId: "j0Py0Pw9LiM",
+    videoId: "jdv4y_CKVUM",
   },
 };

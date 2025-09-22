@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { useQuest } from "@/hooks/useQuest";
-import { CheckCircle, Code, Target, ArrowRight } from "lucide-react";
+import { Code, ArrowRight, Sparkles } from "lucide-react";
 import { FrontendMissionTrack } from "./FrontendMissionTrack";
 import { FRONTEND_FOUNDATION_CONCEPTS } from "../../playground/config/concepts.config";
 
@@ -8,166 +8,96 @@ export default function FrontendFoundation() {
   const { xp } = useQuest();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f5f2e8" }}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <Header xp={xp} />
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Back Button */}
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-8 transition-colors"
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors font-medium"
         >
           <ArrowRight className="w-4 h-4" />
-          العودة إلى مهام تطوير التطبيقات
+          العودة
         </button>
 
-        <div className="text-center mb-12">
-          <div className="flex justify-center items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Code className="w-8 h-8 text-blue-600" />
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-xl">
+              <Code className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-900">
               أساسيات الواجهة الأمامية
             </h1>
-            <span className="text-2xl">💻</span>
+            <Sparkles className="w-6 h-6 text-blue-600" />
           </div>
 
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            <strong>بناء عضلات البرمجة الحقيقية!</strong>
-            <br />
-            تعلم كيفية إنشاء واجهات تفاعلية جميلة من المدخلات البسيطة إلى
-            التطبيقات المعقدة. هذه هي اللبنات الأساسية لكل تطبيق عظيم.
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            تعلم إنشاء واجهات تفاعلية من المدخلات البسيطة إلى التطبيقات المعقدة
           </p>
 
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 font-medium">
-            <Target className="w-4 h-4" />
-            <span>الأسابيع 3-5 - 6 مفاهيم أساسية</span>
+            <span>6 مفاهيم أساسية</span>
           </div>
         </div>
 
-        {/* <div className="bg-white rounded-xl p-6 shadow-md mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">
-              تقدمك في المفاهيم الأساسية
-            </h2>
-            <div className="text-sm text-gray-600">0/6 مكتمل</div>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div
-              className="bg-blue-500 h-3 rounded-full transition-all duration-500"
-              style={{ width: "0%" }}
-            ></div>
-          </div>
-        </div> */}
+        {/* Mission Track */}
+        <div className="mb-8">
+          <FrontendMissionTrack
+            weekRange="3-5"
+            title="المفاهيم الأساسية"
+            description="اللبنات الأساسية لكل تطبيق ويب تفاعلي"
+            concepts={FRONTEND_FOUNDATION_CONCEPTS}
+            color="#3B82F6"
+          />
+        </div>
 
-        <FrontendMissionTrack
-          weekRange="3-5"
-          title="المفاهيم الأساسية المستفادة"
-          description="هذه هي اللبنات الأساسية لكل تطبيق ويب تفاعلي. كل مفهوم يبني على السابق ليخلق تجربة مستخدم رائعة."
-          concepts={FRONTEND_FOUNDATION_CONCEPTS}
-          color="#3B82F6"
-        />
-
-        {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 shadow-md mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            مسار التعلم المقترح
+        {/* Quick Tips */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-blue-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
+            نصائح سريعة للنجاح
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🏗️</span>
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">الأسابيع 3-4</h3>
-              <p className="text-sm text-gray-600">
-                المفاهيم الأساسية الأربعة الأولى: المدخلات، الأزرار، العشوائية،
-                والمنطق الشرطي
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎨</span>
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">الأسبوع 5</h3>
-              <p className="text-sm text-gray-600">
-                التصميم والصور: اجعل تطبيقاتك جميلة ومرئية مع CSS والصور
-                الديناميكية
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚀</span>
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">
-                نهاية الأسبوع 5
-              </h3>
-              <p className="text-sm text-gray-600">
-                دمج جميع المفاهيم في مشروع شامل يظهر مهاراتك الجديدة
-              </p>
-            </div>
-          </div>
-        </div> */}
 
-        <div className="bg-white rounded-xl p-8 shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            نصائح للنجاح
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5" />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <h3 className="font-semibold text-blue-600 text-sm">
                 أثناء التطوير:
               </h3>
-              <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>ابدأ بسيط:</strong> مدخل واحد، مخرج واحد، ثم أضف
-                    التعقيد تدريجياً
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>اختبر كثيراً:</strong> بعد كل تغيير، تأكد أن التطبيق
-                    يعمل
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>استخدم الألوان بحكمة:</strong> 2-3 ألوان تكفي لمظهر
-                    احترافي
-                  </span>
-                </li>
-              </ul>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>ابدأ بسيط، ثم أضف التعقيد تدريجياً</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>اختبر بعد كل تغيير</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>استخدم 2-3 ألوان فقط</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-green-600 text-sm">
                 عند العرض:
               </h3>
-              <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>اشرح الفكرة أولاً:</strong> ما المشكلة التي يحلها
-                    تطبيقك؟
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>أظهر الميزات:</strong> دع الجمهور يجرب التطبيق
-                    بأنفسهم
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <span>
-                    <strong>شارك التحديات:</strong> ما الصعوبات التي واجهتها
-                    وكيف حللتها؟
-                  </span>
-                </li>
-              </ul>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>اشرح الفكرة أولاً</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>دع الجمهور يجرب التطبيق</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>شارك التحديات وحلولها</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
