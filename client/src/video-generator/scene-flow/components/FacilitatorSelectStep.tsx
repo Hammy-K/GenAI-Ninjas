@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useVideoFlowContext } from "../contexts/VideoFlowContext";
 import { Loader2, User, CheckCircle, GraduationCap } from "lucide-react";
 
@@ -19,7 +12,8 @@ export function FacilitatorSelectStep({
   userEmail,
   onComplete,
 }: FacilitatorSelectStepProps) {
-  const [selectedFacilitator, setSelectedFacilitator] = useState<string>("");
+  const [assignedFacilitator, setAssignedFacilitator] = useState<string>("");
+  const [autoConfirming, setAutoConfirming] = useState(false);
   const {
     facilitatorsData,
     confirmFacilitator,
@@ -30,30 +24,37 @@ export function FacilitatorSelectStep({
     facilitatorsError,
   } = useVideoFlowContext();
 
-  // Auto-advance when facilitator is confirmed - FIXED: Wait for confirmation to complete
+  // Auto-advance when facilitator is confirmed
   useEffect(() => {
     if (hasFacilitator && !isConfirmingFacilitator) {
       onComplete();
     }
   }, [hasFacilitator, isConfirmingFacilitator, onComplete]);
 
-  // Auto-select matched facilitator
+  // Auto-assign facilitator and confirm
   useEffect(() => {
-    if (facilitatorsData?.matchedFacilitatorName && !selectedFacilitator) {
-      setSelectedFacilitator(facilitatorsData.matchedFacilitatorName);
-    }
-  }, [facilitatorsData, selectedFacilitator]);
+    if (facilitatorsData && !assignedFacilitator && !autoConfirming) {
+      let facilitatorToAssign = facilitatorsData.matchedFacilitatorName;
+      
+      // If no matched facilitator found, fallback to المشرف المسؤول
+      if (!facilitatorToAssign) {
+        const fallbackFacilitator = facilitatorsData.facilitators?.find(
+          f => f.name === 'المشرف المسؤول'
+        );
+        facilitatorToAssign = fallbackFacilitator ? fallbackFacilitator.name : facilitatorsData.facilitators?.[0]?.name || '';
+      }
 
-  const handleConfirm = () => {
-    if (selectedFacilitator) {
-      confirmFacilitator({ facilitatorName: selectedFacilitator });
-      // FIXED: Removed immediate onComplete() call
-      // The useEffect above will handle advancement when hasFacilitator becomes true
+      if (facilitatorToAssign) {
+        setAssignedFacilitator(facilitatorToAssign);
+        setAutoConfirming(true);
+        
+        // Auto-confirm the assigned facilitator
+        confirmFacilitator({ facilitatorName: facilitatorToAssign });
+      }
     }
-  };
+  }, [facilitatorsData, assignedFacilitator, autoConfirming, confirmFacilitator]);
 
-  const isLoading = isConfirmingFacilitator;
-  const canConfirm = selectedFacilitator && !isLoading;
+  const isLoading = isConfirmingFacilitator || isFacilitatorsLoading || autoConfirming;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
@@ -66,10 +67,10 @@ export function FacilitatorSelectStep({
               <GraduationCap className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              اختر معلمك
+              تخصيص المعلم
             </h2>
             <p className="text-gray-600 text-sm">
-              سيتم ربطك بمعلمك لبدء إنشاء المحتوى
+              سيتم تخصيص معلمك تلقائياً لبدء إنشاء المحتوى
             </p>
           </div>
 
@@ -88,65 +89,34 @@ export function FacilitatorSelectStep({
             </div>
           </div>
 
-          {/* Matched Facilitator Display */}
-          {facilitatorsData?.matchedFacilitatorName && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
+          {/* Assigned Facilitator Display */}
+          {assignedFacilitator && (
+            <div className="mb-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <p className="text-xs text-green-600 font-medium">
-                    تم العثور على معلمك
+                    معلمك المخصص
                   </p>
                   <p className="text-green-800 font-semibold">
-                    {facilitatorsData.matchedFacilitatorName}
+                    {assignedFacilitator}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Facilitator Selection */}
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              اختر المعلم:
-            </label>
-            <Select
-              value={selectedFacilitator}
-              onValueChange={setSelectedFacilitator}
-              data-testid="select-facilitator"
-            >
-              <SelectTrigger className="w-full h-14 bg-white/80 border-2 border-purple-200 rounded-2xl focus:border-purple-400 focus:ring-purple-500 text-right">
-                <SelectValue placeholder="اختر معلمك من القائمة" />
-              </SelectTrigger>
-              <SelectContent className="bg-white/95 backdrop-blur-sm border border-purple-200 rounded-2xl shadow-xl">
-                {facilitatorsData?.facilitators.map((facilitator) => (
-                  <SelectItem
-                    key={facilitator.name}
-                    value={facilitator.name}
-                    className="text-right hover:bg-purple-50 focus:bg-purple-50 rounded-xl mx-1 my-1"
-                    data-testid={`facilitator-option-${facilitator.name}`}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <GraduationCap className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <span className="font-medium">{facilitator.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Loading State */}
-          {isFacilitatorsLoading && (
+          {isLoading && (
             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
               <div className="flex items-center gap-3">
                 <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                 <span className="text-blue-800 font-medium">
-                  جاري تحميل المعلمين...
+                  {isFacilitatorsLoading 
+                    ? "جاري تحميل المعلمين..." 
+                    : "جاري تخصيص معلمك..."}
                 </span>
               </div>
             </div>
@@ -166,31 +136,21 @@ export function FacilitatorSelectStep({
             </div>
           )}
 
-          {/* Confirm Button */}
-          <Button
-            onClick={handleConfirm}
-            disabled={!canConfirm}
-            size="lg"
-            variant="positive"
-            className="w-full h-14 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            data-testid="button-confirm-facilitator"
-          >
-            {isLoading ? (
+          {/* Auto Assignment Message */}
+          {!isLoading && assignedFacilitator && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl">
               <div className="flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>جاري التأكيد...</span>
+                <CheckCircle className="w-5 h-5 text-purple-600" />
+                <span className="text-purple-800 font-medium">
+                  تم تخصيص معلمك تلقائياً وسيتم الانتقال للخطوة التالية...
+                </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5" />
-                <span>تأكيد والمتابعة</span>
-              </div>
-            )}
-          </Button>
+            </div>
+          )}
 
           {/* Footer */}
           <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
-            آمن ومحمي • سيتم حفظ اختيارك تلقائياً
+            آمن ومحمي • سيتم تخصيص معلمك تلقائياً
           </p>
         </div>
 
