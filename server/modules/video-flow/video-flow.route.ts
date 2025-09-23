@@ -11,6 +11,10 @@ import {
 import { firebaseAdminService } from "../../services/auth/firebase-admin.service";
 import { facilitatorService } from "../../services/facilitator/facilitator.service";
 import { usageService } from "../../services/usage/usage.service";
+
+// Rate limiting: Track user requests (userId -> lastRequestTimestamp)
+const userRateLimit = new Map<string, number>();
+const RATE_LIMIT_WINDOW_SECONDS = 10;
 import { veoService } from "../../services/ai/provider/vertex/veo.service";
 import { createVertexAIClient } from "../../services/ai/provider/vertex/vertex.client";
 import { registerAdminRoutes } from "./admin.routes";
@@ -220,6 +224,22 @@ export function registerVideoFlowRoutes(): Router {
           .status(401)
           .json({ error: "Not authenticated" });
       }
+
+      // Rate limiting: Check if user is making requests too frequently
+      const userId = req.session.user.uid;
+      const currentTime = Date.now();
+      const lastRequestTime = userRateLimit.get(userId);
+      
+      if (lastRequestTime && (currentTime - lastRequestTime) < (RATE_LIMIT_WINDOW_SECONDS * 1000)) {
+        const waitTime = Math.ceil((RATE_LIMIT_WINDOW_SECONDS * 1000 - (currentTime - lastRequestTime)) / 1000);
+        return res.status(429).json({
+          error: "Please wait before generating another video",
+          retryAfter: waitTime
+        });
+      }
+
+      // Update rate limit timestamp
+      userRateLimit.set(userId, currentTime);
 
       // Check usage limits
       if (usageService.hasExceededLimit(req.session.user.uid)) {
