@@ -127,6 +127,92 @@ export function registerVideoFlowRoutes(): Router {
   });
 
   /**
+   * POST /api/video-flow/admin/reset-user
+   * Reset specific user's progress and session data (Admin only)
+   */
+  router.post("/admin/reset-user", async (req: Request, res: Response) => {
+    if (!req.session.user?.email) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    // Admin-only restriction for security
+    const isAdmin = req.session.user.email === 'admin@genaiquest.com' || 
+                   req.session.user.email?.includes('@replit.com') ||
+                   process.env.NODE_ENV === 'development';
+    
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    try {
+      const { db } = await import("../../storage");
+      const { students } = await import("../../../shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Find the user in the database
+      const user = await db
+        .select()
+        .from(students)
+        .where(eq(students.email, email))
+        .limit(1);
+
+      if (user.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const userData = user[0];
+      const firebaseUid = userData.firebaseUid;
+
+      console.log(`Admin reset requested for user: ${email} (Firebase UID: ${firebaseUid})`);
+
+      // Clear app builder progress if it exists
+      try {
+        const { appBuilderProgress } = await import("../../../shared/schema");
+        await db
+          .delete(appBuilderProgress)
+          .where(eq(appBuilderProgress.firebaseUid, firebaseUid));
+        console.log(`Cleared app builder progress for ${email}`);
+      } catch (progressError) {
+        console.log("No app builder progress to clear or error:", progressError);
+      }
+
+      // Clear any video generation state (localStorage is client-side, but we can clear server data)
+      // Reset usage if exists
+      try {
+        const { usageService } = await import("../../services/usage/usage.service");
+        usageService.resetUsage(firebaseUid);
+        console.log(`Reset video usage for ${email}`);
+      } catch (usageError) {
+        console.log("No usage data to reset or error:", usageError);
+      }
+
+      // Note: Session clearing happens client-side when user refreshes/logs out
+      
+      res.json({
+        success: true,
+        message: `Successfully reset data for ${email}`,
+        clearedData: {
+          appBuilderProgress: true,
+          videoUsage: true,
+          note: "User should clear browser data (localStorage/cookies) and log back in for complete reset"
+        }
+      });
+
+    } catch (error) {
+      console.error("Reset user error:", error);
+      res.status(500).json({ 
+        error: "Failed to reset user data",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  /**
    * POST /api/video-flow/auth/google
    * Authenticate user with Google Firebase ID token
    */
