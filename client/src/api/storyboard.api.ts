@@ -78,7 +78,8 @@ const STORYBOARD_RESPONSE_FORMAT = {
           finalStory: { type: "string" },
           storyboard: { type: "string" }
         },
-        required: ["phase"]
+        required: ["phase"],
+        additionalProperties: false
       },
       isStoryboardGenerated: { type: "boolean" },
       isConversationComplete: { type: "boolean" }
