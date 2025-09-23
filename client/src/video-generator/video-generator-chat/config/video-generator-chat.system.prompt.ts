@@ -15,7 +15,7 @@ Internal instructions (English):
 - Each scene should be detailed and descriptive enough for a video generation model:
   - الموضوع (Subject)
   - الحركة (Action)
-  - المكان والزمان (Setting)
+  - المكان والزمان (Setting)a
   - الصوت (Audio)
   - أسلوب التصوير: camera angle, lighting, style, and mood
 - Output must be numbered 1–6, copy-paste friendly, and visually clear.
