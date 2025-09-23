@@ -100,6 +100,10 @@ function Router() {
       <Route path="/ffm/intro-mission" component={IntroMission} />
       <Route path="/missions/ai-html-generator" component={AiHtmlGenerator} />
       <Route
+        path="/video-generator/video-generator-chat"
+        component={VideoGeneratorChatMissionPage}
+      />
+      <Route
         path="/ffm/missions/ai-html-generator"
         component={AiHtmlGenerator}
       />
