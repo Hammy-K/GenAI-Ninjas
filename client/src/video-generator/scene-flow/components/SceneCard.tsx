@@ -62,9 +62,9 @@ export function SceneCard({
   const isSceneValid =
     scene.description.length >= 10 && scene.voiceover.length >= 5;
 
-  // One video per scene logic
-  const hasExistingVideo = !!videoResult;
-  const canGenerate = isSceneValid && !hasExistingVideo;
+  // One video per scene logic - only consider video as existing if completed
+  const hasExistingVideo = videoResult?.status === "completed";
+  const canGenerate = isSceneValid && (!videoResult || videoResult?.status === "failed");
 
   // Load saved video on mount
   useEffect(() => {
