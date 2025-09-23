@@ -6,7 +6,7 @@ import {
 import { GoogleSignInStep } from "./components/GoogleSignInStep";
 import { FacilitatorSelectStep } from "./components/FacilitatorSelectStep";
 import { SceneBuilderStep } from "./components/SceneBuilderStep";
-import { ReviewStep } from "./components/ReviewStep";
+import { SubmissionPage } from "./components/SubmissionPage";
 import { ProgressIndicator } from "./components/ProgressIndicator";
 import { Sparkles } from "lucide-react";
 
@@ -129,7 +129,7 @@ function SceneFlowContent() {
             )}
 
             {currentStep === "review" && (
-              <ReviewStep onBack={() => setCurrentStep("scenes")} />
+              <SubmissionPage onBack={() => setCurrentStep("scenes")} />
             )}
           </div>
         )}
