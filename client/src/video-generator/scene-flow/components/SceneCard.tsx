@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { videoFlowApi } from "../api/video-flow.api";
 import { VideoPlayerCard } from "./VideoPlayerCard";
-import { useVideoFlowContext } from "../contexts/VideoFlowContext"; // Add this line
+import { useVideoFlowContext } from "../contexts/VideoFlowContext";
 import type {
   Scene,
   AspectRatio,
@@ -387,7 +387,7 @@ export function SceneCard({
                   </div>
                 )}
 
-                {/* Generate Button */}
+                {/* Generate Button - Enhanced with proper variant */}
                 <Button
                   onClick={handleGenerate}
                   disabled={
@@ -396,21 +396,25 @@ export function SceneCard({
                     isAtUsageLimit
                   }
                   size="sm"
-                  className="w-full h-8 rounded-lg text-xs font-semibold"
+                  variant={isAtUsageLimit ? "secondary" : "default"}
+                  className="w-full"
                   data-testid={`button-generate-${sceneNumber}`}
                 >
                   {generateVideoMutation.isPending ? (
-                    <div className="flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      <span>إنشاء...</span>
-                    </div>
+                    <>
+                      <Loader2 className="animate-spin" />
+                      إنشاء...
+                    </>
                   ) : isAtUsageLimit ? (
-                    <span>استنفد الحد</span>
+                    <>
+                      <AlertTriangle />
+                      استنفد الحد
+                    </>
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <Film className="w-3 h-3" />
-                      <span>إنشاء فيديو</span>
-                    </div>
+                    <>
+                      <Film />
+                      إنشاء فيديو
+                    </>
                   )}
                 </Button>
 
@@ -425,13 +429,13 @@ export function SceneCard({
                   </div>
                 )}
 
-                {/* Error */}
+                {/* Error - Enhanced with better button styling */}
                 {generationError && (
                   <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs text-red-700 font-medium">
+                      <div className="flex-1">
+                        <p className="text-xs text-red-700 font-medium mb-2">
                           {generationError}
                         </p>
                         <Button
@@ -443,7 +447,7 @@ export function SceneCard({
                             generateVideoMutation.isPending ||
                             isAtUsageLimit
                           }
-                          className="mt-1 h-6 text-xs border-red-300 text-red-700 hover:bg-red-50"
+                          className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
                         >
                           إعادة
                         </Button>

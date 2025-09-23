@@ -119,6 +119,7 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
         <Button
           disabled={!canPrev}
           onClick={() => setPage((x) => Math.max(1, x - 1))}
+          className="bg-purple-500"
         >
           السابق
         </Button>
@@ -127,7 +128,11 @@ export default function LovableSubmissionsList({ view, search = "" }: Props) {
           الصفحة {currentPage} من {totalPages} ({total} مشروع)
         </span>
 
-        <Button disabled={!canNext} onClick={() => setPage((x) => x + 1)}>
+        <Button
+          disabled={!canNext}
+          onClick={() => setPage((x) => x + 1)}
+          className="bg-purple-500"
+        >
           التالي
         </Button>
       </div>
