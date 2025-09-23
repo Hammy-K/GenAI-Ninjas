@@ -108,7 +108,7 @@ class VertexAIClient {
       ],
       parameters: {
         aspectRatio: request.aspectRatio,
-        durationSeconds: 8,
+        durationSeconds: 5,
         generateAudio: true,
         sampleCount: 1,
         resolution: "720p",
@@ -193,7 +193,7 @@ class VertexAIClient {
           ],
           parameters: {
             aspectRatio: request.aspectRatio,
-            durationSeconds: 8,
+            durationSeconds: 5,
             generateAudio: true,
             sampleCount: 1,
             ...(modelName.includes("veo-3") && { resolution: "720p" }),
