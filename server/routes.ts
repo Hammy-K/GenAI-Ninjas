@@ -42,6 +42,7 @@ import { registerAiChatRoutes } from "./modules/ai-chat/ai-chat.route";
 import { registerImageGenerationRoutes } from "./modules/image-generation/image-generation.route";
 import { registerAudioTtsRoutes } from "./modules/audio-tts/audio-tts.routes";
 import { registerVideoFlowRoutes } from "./modules/video-flow/video-flow.route";
+import { registerVideoSubmissionsRoutes } from "./routes/video-submissions";
 
 /**
  * Legacy function for server-side prompt logging
@@ -527,6 +528,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register video flow routes
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
+  
+  // Register video submissions routes
+  apiRouter.use("/video-submissions", registerVideoSubmissionsRoutes());
 
   // Apply the API router to all /api routes
   app.use("/api", apiRouter);

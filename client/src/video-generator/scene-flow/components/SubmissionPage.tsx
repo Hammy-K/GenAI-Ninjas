@@ -8,9 +8,6 @@ import { z } from "zod";
 import { CheckCircle, ArrowLeft, Send, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVideoFlowContext } from "../contexts/VideoFlowContext";
-import { db } from "@/lib/db";
-import { videoSubmissions } from "@shared/schema";
-import type { InsertVideoSubmission } from "@shared/schema";
 
 interface SubmissionPageProps {
   onBack: () => void;
@@ -55,13 +52,27 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
     setError(null);
 
     try {
-      const submission: InsertVideoSubmission = {
+      const submission = {
         email: data.email,
         link: data.link,
         projectName: data.projectName,
       };
 
-      await db.insert(videoSubmissions).values(submission);
+      const response = await fetch("/api/video-submissions/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submission),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit project");
+      }
+
+      const result = await response.json();
+      console.log("Project submitted successfully:", result);
       setIsSubmitted(true);
     } catch (err) {
       console.error("Failed to submit project:", err);
