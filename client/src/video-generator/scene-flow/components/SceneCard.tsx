@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { videoFlowApi } from "../api/video-flow.api";
 import { VideoPlayerCard } from "./VideoPlayerCard";
-import { useVideoFlowContext } from "../contexts/VideoFlowContext"; // Add this line
+import { useVideoFlowContext } from "../contexts/VideoFlowContext";
 import type {
   Scene,
   AspectRatio,
@@ -62,13 +62,9 @@ export function SceneCard({
   const isSceneValid =
     scene.description.length >= 10 && scene.voiceover.length >= 5;
 
-  const { data: usage } = useQuery({
-    queryKey: ["video-flow", "usage"],
-    queryFn: videoFlowApi.getUsage,
-    refetchInterval: 5000,
-  });
-
-  const isAtUsageLimit = usage ? usage.used >= usage.limit : false;
+  // One video per scene logic
+  const hasExistingVideo = !!videoResult;
+  const canGenerate = isSceneValid && !hasExistingVideo;
 
   // Load saved video on mount
   useEffect(() => {
@@ -111,9 +107,6 @@ export function SceneCard({
           if (statusResult.status === "completed") {
             onComplete(true);
             setIsPolling(false);
-            queryClient.invalidateQueries({
-              queryKey: ["video-flow", "usage"],
-            });
           } else if (statusResult.status === "failed") {
             setGenerationError("فشل في الإنشاء");
             onComplete(false);
@@ -151,9 +144,6 @@ export function SceneCard({
       setGenerationError(null);
       saveCompletedVideo(sceneNumber, data);
 
-      // Invalidate usage immediately when generation starts
-      queryClient.invalidateQueries({ queryKey: ["video-flow", "usage"] });
-
       if (data.status !== "processing") setIsPolling(false);
       if (data.status === "completed") {
         onComplete(true);
@@ -169,7 +159,7 @@ export function SceneCard({
   });
 
   const handleGenerate = () => {
-    if (isSceneValid && !isAtUsageLimit) {
+    if (canGenerate) {
       setGenerationError(null);
       generateVideoMutation.mutate({ scene });
     }
@@ -375,13 +365,13 @@ export function SceneCard({
                   </RadioGroup>
                 </div>
 
-                {/* Usage Warning */}
-                {isAtUsageLimit && (
-                  <div className="p-2 bg-yellow-50 border border-yellow-300 rounded-lg">
+                {/* One Video Per Scene Warning */}
+                {hasExistingVideo && (
+                  <div className="p-2 bg-blue-50 border border-blue-300 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-3 h-3 text-yellow-600" />
-                      <span className="text-xs text-yellow-800 font-medium">
-                        تم استنفاد الحد
+                      <Film className="w-3 h-3 text-blue-600" />
+                      <span className="text-xs text-blue-800 font-medium">
+                        تم إنشاء فيديو لهذا المشهد
                       </span>
                     </div>
                   </div>
@@ -390,11 +380,7 @@ export function SceneCard({
                 {/* Generate Button */}
                 <Button
                   onClick={handleGenerate}
-                  disabled={
-                    !isSceneValid ||
-                    generateVideoMutation.isPending ||
-                    isAtUsageLimit
-                  }
+                  disabled={!canGenerate || generateVideoMutation.isPending}
                   size="sm"
                   className="w-full h-8 rounded-lg text-xs font-semibold"
                   data-testid={`button-generate-${sceneNumber}`}
@@ -404,8 +390,11 @@ export function SceneCard({
                       <Loader2 className="w-3 h-3 animate-spin" />
                       <span>إنشاء...</span>
                     </div>
-                  ) : isAtUsageLimit ? (
-                    <span>استنفد الحد</span>
+                  ) : hasExistingVideo ? (
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>تم الإنشاء</span>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-1">
                       <Film className="w-3 h-3" />
@@ -439,9 +428,7 @@ export function SceneCard({
                           variant="outline"
                           onClick={handleGenerate}
                           disabled={
-                            !isSceneValid ||
-                            generateVideoMutation.isPending ||
-                            isAtUsageLimit
+                            !canGenerate || generateVideoMutation.isPending
                           }
                           className="mt-1 h-6 text-xs border-red-300 text-red-700 hover:bg-red-50"
                         >
