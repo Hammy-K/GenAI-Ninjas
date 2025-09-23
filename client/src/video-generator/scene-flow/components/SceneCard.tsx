@@ -70,10 +70,15 @@ export function SceneCard({
   useEffect(() => {
     const savedVideo = getCompletedVideo(sceneNumber);
     if (savedVideo) {
-      setVideoResult(savedVideo);
+      // Only set if it's actually completed, ignore processing states from storage
       if (savedVideo.status === "completed") {
+        setVideoResult(savedVideo);
         onComplete(true);
+      } else if (savedVideo.status === "failed") {
+        setVideoResult(savedVideo);
+        onComplete(false);
       }
+      // Ignore processing states from storage to prevent infinite polling
     }
   }, [sceneNumber, getCompletedVideo, onComplete]);
 
@@ -81,7 +86,9 @@ export function SceneCard({
     let pollInterval: NodeJS.Timeout;
     let timeoutTimer: NodeJS.Timeout;
 
-    if (videoResult?.status === "processing" && videoResult.jobId) {
+    // STRICT CHECK: Only start polling if status is exactly "processing" and NOT already polling
+    if (videoResult?.status === "processing" && videoResult.jobId && !isPolling) {
+      console.log(`Starting polling for scene ${sceneNumber}, jobId: ${videoResult.jobId}`);
       setIsPolling(true);
       const startTime = Date.now();
       const TIMEOUT_MINUTES = 5;
@@ -90,31 +97,40 @@ export function SceneCard({
       const pollStatus = async () => {
         try {
           if (Date.now() - startTime > TIMEOUT_MS) {
+            console.log(`Polling timeout for scene ${sceneNumber}`);
             setGenerationError(`انتهت مهلة الإنشاء`);
             onComplete(false);
             setIsPolling(false);
+            clearInterval(pollInterval);
             return;
           }
 
           const statusResult = await videoFlowApi.checkStatus(
             videoResult.jobId,
           );
+          console.log(`Poll result for scene ${sceneNumber}:`, statusResult.status);
           setVideoResult(statusResult);
 
           // Save updated status to context/localStorage
           saveCompletedVideo(sceneNumber, statusResult);
 
           if (statusResult.status === "completed") {
+            console.log(`Polling completed for scene ${sceneNumber}`);
             onComplete(true);
             setIsPolling(false);
+            clearInterval(pollInterval);
           } else if (statusResult.status === "failed") {
+            console.log(`Polling failed for scene ${sceneNumber}`);
             setGenerationError("فشل في الإنشاء");
             onComplete(false);
             setIsPolling(false);
+            clearInterval(pollInterval);
           }
         } catch (error) {
+          console.log(`Polling error for scene ${sceneNumber}:`, error);
           setGenerationError("خطأ في التحقق");
           setIsPolling(false);
+          clearInterval(pollInterval);
         }
       };
 
@@ -122,19 +138,26 @@ export function SceneCard({
       pollInterval = setInterval(pollStatus, 5000);
 
       timeoutTimer = setTimeout(() => {
+        console.log(`Global timeout for scene ${sceneNumber}`);
         setGenerationError(`انتهت المهلة`);
         onComplete(false);
         setIsPolling(false);
+        clearInterval(pollInterval);
       }, TIMEOUT_MS);
-    } else {
-      setIsPolling(false);
+    } else if (videoResult?.status !== "processing") {
+      // Ensure polling is stopped for any non-processing status
+      if (isPolling) {
+        console.log(`Stopping polling for scene ${sceneNumber} - status: ${videoResult?.status}`);
+        setIsPolling(false);
+      }
     }
 
     return () => {
       if (pollInterval) clearInterval(pollInterval);
       if (timeoutTimer) clearTimeout(timeoutTimer);
+      setIsPolling(false);
     };
-  }, [videoResult?.status, videoResult?.jobId, onComplete, queryClient]);
+  }, [videoResult?.status, videoResult?.jobId, isPolling, onComplete, saveCompletedVideo, sceneNumber]);
 
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
