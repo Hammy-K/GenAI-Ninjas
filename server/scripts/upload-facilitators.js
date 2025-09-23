@@ -216,6 +216,62 @@ function chunkArray(array, chunkSize) {
 }
 
 /**
+ * Verify uploaded facilitators
+ */
+async function verifyUpload() {
+  console.log('🔍 VERIFYING UPLOADED FACILITATORS:');
+  
+  try {
+    // Get facilitator count from database
+    const countResponse = await fetch(`${CONFIG.API_BASE_URL}/facilitators/count`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (countResponse.ok) {
+      const countResult = await countResponse.json();
+      console.log(`   📊 Database count: ${countResult.count} facilitators`);
+      
+      if (countResult.count === 55) {
+        console.log('   ✅ Count verification: PASSED');
+      } else {
+        console.log(`   ❌ Count verification: FAILED (expected 55, got ${countResult.count})`);
+        return false;
+      }
+    }
+    
+    // Sample test 5 random facilitators for credential validation
+    console.log('   🧪 Testing sample credentials...');
+    const testResponse = await fetch(`${CONFIG.API_BASE_URL}/facilitators/test-sample?count=5`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (testResponse.ok) {
+      const testResult = await testResponse.json();
+      console.log(`   🔬 Tested ${testResult.tested} credentials`);
+      console.log(`   ✅ Successful: ${testResult.successful}`);
+      console.log(`   ❌ Failed: ${testResult.failed}`);
+      
+      if (testResult.failed === 0) {
+        console.log('   ✅ Credential validation: PASSED');
+        return true;
+      } else {
+        console.log('   ❌ Credential validation: FAILED');
+        console.log('   📝 Failed facilitators:', testResult.failedFacilitators);
+        return false;
+      }
+    }
+    
+  } catch (error) {
+    console.log(`   ❌ Verification failed: ${error.message}`);
+    return false;
+  }
+  
+  return false;
+}
+
+/**
  * Main execution function
  */
 async function main() {
@@ -260,6 +316,19 @@ async function main() {
     }
     
     console.log('\n🎉 All facilitators uploaded successfully!');
+    
+    // Run post-upload verification if this was a live upload
+    if (!CONFIG.DRY_RUN && totalFailed === 0) {
+      console.log('\n' + '═'.repeat(60));
+      const verificationPassed = await verifyUpload();
+      
+      if (verificationPassed) {
+        console.log('\n🎯 VERIFICATION: ALL SYSTEMS OPERATIONAL ✅');
+      } else {
+        console.log('\n⚠️  VERIFICATION: ISSUES DETECTED - CHECK LOGS ❌');
+        process.exit(1);
+      }
+    }
     
   } catch (error) {
     console.error('\n💥 FATAL ERROR:', error.message);

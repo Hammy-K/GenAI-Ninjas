@@ -14,16 +14,7 @@ const FacilitatorUploadZ = z.object({
       name: z.string().min(1, "Name is required"),
       projectId: z.string().min(1, "Project ID is required"),
       location: z.string().default("us-central1"),
-      serviceAccountJson: z.union([
-        z.string().min(1, "Service account JSON is required"),
-        z.object({}).passthrough(), // Accept any object structure
-      ]).transform((val) => {
-        // Normalize to string format
-        if (typeof val === 'object') {
-          return JSON.stringify(val);
-        }
-        return val;
-      }),
+      serviceAccountJson: z.string().min(1, "Service account JSON is required"),
     })
   ),
 });
@@ -51,6 +42,16 @@ export function registerAdminRoutes(): Router {
    */
   router.post("/facilitators", async (req: Request, res: Response) => {
     try {
+      // Manually transform serviceAccountJson objects to strings before validation
+      if (req.body.facilitators && Array.isArray(req.body.facilitators)) {
+        req.body.facilitators = req.body.facilitators.map((facilitator: any) => ({
+          ...facilitator,
+          serviceAccountJson: typeof facilitator.serviceAccountJson === 'object' && facilitator.serviceAccountJson !== null
+            ? JSON.stringify(facilitator.serviceAccountJson)
+            : facilitator.serviceAccountJson
+        }));
+      }
+      
       const parseResult = FacilitatorUploadZ.safeParse(req.body);
       if (!parseResult.success) {
         return res.status(400).json({
@@ -227,6 +228,98 @@ export function registerAdminRoutes(): Router {
       res.status(500).json({
         error: "Failed to retrieve facilitators",
         details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  /**
+   * GET /api/video-flow/admin/facilitators/count
+   * Get facilitator count for verification
+   */
+  router.get("/facilitators/count", async (req: Request, res: Response) => {
+    try {
+      const facilitators = await facilitatorService.getAllFacilitators();
+      res.json({
+        success: true,
+        count: facilitators.length,
+      });
+    } catch (error) {
+      console.error('Failed to get facilitator count:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get facilitator count'
+      });
+    }
+  });
+
+  /**
+   * POST /api/video-flow/admin/facilitators/test-sample
+   * Test sample facilitator credentials
+   */
+  router.post("/facilitators/test-sample", async (req: Request, res: Response) => {
+    try {
+      const count = parseInt(req.query.count as string) || 5;
+      const facilitators = await facilitatorService.getAllFacilitators();
+      
+      if (facilitators.length === 0) {
+        return res.json({
+          success: true,
+          tested: 0,
+          successful: 0,
+          failed: 0,
+          message: 'No facilitators found'
+        });
+      }
+      
+      // Select random sample
+      const shuffled = facilitators.sort(() => 0.5 - Math.random());
+      const sample = shuffled.slice(0, count);
+      
+      const results = [];
+      let successful = 0;
+      let failed = 0;
+      
+      for (const facilitator of sample) {
+        try {
+          // Test credential by attempting to get credentials
+          const credentials = await facilitatorService.getFacilitatorCredentials(facilitator.id);
+          
+          if (credentials && credentials.projectId && credentials.serviceAccountJson) {
+            // Basic validation - check if service account JSON is parseable
+            const serviceAccount = JSON.parse(credentials.serviceAccountJson);
+            if (serviceAccount.type && serviceAccount.project_id && serviceAccount.private_key) {
+              results.push({ name: facilitator.name, success: true });
+              successful++;
+            } else {
+              results.push({ name: facilitator.name, success: false, error: 'Invalid service account structure' });
+              failed++;
+            }
+          } else {
+            results.push({ name: facilitator.name, success: false, error: 'Missing credentials' });
+            failed++;
+          }
+        } catch (error) {
+          results.push({ name: facilitator.name, success: false, error: error.message });
+          failed++;
+        }
+      }
+      
+      const failedFacilitators = results.filter(r => !r.success).map(r => ({ name: r.name, error: r.error }));
+      
+      res.json({
+        success: true,
+        tested: sample.length,
+        successful,
+        failed,
+        failedFacilitators,
+        results,
+      });
+      
+    } catch (error) {
+      console.error('Failed to test facilitator credentials:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to test facilitator credentials'
       });
     }
   });
