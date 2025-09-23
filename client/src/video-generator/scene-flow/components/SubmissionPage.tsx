@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle, ArrowLeft, Send, AlertCircle } from "lucide-react";
+import { CheckCircle, ArrowRight, Send, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVideoFlowContext } from "../contexts/VideoFlowContext";
 
@@ -17,7 +17,10 @@ interface SubmissionPageProps {
 const submissionSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صحيح"),
   link: z.string().url("يجب إدخال رابط صحيح").min(1, "الرابط مطلوب"),
-  projectName: z.string().min(1, "اسم المشروع مطلوب").max(100, "اسم المشروع طويل جداً"),
+  projectName: z
+    .string()
+    .min(1, "اسم المشروع مطلوب")
+    .max(100, "اسم المشروع طويل جداً"),
 });
 
 type SubmissionFormData = z.infer<typeof submissionSchema>;
@@ -119,9 +122,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-3xl flex items-center justify-center shadow-xl">
             <Send className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            أرسل مشروعك
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">أرسل مشروعك</h2>
           <p className="text-gray-600">
             شارك مشروعك النهائي معنا لمراجعته وتقييمه
           </p>
@@ -132,7 +133,10 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email Field (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
                 البريد الإلكتروني
               </Label>
               <Input
@@ -150,7 +154,10 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
 
             {/* Project Link Field */}
             <div className="space-y-2">
-              <Label htmlFor="link" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="link"
+                className="text-sm font-medium text-gray-700"
+              >
                 رابط المشروع <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -168,19 +175,24 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
 
             {/* Project Name Field */}
             <div className="space-y-2">
-              <Label htmlFor="projectName" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="projectName"
+                className="text-sm font-medium text-gray-700"
+              >
                 اسم المشروع <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="projectName"
                 type="text"
-                placeholder="مثال: تطبيق إدارة المهام"
+                placeholder=""
                 {...register("projectName")}
                 className="border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                 data-testid="input-project-name"
               />
               {errors.projectName && (
-                <p className="text-red-500 text-sm">{errors.projectName.message}</p>
+                <p className="text-red-500 text-sm">
+                  {errors.projectName.message}
+                </p>
               )}
             </div>
 
@@ -225,7 +237,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             className="w-full h-12 border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl"
             data-testid="button-back-to-scenes"
           >
-            <ArrowLeft className="ml-2 w-4 h-4" />
+            <ArrowRight className="ml-2 w-4 h-4" />
             العودة للمشاهد
           </Button>
         </div>
@@ -247,7 +259,9 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-purple-500 mt-0.5">•</span>
-              <span>سيتم إرسال إشعار بالبريد الإلكتروني عند مراجعة المشروع</span>
+              <span>
+                سيتم إرسال إشعار بالبريد الإلكتروني عند مراجعة المشروع
+              </span>
             </div>
           </div>
         </div>

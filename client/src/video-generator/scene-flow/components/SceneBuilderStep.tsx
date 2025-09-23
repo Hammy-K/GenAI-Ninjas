@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SceneCard } from "./SceneCard";
 import { UsageTracker } from "./UsageTracker";
 import { Button } from "@/components/ui/button";
-import { Film, CheckCircle, ArrowRight, Send } from "lucide-react";
+import { Film, CheckCircle, ArrowLeft, Send } from "lucide-react";
 import type { Scene } from "@shared/video-flow.schema";
 
 interface SceneBuilderStepProps {
@@ -61,7 +61,9 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">أنشئ مشاهدك</h2>
-              <p className="text-xs text-purple-600 font-medium">6 مشاهد • 5 ثوانِ لكل مشهد</p>
+              <p className="text-xs text-purple-600 font-medium">
+                6 مشاهد • 5 ثوانِ لكل مشهد
+              </p>
               <p className="text-sm text-gray-600">
                 {completedCount} من 6 مكتمل
               </p>
@@ -110,9 +112,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
               isCompleted={completedScenes[index]}
               isLocked={false} // REMOVED: No more locking - complete freedom
               onUpdate={(updatedScene) => updateScene(index, updatedScene)}
-              onComplete={(isComplete) =>
-                markSceneComplete(index, isComplete)
-              }
+              onComplete={(isComplete) => markSceneComplete(index, isComplete)}
               onExpand={() => setCurrentScene(index)}
               data-testid={`scene-card-${index + 1}`}
             />
@@ -126,9 +126,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
               <Send className="w-6 h-6 text-white" />
             </div>
             <div className="text-right">
-              <h3 className="text-lg font-bold text-gray-900">
-                جاهز للتقديم؟
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900">جاهز للتقديم؟</h3>
               <p className="text-sm text-gray-600">
                 يمكنك إرسال مشروعك في أي وقت
               </p>
@@ -141,7 +139,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
             >
               <div className="flex items-center gap-2">
                 <span>انتقل للإرسال</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
               </div>
             </Button>
           </div>

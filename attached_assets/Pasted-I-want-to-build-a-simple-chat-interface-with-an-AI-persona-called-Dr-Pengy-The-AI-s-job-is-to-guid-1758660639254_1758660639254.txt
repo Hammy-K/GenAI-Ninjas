@@ -1,0 +1,95 @@
+I want to build a simple chat interface with an AI persona called Dr. Pengy. The AI’s job is to guide students from a story idea all the way to a 6-scene storyboard for a 30-second viral video.
+
+⚠️ Important: Do not write new chat components from scratch. Reuse the existing chat components and chat flow logic that already exist in the app (e.g in client/src/lovable-mission/chat). Do not modify those components — just compose them together for this new page.
+
+Requirements
+1. Chat Interface
+
+Use the existing chat components to render a chat log and input box.
+
+Messages should display in chat bubble style (like in other chat features we already have).
+
+Messages should auto-scroll as new ones appear.
+
+2. Conversation Flow (AI logic)
+
+Dr. Pengy must always follow this flow:
+
+Receive story idea
+
+The student writes their initial idea.
+
+Dr. Pengy responds warmly, acknowledges it, and checks if it’s clear.
+
+Clarify / Suggest
+
+If the idea is vague → Dr. Pengy asks clarifying questions.
+
+If it’s clear → Dr. Pengy suggests 1–2 creative tweaks to make it more engaging.
+
+Keep this light and conversational.
+
+Confirm final story
+
+Once the idea is ready, Dr. Pengy confirms with the student:
+
+“So the story is about X happening in Y, right? Shall we lock this in?”
+
+Generate storyboard
+
+After confirmation, Dr. Pengy outputs a 6-scene storyboard, each ~5 seconds long.
+
+Each scene must include:
+
+الموضوع (Subject)
+
+الحركة (Action)
+
+المكان والزمان (Setting)
+
+الصوت (Audio)
+
+The storyboard should be copy-paste friendly and numbered (Scene 1 → Scene 6).
+
+3. Persona (Dr. Pengy)
+
+Friendly, fun, and encouraging.
+
+An expert in Saudi culture and storytelling.
+
+Skilled at crafting viral hooks and short engaging content.
+
+Always keeps the video culturally resonant and engaging.
+
+4. Output Format
+
+All AI responses shown in the chat UI.
+
+Final storyboard formatted like this:
+
+🎬 Storyboard (30 seconds)
+
+Scene 1 (5s)
+الموضوع: …
+الحركة: …
+المكان والزمان: …
+الصوت: …
+
+Scene 2 (5s)
+...
+
+5. File/Code Structure
+
+Create a new file: ChatPage.tsx.
+
+In this file:
+
+Render the existing chat components.
+
+Connect to the existing AI API functions (already available in the app).
+
+Implement the conversation flow above.
+
+Keep it minimal and focused only on this Dr. Pengy flow.
+
+✅ Deliverable: A working ChatPage.tsx that reuses existing chat components + APIs, and runs the Dr. Pengy flow described above.
