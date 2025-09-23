@@ -11,7 +11,7 @@ export function ProgressIndicator({ currentStep, totalSteps, className }: Progre
     { number: 1, label: 'تسجيل الدخول' },
     { number: 2, label: 'اختيار المعلم' },
     { number: 3, label: 'إنشاء المشاهد' },
-    { number: 4, label: 'مراجعة النتائج' },
+    { number: 4, label: 'تسليم المشروع' },
   ];
 
   return (

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SceneCard } from "./SceneCard";
 import { UsageTracker } from "./UsageTracker";
 import { Button } from "@/components/ui/button";
-import { Film, CheckCircle, ArrowRight } from "lucide-react";
+import { Film, CheckCircle, ArrowRight, Send } from "lucide-react";
 import type { Scene } from "@shared/video-flow.schema";
 
 interface SceneBuilderStepProps {
@@ -117,6 +117,34 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
               data-testid={`scene-card-${index + 1}`}
             />
           ))}
+        </div>
+
+        {/* Navigation Section - Always Visible */}
+        <div className="mt-6 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-6 text-center shadow-lg">
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center">
+              <Send className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-right">
+              <h3 className="text-lg font-bold text-gray-900">
+                جاهز للتقديم؟
+              </h3>
+              <p className="text-sm text-gray-600">
+                يمكنك إرسال مشروعك في أي وقت
+              </p>
+            </div>
+            <Button
+              onClick={onComplete}
+              variant="outline"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg"
+              data-testid="button-navigate-to-submission"
+            >
+              <div className="flex items-center gap-2">
+                <span>انتقل للإرسال</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </Button>
+          </div>
         </div>
 
         {/* Compact Completion Section */}
