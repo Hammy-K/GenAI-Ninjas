@@ -333,6 +333,33 @@ export const videoSubmissions = pgTable("video_submissions", {
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 
+// Video generation jobs table for reliable job tracking
+export const videoJobs = pgTable("video_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id),
+  firebaseUid: text("firebase_uid").notNull(), // For session-based tracking
+  facilitatorId: integer("facilitator_id")
+    .references(() => facilitators.id),
+  sceneNumber: integer("scene_number").notNull().default(1),
+  requestHash: text("request_hash").notNull().unique(), // For idempotency
+  prompt: text("prompt").notNull(),
+  aspectRatio: text("aspect_ratio").notNull().default("16:9"),
+  vertexOperation: text("vertex_operation"), // Google operation name
+  status: text("status").notNull().default("queued"), // queued|processing|completed|failed|expired
+  videoUrl: text("video_url"),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  attemptCount: integer("attempt_count").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(10),
+  nextCheckAt: timestamp("next_check_at"),
+  lastCheckAt: timestamp("last_check_at"),
+  completedAt: timestamp("completed_at"),
+  expiredAt: timestamp("expired_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Facilitator credential management tables
 export const facilitators = pgTable("facilitators", {
   id: serial("id").primaryKey(),
@@ -374,6 +401,18 @@ export const insertVideoSubmissionSchema = createInsertSchema(
   submittedAt: true,
 });
 
+export const insertVideoJobSchema = createInsertSchema(videoJobs, {
+  status: z.enum(["queued", "processing", "completed", "failed", "expired"]).default("queued"),
+  aspectRatio: z.string().default("16:9"),
+  sceneNumber: z.number().default(1),
+  attemptCount: z.number().default(0),
+  maxAttempts: z.number().default(10),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
@@ -405,6 +444,7 @@ export type InsertStudentFacilitatorAssignment = z.infer<
   typeof insertStudentFacilitatorAssignmentSchema
 >;
 export type InsertVideoSubmission = z.infer<typeof insertVideoSubmissionSchema>;
+export type InsertVideoJob = z.infer<typeof insertVideoJobSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -424,3 +464,4 @@ export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
 export type Facilitator = typeof facilitators.$inferSelect;
 export type StudentFacilitatorAssignment = typeof studentFacilitatorAssignments.$inferSelect;
 export type VideoSubmission = typeof videoSubmissions.$inferSelect;
+export type VideoJob = typeof videoJobs.$inferSelect;

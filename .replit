@@ -45,5 +45,9 @@ externalPort = 80
 localPort = 36311
 externalPort = 3000
 
+[[ports]]
+localPort = 41709
+externalPort = 3001
+
 [agent]
 integrations = ["javascript_anthropic==1.0.0", "firebase_barebones_javascript==1.0.0", "javascript_openai==1.0.0"]

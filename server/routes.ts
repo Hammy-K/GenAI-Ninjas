@@ -43,6 +43,7 @@ import { registerImageGenerationRoutes } from "./modules/image-generation/image-
 import { registerAudioTtsRoutes } from "./modules/audio-tts/audio-tts.routes";
 import { registerVideoFlowRoutes } from "./modules/video-flow/video-flow.route";
 import { registerVideoSubmissionsRoutes } from "./routes/video-submissions";
+import { createVideoJobsRouter } from "./modules/video-jobs/video-jobs.route";
 
 /**
  * Legacy function for server-side prompt logging
@@ -115,6 +116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount the video flow routes onto the apiRouter
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
+
+  // Mount the new robust video jobs routes
+  apiRouter.use("/video-jobs", createVideoJobsRouter());
 
   // Mount the entire apiRouter to the main app at the '/api' path
   app.use("/api", apiRouter);

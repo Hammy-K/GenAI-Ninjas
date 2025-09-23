@@ -3,6 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAppBuilderSteps } from "./scripts/seed-app-builder-steps";
+import "./modules/video-jobs/video-jobs.worker"; // Start video job worker
 
 const app = express();
 app.use(express.json());
