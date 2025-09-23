@@ -61,6 +61,72 @@ export function registerVideoFlowRoutes(): Router {
   });
 
   /**
+   * GET /api/video-flow/admin/debug-facilitators
+   * Debug endpoint to check facilitator credentials status (Admin only)
+   */
+  router.get("/admin/debug-facilitators", async (req: Request, res: Response) => {
+    if (!req.session.user?.email) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    // Admin-only restriction for security
+    const isAdmin = req.session.user.email === 'admin@genaiquest.com' || 
+                   req.session.user.email?.includes('@replit.com') ||
+                   process.env.NODE_ENV === 'development';
+    
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      // Check if student has database assignment
+      const assignment = await facilitatorService.getCredentialsForStudent(req.session.user.email);
+      
+      // Get all active facilitators
+      const activeFacilitators = await facilitatorService.getActiveFacilitators();
+      
+      // Check if legacy facilitator exists
+      let legacyFacilitator = null;
+      if (req.session.facilitator?.name) {
+        try {
+          legacyFacilitator = {
+            name: req.session.facilitator.name,
+            hasApiKey: !!facilitatorService.getFacilitatorApiKey(req.session.facilitator.name),
+            isValid: facilitatorService.isValidFacilitator(req.session.facilitator.name)
+          };
+        } catch (error) {
+          legacyFacilitator = {
+            name: req.session.facilitator.name,
+            hasApiKey: false,
+            isValid: false,
+            error: error instanceof Error ? error.message : "Unknown error"
+          };
+        }
+      }
+
+      res.json({
+        userEmail: req.session.user.email,
+        hasAssignment: !!assignment,
+        assignmentDetails: assignment ? {
+          projectId: assignment.projectId,
+          location: assignment.location,
+          hasServiceAccount: !!assignment.serviceAccountJson
+        } : null,
+        activeFacilitatorsCount: activeFacilitators.length,
+        activeFacilitators: activeFacilitators.map(f => ({ name: f.name, id: f.id })),
+        sessionFacilitator: legacyFacilitator,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Debug facilitators error:", error);
+      res.status(500).json({ 
+        error: "Failed to debug facilitators",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  /**
    * POST /api/video-flow/auth/google
    * Authenticate user with Google Firebase ID token
    */
@@ -335,6 +401,7 @@ export function registerVideoFlowRoutes(): Router {
     try {
       // Check authentication
       if (!req.session.user) {
+        console.error("Video status check: User not authenticated");
         return res
           .status(401)
           .json({ error: "Not authenticated" });
@@ -343,6 +410,7 @@ export function registerVideoFlowRoutes(): Router {
       const { jobId } = req.params;
 
       if (!jobId) {
+        console.error("Video status check: Missing job ID");
         const response: GenerateVideoResponse = {
           jobId: "",
           status: "failed",
@@ -353,21 +421,52 @@ export function registerVideoFlowRoutes(): Router {
 
       // FIXED: Decode the URL-encoded job ID
       const decodedJobId = decodeURIComponent(jobId);
-      console.log("Status check for operation:", decodedJobId);
-
-      // NEW: Get student-specific facilitator credentials for status check
-      const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
-        req.session.user.email
-      );
+      console.log("Status check for operation:", decodedJobId, "for user:", req.session.user.email);
 
       let result;
-      if (facilitatorCredentials) {
-        // Use custom client with student's facilitator credentials
-        const customVertexClient = createVertexAIClient(facilitatorCredentials);
-        result = await customVertexClient.checkJobStatus(decodedJobId);
-      } else {
-        // Fallback: Use default client (this maintains backward compatibility)
-        console.warn("No facilitator credentials found for student, using default client");
+      let credentialsSource = "none";
+
+      try {
+        // NEW: Get student-specific facilitator credentials for status check
+        const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
+          req.session.user.email
+        );
+
+        if (facilitatorCredentials) {
+          credentialsSource = "database";
+          console.log("Using database facilitator credentials for status check");
+          // Use custom client with student's facilitator credentials
+          const customVertexClient = createVertexAIClient(facilitatorCredentials);
+          result = await customVertexClient.checkJobStatus(decodedJobId);
+        } else if (req.session.facilitator?.name) {
+          // Fallback: Use legacy facilitator credentials if available
+          credentialsSource = "legacy";
+          console.log("Using legacy facilitator credentials for status check:", req.session.facilitator.name);
+          try {
+            const apiKey = facilitatorService.getFacilitatorApiKey(req.session.facilitator.name);
+            if (apiKey && facilitatorService.isValidFacilitator(req.session.facilitator.name)) {
+              const { createSimpleVertexClient } = await import("../../services/ai/provider/vertex/vertex.client");
+              const legacyClient = createSimpleVertexClient(apiKey);
+              result = await legacyClient.checkJobStatus(decodedJobId);
+            } else {
+              throw new Error("Invalid or missing legacy facilitator API key");
+            }
+          } catch (legacyError) {
+            console.warn("Legacy facilitator credentials failed:", legacyError);
+            throw legacyError; // Let outer catch handle fallback to default
+          }
+        } else {
+          credentialsSource = "default";
+          // Final fallback: Use default client
+          console.warn("No facilitator credentials found for student, using default client");
+          const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
+          result = await vertexAIClient.checkJobStatus(decodedJobId);
+        }
+      } catch (credentialsError) {
+        console.error("Error getting facilitator credentials:", credentialsError);
+        // Try default client as final fallback
+        credentialsSource = "fallback";
+        console.log("Attempting status check with default client as fallback");
         const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
         result = await vertexAIClient.checkJobStatus(decodedJobId);
       }
@@ -377,7 +476,8 @@ export function registerVideoFlowRoutes(): Router {
         jobId: result.jobId,
         status: result.status,
         videoUrl: result.videoUrl || 'none',
-        hasError: !!result.error
+        hasError: !!result.error,
+        credentialsSource
       });
 
       // Increment usage if video just completed
@@ -391,13 +491,22 @@ export function registerVideoFlowRoutes(): Router {
       const response: GenerateVideoResponse = result;
       res.json(response);
     } catch (error) {
-      console.error("Video status check error:", error);
+      console.error("Video status check error:", {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        jobId: req.params.jobId,
+        userEmail: req.session.user?.email
+      });
+      // Enhanced error response with structured information
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const response: GenerateVideoResponse = {
         jobId: req.params.jobId || "",
         status: "failed",
-        error:
-          "Status check failed: " +
-          (error instanceof Error ? error.message : "Unknown error"),
+        error: `Status check failed: ${errorMessage}`,
+        errorCode: error instanceof Error && errorMessage.includes('facilitator') ? 'FACILITATOR_ERROR' : 
+                  error instanceof Error && errorMessage.includes('credentials') ? 'CREDENTIALS_ERROR' : 
+                  error instanceof Error && errorMessage.includes('Not authenticated') ? 'AUTH_ERROR' : 
+                  'UNKNOWN_ERROR'
       };
       res.status(500).json(response);
     }

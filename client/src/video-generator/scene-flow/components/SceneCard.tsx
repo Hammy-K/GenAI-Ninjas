@@ -56,6 +56,7 @@ export function SceneCard({
   );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [pollTimeoutId, setPollTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
   const { saveCompletedVideo, getCompletedVideo } = useVideoFlowContext();
 
@@ -87,6 +88,12 @@ export function SceneCard({
     if (isPolling) {
       console.log(`Polling already active for scene ${sceneNumber}, ignoring request`);
       return;
+    }
+
+    // Clear any existing timeout
+    if (pollTimeoutId) {
+      clearTimeout(pollTimeoutId);
+      setPollTimeoutId(null);
     }
 
     console.log(`Starting polling for scene ${sceneNumber}, jobId: ${jobId}`);
@@ -125,6 +132,10 @@ export function SceneCard({
           saveCompletedVideo(sceneNumber, statusResult);
           onComplete(true);
           setIsPolling(false);
+          if (pollTimeoutId) {
+            clearTimeout(pollTimeoutId);
+            setPollTimeoutId(null);
+          }
           return;
         } else if (statusResult.status === "failed") {
           console.log(`❌ Video failed for scene ${sceneNumber} after ${pollAttempts} attempts`);
@@ -132,10 +143,15 @@ export function SceneCard({
           setGenerationError("فشل في إنشاء الفيديو");
           onComplete(false);
           setIsPolling(false);
+          if (pollTimeoutId) {
+            clearTimeout(pollTimeoutId);
+            setPollTimeoutId(null);
+          }
           return;
         } else if (statusResult.status === "processing") {
           // Continue polling with exponential backoff
-          setTimeout(pollStatus, currentInterval);
+          const timeoutId = setTimeout(pollStatus, currentInterval);
+          setPollTimeoutId(timeoutId);
         } else {
           console.log(`Unknown status for scene ${sceneNumber}:`, statusResult.status);
           setIsPolling(false);
@@ -143,38 +159,75 @@ export function SceneCard({
       } catch (error: any) {
         console.error(`Polling error for scene ${sceneNumber}:`, error);
         
-        // Distinguish between network errors and API errors
-        if (error?.message?.includes('fetch') || error?.code === 'NETWORK_ERROR') {
-          // Network error - retry with exponential backoff
-          if (pollAttempts < 10) {
-            const retryDelay = Math.min(5000 * Math.pow(2, pollAttempts), 30000);
-            console.log(`Network error, retrying in ${retryDelay}ms...`);
-            setTimeout(pollStatus, retryDelay);
+        // Enhanced error handling with specific error types
+        const errorMessage = error?.message || error?.toString() || 'Unknown error';
+        const errorStatus = error?.status || (errorMessage.includes('401') ? 401 : 0);
+        
+        console.log(`Error details: status=${errorStatus}, message="${errorMessage}"`);
+        
+        // Authentication error - don't retry, user needs to re-authenticate
+        if (errorStatus === 401 || errorMessage.includes('Not authenticated')) {
+          console.log("Authentication error - stopping polling");
+          setGenerationError("انتهت صلاحية الجلسة - يرجى تحديث الصفحة");
+          setIsPolling(false);
+          return;
+        }
+        
+        // Server errors (5xx) or facilitator credential issues - retry with limit
+        if (errorStatus >= 500 || errorMessage.includes('facilitator') || errorMessage.includes('credentials')) {
+          if (pollAttempts < 5) { // Reduced retry attempts for server errors
+            const retryDelay = Math.min(10000 * Math.pow(1.5, pollAttempts), 30000);
+            console.log(`Server/credentials error, retrying in ${retryDelay}ms... (attempt ${pollAttempts + 1}/5)`);
+            const timeoutId = setTimeout(pollStatus, retryDelay);
+            setPollTimeoutId(timeoutId);
           } else {
-            setGenerationError("مشكلة في الاتصال - حاول مرة أخرى");
+            console.log("Too many server errors, stopping polling");
+            setGenerationError("مشكلة في الخادم - يرجى المحاولة مرة أخرى لاحقاً");
             setIsPolling(false);
           }
-        } else {
-          // API or other error - stop polling
-          setGenerationError("حدث خطأ أثناء التحقق من حالة الفيديو");
-          setIsPolling(false);
+          return;
         }
+        
+        // Network errors - retry with exponential backoff
+        if (error?.code === 'NETWORK_ERROR' || errorMessage.includes('fetch') || errorMessage.includes('NetworkError')) {
+          if (pollAttempts < 8) { // More attempts for network issues
+            const retryDelay = Math.min(5000 * Math.pow(2, pollAttempts), 30000);
+            console.log(`Network error, retrying in ${retryDelay}ms... (attempt ${pollAttempts + 1}/8)`);
+            const timeoutId = setTimeout(pollStatus, retryDelay);
+            setPollTimeoutId(timeoutId);
+          } else {
+            console.log("Too many network errors, stopping polling");
+            setGenerationError("مشكلة في الاتصال - تحقق من الإنترنت وحاول مرة أخرى");
+            setIsPolling(false);
+          }
+          return;
+        }
+        
+        // Other errors - stop polling immediately
+        console.log("Unhandled error type, stopping polling");
+        setGenerationError("حدث خطأ غير متوقع - يرجى المحاولة مرة أخرى");
+        setIsPolling(false);
       }
     };
 
     // Start polling with initial delay
-    setTimeout(pollStatus, 10000); // Wait 10 seconds before first check
-  }, [sceneNumber, isPolling, onComplete, saveCompletedVideo]);
+    const initialTimeoutId = setTimeout(pollStatus, 10000); // Wait 10 seconds before first check
+    setPollTimeoutId(initialTimeoutId);
+  }, [sceneNumber, isPolling, onComplete, saveCompletedVideo, pollTimeoutId]);
 
   // Cleanup polling on unmount or status change to completed/failed
   useEffect(() => {
     return () => {
-      if (isPolling) {
+      if (isPolling || pollTimeoutId) {
         console.log(`Cleaning up polling for scene ${sceneNumber}`);
+        if (pollTimeoutId) {
+          clearTimeout(pollTimeoutId);
+          setPollTimeoutId(null);
+        }
         setIsPolling(false);
       }
     };
-  }, [sceneNumber, isPolling]);
+  }, [sceneNumber, isPolling, pollTimeoutId]);
 
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
