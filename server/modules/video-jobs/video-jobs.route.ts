@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../../storage";
+import { db } from "../../db";
 import { videoJobs, facilitators } from "../../../shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { createHash } from "crypto";

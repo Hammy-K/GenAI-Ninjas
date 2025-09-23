@@ -1,4 +1,4 @@
-import { db } from "../../storage";
+import { db } from "../../db";
 import { videoJobs, facilitators } from "../../../shared/schema";
 import { eq, and, lte, or, isNull } from "drizzle-orm";
 
