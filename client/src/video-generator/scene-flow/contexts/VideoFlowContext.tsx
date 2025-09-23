@@ -63,8 +63,27 @@ interface VideoFlowProviderProps {
 }
 
 export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
+  // Initialize user from localStorage with safety checks
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const savedUser = localStorage.getItem('videoflow_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (error) {
+      console.error('Failed to load user from localStorage:', error);
+      return null;
+    }
+  });
+
+  // Initialize facilitator from localStorage with safety checks
+  const [facilitator, setFacilitator] = useState<Facilitator | null>(() => {
+    try {
+      const savedFacilitator = localStorage.getItem('videoflow_facilitator');
+      return savedFacilitator ? JSON.parse(savedFacilitator) : null;
+    } catch (error) {
+      console.error('Failed to load facilitator from localStorage:', error);
+      return null;
+    }
+  });
   const [completedVideos, setCompletedVideos] = useState<
     Map<number, GenerateVideoResponse>
   >(new Map());
@@ -184,6 +203,32 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     refetchOnWindowFocus: false,
   });
 
+  // Persist user state to localStorage
+  useEffect(() => {
+    try {
+      if (user) {
+        localStorage.setItem('videoflow_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('videoflow_user');
+      }
+    } catch (error) {
+      console.error('Failed to save user to localStorage:', error);
+    }
+  }, [user]);
+
+  // Persist facilitator state to localStorage
+  useEffect(() => {
+    try {
+      if (facilitator) {
+        localStorage.setItem('videoflow_facilitator', JSON.stringify(facilitator));
+      } else {
+        localStorage.removeItem('videoflow_facilitator');
+      }
+    } catch (error) {
+      console.error('Failed to save facilitator to localStorage:', error);
+    }
+  }, [facilitator]);
+
   // Session hydration: Load user and facilitator from server data on mount
   useEffect(() => {
     if (facilitatorsData && !facilitatorsError) {
@@ -219,6 +264,8 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     onError: (error) => {
       console.error("Google authentication failed:", error);
       setUser(null);
+      // Clear facilitator on auth failure
+      setFacilitator(null);
     },
   });
 
