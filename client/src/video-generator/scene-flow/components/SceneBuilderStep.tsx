@@ -32,7 +32,10 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
     const newCompleted = [...completedScenes];
     newCompleted[index] = isComplete;
     setCompletedScenes(newCompleted);
-    // No auto-advancement - complete freedom to navigate
+
+    if (isComplete && index === currentScene && index < 2) {
+      setCurrentScene(index + 1);
+    }
   };
 
   const allScenesCompleted = completedScenes.every(Boolean);
@@ -64,7 +67,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
           <div className="flex items-center gap-4">
             <UsageTracker className="border-0 bg-transparent shadow-none p-0" />
 
-            {/* FREE NAVIGATION: Click any scene anytime */}
+            {/* Compact Progress Dots */}
             <div className="flex gap-2">
               {scenes.map((_, index) => (
                 <button
@@ -72,13 +75,12 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
                   onClick={() => setCurrentScene(index)}
                   className={`w-8 h-8 rounded-lg transition-all duration-200 flex items-center justify-center text-xs font-bold ${
                     completedScenes[index]
-                      ? "bg-green-500 text-white shadow-md hover:bg-green-600 cursor-pointer"
+                      ? "bg-green-500 text-white shadow-md"
                       : index === currentScene
                         ? "bg-purple-500 text-white shadow-md scale-110"
-                        : "bg-gray-200 text-gray-500 hover:bg-gray-300 cursor-pointer"
+                        : "bg-gray-200 text-gray-500 hover:bg-gray-300"
                   }`}
                   data-testid={`scene-dot-${index + 1}`}
-                  title={`انتقل إلى المشهد ${index + 1}`}
                 >
                   {completedScenes[index] ? (
                     <CheckCircle className="w-4 h-4" />
@@ -93,7 +95,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
 
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Scene Cards - NO RESTRICTIONS */}
+          {/* Scene Cards - Compact Grid */}
           {scenes.map((scene, index) => (
             <div key={index} className="h-fit">
               <SceneCard
@@ -101,7 +103,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
                 scene={scene}
                 isExpanded={index === currentScene}
                 isCompleted={completedScenes[index]}
-                isLocked={false} // REMOVED: No more locking - complete freedom
+                isLocked={index > 0 && !completedScenes[index - 1]}
                 onUpdate={(updatedScene) => updateScene(index, updatedScene)}
                 onComplete={(isComplete) =>
                   markSceneComplete(index, isComplete)
