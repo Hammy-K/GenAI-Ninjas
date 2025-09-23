@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,100 +82,128 @@ export function SceneCard({
     }
   }, [sceneNumber, getCompletedVideo, onComplete]);
 
-  useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
-    let timeoutTimer: NodeJS.Timeout;
-
-    // STRICT CHECK: Only start polling if status is exactly "processing" and NOT already polling
-    if (videoResult?.status === "processing" && videoResult.jobId && !isPolling) {
-      console.log(`Starting polling for scene ${sceneNumber}, jobId: ${videoResult.jobId}`);
-      setIsPolling(true);
-      const startTime = Date.now();
-      const TIMEOUT_MINUTES = 5;
-      const TIMEOUT_MS = TIMEOUT_MINUTES * 60 * 1000;
-
-      const pollStatus = async () => {
-        try {
-          if (Date.now() - startTime > TIMEOUT_MS) {
-            console.log(`Polling timeout for scene ${sceneNumber}`);
-            setGenerationError(`انتهت مهلة الإنشاء`);
-            onComplete(false);
-            setIsPolling(false);
-            clearInterval(pollInterval);
-            return;
-          }
-
-          const statusResult = await videoFlowApi.checkStatus(
-            videoResult.jobId,
-          );
-          console.log(`Poll result for scene ${sceneNumber}:`, statusResult.status);
-          setVideoResult(statusResult);
-
-          // Save updated status to context/localStorage
-          saveCompletedVideo(sceneNumber, statusResult);
-
-          if (statusResult.status === "completed") {
-            console.log(`Polling completed for scene ${sceneNumber}`);
-            onComplete(true);
-            setIsPolling(false);
-            clearInterval(pollInterval);
-          } else if (statusResult.status === "failed") {
-            console.log(`Polling failed for scene ${sceneNumber}`);
-            setGenerationError("فشل في الإنشاء");
-            onComplete(false);
-            setIsPolling(false);
-            clearInterval(pollInterval);
-          }
-        } catch (error) {
-          console.log(`Polling error for scene ${sceneNumber}:`, error);
-          setGenerationError("خطأ في التحقق");
-          setIsPolling(false);
-          clearInterval(pollInterval);
-        }
-      };
-
-      pollStatus();
-      pollInterval = setInterval(pollStatus, 5000);
-
-      timeoutTimer = setTimeout(() => {
-        console.log(`Global timeout for scene ${sceneNumber}`);
-        setGenerationError(`انتهت المهلة`);
-        onComplete(false);
-        setIsPolling(false);
-        clearInterval(pollInterval);
-      }, TIMEOUT_MS);
-    } else if (videoResult?.status !== "processing") {
-      // Ensure polling is stopped for any non-processing status
-      if (isPolling) {
-        console.log(`Stopping polling for scene ${sceneNumber} - status: ${videoResult?.status}`);
-        setIsPolling(false);
-      }
+  // Separate polling management to prevent infinite loops
+  const startPolling = useCallback((jobId: string) => {
+    if (isPolling) {
+      console.log(`Polling already active for scene ${sceneNumber}, ignoring request`);
+      return;
     }
 
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-      if (timeoutTimer) clearTimeout(timeoutTimer);
-      setIsPolling(false);
+    console.log(`Starting polling for scene ${sceneNumber}, jobId: ${jobId}`);
+    setIsPolling(true);
+    setGenerationError(null);
+
+    const startTime = Date.now();
+    const TIMEOUT_MINUTES = 8; // Increased timeout
+    const TIMEOUT_MS = TIMEOUT_MINUTES * 60 * 1000;
+    let pollAttempts = 0;
+
+    const pollStatus = async () => {
+      try {
+        pollAttempts++;
+        
+        // Exponential backoff: start at 10s, max 30s
+        const baseInterval = 10000; // 10 seconds
+        const maxInterval = 30000; // 30 seconds  
+        const currentInterval = Math.min(baseInterval * Math.pow(1.2, pollAttempts - 1), maxInterval);
+
+        if (Date.now() - startTime > TIMEOUT_MS) {
+          console.log(`Polling timeout for scene ${sceneNumber} after ${pollAttempts} attempts`);
+          setGenerationError(`انتهت مهلة إنشاء الفيديو بعد ${TIMEOUT_MINUTES} دقائق`);
+          onComplete(false);
+          setIsPolling(false);
+          return;
+        }
+
+        const statusResult = await videoFlowApi.checkStatus(jobId);
+        console.log(`Poll ${pollAttempts} for scene ${sceneNumber}:`, statusResult.status);
+
+        // Only update state if status actually changed or it's completed
+        if (statusResult.status === "completed") {
+          console.log(`✅ Video completed for scene ${sceneNumber} after ${pollAttempts} attempts`);
+          setVideoResult(statusResult);
+          saveCompletedVideo(sceneNumber, statusResult);
+          onComplete(true);
+          setIsPolling(false);
+          return;
+        } else if (statusResult.status === "failed") {
+          console.log(`❌ Video failed for scene ${sceneNumber} after ${pollAttempts} attempts`);
+          setVideoResult(statusResult);
+          setGenerationError("فشل في إنشاء الفيديو");
+          onComplete(false);
+          setIsPolling(false);
+          return;
+        } else if (statusResult.status === "processing") {
+          // Continue polling with exponential backoff
+          setTimeout(pollStatus, currentInterval);
+        } else {
+          console.log(`Unknown status for scene ${sceneNumber}:`, statusResult.status);
+          setIsPolling(false);
+        }
+      } catch (error: any) {
+        console.error(`Polling error for scene ${sceneNumber}:`, error);
+        
+        // Distinguish between network errors and API errors
+        if (error?.message?.includes('fetch') || error?.code === 'NETWORK_ERROR') {
+          // Network error - retry with exponential backoff
+          if (pollAttempts < 10) {
+            const retryDelay = Math.min(5000 * Math.pow(2, pollAttempts), 30000);
+            console.log(`Network error, retrying in ${retryDelay}ms...`);
+            setTimeout(pollStatus, retryDelay);
+          } else {
+            setGenerationError("مشكلة في الاتصال - حاول مرة أخرى");
+            setIsPolling(false);
+          }
+        } else {
+          // API or other error - stop polling
+          setGenerationError("حدث خطأ أثناء التحقق من حالة الفيديو");
+          setIsPolling(false);
+        }
+      }
     };
-  }, [videoResult?.status, videoResult?.jobId, isPolling, onComplete, saveCompletedVideo, sceneNumber]);
+
+    // Start polling with initial delay
+    setTimeout(pollStatus, 10000); // Wait 10 seconds before first check
+  }, [sceneNumber, isPolling, onComplete, saveCompletedVideo]);
+
+  // Cleanup polling on unmount or status change to completed/failed
+  useEffect(() => {
+    return () => {
+      if (isPolling) {
+        console.log(`Cleaning up polling for scene ${sceneNumber}`);
+        setIsPolling(false);
+      }
+    };
+  }, [sceneNumber, isPolling]);
 
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
     retry: 1,
     onSuccess: (data: GenerateVideoResponse) => {
+      console.log(`Video generation initiated for scene ${sceneNumber}:`, data.status);
       setVideoResult(data);
       setGenerationError(null);
       saveCompletedVideo(sceneNumber, data);
 
-      if (data.status !== "processing") setIsPolling(false);
       if (data.status === "completed") {
+        // Video already completed
         onComplete(true);
       } else if (data.status === "failed") {
+        // Video failed immediately
+        setGenerationError("فشل في إنشاء الفيديو");
+        onComplete(false);
+      } else if (data.status === "processing" && data.jobId) {
+        // Start polling for video completion
+        startPolling(data.jobId);
+      } else {
+        // Unknown status
+        setGenerationError("حالة غير معروفة للفيديو");
         onComplete(false);
       }
     },
     onError: (error: any) => {
-      setGenerationError("حدث خطأ");
+      console.error(`Video generation failed for scene ${sceneNumber}:`, error);
+      setGenerationError("فشل في بدء إنشاء الفيديو");
       setVideoResult(null);
       onComplete(false);
     },
