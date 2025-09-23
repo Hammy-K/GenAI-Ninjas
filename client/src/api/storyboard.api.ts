@@ -1,14 +1,9 @@
-import type {
-  ChatMessage,
-  StoryboardAiResponse,
-  StoryboardChatRequest,
-  StoryboardConversationState,
-} from "../types/storyboard.types";
+import type { ChatMessage } from "@/lovable-mission/types/lovable.types";
 
 const API_PATH = "/api/ai-chat/openai";
 const GENERIC_ERROR_AR = "حدث خطأ أثناء توليد الرد. يرجى المحاولة مجددا.";
 
-// System prompt for Dr. Pengy storyboard conversation
+// System prompt for Dr. Pengy storyboard conversation  
 const STORYBOARD_SYSTEM_PROMPT = `أنت د. بنجي، خبير في الثقافة السعودية والحكايات. مهمتك هي مساعدة الطلاب في تطوير فكرة قصة وتحويلها إلى storyboard مكون من 6 مشاهد لفيديو فيروسي مدته 30 ثانية.
 
 اتبع هذا التدفق بدقة:
@@ -45,59 +40,7 @@ Scene 2 (5s)
 - ودود ومشجع ومرح
 - خبير في الثقافة السعودية
 - ماهر في صناعة المحتوى الفيروسي
-- تحافظ على المحتوى مناسب ثقافياً ومشوق
-
-استجب دائماً بـJSON بهذا التنسيق:
-{
-  "aiMessage": "رسالتك للطالب بالعربية",
-  "conversationState": {
-    "phase": "initial" | "clarifying" | "confirming" | "storyboard_generated" | "complete",
-    "storyIdea": "الفكرة الأولية إن وُجدت",
-    "finalStory": "القصة النهائية إن تم تأكيدها", 
-    "storyboard": "الـstoryboard الكامل إن تم إنتاجه"
-  },
-  "isStoryboardGenerated": true/false,
-  "isConversationComplete": true/false
-}`;
-
-// Response format for structured JSON
-const STORYBOARD_RESPONSE_FORMAT = {
-  name: "storyboard_response",
-  schema: {
-    type: "object",
-    properties: {
-      aiMessage: { type: "string" },
-      conversationState: {
-        type: "object",
-        properties: {
-          phase: { 
-            type: "string", 
-            enum: ["initial", "clarifying", "confirming", "storyboard_generated", "complete"] 
-          },
-          storyIdea: { type: "string" },
-          finalStory: { type: "string" },
-          storyboard: { type: "string" }
-        },
-        required: ["phase"],
-        additionalProperties: false
-      },
-      isStoryboardGenerated: { type: "boolean" },
-      isConversationComplete: { type: "boolean" }
-    },
-    required: ["aiMessage", "conversationState", "isStoryboardGenerated", "isConversationComplete"],
-    additionalProperties: false
-  },
-  strict: true
-};
-
-const DEFAULT_STATE: StoryboardAiResponse = {
-  aiMessage: "حدث خطأ بسيط. حاول مرة أخرى.",
-  conversationState: {
-    phase: "initial"
-  },
-  isStoryboardGenerated: false,
-  isConversationComplete: false,
-};
+- تحافظ على المحتوى مناسب ثقافياً ومشوق`;
 
 async function safeJson(res: Response) {
   try {
@@ -110,19 +53,13 @@ async function safeJson(res: Response) {
 export async function sendStoryboardChat(params: {
   history: ChatMessage[];
   message: string;
-  conversationState?: StoryboardConversationState;
   signal?: AbortSignal;
-}): Promise<StoryboardAiResponse> {
+}): Promise<{ ok: boolean; message: { role: string; content: string } }> {
   try {
     const body = {
       history: params.history ?? [],
       message: params.message ?? "",
-      conversationState: params.conversationState,
       systemPrompt: STORYBOARD_SYSTEM_PROMPT,
-      responseFormat: {
-        type: "json_schema", 
-        json_schema: STORYBOARD_RESPONSE_FORMAT
-      },
     };
 
     const res = await fetch(API_PATH, {
@@ -131,12 +68,6 @@ export async function sendStoryboardChat(params: {
       body: JSON.stringify(body),
       signal: params.signal,
     });
-
-    // Check if response is ok first
-    if (!res.ok) {
-      console.error("API request failed:", res.status, res.statusText);
-      return DEFAULT_STATE;
-    }
 
     const data = await safeJson(res);
 
@@ -148,34 +79,24 @@ export async function sendStoryboardChat(params: {
       data.message &&
       typeof data.message.content === "string"
     ) {
-      const rawContent: string = (data as any).message.content;
-
-      try {
-        const parsed = JSON.parse(rawContent);
-
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          typeof parsed.aiMessage === "string" &&
-          parsed.conversationState &&
-          typeof parsed.conversationState === "object"
-        ) {
-          return {
-            aiMessage: parsed.aiMessage,
-            conversationState: parsed.conversationState,
-            isStoryboardGenerated: !!parsed.isStoryboardGenerated,
-            isConversationComplete: !!parsed.isConversationComplete,
-          } as StoryboardAiResponse;
-        }
-      } catch (parseError) {
-        console.error("Failed to parse AI response JSON:", parseError);
-      }
+      return {
+        ok: !!(data as any).ok,
+        message: {
+          role: "assistant",
+          content: (data as any).message.content,
+        },
+      };
     }
 
     // Unexpected shape -> minimal error response
-    console.error("Unexpected response shape from AI API:", data);
-    return DEFAULT_STATE;
+    return {
+      ok: false,
+      message: { role: "assistant", content: GENERIC_ERROR_AR },
+    };
   } catch (err) {
-    return DEFAULT_STATE;
+    return {
+      ok: false,
+      message: { role: "assistant", content: GENERIC_ERROR_AR },
+    };
   }
 }
