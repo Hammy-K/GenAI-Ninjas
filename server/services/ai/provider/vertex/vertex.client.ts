@@ -97,7 +97,7 @@ class VertexAIClient {
     console.log("Prompt value:", request.prompt);
     const accessToken = await this.getAccessToken();
 
-    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast-generate:predictLongRunning`;
+    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-generate-fast:predictLongRunning`;
 
     // Confirmed by documentation: 'instances' with nested 'prompt'
     const payload = {
@@ -174,7 +174,7 @@ class VertexAIClient {
     accessToken: string,
   ): Promise<VideoGenerationResponse> {
     const alternativeModels = [
-      "veo-3.0-generate-fast-preview",
+      "veo-3.0-fast-generate",
       "veo-3.0-generate-001",
       "veo-3.0-generate-preview",
       "veo-2.0-generate-001",

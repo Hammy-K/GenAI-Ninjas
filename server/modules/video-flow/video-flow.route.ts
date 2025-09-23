@@ -61,6 +61,49 @@ export function registerVideoFlowRoutes(): Router {
   });
 
   /**
+   * POST /api/video-flow/admin/reset-all-data
+   * TEMPORARY: Reset all user data (credits, session, facilitator) for testing
+   */
+  router.post("/admin/reset-all-data", (req: Request, res: Response) => {
+    if (!req.session.user?.uid) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      // Reset usage/credits
+      usageService.resetUsage(req.session.user.uid);
+      
+      // Clear facilitator session
+      req.session.facilitator = undefined;
+      
+      // Clear rate limiting for this user
+      const userId = req.session.user.uid;
+      if (userRateLimit.has(userId)) {
+        userRateLimit.delete(userId);
+      }
+      
+      const newUsage = usageService.getUsage(req.session.user.uid);
+      
+      res.json({
+        success: true,
+        message: "All user data reset successfully. Please refresh the page to clear frontend data.",
+        usage: newUsage,
+        clearedData: {
+          videoCredits: true,
+          facilitatorSession: true,
+          rateLimiting: true
+        }
+      });
+    } catch (error) {
+      console.error("Reset all data error:", error);
+      res.status(500).json({ 
+        error: "Failed to reset user data",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  /**
    * GET /api/video-flow/admin/debug-facilitators
    * Debug endpoint to check facilitator credentials status (Admin only)
    */
