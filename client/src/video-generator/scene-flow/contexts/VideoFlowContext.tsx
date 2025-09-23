@@ -38,6 +38,7 @@ interface VideoFlowContextType {
   ) => void;
   getCompletedVideo: (sceneNumber: number) => GenerateVideoResponse | null;
   clearAllVideos: () => void;
+  clearAllVideosForUser: (userEmail: string) => void;
 
   // Actions
   authenticateGoogle: (request: { idToken: string }) => void;
@@ -99,13 +100,14 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   ) => {
     setCompletedVideos((prev) => new Map(prev.set(sceneNumber, videoResult)));
 
-    // Persist to localStorage
+    // Persist to localStorage with user-specific key
     try {
+      const userEmail = user?.email || 'anonymous';
       localStorage.setItem(
-        `video_scene_${sceneNumber}`,
+        `video_scene_${sceneNumber}_${userEmail}`,
         JSON.stringify(videoResult),
       );
-      console.log(`Video ${sceneNumber} saved to localStorage`);
+      console.log(`Video ${sceneNumber} saved to localStorage for ${userEmail}`);
     } catch (error) {
       console.error("Failed to save video to localStorage:", error);
     }
@@ -120,9 +122,10 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
       return inMemoryVideo;
     }
 
-    // Fallback to localStorage
+    // Fallback to localStorage with user-specific key
     try {
-      const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}`);
+      const userEmail = user?.email || 'anonymous';
+      const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}_${userEmail}`);
       if (savedVideo) {
         const parsedVideo = JSON.parse(savedVideo) as GenerateVideoResponse;
         // Also restore to in-memory state
@@ -144,25 +147,46 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   const clearAllVideos = () => {
     setCompletedVideos(new Map());
 
-    // Clear from localStorage
+    // Clear from localStorage for current user
     try {
+      const userEmail = user?.email || 'anonymous';
       [1, 2, 3].forEach((sceneNumber) => {
-        localStorage.removeItem(`video_scene_${sceneNumber}`);
+        localStorage.removeItem(`video_scene_${sceneNumber}_${userEmail}`);
       });
-      console.log("All videos cleared from localStorage");
+      console.log(`All videos cleared from localStorage for ${userEmail}`);
     } catch (error) {
       console.error("Failed to clear videos from localStorage:", error);
+    }
+  };
+
+  const clearAllVideosForUser = (userEmail: string) => {
+    // Clear from localStorage for specific user
+    try {
+      [1, 2, 3].forEach((sceneNumber) => {
+        localStorage.removeItem(`video_scene_${sceneNumber}_${userEmail}`);
+      });
+      console.log(`All videos cleared from localStorage for ${userEmail}`);
+      
+      // If clearing for current user, also clear in-memory state
+      if (user?.email === userEmail) {
+        setCompletedVideos(new Map());
+      }
+    } catch (error) {
+      console.error(`Failed to clear videos for ${userEmail}:`, error);
     }
   };
 
   // Load saved videos on mount
   useEffect(() => {
     const loadSavedVideos = () => {
+      if (!user?.email) return;
+      
       const savedVideosMap = new Map<number, GenerateVideoResponse>();
+      const userEmail = user.email;
 
       [1, 2, 3].forEach((sceneNumber) => {
         try {
-          const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}`);
+          const savedVideo = localStorage.getItem(`video_scene_${sceneNumber}_${userEmail}`);
           if (savedVideo) {
             const parsedVideo = JSON.parse(savedVideo) as GenerateVideoResponse;
             savedVideosMap.set(sceneNumber, parsedVideo);
@@ -177,12 +201,12 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
 
       if (savedVideosMap.size > 0) {
         setCompletedVideos(savedVideosMap);
-        console.log(`Loaded ${savedVideosMap.size} videos from localStorage`);
+        console.log(`Loaded ${savedVideosMap.size} videos from localStorage for ${userEmail}`);
       }
     };
 
     loadSavedVideos();
-  }, []);
+  }, [user?.email]);
 
   // Get facilitators data - only fetch when authenticated
   const {
@@ -417,6 +441,7 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     saveCompletedVideo,
     getCompletedVideo,
     clearAllVideos,
+    clearAllVideosForUser,
 
     // Actions
     authenticateGoogle: authenticateGoogleMutation.mutate,
