@@ -1,6 +1,6 @@
 import { GoogleAuth } from "google-auth-library";
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Vertex AI client for video generation using Veo 3 Fast model
@@ -97,7 +97,7 @@ class VertexAIClient {
     console.log("Prompt value:", request.prompt);
     const accessToken = await this.getAccessToken();
 
-    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast-generate-preview:predictLongRunning`;
+    const endpoint = `https://${this.config.location}-aiplatform.googleapis.com/v1/projects/${this.config.projectId}/locations/${this.config.location}/publishers/google/models/veo-3.0-fast-generate:predictLongRunning`;
 
     // Confirmed by documentation: 'instances' with nested 'prompt'
     const payload = {
@@ -174,9 +174,9 @@ class VertexAIClient {
     accessToken: string,
   ): Promise<VideoGenerationResponse> {
     const alternativeModels = [
+      "veo-3.0-generate-fast-preview",
       "veo-3.0-generate-001",
       "veo-3.0-generate-preview",
-      "veo-3.0-generate-fast-preview",
       "veo-2.0-generate-001",
     ];
 
@@ -193,10 +193,10 @@ class VertexAIClient {
           ],
           parameters: {
             aspectRatio: request.aspectRatio,
-            durationSeconds: 5,
+            durationSeconds: 6,
             generateAudio: true,
             sampleCount: 1,
-            ...(modelName.includes("veo-3") && { resolution: "720p" }),
+            ...(modelName.includes("veo-3") && { resolution: "1080p" }),
           },
         };
 
@@ -293,9 +293,9 @@ class VertexAIClient {
       // Log only essential status info, not the massive video data
       console.log("Status check result:", {
         jobId: operationName,
-        status: result.done ? 'completed' : 'processing',
+        status: result.done ? "completed" : "processing",
         hasVideo: !!(result.response?.videos?.length > 0),
-        hasError: !!result.error
+        hasError: !!result.error,
       });
 
       if (result.done) {
@@ -326,48 +326,54 @@ class VertexAIClient {
           result.response.videos.length > 0
         ) {
           const video = result.response.videos[0];
-          
+
           // PRIORITY FIX: Try base64 data first (creates downloadable files)
           if (video.bytesBase64Encoded) {
             try {
-              const videoData = Buffer.from(video.bytesBase64Encoded, 'base64');
-              const operationId = operationName.split('/').pop() || Date.now().toString();
+              const videoData = Buffer.from(video.bytesBase64Encoded, "base64");
+              const operationId =
+                operationName.split("/").pop() || Date.now().toString();
               const filename = `${operationId}.mp4`;
-              const filePath = path.join('server/public/generated-videos', filename);
-              
+              const filePath = path.join(
+                "server/public/generated-videos",
+                filename,
+              );
+
               // Ensure directory exists
               const dir = path.dirname(filePath);
               if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
               }
-              
+
               // Write video file
               fs.writeFileSync(filePath, videoData);
-              
+
               const publicUrl = `/generated-videos/${filename}`;
               console.log(`Video saved successfully: ${publicUrl}`);
-              
+
               return {
                 jobId: operationName,
                 status: "completed",
                 videoUrl: publicUrl,
               };
             } catch (error) {
-              console.error('Failed to save video file:', error);
+              console.error("Failed to save video file:", error);
               // Fall back to GCS URI if base64 processing fails
             }
           }
-          
+
           // Fallback: Try GCS URI (browsers can't access gs:// directly)
           if (video.gcsUri) {
-            console.warn(`Using GCS URI - browsers may not be able to access: ${video.gcsUri}`);
+            console.warn(
+              `Using GCS URI - browsers may not be able to access: ${video.gcsUri}`,
+            );
             return {
               jobId: operationName,
               status: "completed",
               videoUrl: video.gcsUri,
             };
           }
-          
+
           console.error("Video object found but no URL or base64 data:", video);
           return {
             jobId: operationName,
