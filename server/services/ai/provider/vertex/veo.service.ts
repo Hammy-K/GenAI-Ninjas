@@ -46,7 +46,7 @@ Requirements:
 - Use cinematic camera movements and professional lighting
 - Create smooth transitions and engaging visual storytelling
 - Maintain high visual quality throughout the video
-- Duration: 5 seconds
+- Duration: 6 seconds
 - Output format: MP4
 
 The voiceover should complement and enhance the visual narrative, providing context and emotional depth to the scene.`;
