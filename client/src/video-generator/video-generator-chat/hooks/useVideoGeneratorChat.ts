@@ -11,7 +11,7 @@ import { VIDEO_GENERATOR_CHAT_SYSTEM_PROMPT } from "../config/video-generator-ch
 const WELCOME_MSG: ChatMessage = {
   role: "system",
   content:
-    "مرحباً! في هذه المهمة سنصيغ برومبت قوي لتوليد صورة (وصف دقيق، أسلوب، إضاءة، زاوية كاميرا). اكتب فكرتك الأولية وسأساعدك على تحسينها ✍️🖼️",
+    "هلا! أنا دكتور بنجي 🤓✨، مهمتي مساعدتك تحوّل فكرتك لقصة واضحة ومن ثم نصوّرها في 6 مشاهد لكل مشهد 5 ثواني. ابدأ بكتابة فكرتك الأولية وأنا بعطيك اقتراحات وأسئلة لتحسينها 📖🎬",
 };
 
 export function useVideoGeneratorChat() {
