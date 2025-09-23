@@ -319,8 +319,8 @@ class VideoJobWorker {
 // Singleton instance
 export const videoJobWorker = new VideoJobWorker();
 
-// Auto-start the worker when this module is imported
-videoJobWorker.start();
+// Do not auto-start the worker - we're using video-flow system instead
+// videoJobWorker.start();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

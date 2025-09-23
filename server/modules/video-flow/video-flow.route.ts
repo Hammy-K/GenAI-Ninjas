@@ -525,36 +525,27 @@ export function registerVideoFlowRoutes(): Router {
           const customVertexClient = createVertexAIClient(facilitatorCredentials);
           result = await customVertexClient.checkJobStatus(decodedJobId);
         } else if (req.session.facilitator?.name) {
-          // Fallback: Use legacy facilitator credentials if available
+          // Fallback: Use legacy facilitator credentials with veoService
           credentialsSource = "legacy";
           console.log("Using legacy facilitator credentials for status check:", req.session.facilitator.name);
-          try {
-            const apiKey = facilitatorService.getFacilitatorApiKey(req.session.facilitator.name);
-            if (apiKey && facilitatorService.isValidFacilitator(req.session.facilitator.name)) {
-              const { createSimpleVertexClient } = await import("../../services/ai/provider/vertex/vertex.client");
-              const legacyClient = createSimpleVertexClient(apiKey);
-              result = await legacyClient.checkJobStatus(decodedJobId);
-            } else {
-              throw new Error("Invalid or missing legacy facilitator API key");
-            }
-          } catch (legacyError) {
-            console.warn("Legacy facilitator credentials failed:", legacyError);
-            throw legacyError; // Let outer catch handle fallback to default
+          const apiKey = facilitatorService.getFacilitatorApiKey(req.session.facilitator.name);
+          if (apiKey && facilitatorService.isValidFacilitator(req.session.facilitator.name)) {
+            result = await veoService.checkJobStatus(decodedJobId);
+          } else {
+            throw new Error("Invalid or missing legacy facilitator API key");
           }
         } else {
           credentialsSource = "default";
-          // Final fallback: Use default client
-          console.warn("No facilitator credentials found for student, using default client");
-          const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
-          result = await vertexAIClient.checkJobStatus(decodedJobId);
+          // Final fallback: Use veoService
+          console.warn("No facilitator credentials found for student, using default veoService");
+          result = await veoService.checkJobStatus(decodedJobId);
         }
       } catch (credentialsError) {
         console.error("Error getting facilitator credentials:", credentialsError);
-        // Try default client as final fallback
+        // Try veoService as final fallback
         credentialsSource = "fallback";
-        console.log("Attempting status check with default client as fallback");
-        const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
-        result = await vertexAIClient.checkJobStatus(decodedJobId);
+        console.log("Attempting status check with veoService as fallback");
+        result = await veoService.checkJobStatus(decodedJobId);
       }
 
       // Log only essential status info, not the massive video data

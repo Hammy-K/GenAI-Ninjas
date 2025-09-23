@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SimpleSceneCard } from "./SimpleSceneCard";
+import { SceneCard } from "./SceneCard";
 import { UsageTracker } from "./UsageTracker";
 import { Button } from "@/components/ui/button";
 import { Film, CheckCircle, ArrowLeft, ArrowRight, Send } from "lucide-react";
@@ -104,7 +104,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Scene Cards - NO RESTRICTIONS */}
           {scenes.map((scene, index) => (
-            <SimpleSceneCard
+            <SceneCard
               key={index}
               sceneNumber={index + 1}
               scene={scene}

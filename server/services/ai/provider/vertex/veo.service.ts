@@ -67,11 +67,7 @@ The voiceover should complement and enhance the visual narrative, providing cont
         aspectRatio: scene.aspectRatio,
       });
 
-      if (result.status === 'completed') {
-        // Create a mock video file for now
-        await this.createMockVideoFile(result.jobId);
-      }
-
+      // Return the real result from Vertex AI - no mocks
       return result;
     } catch (error) {
       console.error('Video generation failed:', error);
@@ -86,17 +82,23 @@ The voiceover should complement and enhance the visual narrative, providing cont
   }
 
   /**
-   * Create a mock video file for testing
-   * In production, this would be replaced by actual video content from Vertex AI
+   * Check the status of a video generation job
    */
-  private async createMockVideoFile(jobId: string): Promise<void> {
-    const filePath = join(this.videoOutputDir, `${jobId}.mp4`);
-    
-    // Create a small placeholder file for now
-    const mockVideoContent = Buffer.from('MOCK_VIDEO_CONTENT_' + jobId);
-    writeFileSync(filePath, mockVideoContent);
-    
-    console.log(`Mock video file created: ${filePath}`);
+  async checkJobStatus(jobId: string): Promise<VideoGenerationResult> {
+    try {
+      console.log('Checking job status for:', jobId);
+      
+      const result = await vertexAIClient.checkJobStatus(jobId);
+      return result;
+    } catch (error) {
+      console.error('Job status check failed:', error);
+      
+      return {
+        jobId,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Status check failed',
+      };
+    }
   }
 
   /**
