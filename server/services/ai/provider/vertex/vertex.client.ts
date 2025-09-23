@@ -111,7 +111,7 @@ class VertexAIClient {
         durationSeconds: 6,
         generateAudio: true,
         sampleCount: 1,
-        resolution: "720p",
+        resolution: "1080p",
       },
     };
 
