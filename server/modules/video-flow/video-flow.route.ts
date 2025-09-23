@@ -372,9 +372,18 @@ export function registerVideoFlowRoutes(): Router {
 
       let result;
       if (facilitatorCredentials) {
-        // Use custom client with student's facilitator credentials
-        const customVertexClient = createVertexAIClient(facilitatorCredentials);
-        result = await customVertexClient.checkJobStatus(decodedJobId);
+        // Try to use custom client with student's facilitator credentials
+        try {
+          const customVertexClient = createVertexAIClient(facilitatorCredentials);
+          result = await customVertexClient.checkJobStatus(decodedJobId);
+        } catch (error) {
+          console.error('Failed to use facilitator credentials for status check, falling back to environment credentials:', error);
+          
+          // Fallback: Use default client with environment variables
+          console.warn("Facilitator credentials failed for status check, using default environment client");
+          const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
+          result = await vertexAIClient.checkJobStatus(decodedJobId);
+        }
       } else {
         // Fallback: Use default client (this maintains backward compatibility)
         console.warn("No facilitator credentials found for student, using default client");
