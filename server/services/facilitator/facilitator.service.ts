@@ -129,7 +129,7 @@ class FacilitatorService {
           vertexLocation: `${encryptedLocation.iv}:${encryptedLocation.encrypted}`,
           vertexServiceAccountJson: `${encryptedCredentials.iv}:${encryptedCredentials.encrypted}`,
           isActive,
-          updatedAt: sql`NOW()`,
+          updatedAt: new Date(),
         },
       }).returning();
       

@@ -14,7 +14,10 @@ const FacilitatorUploadZ = z.object({
       name: z.string().min(1, "Name is required"),
       projectId: z.string().min(1, "Project ID is required"),
       location: z.string().default("us-central1"),
-      serviceAccountJson: z.string().min(1, "Service account JSON is required"),
+      serviceAccountJson: z.union([
+        z.string(),
+        z.record(z.any())
+      ]).transform((v) => typeof v === 'string' ? v : JSON.stringify(v)),
     })
   ),
 });
@@ -42,16 +45,6 @@ export function registerAdminRoutes(): Router {
    */
   router.post("/facilitators", async (req: Request, res: Response) => {
     try {
-      // Manually transform serviceAccountJson objects to strings before validation
-      if (req.body.facilitators && Array.isArray(req.body.facilitators)) {
-        req.body.facilitators = req.body.facilitators.map((facilitator: any) => ({
-          ...facilitator,
-          serviceAccountJson: typeof facilitator.serviceAccountJson === 'object' && facilitator.serviceAccountJson !== null
-            ? JSON.stringify(facilitator.serviceAccountJson)
-            : facilitator.serviceAccountJson
-        }));
-      }
-      
       const parseResult = FacilitatorUploadZ.safeParse(req.body);
       if (!parseResult.success) {
         return res.status(400).json({
