@@ -90,7 +90,7 @@ export function VideoPlayerCard({
 
   return (
     <div
-      className={`rounded-xl border-2 ${config.bgColor} ${config.borderColor} overflow-hidden shadow-sm`}
+      className={`rounded-xl border-2 ${config.bgColor} ${config.borderColor} overflow-hidden shadow-sm max-w-sm mx-auto`}
       data-testid={testId}
     >
       {/* Compact Status Header */}
@@ -113,6 +113,7 @@ export function VideoPlayerCard({
           <video
             controls
             className="w-full rounded-lg border border-gray-200 bg-black shadow-sm"
+            style={{ maxHeight: "200px" }}
             data-testid={`video-player-${sceneNumber}`}
           >
             <source src={videoSrc} type="video/mp4" />
