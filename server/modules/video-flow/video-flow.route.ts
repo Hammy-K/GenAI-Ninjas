@@ -372,7 +372,13 @@ export function registerVideoFlowRoutes(): Router {
         result = await vertexAIClient.checkJobStatus(decodedJobId);
       }
 
-      console.log("Status check result:", JSON.stringify(result, null, 2));
+      // Log only essential status info, not the massive video data
+      console.log("Status check result:", {
+        jobId: result.jobId,
+        status: result.status,
+        videoUrl: result.videoUrl || 'none',
+        hasError: !!result.error
+      });
 
       // Increment usage if video just completed
       if (

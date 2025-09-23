@@ -290,7 +290,13 @@ class VertexAIClient {
       }
 
       const result = await response.json();
-      console.log("Status check response:", JSON.stringify(result, null, 2));
+      // Log only essential status info, not the massive video data
+      console.log("Status check result:", {
+        jobId: operationName,
+        status: result.done ? 'completed' : 'processing',
+        hasVideo: !!(result.response?.videos?.length > 0),
+        hasError: !!result.error
+      });
 
       if (result.done) {
         if (result.error) {
