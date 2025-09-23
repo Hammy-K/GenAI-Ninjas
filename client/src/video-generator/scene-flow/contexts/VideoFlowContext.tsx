@@ -6,7 +6,8 @@ import {
   ReactNode,
 } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { videoFlowApi } from "../api/video-flow.api";
+import { getAuth, onIdTokenChanged } from "firebase/auth";
+import { videoFlowApi, setReAuthenticateCallback } from "../api/video-flow.api";
 import type {
   AuthResponse,
   FacilitatorsResponse,
@@ -27,6 +28,7 @@ interface VideoFlowContextType {
   user: User | null;
   facilitator: Facilitator | null;
   isAuthenticated: boolean;
+  sessionReady: boolean;
   hasFacilitator: boolean;
   facilitatorsData: FacilitatorsResponse | undefined;
 
@@ -42,11 +44,13 @@ interface VideoFlowContextType {
   // Actions
   authenticateGoogle: (request: { idToken: string }) => void;
   confirmFacilitator: (request: { facilitatorName: string }) => void;
+  ensureServerSession: (forceRefresh?: boolean) => Promise<boolean>;
 
   // Loading states
   isAuthenticating: boolean;
   isConfirmingFacilitator: boolean;
   isFacilitatorsLoading: boolean;
+  isSessionBootstrapping: boolean;
 
   // Errors
   authError: Error | null;
@@ -65,40 +69,145 @@ interface VideoFlowProviderProps {
 export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [isSessionBootstrapping, setIsSessionBootstrapping] = useState(false);
   const [completedVideos, setCompletedVideos] = useState<
     Map<number, GenerateVideoResponse>
   >(new Map());
   const queryClient = useQueryClient();
 
-  // Load persisted state on mount
-  useEffect(() => {
-    // Load user from localStorage
-    try {
-      const savedUser = localStorage.getItem('video_flow_user');
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser) as User;
-        setUser(parsedUser);
-        console.log('Restored user from localStorage:', parsedUser.email);
-      }
-    } catch (error) {
-      console.error('Failed to load user from localStorage:', error);
-    }
-
-    // Load facilitator from localStorage
-    try {
-      const savedFacilitator = localStorage.getItem('video_flow_facilitator');
-      if (savedFacilitator) {
-        const parsedFacilitator = JSON.parse(savedFacilitator) as Facilitator;
-        setFacilitator(parsedFacilitator);
-        console.log('Restored facilitator from localStorage:', parsedFacilitator.name);
-      }
-    } catch (error) {
-      console.error('Failed to load facilitator from localStorage:', error);
-    }
-  }, []);
-
+  // Computed state values
   const isAuthenticated = !!user;
   const hasFacilitator = !!facilitator;
+
+  // Load persisted state on mount and bootstrap server session
+  useEffect(() => {
+    const initializeSession = async () => {
+      // Load user from localStorage
+      try {
+        const savedUser = localStorage.getItem('video_flow_user');
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser) as User;
+          setUser(parsedUser);
+          console.log('Restored user from localStorage:', parsedUser.email);
+          
+          // Bootstrap server session after localStorage restoration
+          console.log('Bootstrapping server session...');
+          await ensureServerSession(false);
+        }
+      } catch (error) {
+        console.error('Failed to load user from localStorage:', error);
+      }
+
+      // Load facilitator from localStorage
+      try {
+        const savedFacilitator = localStorage.getItem('video_flow_facilitator');
+        if (savedFacilitator) {
+          const parsedFacilitator = JSON.parse(savedFacilitator) as Facilitator;
+          setFacilitator(parsedFacilitator);
+          console.log('Restored facilitator from localStorage:', parsedFacilitator.name);
+        }
+      } catch (error) {
+        console.error('Failed to load facilitator from localStorage:', error);
+      }
+    };
+
+    initializeSession();
+  }, []);
+
+  // Set re-authentication callback for API 401 retry logic
+  useEffect(() => {
+    const reAuthCallback = () => ensureServerSession(true); // Force refresh token
+    setReAuthenticateCallback(reAuthCallback);
+    
+    return () => {
+      setReAuthenticateCallback(null); // Clean up on unmount
+    };
+  }, []);
+
+  // Firebase token change detection for session sync
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      if (user && isAuthenticated) {
+        console.log('Firebase token changed, syncing server session...');
+        await ensureServerSession(true); // Force refresh
+      } else if (!user && isAuthenticated) {
+        console.log('Firebase user signed out, clearing session...');
+        setUser(null);
+        setSessionReady(false);
+        setFacilitator(null);
+        // Clear localStorage
+        try {
+          localStorage.removeItem('video_flow_user');
+          localStorage.removeItem('video_flow_facilitator');
+        } catch (error) {
+          console.error('Failed to clear localStorage:', error);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isAuthenticated]);
+
+  // Session bootstrap function to establish server session
+  const ensureServerSession = async (forceRefresh: boolean = false): Promise<boolean> => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      console.log('No Firebase user found for session bootstrap');
+      setUser(null);
+      setSessionReady(false);
+      // Clear user from localStorage
+      try {
+        localStorage.removeItem('video_flow_user');
+      } catch (error) {
+        console.error('Failed to clear user from localStorage:', error);
+      }
+      return false;
+    }
+
+    try {
+      setIsSessionBootstrapping(true);
+      
+      // Get current Firebase ID token (force refresh if requested)
+      const idToken = await currentUser.getIdToken(forceRefresh);
+      
+      // Call server authentication endpoint to establish session
+      const response = await videoFlowApi.authenticateGoogle({ idToken });
+      
+      if (response.success && response.user) {
+        console.log('Server session established successfully');
+        setUser(response.user);
+        setSessionReady(true);
+        
+        // Persist user to localStorage
+        try {
+          localStorage.setItem('video_flow_user', JSON.stringify(response.user));
+        } catch (error) {
+          console.error('Failed to persist user to localStorage:', error);
+        }
+        
+        // Invalidate queries to refresh with new session
+        queryClient.invalidateQueries({
+          queryKey: ["video-flow"],
+        });
+        
+        return true;
+      } else {
+        console.error('Server session establishment failed');
+        setSessionReady(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Session bootstrap failed:', error);
+      setSessionReady(false);
+      return false;
+    } finally {
+      setIsSessionBootstrapping(false);
+    }
+  };
 
   // Video management functions
   const saveCompletedVideo = (
@@ -200,11 +309,16 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   } = useQuery({
     queryKey: ["video-flow", "facilitators"],
     queryFn: videoFlowApi.getFacilitators,
-    enabled: isAuthenticated, // Only run when user is authenticated
-    retry: (failureCount, error: any) => {
-      // Don't retry on 401 (unauthorized) - user needs to sign in
+    enabled: isAuthenticated && sessionReady, // Only run when user is authenticated AND session ready
+    retry: async (failureCount, error: any) => {
+      // On 401 (unauthorized), attempt to re-authenticate and retry once
       if (error?.status === 401) {
-        return false;
+        if (failureCount === 0) {
+          console.log('401 error detected, attempting to refresh server session...');
+          const sessionRestored = await ensureServerSession(true); // Force refresh token
+          return sessionRestored; // Retry if session was successfully restored
+        }
+        return false; // Don't retry after failed re-authentication
       }
       return failureCount < 3;
     },
@@ -304,6 +418,7 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     user,
     facilitator,
     isAuthenticated,
+    sessionReady,
     hasFacilitator,
     facilitatorsData,
 
@@ -316,11 +431,13 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     // Actions
     authenticateGoogle: authenticateGoogleMutation.mutate,
     confirmFacilitator: confirmFacilitatorMutation.mutate,
+    ensureServerSession,
 
     // Loading states
     isAuthenticating: authenticateGoogleMutation.isPending,
     isConfirmingFacilitator: confirmFacilitatorMutation.isPending,
     isFacilitatorsLoading,
+    isSessionBootstrapping,
 
     // Errors
     authError: authenticateGoogleMutation.error,

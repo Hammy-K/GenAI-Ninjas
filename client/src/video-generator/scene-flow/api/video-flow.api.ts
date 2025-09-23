@@ -14,11 +14,30 @@ import type {
 
 const VIDEO_FLOW_BASE = "/api/video-flow";
 
-// Custom fetch wrapper for video flow API to handle GET/POST properly
+// Module-level re-authentication function that can be set by the context
+let reAuthenticateCallback: (() => Promise<boolean>) | null = null;
+
+export function setReAuthenticateCallback(callback: (() => Promise<boolean>) | null) {
+  reAuthenticateCallback = callback;
+}
+
+// Custom error class that preserves HTTP status codes
+class APIError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'APIError';
+    this.status = status;
+  }
+}
+
+// Custom fetch wrapper for video flow API to handle GET/POST properly with 401 retry
 async function makeVideoFlowRequest<T>(
   method: string,
   endpoint: string,
   data?: unknown,
+  retryCount: number = 0,
 ): Promise<T> {
   const requestInit: RequestInit = {
     method,
@@ -33,14 +52,36 @@ async function makeVideoFlowRequest<T>(
     requestInit.body = JSON.stringify(data);
   }
 
-  const response = await fetch(`${VIDEO_FLOW_BASE}${endpoint}`, requestInit);
+  try {
+    const response = await fetch(`${VIDEO_FLOW_BASE}${endpoint}`, requestInit);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`${response.status}: ${errorText || response.statusText}`);
+    if (!response.ok) {
+      // Handle 401 Unauthorized with automatic re-authentication retry
+      // Exempt "/auth/google" endpoint to prevent recursive auth calls
+      if (response.status === 401 && retryCount === 0 && reAuthenticateCallback && endpoint !== "/auth/google") {
+        console.log(`401 error on ${method} ${endpoint}, attempting re-authentication...`);
+        const reAuthSuccess = await reAuthenticateCallback();
+        
+        if (reAuthSuccess) {
+          console.log('Re-authentication successful, retrying request...');
+          return makeVideoFlowRequest<T>(method, endpoint, data, retryCount + 1);
+        } else {
+          console.log('Re-authentication failed, not retrying');
+        }
+      }
+      
+      const errorText = await response.text();
+      throw new APIError(response.status, errorText || response.statusText);
+    }
+
+    return response.json();
+  } catch (error) {
+    // Re-throw APIError as-is, wrap other errors
+    if (error instanceof APIError) {
+      throw error;
+    }
+    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return response.json();
 }
 
 export const videoFlowApi = {
