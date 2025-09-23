@@ -127,21 +127,9 @@ export function registerVideoFlowRoutes(): Router {
           f.projectId === assignedCredentials.projectId
         );
         matchedFacilitatorName = matchedFacilitator?.name;
-      } else {
-        // FALLBACK: Try legacy system if no database assignment found
-        try {
-          const legacyInfo = facilitatorService.getFacilitatorInfo(req.session.user.email);
-          if (legacyInfo.facilitators.length > 0) {
-            facilitators.push(...legacyInfo.facilitators.filter(
-              lf => !facilitators.some(f => f.name === lf.name)
-            ));
-          }
-          matchedFacilitatorName = legacyInfo.matchedFacilitatorName || undefined;
-        } catch (error) {
-          // Legacy system failed (expected in production), continue with database-only
-          console.log('Legacy facilitator system not available, using database only');
-        }
       }
+      // REMOVED: Legacy system fallback that was incorrectly assigning TestFacilitator
+      // New users should start with no assigned facilitator and manually select one
 
       const response: FacilitatorsResponse = {
         facilitators,
