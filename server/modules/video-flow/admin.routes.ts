@@ -14,7 +14,16 @@ const FacilitatorUploadZ = z.object({
       name: z.string().min(1, "Name is required"),
       projectId: z.string().min(1, "Project ID is required"),
       location: z.string().default("us-central1"),
-      serviceAccountJson: z.string().min(1, "Service account JSON is required"),
+      serviceAccountJson: z.union([
+        z.string().min(1, "Service account JSON is required"),
+        z.object({}).passthrough(), // Accept any object structure
+      ]).transform((val) => {
+        // Normalize to string format
+        if (typeof val === 'object') {
+          return JSON.stringify(val);
+        }
+        return val;
+      }),
     })
   ),
 });
@@ -55,8 +64,13 @@ export function registerAdminRoutes(): Router {
 
       for (const facilitator of facilitators) {
         try {
-          // Validate service account JSON format
-          JSON.parse(facilitator.serviceAccountJson);
+          // Validate service account JSON format (already normalized to string by schema transform)
+          const serviceAccountObj = JSON.parse(facilitator.serviceAccountJson);
+          
+          // Basic validation of required service account fields
+          if (!serviceAccountObj.type || !serviceAccountObj.project_id || !serviceAccountObj.private_key || !serviceAccountObj.client_email) {
+            throw new Error('Invalid service account JSON: missing required fields');
+          }
 
           await facilitatorService.addFacilitator({
             name: facilitator.name,

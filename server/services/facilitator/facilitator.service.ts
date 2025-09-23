@@ -115,13 +115,22 @@ class FacilitatorService {
       const encryptedProjectId = encryptionService.encrypt(credentials.projectId);
       const encryptedLocation = encryptionService.encrypt(credentials.location);
       
-      // Store in database with encrypted credentials (IV embedded in encrypted string)
+      // Store in database with encrypted credentials (IV embedded in encrypted string) - Use upsert
       const [facilitator] = await db.insert(facilitators).values({
         name,
         vertexProjectId: `${encryptedProjectId.iv}:${encryptedProjectId.encrypted}`,
         vertexLocation: `${encryptedLocation.iv}:${encryptedLocation.encrypted}`,
         vertexServiceAccountJson: `${encryptedCredentials.iv}:${encryptedCredentials.encrypted}`,
         isActive,
+      }).onConflictDoUpdate({
+        target: facilitators.name,
+        set: {
+          vertexProjectId: `${encryptedProjectId.iv}:${encryptedProjectId.encrypted}`,
+          vertexLocation: `${encryptedLocation.iv}:${encryptedLocation.encrypted}`,
+          vertexServiceAccountJson: `${encryptedCredentials.iv}:${encryptedCredentials.encrypted}`,
+          isActive,
+          updatedAt: sql`NOW()`,
+        },
       }).returning();
       
       console.log(`Facilitator credentials stored successfully for: ${name}`);
