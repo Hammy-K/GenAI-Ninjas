@@ -203,38 +203,102 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     refetchOnWindowFocus: false,
   });
 
+  // Auto re-authentication on mount: Handle session loss after page refresh
+  useEffect(() => {
+    const attemptReauth = async () => {
+      // Only attempt if we have user data but no successful facilitators response yet
+      if (user && !facilitatorsData && !isFacilitatorsLoading) {
+        console.log('🔄 Attempting re-authentication on mount...', { user: user.email });
+        
+        try {
+          const { getAuth } = await import('firebase/auth');
+          const auth = getAuth();
+          
+          if (auth.currentUser) {
+            console.log('Getting Firebase token...');
+            const idToken = await auth.currentUser.getIdToken(true);
+            
+            console.log('Re-authenticating with server...');
+            const result = await videoFlowApi.authenticateGoogle({ idToken });
+            console.log('✅ Re-authentication successful:', result);
+            
+            // Force refresh of facilitators data
+            queryClient.invalidateQueries({
+              queryKey: ["video-flow", "facilitators"],
+            });
+          } else {
+            console.log('❌ No Firebase user - clearing localStorage');
+            setUser(null);
+            setFacilitator(null);
+          }
+        } catch (error) {
+          console.error('❌ Re-authentication failed:', error);
+          setUser(null);
+          setFacilitator(null);
+        }
+      }
+    };
+
+    // Give a small delay to let the query attempt first
+    const timer = setTimeout(attemptReauth, 2000);
+    return () => clearTimeout(timer);
+  }, [user, facilitatorsData, isFacilitatorsLoading, queryClient]);
+
   // Auto re-authentication: Handle session loss after page refresh
   useEffect(() => {
     const handleSessionLoss = async () => {
+      console.log('Re-auth check:', { 
+        hasUser: !!user, 
+        hasError: !!facilitatorsError, 
+        errorType: facilitatorsError?.constructor.name,
+        errorMessage: facilitatorsError?.message 
+      });
+
       // Check if we have user in localStorage but server returns 401
-      if (user && facilitatorsError && (facilitatorsError as any)?.status === 401) {
-        console.log('Detected session loss - attempting to re-authenticate...');
+      // TanStack Query wraps errors, so check multiple possible error formats
+      const isAuthError = facilitatorsError && (
+        (facilitatorsError as any)?.status === 401 ||
+        (facilitatorsError as any)?.response?.status === 401 ||
+        facilitatorsError?.message?.includes('401') ||
+        facilitatorsError?.message?.includes('Not authenticated')
+      );
+
+      if (user && isAuthError) {
+        console.log('🔄 Detected session loss - attempting to re-authenticate...');
         
         try {
           // Get fresh Firebase ID token and re-authenticate
           const { getAuth } = await import('firebase/auth');
           const auth = getAuth();
           
+          console.log('Firebase auth state:', { 
+            hasCurrentUser: !!auth.currentUser,
+            uid: auth.currentUser?.uid 
+          });
+          
           if (auth.currentUser) {
+            console.log('Getting fresh Firebase token...');
             const idToken = await auth.currentUser.getIdToken(true); // Force refresh
             
+            console.log('Re-authenticating with server...');
             // Re-authenticate with server
-            await videoFlowApi.authenticateGoogle({ idToken });
+            const result = await videoFlowApi.authenticateGoogle({ idToken });
+            console.log('Re-authentication result:', result);
             
             // Invalidate and refetch facilitators data
             queryClient.invalidateQueries({
               queryKey: ["video-flow", "facilitators"],
             });
             
-            console.log('Re-authentication successful');
+            console.log('✅ Re-authentication successful');
           } else {
             // Clear user state if Firebase user is gone
-            console.log('No Firebase user found - clearing stored user data');
+            console.log('❌ No Firebase user found - clearing stored user data');
             setUser(null);
             setFacilitator(null);
           }
         } catch (error) {
-          console.error('Re-authentication failed:', error);
+          console.error('❌ Re-authentication failed:', error);
           // Clear user state on re-auth failure
           setUser(null);
           setFacilitator(null);
@@ -242,7 +306,9 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
       }
     };
 
-    handleSessionLoss();
+    // Add a small delay to ensure the error state is settled
+    const timer = setTimeout(handleSessionLoss, 100);
+    return () => clearTimeout(timer);
   }, [user, facilitatorsError, queryClient]);
 
   // Persist user state to localStorage
