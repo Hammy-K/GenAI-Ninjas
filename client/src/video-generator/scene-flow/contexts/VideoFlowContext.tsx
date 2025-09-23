@@ -203,6 +203,48 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     refetchOnWindowFocus: false,
   });
 
+  // Auto re-authentication: Handle session loss after page refresh
+  useEffect(() => {
+    const handleSessionLoss = async () => {
+      // Check if we have user in localStorage but server returns 401
+      if (user && facilitatorsError && (facilitatorsError as any)?.status === 401) {
+        console.log('Detected session loss - attempting to re-authenticate...');
+        
+        try {
+          // Get fresh Firebase ID token and re-authenticate
+          const { getAuth } = await import('firebase/auth');
+          const auth = getAuth();
+          
+          if (auth.currentUser) {
+            const idToken = await auth.currentUser.getIdToken(true); // Force refresh
+            
+            // Re-authenticate with server
+            await videoFlowApi.authenticateGoogle({ idToken });
+            
+            // Invalidate and refetch facilitators data
+            queryClient.invalidateQueries({
+              queryKey: ["video-flow", "facilitators"],
+            });
+            
+            console.log('Re-authentication successful');
+          } else {
+            // Clear user state if Firebase user is gone
+            console.log('No Firebase user found - clearing stored user data');
+            setUser(null);
+            setFacilitator(null);
+          }
+        } catch (error) {
+          console.error('Re-authentication failed:', error);
+          // Clear user state on re-auth failure
+          setUser(null);
+          setFacilitator(null);
+        }
+      }
+    };
+
+    handleSessionLoss();
+  }, [user, facilitatorsError, queryClient]);
+
   // Persist user state to localStorage
   useEffect(() => {
     try {

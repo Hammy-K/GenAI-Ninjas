@@ -365,11 +365,6 @@ export function SceneCard({
                   </RadioGroup>
                 </div>
 
-                {/* One Video Per Scene Warning */}
-                {hasExistingVideo && (
-                  <div className="p-2 bg-blue-50 border border-blue-300 rounded-lg"></div>
-                )}
-
                 {/* Generate Button */}
                 <Button
                   onClick={handleGenerate}
