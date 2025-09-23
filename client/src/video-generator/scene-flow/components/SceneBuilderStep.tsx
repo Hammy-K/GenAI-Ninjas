@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { SceneCard } from "./SceneCard";
+import { SimpleSceneCard } from "./SimpleSceneCard";
 import { UsageTracker } from "./UsageTracker";
 import { Button } from "@/components/ui/button";
-import { Film, CheckCircle, ArrowLeft, Send } from "lucide-react";
+import { Film, CheckCircle, ArrowLeft, ArrowRight, Send } from "lucide-react";
 import type { Scene } from "@shared/video-flow.schema";
 
 interface SceneBuilderStepProps {
@@ -104,7 +104,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Scene Cards - NO RESTRICTIONS */}
           {scenes.map((scene, index) => (
-            <SceneCard
+            <SimpleSceneCard
               key={index}
               sceneNumber={index + 1}
               scene={scene}
