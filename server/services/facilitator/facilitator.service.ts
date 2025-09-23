@@ -133,6 +133,47 @@ class FacilitatorService {
   }
 
   /**
+   * Update facilitator credentials securely in the database
+   */
+  async updateFacilitatorCredentials(
+    facilitatorId: number,
+    updateData: {
+      name: string;
+      projectId: string;
+      location: string;
+      serviceAccountJson: string;
+    }
+  ): Promise<void> {
+    try {
+      // Encrypt new credentials
+      const encryptedCredentials = encryptionService.encrypt(updateData.serviceAccountJson);
+      const encryptedProjectId = encryptionService.encrypt(updateData.projectId);
+      const encryptedLocation = encryptionService.encrypt(updateData.location);
+      
+      // Update the facilitator record
+      const [updatedFacilitator] = await db.update(facilitators)
+        .set({
+          name: updateData.name,
+          vertexProjectId: `${encryptedProjectId.iv}:${encryptedProjectId.encrypted}`,
+          vertexLocation: `${encryptedLocation.iv}:${encryptedLocation.encrypted}`,
+          vertexServiceAccountJson: `${encryptedCredentials.iv}:${encryptedCredentials.encrypted}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(facilitators.id, facilitatorId))
+        .returning();
+      
+      if (!updatedFacilitator) {
+        throw new Error('Facilitator not found or update failed');
+      }
+      
+      console.log(`Facilitator credentials updated successfully for ID: ${facilitatorId} (${updateData.name})`);
+    } catch (error) {
+      console.error('Failed to update facilitator credentials:', error);
+      throw new Error('Failed to update facilitator credentials');
+    }
+  }
+
+  /**
    * Get facilitator credentials by facilitator ID
    */
   async getFacilitatorCredentials(facilitatorId: number): Promise<VertexAICredentials | null> {
@@ -158,21 +199,11 @@ class FacilitatorService {
       const decryptedLocation = encryptionService.decrypt(locationEncrypted, locationIv);
       const decryptedServiceAccount = encryptionService.decrypt(serviceAccountEncrypted, serviceAccountIv);
 
-      // Debug logging to check decrypted credentials
-      console.log(`Decrypted credentials for facilitator ${facilitatorId}:`);
-      console.log(`Project ID: ${decryptedProjectId}`);
-      console.log(`Location: ${decryptedLocation}`);
-      console.log(`Service Account JSON (first 50 chars): ${decryptedServiceAccount.substring(0, 50)}...`);
-      
-      // Validate that the service account JSON is valid JSON
+      // Validate that the service account JSON is valid JSON (no sensitive logging)
       try {
-        const parsedJson = JSON.parse(decryptedServiceAccount);
-        console.log(`Service account type: ${parsedJson.type}`);
-        console.log(`Service account project_id: ${parsedJson.project_id}`);
-        console.log(`Service account has private_key: ${!!parsedJson.private_key}`);
-        console.log(`Service account client_email: ${parsedJson.client_email}`);
+        JSON.parse(decryptedServiceAccount);
       } catch (error) {
-        console.error(`Invalid service account JSON for facilitator ${facilitatorId}:`, error);
+        console.error(`Invalid service account JSON for facilitator ${facilitatorId}`);
         throw new Error('Stored service account JSON is not valid JSON');
       }
 
