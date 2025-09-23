@@ -324,6 +324,15 @@ export const insertLovableSubmissionSchema = createInsertSchema(
   },
 ).omit({ id: true, submissionDate: true });
 
+// Video submissions table for student project submissions
+export const videoSubmissions = pgTable("video_submissions", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  link: text("link").notNull(),
+  projectName: text("project_name").notNull(),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+});
+
 // Facilitator credential management tables
 export const facilitators = pgTable("facilitators", {
   id: serial("id").primaryKey(),
@@ -358,6 +367,13 @@ export const insertStudentFacilitatorAssignmentSchema = createInsertSchema(
   assignedAt: true,
 });
 
+export const insertVideoSubmissionSchema = createInsertSchema(
+  videoSubmissions,
+).omit({
+  id: true,
+  submittedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type InsertProjectIdea = z.infer<typeof insertProjectIdeaSchema>;
@@ -388,6 +404,7 @@ export type InsertFacilitator = z.infer<typeof insertFacilitatorSchema>;
 export type InsertStudentFacilitatorAssignment = z.infer<
   typeof insertStudentFacilitatorAssignmentSchema
 >;
+export type InsertVideoSubmission = z.infer<typeof insertVideoSubmissionSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Quest = typeof quests.$inferSelect;
@@ -406,3 +423,4 @@ export type LovableMissionChatHistory =
 export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
 export type Facilitator = typeof facilitators.$inferSelect;
 export type StudentFacilitatorAssignment = typeof studentFacilitatorAssignments.$inferSelect;
+export type VideoSubmission = typeof videoSubmissions.$inferSelect;
