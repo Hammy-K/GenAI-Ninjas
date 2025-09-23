@@ -64,8 +64,13 @@ export function useStoryboardChat() {
       setLastResponse(response);
       setConversationState(response.conversationState);
     } catch (err) {
-      // Error handling - could add a toast or error message
+      // Error handling - add error message to chat
       console.error("Chat error:", err);
+      const errorMsg: ChatMessage = {
+        role: "assistant",
+        content: "أعتذر، حدث خطأ أثناء معالجة رسالتك. يرجى المحاولة مرة أخرى."
+      };
+      append(errorMsg);
     } finally {
       setIsLoading(false);
     }

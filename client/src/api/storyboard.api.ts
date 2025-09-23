@@ -116,6 +116,7 @@ export async function sendStoryboardChat(params: {
     const body = {
       history: params.history ?? [],
       message: params.message ?? "",
+      conversationState: params.conversationState,
       systemPrompt: STORYBOARD_SYSTEM_PROMPT,
       responseFormat: STORYBOARD_RESPONSE_FORMAT,
     };
@@ -126,6 +127,12 @@ export async function sendStoryboardChat(params: {
       body: JSON.stringify(body),
       signal: params.signal,
     });
+
+    // Check if response is ok first
+    if (!res.ok) {
+      console.error("API request failed:", res.status, res.statusText);
+      return DEFAULT_STATE;
+    }
 
     const data = await safeJson(res);
 
@@ -156,12 +163,13 @@ export async function sendStoryboardChat(params: {
             isConversationComplete: !!parsed.isConversationComplete,
           } as StoryboardAiResponse;
         }
-      } catch {
-        // not JSON -> fallthrough to error
+      } catch (parseError) {
+        console.error("Failed to parse AI response JSON:", parseError);
       }
     }
 
     // Unexpected shape -> minimal error response
+    console.error("Unexpected response shape from AI API:", data);
     return DEFAULT_STATE;
   } catch (err) {
     return DEFAULT_STATE;
