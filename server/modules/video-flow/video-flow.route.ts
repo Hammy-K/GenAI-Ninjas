@@ -290,16 +290,34 @@ export function registerVideoFlowRoutes(): Router {
       }
 
       // NEW: Create custom VertexAI client with student's facilitator credentials
-      const customVertexClient = createVertexAIClient(facilitatorCredentials);
-      
-      // Build prompt using veoService logic
-      const prompt = veoService.buildPrompt(scene);
-      
-      // Generate video with custom client
-      const result = await customVertexClient.generateVideo({
-        prompt,
-        aspectRatio: scene.aspectRatio,
-      });
+      let result;
+      try {
+        const customVertexClient = createVertexAIClient(facilitatorCredentials);
+        
+        // Build prompt using veoService logic
+        const prompt = veoService.buildPrompt(scene);
+        
+        // Generate video with custom client
+        result = await customVertexClient.generateVideo({
+          prompt,
+          aspectRatio: scene.aspectRatio,
+        });
+      } catch (error) {
+        console.error('Failed to use facilitator credentials, falling back to environment credentials:', error);
+        
+        // Fallback: Use default client with environment variables (same pattern as status endpoint)
+        console.warn("Facilitator credentials failed, using default environment client");
+        const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
+        
+        // Build prompt using veoService logic
+        const prompt = veoService.buildPrompt(scene);
+        
+        // Generate video with default client
+        result = await vertexAIClient.generateVideo({
+          prompt,
+          aspectRatio: scene.aspectRatio,
+        });
+      }
 
       // Increment usage only if generation was successful
       if (result.status === "completed") {

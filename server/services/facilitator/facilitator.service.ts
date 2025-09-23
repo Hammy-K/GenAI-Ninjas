@@ -158,6 +158,24 @@ class FacilitatorService {
       const decryptedLocation = encryptionService.decrypt(locationEncrypted, locationIv);
       const decryptedServiceAccount = encryptionService.decrypt(serviceAccountEncrypted, serviceAccountIv);
 
+      // Debug logging to check decrypted credentials
+      console.log(`Decrypted credentials for facilitator ${facilitatorId}:`);
+      console.log(`Project ID: ${decryptedProjectId}`);
+      console.log(`Location: ${decryptedLocation}`);
+      console.log(`Service Account JSON (first 50 chars): ${decryptedServiceAccount.substring(0, 50)}...`);
+      
+      // Validate that the service account JSON is valid JSON
+      try {
+        const parsedJson = JSON.parse(decryptedServiceAccount);
+        console.log(`Service account type: ${parsedJson.type}`);
+        console.log(`Service account project_id: ${parsedJson.project_id}`);
+        console.log(`Service account has private_key: ${!!parsedJson.private_key}`);
+        console.log(`Service account client_email: ${parsedJson.client_email}`);
+      } catch (error) {
+        console.error(`Invalid service account JSON for facilitator ${facilitatorId}:`, error);
+        throw new Error('Stored service account JSON is not valid JSON');
+      }
+
       return {
         projectId: decryptedProjectId,
         location: decryptedLocation,
