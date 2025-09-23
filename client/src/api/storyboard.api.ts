@@ -78,12 +78,14 @@ const STORYBOARD_RESPONSE_FORMAT = {
           finalStory: { type: "string" },
           storyboard: { type: "string" }
         },
-        required: ["phase"]
+        required: ["phase"],
+        additionalProperties: false
       },
       isStoryboardGenerated: { type: "boolean" },
       isConversationComplete: { type: "boolean" }
     },
-    required: ["aiMessage", "conversationState", "isStoryboardGenerated", "isConversationComplete"]
+    required: ["aiMessage", "conversationState", "isStoryboardGenerated", "isConversationComplete"],
+    additionalProperties: false
   },
   strict: true
 };
@@ -117,7 +119,10 @@ export async function sendStoryboardChat(params: {
       message: params.message ?? "",
       conversationState: params.conversationState,
       systemPrompt: STORYBOARD_SYSTEM_PROMPT,
-      responseFormat: STORYBOARD_RESPONSE_FORMAT,
+      responseFormat: {
+        type: "json_schema", 
+        json_schema: STORYBOARD_RESPONSE_FORMAT
+      },
     };
 
     const res = await fetch(API_PATH, {
