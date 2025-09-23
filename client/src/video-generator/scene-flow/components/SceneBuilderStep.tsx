@@ -14,9 +14,15 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
     { description: "", voiceover: "", aspectRatio: "16:9" },
     { description: "", voiceover: "", aspectRatio: "16:9" },
     { description: "", voiceover: "", aspectRatio: "16:9" },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
+    { description: "", voiceover: "", aspectRatio: "16:9" },
   ]);
   const [currentScene, setCurrentScene] = useState(0);
   const [completedScenes, setCompletedScenes] = useState<boolean[]>([
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -55,8 +61,9 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">أنشئ مشاهدك</h2>
+              <p className="text-xs text-purple-600 font-medium">6 مشاهد • 5 ثوانِ لكل مشهد</p>
               <p className="text-sm text-gray-600">
-                {completedCount} من 3 مكتمل
+                {completedCount} من 6 مكتمل
               </p>
             </div>
           </div>
@@ -91,25 +98,24 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Main Content Area - Vertical Layout */}
+        <div className="max-w-2xl mx-auto space-y-6">
           {/* Scene Cards - NO RESTRICTIONS */}
           {scenes.map((scene, index) => (
-            <div key={index} className="h-fit">
-              <SceneCard
-                sceneNumber={index + 1}
-                scene={scene}
-                isExpanded={index === currentScene}
-                isCompleted={completedScenes[index]}
-                isLocked={false} // REMOVED: No more locking - complete freedom
-                onUpdate={(updatedScene) => updateScene(index, updatedScene)}
-                onComplete={(isComplete) =>
-                  markSceneComplete(index, isComplete)
-                }
-                onExpand={() => setCurrentScene(index)}
-                data-testid={`scene-card-${index + 1}`}
-              />
-            </div>
+            <SceneCard
+              key={index}
+              sceneNumber={index + 1}
+              scene={scene}
+              isExpanded={index === currentScene}
+              isCompleted={completedScenes[index]}
+              isLocked={false} // REMOVED: No more locking - complete freedom
+              onUpdate={(updatedScene) => updateScene(index, updatedScene)}
+              onComplete={(isComplete) =>
+                markSceneComplete(index, isComplete)
+              }
+              onExpand={() => setCurrentScene(index)}
+              data-testid={`scene-card-${index + 1}`}
+            />
           ))}
         </div>
 
@@ -147,7 +153,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500 rounded-full"
-              style={{ width: `${(completedCount / 3) * 100}%` }}
+              style={{ width: `${(completedCount / 6) * 100}%` }}
             />
           </div>
         </div>
