@@ -133,47 +133,6 @@ class FacilitatorService {
   }
 
   /**
-   * Update facilitator credentials securely in the database
-   */
-  async updateFacilitatorCredentials(
-    facilitatorId: number,
-    updateData: {
-      name: string;
-      projectId: string;
-      location: string;
-      serviceAccountJson: string;
-    }
-  ): Promise<void> {
-    try {
-      // Encrypt new credentials
-      const encryptedCredentials = encryptionService.encrypt(updateData.serviceAccountJson);
-      const encryptedProjectId = encryptionService.encrypt(updateData.projectId);
-      const encryptedLocation = encryptionService.encrypt(updateData.location);
-      
-      // Update the facilitator record
-      const [updatedFacilitator] = await db.update(facilitators)
-        .set({
-          name: updateData.name,
-          vertexProjectId: `${encryptedProjectId.iv}:${encryptedProjectId.encrypted}`,
-          vertexLocation: `${encryptedLocation.iv}:${encryptedLocation.encrypted}`,
-          vertexServiceAccountJson: `${encryptedCredentials.iv}:${encryptedCredentials.encrypted}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(facilitators.id, facilitatorId))
-        .returning();
-      
-      if (!updatedFacilitator) {
-        throw new Error('Facilitator not found or update failed');
-      }
-      
-      console.log(`Facilitator credentials updated successfully for ID: ${facilitatorId} (${updateData.name})`);
-    } catch (error) {
-      console.error('Failed to update facilitator credentials:', error);
-      throw new Error('Failed to update facilitator credentials');
-    }
-  }
-
-  /**
    * Get facilitator credentials by facilitator ID
    */
   async getFacilitatorCredentials(facilitatorId: number): Promise<VertexAICredentials | null> {
@@ -198,14 +157,6 @@ class FacilitatorService {
       const decryptedProjectId = encryptionService.decrypt(projectIdEncrypted, projectIdIv);
       const decryptedLocation = encryptionService.decrypt(locationEncrypted, locationIv);
       const decryptedServiceAccount = encryptionService.decrypt(serviceAccountEncrypted, serviceAccountIv);
-
-      // Validate that the service account JSON is valid JSON (no sensitive logging)
-      try {
-        JSON.parse(decryptedServiceAccount);
-      } catch (error) {
-        console.error(`Invalid service account JSON for facilitator ${facilitatorId}`);
-        throw new Error('Stored service account JSON is not valid JSON');
-      }
 
       return {
         projectId: decryptedProjectId,

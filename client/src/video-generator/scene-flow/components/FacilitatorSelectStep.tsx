@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useVideoFlowContext } from "../contexts/VideoFlowContext";
 import {
-  Loader2,
-  User,
-  CheckCircle,
-  GraduationCap,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useVideoFlowContext } from "../contexts/VideoFlowContext";
+import { Loader2, User, CheckCircle, GraduationCap } from "lucide-react";
 
 interface FacilitatorSelectStepProps {
   userEmail: string;
@@ -20,12 +20,6 @@ export function FacilitatorSelectStep({
   onComplete,
 }: FacilitatorSelectStepProps) {
   const [selectedFacilitator, setSelectedFacilitator] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const {
     facilitatorsData,
     confirmFacilitator,
@@ -47,87 +41,8 @@ export function FacilitatorSelectStep({
   useEffect(() => {
     if (facilitatorsData?.matchedFacilitatorName && !selectedFacilitator) {
       setSelectedFacilitator(facilitatorsData.matchedFacilitatorName);
-      setSearchQuery(facilitatorsData.matchedFacilitatorName);
     }
   }, [facilitatorsData, selectedFacilitator]);
-
-  // Filter facilitators based on search query
-  const filteredFacilitators =
-    facilitatorsData?.facilitators.filter((facilitator) =>
-      facilitator.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    ) || [];
-
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setIsDropdownOpen(true);
-    setHighlightedIndex(-1);
-
-    // If exact match found, select it
-    const exactMatch = facilitatorsData?.facilitators.find(
-      (f) => f.name.toLowerCase() === value.toLowerCase(),
-    );
-    if (exactMatch) {
-      setSelectedFacilitator(exactMatch.name);
-    } else {
-      setSelectedFacilitator("");
-    }
-  };
-
-  // Handle facilitator selection
-  const handleFacilitatorSelect = (facilitatorName: string) => {
-    setSelectedFacilitator(facilitatorName);
-    setSearchQuery(facilitatorName);
-    setIsDropdownOpen(false);
-    setHighlightedIndex(-1);
-  };
-
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isDropdownOpen) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev < filteredFacilitators.length - 1 ? prev + 1 : 0,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredFacilitators.length - 1,
-        );
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (highlightedIndex >= 0) {
-          handleFacilitatorSelect(filteredFacilitators[highlightedIndex].name);
-        }
-        break;
-      case "Escape":
-        setIsDropdownOpen(false);
-        setHighlightedIndex(-1);
-        break;
-    }
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-        setHighlightedIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleConfirm = () => {
     if (selectedFacilitator) {
@@ -152,7 +67,7 @@ export function FacilitatorSelectStep({
               اختر معلمك
             </h2>
             <p className="text-gray-600 text-sm">
-              ابحث واختر معلمك لبدء إنشاء المحتوى
+              سيتم ربطك بمعلمك لبدء إنشاء المحتوى
             </p>
           </div>
 
@@ -190,68 +105,37 @@ export function FacilitatorSelectStep({
             </div>
           )}
 
-          {/* Searchable Facilitator Selection */}
-          <div className="mb-8 relative" ref={dropdownRef}>
+          {/* Facilitator Selection */}
+          <div className="mb-8">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              ابحث عن المعلم:
+              اختر المعلم:
             </label>
-
-            {/* Search Input */}
-            <div className="relative">
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <Search className="w-5 h-5 text-purple-400" />
-              </div>
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchQuery}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsDropdownOpen(true)}
-                placeholder="اكتب اسم المعلم..."
-                className="w-full h-14 bg-white/80 border-2 border-purple-200 rounded-2xl focus:border-purple-400 focus:ring-2 focus:ring-purple-500 focus:outline-none text-right pr-12 pl-12 font-medium transition-all duration-200"
-                data-testid="search-facilitator"
-              />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <ChevronDown
-                  className={`w-4 h-4 text-purple-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
-                />
-              </div>
-            </div>
-
-            {/* Dropdown Results */}
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-sm border border-purple-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto z-50">
-                {filteredFacilitators.length > 0 ? (
-                  filteredFacilitators.map((facilitator, index) => (
-                    <div
-                      key={facilitator.name}
-                      onClick={() => handleFacilitatorSelect(facilitator.name)}
-                      className={`flex items-center gap-3 p-4 cursor-pointer transition-all duration-150 mx-2 my-1 rounded-xl ${
-                        index === highlightedIndex
-                          ? "bg-purple-100 border border-purple-300"
-                          : "hover:bg-purple-50"
-                      } ${selectedFacilitator === facilitator.name ? "bg-purple-100 border border-purple-400" : ""}`}
-                      data-testid={`facilitator-option-${facilitator.name}`}
-                    >
+            <Select
+              value={selectedFacilitator}
+              onValueChange={setSelectedFacilitator}
+              data-testid="select-facilitator"
+            >
+              <SelectTrigger className="w-full h-14 bg-white/80 border-2 border-purple-200 rounded-2xl focus:border-purple-400 focus:ring-purple-500 text-right">
+                <SelectValue placeholder="اختر معلمك من القائمة" />
+              </SelectTrigger>
+              <SelectContent className="bg-white/95 backdrop-blur-sm border border-purple-200 rounded-2xl shadow-xl">
+                {facilitatorsData?.facilitators.map((facilitator) => (
+                  <SelectItem
+                    key={facilitator.name}
+                    value={facilitator.name}
+                    className="text-right hover:bg-purple-50 focus:bg-purple-50 rounded-xl mx-1 my-1"
+                    data-testid={`facilitator-option-${facilitator.name}`}
+                  >
+                    <div className="flex items-center gap-3 w-full">
                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                         <GraduationCap className="w-4 h-4 text-purple-600" />
                       </div>
-                      <span className="font-medium text-gray-900">
-                        {facilitator.name}
-                      </span>
-                      {selectedFacilitator === facilitator.name && (
-                        <CheckCircle className="w-4 h-4 text-purple-600 mr-auto" />
-                      )}
+                      <span className="font-medium">{facilitator.name}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    لا توجد نتائج للبحث "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Loading State */}
@@ -301,6 +185,11 @@ export function FacilitatorSelectStep({
               </div>
             )}
           </Button>
+
+          {/* Footer */}
+          <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
+            آمن ومحمي • سيتم حفظ اختيارك تلقائياً
+          </p>
         </div>
 
         {/* Progress Indicator */}

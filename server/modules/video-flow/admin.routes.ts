@@ -1,7 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { facilitatorService } from "../../services/facilitator/facilitator.service";
-import { credentialValidatorService } from "../../services/validation/credential-validator.service";
 
 /**
  * Admin routes for managing facilitator credentials and student assignments
@@ -32,13 +31,6 @@ const StudentAssignmentUploadZ = z.object({
 const SingleAssignmentZ = z.object({
   studentEmail: z.string().email("Valid email required"),
   facilitatorName: z.string().min(1, "Facilitator name is required"),
-});
-
-const UpdateCredentialsZ = z.object({
-  name: z.string().min(1, "Name is required"),
-  projectId: z.string().min(1, "Project ID is required"),
-  location: z.string().min(1, "Location is required"),
-  serviceAccountJson: z.string().min(1, "Service account JSON is required"),
 });
 
 export function registerAdminRoutes(): Router {
@@ -334,165 +326,6 @@ export function registerAdminRoutes(): Router {
       console.error("Failed to get admin status:", error);
       res.status(500).json({
         error: "Failed to retrieve system status",
-        details: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  /**
-   * PATCH /api/video-flow/admin/facilitator/:id/credentials
-   * Update/fix corrupted credentials for a specific facilitator with validation
-   */
-  router.patch("/facilitator/:id/credentials", async (req: Request, res: Response) => {
-    try {
-      const facilitatorId = parseInt(req.params.id);
-      if (isNaN(facilitatorId)) {
-        return res.status(400).json({ error: "Invalid facilitator ID" });
-      }
-
-      const parseResult = UpdateCredentialsZ.safeParse(req.body);
-      if (!parseResult.success) {
-        return res.status(400).json({
-          error: "Invalid request format",
-          details: parseResult.error.errors,
-        });
-      }
-
-      const { name, projectId, location, serviceAccountJson } = parseResult.data;
-
-      // First, validate the credentials before storing
-      console.log(`🔍 Validating new credentials for facilitator ID ${facilitatorId} (${name})...`);
-      const validationResult = await credentialValidatorService.validateCredentialsData(
-        projectId,
-        location,
-        serviceAccountJson
-      );
-
-      if (!validationResult.isValid) {
-        return res.status(400).json({
-          error: "Credential validation failed",
-          validationError: validationResult.errorMessage,
-          errorType: validationResult.errorType,
-        });
-      }
-
-      // Update the facilitator credentials using the facilitator service
-      await facilitatorService.updateFacilitatorCredentials(facilitatorId, {
-        name,
-        projectId,
-        location,
-        serviceAccountJson,
-      });
-
-      console.log(`✅ Successfully updated credentials for facilitator ${name} (ID: ${facilitatorId})`);
-
-      res.json({
-        message: `Successfully updated and validated credentials for facilitator ${name}`,
-        facilitatorId,
-        validated: true,
-        validatedAt: validationResult.validatedAt,
-      });
-    } catch (error) {
-      console.error("Failed to update facilitator credentials:", error);
-      res.status(500).json({
-        error: "Failed to update facilitator credentials",
-        details: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  /**
-   * POST /api/video-flow/admin/facilitator/:id/validate
-   * Validate credentials for a specific facilitator
-   */
-  router.post("/facilitator/:id/validate", async (req: Request, res: Response) => {
-    try {
-      const facilitatorId = parseInt(req.params.id);
-      if (isNaN(facilitatorId)) {
-        return res.status(400).json({ error: "Invalid facilitator ID" });
-      }
-
-      // Get facilitator info
-      const facilitators = await facilitatorService.getAllFacilitators();
-      const facilitator = facilitators.find((f: any) => f.id === facilitatorId);
-      
-      if (!facilitator) {
-        return res.status(404).json({ error: "Facilitator not found" });
-      }
-
-      console.log(`🔍 Validating credentials for facilitator ${facilitator.name} (ID: ${facilitatorId})...`);
-      
-      const validationResult = await credentialValidatorService.validateFacilitator(
-        facilitatorId,
-        facilitator.name
-      );
-
-      const statusCode = validationResult.isValid ? 200 : 400;
-      
-      res.status(statusCode).json({
-        facilitatorId,
-        facilitatorName: facilitator.name,
-        validation: validationResult,
-      });
-    } catch (error) {
-      console.error("Failed to validate facilitator:", error);
-      res.status(500).json({
-        error: "Failed to validate facilitator",
-        details: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  /**
-   * POST /api/video-flow/admin/validate-all
-   * Validate credentials for ALL active facilitators
-   */
-  router.post("/validate-all", async (req: Request, res: Response) => {
-    try {
-      console.log("🚀 Starting comprehensive validation of all facilitator credentials...");
-      
-      const validationReport = await credentialValidatorService.validateAllFacilitators();
-
-      const statusCode = validationReport.invalidCount === 0 ? 200 : 207; // 207 Multi-Status
-
-      res.status(statusCode).json({
-        message: validationReport.invalidCount === 0 
-          ? "All facilitator credentials are valid! 🎉" 
-          : `Found ${validationReport.invalidCount} facilitators with invalid credentials`,
-        report: validationReport,
-      });
-    } catch (error) {
-      console.error("Failed to validate all facilitators:", error);
-      res.status(500).json({
-        error: "Failed to validate facilitator credentials",
-        details: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  /**
-   * GET /api/video-flow/admin/validation-report
-   * Get the latest validation report from cache
-   */
-  router.get("/validation-report", (req: Request, res: Response) => {
-    try {
-      const report = credentialValidatorService.getLastReport();
-      
-      if (!report) {
-        return res.status(404).json({
-          error: "No validation report available",
-          message: "Run POST /api/video-flow/admin/validate-all first to generate a report",
-        });
-      }
-
-      res.json({
-        message: "Latest validation report",
-        report,
-      });
-    } catch (error) {
-      console.error("Failed to get validation report:", error);
-      res.status(500).json({
-        error: "Failed to retrieve validation report",
         details: error instanceof Error ? error.message : "Unknown error",
       });
     }

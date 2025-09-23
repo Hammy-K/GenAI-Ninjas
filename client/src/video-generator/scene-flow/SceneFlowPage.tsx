@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   VideoFlowProvider,
   useVideoFlowContext,
@@ -16,69 +16,9 @@ function SceneFlowContent() {
   const [currentStep, setCurrentStep] = useState<FlowStep>("signin");
   const { user, isAuthenticated, facilitator } = useVideoFlowContext();
 
-  // Load persisted step on mount and determine correct step based on auth state
-  useEffect(() => {
-    // Load saved step from localStorage
-    try {
-      const savedStep = localStorage.getItem('video_flow_current_step');
-      if (savedStep && ["signin", "facilitator", "scenes", "review"].includes(savedStep)) {
-        const step = savedStep as FlowStep;
-        
-        // Only restore the step if the user has the required state for that step
-        if (step === "signin") {
-          setCurrentStep("signin");
-        } else if (step === "facilitator" && isAuthenticated) {
-          setCurrentStep("facilitator");
-        } else if (step === "scenes" && isAuthenticated && facilitator) {
-          setCurrentStep("scenes");
-        } else if (step === "review" && isAuthenticated && facilitator) {
-          setCurrentStep("review");
-        } else {
-          // Fallback to appropriate step based on current auth state
-          if (!isAuthenticated) {
-            setCurrentStep("signin");
-          } else if (!facilitator) {
-            setCurrentStep("facilitator");
-          } else {
-            setCurrentStep("scenes");
-          }
-        }
-        
-        console.log('Current step determined:', step);
-      } else {
-        // Auto-advance based on current authentication state
-        if (!isAuthenticated) {
-          setCurrentStep("signin");
-        } else if (!facilitator) {
-          setCurrentStep("facilitator");
-        } else {
-          setCurrentStep("scenes");
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load current step from localStorage:', error);
-      // Fallback to step based on auth state
-      if (!isAuthenticated) {
-        setCurrentStep("signin");
-      } else if (!facilitator) {
-        setCurrentStep("facilitator");
-      } else {
-        setCurrentStep("scenes");
-      }
-    }
-  }, [isAuthenticated, facilitator]);
-
-  // Persist step changes to localStorage
+  // Auto-advance through steps based on auth state
   const handleStepComplete = (nextStep: FlowStep) => {
     setCurrentStep(nextStep);
-    
-    // Persist step to localStorage
-    try {
-      localStorage.setItem('video_flow_current_step', nextStep);
-      console.log('Current step persisted to localStorage:', nextStep);
-    } catch (error) {
-      console.error('Failed to persist current step to localStorage:', error);
-    }
   };
 
   const getStepNumber = (step: FlowStep): number => {

@@ -290,34 +290,16 @@ export function registerVideoFlowRoutes(): Router {
       }
 
       // NEW: Create custom VertexAI client with student's facilitator credentials
-      let result;
-      try {
-        const customVertexClient = createVertexAIClient(facilitatorCredentials);
-        
-        // Build prompt using veoService logic
-        const prompt = veoService.buildPrompt(scene);
-        
-        // Generate video with custom client
-        result = await customVertexClient.generateVideo({
-          prompt,
-          aspectRatio: scene.aspectRatio,
-        });
-      } catch (error) {
-        console.error('Failed to use facilitator credentials, falling back to environment credentials:', error);
-        
-        // Fallback: Use default client with environment variables (same pattern as status endpoint)
-        console.warn("Facilitator credentials failed, using default environment client");
-        const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
-        
-        // Build prompt using veoService logic
-        const prompt = veoService.buildPrompt(scene);
-        
-        // Generate video with default client
-        result = await vertexAIClient.generateVideo({
-          prompt,
-          aspectRatio: scene.aspectRatio,
-        });
-      }
+      const customVertexClient = createVertexAIClient(facilitatorCredentials);
+      
+      // Build prompt using veoService logic
+      const prompt = veoService.buildPrompt(scene);
+      
+      // Generate video with custom client
+      const result = await customVertexClient.generateVideo({
+        prompt,
+        aspectRatio: scene.aspectRatio,
+      });
 
       // Increment usage only if generation was successful
       if (result.status === "completed") {
@@ -372,18 +354,9 @@ export function registerVideoFlowRoutes(): Router {
 
       let result;
       if (facilitatorCredentials) {
-        // Try to use custom client with student's facilitator credentials
-        try {
-          const customVertexClient = createVertexAIClient(facilitatorCredentials);
-          result = await customVertexClient.checkJobStatus(decodedJobId);
-        } catch (error) {
-          console.error('Failed to use facilitator credentials for status check, falling back to environment credentials:', error);
-          
-          // Fallback: Use default client with environment variables
-          console.warn("Facilitator credentials failed for status check, using default environment client");
-          const { vertexAIClient } = await import("../../services/ai/provider/vertex/vertex.client");
-          result = await vertexAIClient.checkJobStatus(decodedJobId);
-        }
+        // Use custom client with student's facilitator credentials
+        const customVertexClient = createVertexAIClient(facilitatorCredentials);
+        result = await customVertexClient.checkJobStatus(decodedJobId);
       } else {
         // Fallback: Use default client (this maintains backward compatibility)
         console.warn("No facilitator credentials found for student, using default client");
