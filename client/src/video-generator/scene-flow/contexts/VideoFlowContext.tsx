@@ -222,22 +222,30 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     },
   });
 
-  // Facilitator confirmation mutation
+  // FIXED: Facilitator confirmation mutation
   const confirmFacilitatorMutation = useMutation({
     mutationFn: videoFlowApi.confirmFacilitator,
     retry: 2, // Retry up to 2 times
     onSuccess: (data, variables) => {
       if (data.success) {
+        // FIXED: Update facilitator state immediately
         setFacilitator({ name: variables.facilitatorName });
+
         // Invalidate facilitators query to update server state
         queryClient.invalidateQueries({
           queryKey: ["video-flow", "facilitators"],
         });
+
+        console.log(
+          "Facilitator confirmed successfully:",
+          variables.facilitatorName,
+        );
       }
     },
     onError: (error) => {
       console.error("Facilitator confirmation failed:", error);
-      setFacilitator(null);
+      // FIXED: Don't reset facilitator state on error - keep the selection
+      // This prevents the UI from resetting when there's a temporary network issue
     },
   });
 

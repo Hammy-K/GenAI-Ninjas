@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   VideoFlowProvider,
   useVideoFlowContext,
@@ -13,8 +13,51 @@ import { Sparkles } from "lucide-react";
 export type FlowStep = "signin" | "facilitator" | "scenes" | "review";
 
 function SceneFlowContent() {
-  const [currentStep, setCurrentStep] = useState<FlowStep>("signin");
-  const { user, isAuthenticated, facilitator } = useVideoFlowContext();
+  // Initialize currentStep intelligently based on persisted state
+  const [currentStep, setCurrentStep] = useState<FlowStep>(() => {
+    try {
+      const savedStep = localStorage.getItem(
+        "videoFlowCurrentStep",
+      ) as FlowStep;
+      return savedStep || "signin";
+    } catch (error) {
+      console.error("Failed to load current step from localStorage:", error);
+      return "signin";
+    }
+  });
+
+  const { user, isAuthenticated, facilitator, hasFacilitator } =
+    useVideoFlowContext();
+
+  // Persist current step to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("videoFlowCurrentStep", currentStep);
+    } catch (error) {
+      console.error("Failed to save current step to localStorage:", error);
+    }
+  }, [currentStep]);
+
+  // Smart step detection based on auth state
+  useEffect(() => {
+    // Only auto-advance if we're not already in the correct state
+    if (
+      isAuthenticated &&
+      hasFacilitator &&
+      currentStep !== "scenes" &&
+      currentStep !== "review"
+    ) {
+      setCurrentStep("scenes");
+    } else if (
+      isAuthenticated &&
+      !hasFacilitator &&
+      currentStep !== "facilitator"
+    ) {
+      setCurrentStep("facilitator");
+    } else if (!isAuthenticated && currentStep !== "signin") {
+      setCurrentStep("signin");
+    }
+  }, [isAuthenticated, hasFacilitator, currentStep]);
 
   // Auto-advance through steps based on auth state
   const handleStepComplete = (nextStep: FlowStep) => {

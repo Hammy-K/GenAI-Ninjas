@@ -30,9 +30,12 @@ export function FacilitatorSelectStep({
     facilitatorsError,
   } = useVideoFlowContext();
 
-  // REMOVED: Auto-advance was causing premature scene transitions
-  // Users should manually proceed after confirming facilitator selection
-  // The onComplete() will be called from handleConfirm() instead
+  // Auto-advance when facilitator is confirmed - FIXED: Wait for confirmation to complete
+  useEffect(() => {
+    if (hasFacilitator && !isConfirmingFacilitator) {
+      onComplete();
+    }
+  }, [hasFacilitator, isConfirmingFacilitator, onComplete]);
 
   // Auto-select matched facilitator
   useEffect(() => {
@@ -44,8 +47,8 @@ export function FacilitatorSelectStep({
   const handleConfirm = () => {
     if (selectedFacilitator) {
       confirmFacilitator({ facilitatorName: selectedFacilitator });
-      // Manually advance to next step after confirming
-      onComplete();
+      // FIXED: Removed immediate onComplete() call
+      // The useEffect above will handle advancement when hasFacilitator becomes true
     }
   };
 
