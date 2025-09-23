@@ -70,6 +70,33 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
   >(new Map());
   const queryClient = useQueryClient();
 
+  // Load persisted state on mount
+  useEffect(() => {
+    // Load user from localStorage
+    try {
+      const savedUser = localStorage.getItem('video_flow_user');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser) as User;
+        setUser(parsedUser);
+        console.log('Restored user from localStorage:', parsedUser.email);
+      }
+    } catch (error) {
+      console.error('Failed to load user from localStorage:', error);
+    }
+
+    // Load facilitator from localStorage
+    try {
+      const savedFacilitator = localStorage.getItem('video_flow_facilitator');
+      if (savedFacilitator) {
+        const parsedFacilitator = JSON.parse(savedFacilitator) as Facilitator;
+        setFacilitator(parsedFacilitator);
+        console.log('Restored facilitator from localStorage:', parsedFacilitator.name);
+      }
+    } catch (error) {
+      console.error('Failed to load facilitator from localStorage:', error);
+    }
+  }, []);
+
   const isAuthenticated = !!user;
   const hasFacilitator = !!facilitator;
 
@@ -210,6 +237,15 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     onSuccess: (data: AuthResponse) => {
       if (data.success && data.user) {
         setUser(data.user);
+        
+        // Persist user to localStorage
+        try {
+          localStorage.setItem('video_flow_user', JSON.stringify(data.user));
+          console.log('User persisted to localStorage:', data.user.email);
+        } catch (error) {
+          console.error('Failed to persist user to localStorage:', error);
+        }
+        
         // Invalidate facilitators query to fetch fresh data
         queryClient.invalidateQueries({
           queryKey: ["video-flow", "facilitators"],
@@ -219,6 +255,12 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     onError: (error) => {
       console.error("Google authentication failed:", error);
       setUser(null);
+      // Clear user from localStorage on auth failure
+      try {
+        localStorage.removeItem('video_flow_user');
+      } catch (error) {
+        console.error('Failed to clear user from localStorage:', error);
+      }
     },
   });
 
@@ -228,7 +270,17 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     retry: 2, // Retry up to 2 times
     onSuccess: (data, variables) => {
       if (data.success) {
-        setFacilitator({ name: variables.facilitatorName });
+        const newFacilitator = { name: variables.facilitatorName };
+        setFacilitator(newFacilitator);
+        
+        // Persist facilitator to localStorage
+        try {
+          localStorage.setItem('video_flow_facilitator', JSON.stringify(newFacilitator));
+          console.log('Facilitator persisted to localStorage:', variables.facilitatorName);
+        } catch (error) {
+          console.error('Failed to persist facilitator to localStorage:', error);
+        }
+        
         // Invalidate facilitators query to update server state
         queryClient.invalidateQueries({
           queryKey: ["video-flow", "facilitators"],
@@ -238,6 +290,12 @@ export function VideoFlowProvider({ children }: VideoFlowProviderProps) {
     onError: (error) => {
       console.error("Facilitator confirmation failed:", error);
       setFacilitator(null);
+      // Clear facilitator from localStorage on confirmation failure
+      try {
+        localStorage.removeItem('video_flow_facilitator');
+      } catch (error) {
+        console.error('Failed to clear facilitator from localStorage:', error);
+      }
     },
   });
 
