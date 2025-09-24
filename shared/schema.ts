@@ -465,3 +465,24 @@ export type Facilitator = typeof facilitators.$inferSelect;
 export type StudentFacilitatorAssignment = typeof studentFacilitatorAssignments.$inferSelect;
 export type VideoSubmission = typeof videoSubmissions.$inferSelect;
 export type VideoJob = typeof videoJobs.$inferSelect;
+
+// Tracks Students table for CSV data upload
+export const tracksStudents = pgTable("tracks_students", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  studentName: text("student_name").notNull(),
+  school: text("school").notNull(),
+  gender: text("gender").notNull(),
+  grade: text("grade").notNull(),
+  supervisor: text("supervisor").notNull(),
+  studentEmail: text("student_email").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTracksStudentSchema = createInsertSchema(tracksStudents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTracksStudent = z.infer<typeof insertTracksStudentSchema>;
+export type TracksStudent = typeof tracksStudents.$inferSelect;
