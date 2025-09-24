@@ -63,6 +63,7 @@ import VideoGeneratorChatMissionPage from "./video-generator/video-generator-cha
 import { ImageGenerationPage } from "./image-generation/components/ImageGenerationPage";
 import SceneFlowPage from "./video-generator/scene-flow/SceneFlowPage";
 import ChatPage from "./pages/ChatPage";
+import VideoSubmissionsPage from "./pages/VideoSubmissionsPage";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -261,6 +262,8 @@ function Router() {
         path="/missions/videos/:categorySlug/:videoSlug"
         component={VideoPlayerPage}
       />
+      
+      <Route path="/video-submissions" component={VideoSubmissionsPage} />
 
       {/* <Route
         path="/missions/html-projects/submissions"
