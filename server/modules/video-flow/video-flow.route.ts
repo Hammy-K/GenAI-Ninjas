@@ -261,8 +261,11 @@ export function registerVideoFlowRoutes(): Router {
    */
   router.post("/auth/google", async (req: Request, res: Response) => {
     try {
+      console.log(`[AUTH] Authentication attempt from ${req.ip}, NODE_ENV: ${process.env.NODE_ENV}`);
+      
       const parseResult = GoogleAuthRequestZ.safeParse(req.body);
       if (!parseResult.success) {
+        console.log("[AUTH] Invalid request format:", parseResult.error);
         const response: AuthResponse = {
           success: false,
           error: "Invalid request format",
@@ -271,9 +274,11 @@ export function registerVideoFlowRoutes(): Router {
       }
 
       const { idToken } = parseResult.data;
+      console.log("[AUTH] Attempting to verify Firebase ID token...");
       const userInfo = await firebaseAdminService.verifyIdToken(idToken);
 
       if (!userInfo) {
+        console.log("[AUTH] Firebase token verification failed");
         const response: AuthResponse = {
           success: false,
           error: "Invalid or expired token",
@@ -281,8 +286,12 @@ export function registerVideoFlowRoutes(): Router {
         return res.status(401).json(response);
       }
 
+      console.log(`[AUTH] Firebase verification successful for user: ${userInfo.email}`);
+      
       // Store user info in session
       req.session.user = userInfo;
+      console.log(`[AUTH] Session user set: ${JSON.stringify(req.session.user)}`);
+      console.log(`[AUTH] Session ID: ${req.sessionID}`);
 
       const response: AuthResponse = {
         success: true,
@@ -305,8 +314,12 @@ export function registerVideoFlowRoutes(): Router {
    */
   router.get("/facilitators", async (req: Request, res: Response) => {
     if (!req.session.user) {
+      console.log(`[AUTH] Facilitators request denied - no session user. Session ID: ${req.sessionID}`);
+      console.log(`[AUTH] Session data: ${JSON.stringify(req.session)}`);
       return res.status(401).json({ error: "Not authenticated" });
     }
+    
+    console.log(`[AUTH] Facilitators request authorized for user: ${req.session.user.email}`);
 
     try {
       // NEW: Get facilitators from database instead of JSON file
@@ -415,10 +428,15 @@ export function registerVideoFlowRoutes(): Router {
     try {
       // Check authentication
       if (!req.session.user) {
+        console.log(`[AUTH] Video generation denied - no session user. Session ID: ${req.sessionID}`);
+        console.log(`[AUTH] Session data: ${JSON.stringify(req.session)}`);
+        console.log(`[AUTH] Headers: ${JSON.stringify(req.headers)}`);
         return res
           .status(401)
           .json({ error: "Not authenticated" });
       }
+      
+      console.log(`[AUTH] Video generation authorized for user: ${req.session.user.email}`);
 
       // Rate limiting: Check if user is making requests too frequently
       const userId = req.session.user.uid;
