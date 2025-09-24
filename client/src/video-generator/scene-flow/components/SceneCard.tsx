@@ -226,19 +226,16 @@ export function SceneCard({
     pollTimerRef.current = initialTimeoutId;
   }, [sceneNumber, isPolling, onComplete, saveCompletedVideo]);
 
-  // Cleanup polling on unmount or status change to completed/failed
+  // Cleanup polling only on unmount
   useEffect(() => {
     return () => {
-      if (isPolling || pollTimerRef.current) {
-        console.log(`Cleaning up polling for scene ${sceneNumber}`);
-        if (pollTimerRef.current) {
-          clearTimeout(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
-        setIsPolling(false);
+      if (pollTimerRef.current) {
+        console.log(`Cleaning up polling for scene ${sceneNumber} on unmount`);
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
       }
     };
-  }, [sceneNumber, isPolling]);
+  }, [sceneNumber]);
 
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
