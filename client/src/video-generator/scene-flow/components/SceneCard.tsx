@@ -102,9 +102,9 @@ export function SceneCard({
     }
 
     // Clear any existing timeout
-    if (pollTimeoutId) {
-      clearTimeout(pollTimeoutId);
-      setPollTimeoutId(null);
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
     }
 
     console.log(`Starting polling for scene ${sceneNumber}, jobId: ${jobId}`);
@@ -223,22 +223,22 @@ export function SceneCard({
 
     // Start polling with initial delay
     const initialTimeoutId = setTimeout(pollStatus, 10000); // Wait 10 seconds before first check
-    setPollTimeoutId(initialTimeoutId);
-  }, [sceneNumber, isPolling, onComplete, saveCompletedVideo, pollTimeoutId]);
+    pollTimerRef.current = initialTimeoutId;
+  }, [sceneNumber, isPolling, onComplete, saveCompletedVideo]);
 
   // Cleanup polling on unmount or status change to completed/failed
   useEffect(() => {
     return () => {
-      if (isPolling || pollTimeoutId) {
+      if (isPolling || pollTimerRef.current) {
         console.log(`Cleaning up polling for scene ${sceneNumber}`);
-        if (pollTimeoutId) {
-          clearTimeout(pollTimeoutId);
-          setPollTimeoutId(null);
+        if (pollTimerRef.current) {
+          clearTimeout(pollTimerRef.current);
+          pollTimerRef.current = null;
         }
         setIsPolling(false);
       }
     };
-  }, [sceneNumber, isPolling, pollTimeoutId]);
+  }, [sceneNumber, isPolling]);
 
   const generateVideoMutation = useMutation({
     mutationFn: videoFlowApi.generateVideo,
