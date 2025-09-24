@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,7 +56,7 @@ export function SceneCard({
   );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [pollTimeoutId, setPollTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
   const { saveCompletedVideo, getCompletedVideo } = useVideoFlowContext();
 
@@ -66,6 +66,17 @@ export function SceneCard({
   // One video per scene logic - only consider video as existing if completed
   const hasExistingVideo = videoResult?.status === "completed";
   const canGenerate = isSceneValid && (!videoResult || videoResult?.status === "failed");
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        console.log(`Cleaning up polling for scene ${sceneNumber}`);
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [sceneNumber]);
 
   // Load saved video on mount
   useEffect(() => {
@@ -132,9 +143,9 @@ export function SceneCard({
           saveCompletedVideo(sceneNumber, statusResult);
           onComplete(true);
           setIsPolling(false);
-          if (pollTimeoutId) {
-            clearTimeout(pollTimeoutId);
-            setPollTimeoutId(null);
+          if (pollTimerRef.current) {
+            clearTimeout(pollTimerRef.current);
+            pollTimerRef.current = null;
           }
           return;
         } else if (statusResult.status === "failed") {
@@ -143,15 +154,15 @@ export function SceneCard({
           setGenerationError("فشل في إنشاء الفيديو");
           onComplete(false);
           setIsPolling(false);
-          if (pollTimeoutId) {
-            clearTimeout(pollTimeoutId);
-            setPollTimeoutId(null);
+          if (pollTimerRef.current) {
+            clearTimeout(pollTimerRef.current);
+            pollTimerRef.current = null;
           }
           return;
         } else if (statusResult.status === "processing") {
           // Continue polling with exponential backoff
           const timeoutId = setTimeout(pollStatus, currentInterval);
-          setPollTimeoutId(timeoutId);
+          pollTimerRef.current = timeoutId;
         } else {
           console.log(`Unknown status for scene ${sceneNumber}:`, statusResult.status);
           setIsPolling(false);
@@ -179,7 +190,7 @@ export function SceneCard({
             const retryDelay = Math.min(10000 * Math.pow(1.5, pollAttempts), 30000);
             console.log(`Server/credentials error, retrying in ${retryDelay}ms... (attempt ${pollAttempts + 1}/5)`);
             const timeoutId = setTimeout(pollStatus, retryDelay);
-            setPollTimeoutId(timeoutId);
+            pollTimerRef.current = timeoutId;
           } else {
             console.log("Too many server errors, stopping polling");
             setGenerationError("مشكلة في الخادم - يرجى المحاولة مرة أخرى لاحقاً");
@@ -194,7 +205,7 @@ export function SceneCard({
             const retryDelay = Math.min(5000 * Math.pow(2, pollAttempts), 30000);
             console.log(`Network error, retrying in ${retryDelay}ms... (attempt ${pollAttempts + 1}/8)`);
             const timeoutId = setTimeout(pollStatus, retryDelay);
-            setPollTimeoutId(timeoutId);
+            pollTimerRef.current = timeoutId;
           } else {
             console.log("Too many network errors, stopping polling");
             setGenerationError("مشكلة في الاتصال - تحقق من الإنترنت وحاول مرة أخرى");
