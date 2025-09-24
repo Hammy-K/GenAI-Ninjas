@@ -42,12 +42,12 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 36311
-externalPort = 3000
+localPort = 34435
+externalPort = 3002
 
 [[ports]]
-localPort = 45297
-externalPort = 3001
+localPort = 36311
+externalPort = 3000
 
 [agent]
 integrations = ["javascript_anthropic==1.0.0", "firebase_barebones_javascript==1.0.0", "javascript_openai==1.0.0"]
