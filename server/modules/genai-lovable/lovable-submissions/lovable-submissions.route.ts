@@ -1,13 +1,25 @@
 import { Router } from "express";
 import { LovableSubmissionsController } from "./lovable-submissions.controller";
 import { LovableSubmissionWhere } from "./lovable-submissions.model";
+import { validateSubmissionPayload } from "./lovable-submissions.utils";
 
 export function registerLovableSubmissionsRoutes(router: Router): void {
   const r = Router();
 
   r.post("/", async (req, res) => {
     try {
-      const row = await LovableSubmissionsController.create(req.body);
+      const v = validateSubmissionPayload(req.body);
+
+      if (!v.ok) {
+        return res.status(400).json({
+          error: "invalid_payload",
+          userMessage: v.userMessage,
+        });
+      }
+
+      const payload = { ...req.body, ...v.data };
+
+      const row = await LovableSubmissionsController.create(payload);
 
       res.status(201).json(row);
     } catch (err: any) {
@@ -77,6 +89,7 @@ export function registerLovableSubmissionsRoutes(router: Router): void {
         "noonCode",
         "projectTitle",
         "projectLink",
+        "email",
         "createdAt",
         "updatedAt",
       ]);

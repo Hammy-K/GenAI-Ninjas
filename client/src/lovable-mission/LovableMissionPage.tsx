@@ -10,6 +10,8 @@ import { LABELS } from "./constants";
 import { FloatingActionsPanel } from "./ui/FloatingActionsPanel";
 import { ChatLayout } from "./ui/ChatLayout";
 import { useLocation } from "wouter";
+import { GoogleSignInCTA } from "./ui/auth/GoogleSignInCta";
+import { useLovableAuth } from "./auth/AuthProvider";
 
 export default function LovableMissionPage() {
   const {
@@ -25,6 +27,8 @@ export default function LovableMissionPage() {
     resetAll,
   } = useLovableChat();
 
+  const { user } = useLovableAuth();
+
   const [modalOpen, setModalOpen] = useState(false);
   const promptLink = lastResponse?.lovablePromptLink;
   const [, navigate] = useLocation();
@@ -38,6 +42,24 @@ export default function LovableMissionPage() {
     navigate("/missions/lovable/submissions");
   };
 
+  const handleOpenSubmitModal = () => {
+    if (!user) {
+      toastError("الرجاء تسجيل الدخول عبر Google قبل إرسال المشروع.");
+      return;
+    }
+    setModalOpen(true);
+  };
+
+  if (!user) {
+    return (
+      <Container>
+        <div className="mx-auto max-w-3xl py-10">
+          <GoogleSignInCTA />
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <div className="mx-auto max-w-7xl py-6">
@@ -47,7 +69,7 @@ export default function LovableMissionPage() {
             promptLink={promptLink}
             onOpenLovable={handleOpenLovable}
             onReset={resetAll}
-            onSubmitProject={() => setModalOpen(true)}
+            onSubmitProject={handleOpenSubmitModal}
             onViewSubmissions={handleViewSubmissions}
             resetLabel={LABELS.restart}
             submitLabel={LABELS.submitProject}

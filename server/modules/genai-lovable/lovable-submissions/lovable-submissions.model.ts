@@ -15,6 +15,7 @@ export interface LovableSubmissionWhere extends Record<string, unknown> {
   search?: string;
   studentName?: string;
   noonCode?: string;
+  email?: string;
   projectTitle?: string;
   projectLink?: string;
   isFeatured?: boolean;
@@ -39,6 +40,8 @@ function col(
       return lovableSubmissionsV2.projectTitle;
     case "projectLink":
       return lovableSubmissionsV2.projectLink;
+    case "email":
+      return lovableSubmissionsV2.email;
     case "isFeatured":
       return lovableSubmissionsV2.isFeatured;
     case "createdAt":
@@ -76,6 +79,7 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
         ilike(lovableSubmissionsV2.studentName, `%${search}%`),
         ilike(lovableSubmissionsV2.projectTitle, `%${search}%`),
         ilike(lovableSubmissionsV2.noonCode, `%${search}%`),
+        ilike(lovableSubmissionsV2.email, `%${search}%`),
       ),
     );
   }

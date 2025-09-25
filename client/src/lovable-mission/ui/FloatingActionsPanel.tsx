@@ -4,6 +4,7 @@ import { ResetProjectControl } from "../ui/ResetProjectControl";
 import { ProgressDisplay } from "./ProgressDisplay";
 import { LABELS } from "../constants";
 import { RotateCcw, Upload, FolderOpen } from "lucide-react";
+import { AccountCard } from "./AccountCard";
 
 interface FloatingActionsPanelProps {
   progress: any;
@@ -100,6 +101,8 @@ export function FloatingActionsPanel({
       >
         <ResetProjectControl onReset={onReset} label={LABELS.restart} />
       </section>
+
+      <AccountCard />
     </aside>
   );
 }

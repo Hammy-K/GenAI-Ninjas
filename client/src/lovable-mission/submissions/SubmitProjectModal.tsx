@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLovableAuth } from "../auth/AuthProvider";
 
 type Props = {
   open: boolean;
@@ -41,6 +42,7 @@ export function SubmitProjectModal({
   const [projectLink, setProjectLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [attempted, setAttempted] = useState(false); // show inline errors only after first submit
+  const { user } = useLovableAuth();
 
   // reset on open
   useEffect(() => {
@@ -57,9 +59,9 @@ export function SubmitProjectModal({
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
 
-    if (!studentName.trim()) e.studentName = "الاسم مطلوب";
+    // if (!studentName.trim()) e.studentName = "الاسم مطلوب";
 
-    if (!noonCode.trim()) e.noonCode = "كود نون مطلوب";
+    // if (!noonCode.trim()) e.noonCode = "كود نون مطلوب";
 
     if (!projectTitle.trim()) e.projectTitle = "عنوان المشروع مطلوب";
 
@@ -81,7 +83,7 @@ export function SubmitProjectModal({
     }
 
     return e;
-  }, [studentName, projectTitle, projectLink]);
+  }, [projectTitle, projectLink]);
 
   const firstErrorMessage = useMemo(() => {
     const keys = Object.keys(errors);
@@ -106,8 +108,9 @@ export function SubmitProjectModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          studentName: studentName.trim(),
-          noonCode: noonCode.trim(),
+          studentName: user?.displayName,
+          email: user?.email,
+          // noonCode: noonCode.trim(),
           projectTitle: projectTitle.trim(),
           projectLink: projectLink.trim(),
         }),
@@ -148,6 +151,7 @@ export function SubmitProjectModal({
 
         {/* Form body — labels on top, consistent with student modal */}
         <div className="grid gap-4 py-2">
+          {/* 
           <div className="grid gap-2">
             <Label htmlFor="studentName">اسم الطالب</Label>
             <Input
@@ -176,7 +180,7 @@ export function SubmitProjectModal({
             {attempted && errors.noonCode && (
               <p className="text-red-600 text-xs">{errors.noonCode}</p>
             )}
-          </div>
+          </div> */}
 
           <div className="grid gap-2">
             <Label htmlFor="projectTitle">عنوان المشروع</Label>
