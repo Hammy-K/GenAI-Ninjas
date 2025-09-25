@@ -91,7 +91,18 @@ export default function LovableProjectCard({ project }: Props) {
             {project.noonCode ? ` • كود: ${project.noonCode}` : ""}
           </p>
           <p className="text-gray-500 text-xs mt-1">
-            🗓️ {new Date(project.createdAt).toLocaleString("ar-SA")}
+            🗓️{" "}
+            {new Intl.DateTimeFormat("ar-SA", {
+              calendar: "gregory",
+              numberingSystem: "arab",
+              timeZone: "Asia/Riyadh",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }).format(new Date(project.createdAt))}
           </p>
         </div>
 
