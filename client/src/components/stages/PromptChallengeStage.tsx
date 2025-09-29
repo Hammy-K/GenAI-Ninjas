@@ -47,8 +47,8 @@ export function PromptChallengeStage({
   onBack,
 }: PromptChallengeStageProps) {
   // Use quest hook for global state
-  const { isStageTimerExpired, markStageTimerExpired, markStageVisited } =
-    useQuest();
+  // const { isStageTimerExpired, markStageTimerExpired, markStageVisited } =
+  //   useQuest();
 
   // Use custom hook for persisted state
   const [state, setState] = useStageState<PromptChallengeState>(
@@ -67,14 +67,14 @@ export function PromptChallengeStage({
   const STAGE_TIME_LIMIT = 5; // 5 minutes
 
   // Mark stage as visited
-  useEffect(() => {
-    markStageVisited(STAGE_ID);
-  }, [markStageVisited]);
+  // useEffect(() => {
+  //   markStageVisited(STAGE_ID);
+  // }, [markStageVisited]);
 
   // Handle timer expiration
-  const handleTimeUp = (stageId: number) => {
-    markStageTimerExpired(stageId);
-  };
+  // const handleTimeUp = (stageId: number) => {
+  //   markStageTimerExpired(stageId);
+  // };
 
   // Utility functions to update individual state properties
   const setImprovedPrompt = (prompt: string) =>
@@ -214,7 +214,7 @@ export function PromptChallengeStage({
           </CardHeader>
 
           <CardContent>
-            {isStageTimerExpired(STAGE_ID) && (
+            {/* {isStageTimerExpired(STAGE_ID) && (
               <Alert className="bg-amber-50 border-amber-200 mb-4">
                 <AlertDescription className="text-sm">
                   انتهى الوقت المقترح لهذه المرحلة، لكن يمكنك أن تأخذ وقتك إذا
@@ -222,7 +222,7 @@ export function PromptChallengeStage({
                   تكون جاهزاً.
                 </AlertDescription>
               </Alert>
-            )}
+            )} */}
 
             {/* Compact Examples Section */}
             <div className="py-3 mb-4">
