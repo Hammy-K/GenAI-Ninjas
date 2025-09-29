@@ -336,11 +336,9 @@ export const videoSubmissions = pgTable("video_submissions", {
 // Video generation jobs table for reliable job tracking
 export const videoJobs = pgTable("video_jobs", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   firebaseUid: text("firebase_uid").notNull(), // For session-based tracking
-  facilitatorId: integer("facilitator_id")
-    .references(() => facilitators.id),
+  facilitatorId: integer("facilitator_id").references(() => facilitators.id),
   sceneNumber: integer("scene_number").notNull().default(1),
   requestHash: text("request_hash").notNull().unique(), // For idempotency
   prompt: text("prompt").notNull(),
@@ -372,14 +370,17 @@ export const facilitators = pgTable("facilitators", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const studentFacilitatorAssignments = pgTable("student_facilitator_assignments", {
-  studentEmail: text("student_email").primaryKey(), // Primary key - unique student emails
-  facilitatorId: integer("facilitator_id")
-    .references(() => facilitators.id)
-    .notNull(),
-  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
-  assignedBy: text("assigned_by"), // For audit trail
-});
+export const studentFacilitatorAssignments = pgTable(
+  "student_facilitator_assignments",
+  {
+    studentEmail: text("student_email").primaryKey(), // Primary key - unique student emails
+    facilitatorId: integer("facilitator_id")
+      .references(() => facilitators.id)
+      .notNull(),
+    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    assignedBy: text("assigned_by"), // For audit trail
+  },
+);
 
 // Insert schemas for facilitator management
 export const insertFacilitatorSchema = createInsertSchema(facilitators).omit({
@@ -402,7 +403,9 @@ export const insertVideoSubmissionSchema = createInsertSchema(
 });
 
 export const insertVideoJobSchema = createInsertSchema(videoJobs, {
-  status: z.enum(["queued", "processing", "completed", "failed", "expired"]).default("queued"),
+  status: z
+    .enum(["queued", "processing", "completed", "failed", "expired"])
+    .default("queued"),
   aspectRatio: z.string().default("16:9"),
   sceneNumber: z.number().default(1),
   attemptCount: z.number().default(0),
@@ -462,7 +465,8 @@ export type LovableMissionChatHistory =
   typeof lovableMissionChatHistory.$inferSelect;
 export type LovableSubmission = typeof lovableSubmissions.$inferSelect;
 export type Facilitator = typeof facilitators.$inferSelect;
-export type StudentFacilitatorAssignment = typeof studentFacilitatorAssignments.$inferSelect;
+export type StudentFacilitatorAssignment =
+  typeof studentFacilitatorAssignments.$inferSelect;
 export type VideoSubmission = typeof videoSubmissions.$inferSelect;
 export type VideoJob = typeof videoJobs.$inferSelect;
 
@@ -479,10 +483,33 @@ export const tracksStudents = pgTable("tracks_students", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertTracksStudentSchema = createInsertSchema(tracksStudents).omit({
+export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
+  id: serial("id").primaryKey(),
+  studentName: text("student_name").notNull(),
+  noonCode: text("noon_code"),
+  projectTitle: text("project_title").notNull(),
+  projectLink: text("project_link").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  email: text("email"),
+});
+
+export const insertLovableSubmissionV2Schema = createInsertSchema(lovableSubmissionsV2).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTracksStudentSchema = createInsertSchema(
+  tracksStudents,
+).omit({
   id: true,
   createdAt: true,
 });
 
 export type InsertTracksStudent = z.infer<typeof insertTracksStudentSchema>;
 export type TracksStudent = typeof tracksStudents.$inferSelect;
+export type LovableSubmissionV2 = typeof lovableSubmissionsV2.$inferSelect;
+export type InsertLovableSubmissionV2 = z.infer<typeof insertLovableSubmissionV2Schema>;

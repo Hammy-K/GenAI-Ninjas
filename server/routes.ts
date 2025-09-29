@@ -44,6 +44,7 @@ import { registerAudioTtsRoutes } from "./modules/audio-tts/audio-tts.routes";
 import { registerVideoFlowRoutes } from "./modules/video-flow/video-flow.route";
 import { registerVideoSubmissionsRoutes } from "./routes/video-submissions";
 import { createVideoJobsRouter } from "./modules/video-jobs/video-jobs.route";
+import { getSubmissionsAnalytics } from "./routes/submissions-analytics";
 
 /**
  * Legacy function for server-side prompt logging
@@ -113,6 +114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Health check endpoint called");
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Submissions analytics endpoint
+  apiRouter.get("/submissions-analytics", getSubmissionsAnalytics);
 
   // Mount the video flow routes onto the apiRouter
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
@@ -532,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register video flow routes
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
-  
+
   // Register video submissions routes
   apiRouter.use("/video-submissions", registerVideoSubmissionsRoutes());
 

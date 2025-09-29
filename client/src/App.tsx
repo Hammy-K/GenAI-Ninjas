@@ -65,6 +65,7 @@ import SceneFlowPage from "./video-generator/scene-flow/SceneFlowPage";
 import ChatPage from "./pages/ChatPage";
 import VideoSubmissionsPage from "./pages/VideoSubmissionsPage";
 import { LovableAuthProvider } from "./lovable-mission/auth/AuthProvider";
+import SubmissionsDashboard from "./pages/SubmissionsDashboard";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -300,7 +301,7 @@ function Router() {
         component={GenaiSchoolTrainingPage}
       />
       {/* ########################## admin routes ############################# */}
-
+      <Route path="/analytics" component={SubmissionsDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
