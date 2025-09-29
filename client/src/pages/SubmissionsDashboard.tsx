@@ -87,12 +87,6 @@ const SubmissionsDashboard = () => {
   const tableData = getTableData();
   const totalSubmissions = data.total || 0;
 
-  const getDisplayCount = (row) => {
-    if (submissionType === "video") return row.video;
-    if (submissionType === "lovable") return row.lovable;
-    return row.total;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -254,12 +248,6 @@ const SubmissionsDashboard = () => {
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Lovable
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Male
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Female
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -283,22 +271,12 @@ const SubmissionsDashboard = () => {
                         {row.lovable}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                      <span className="inline-flex items-center justify-center w-16 h-8 rounded-full bg-indigo-100 text-indigo-800 font-semibold">
-                        {row.male}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                      <span className="inline-flex items-center justify-center w-16 h-8 rounded-full bg-pink-100 text-pink-800 font-semibold">
-                        {row.female}
-                      </span>
-                    </td>
                   </tr>
                 ))}
                 {tableData.length === 0 && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={4}
                       className="px-6 py-8 text-center text-gray-500"
                     >
                       No data available for this view
