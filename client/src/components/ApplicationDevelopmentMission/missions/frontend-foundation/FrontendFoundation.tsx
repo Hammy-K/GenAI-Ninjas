@@ -70,23 +70,25 @@ export default function FrontendFoundation() {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-xl animate-pulse">
               <Code className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               أساسيات الواجهة الأمامية
             </h1>
             <Sparkles className="w-6 h-6 text-yellow-500 animate-bounce" />
           </div>
 
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-xl">
             تعلّم كيف تبني واجهات تفاعلية — من أفكار بسيطة إلى تطبيقات خرافية
           </p>
 
           {/* Progress Badge */}
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 border-2 border-blue-300 shadow-lg">
             <Trophy className="w-6 h-6 text-yellow-600" />
-            <span className="font-bold text-2xl text-blue-900">
+            <span className="font-bold text-3xl text-blue-900">
               {completedCount} / {FRONTEND_FOUNDATION_CONCEPTS.length}
             </span>
-            <span className="text-blue-700 font-medium">خزنة مفتوحة</span>
+            <span className="text-blue-700 font-medium text-lg">
+              خزنة مفتوحة
+            </span>
           </div>
         </div>
 

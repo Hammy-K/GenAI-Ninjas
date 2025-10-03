@@ -33,7 +33,7 @@ export function SupervisorLeaderboard({
       <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 shadow-lg border-2 border-yellow-300">
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="w-6 h-6 text-yellow-600" />
-          <h2 className="text-lg font-bold text-gray-900">لوحة المتصدرين</h2>
+          <h2 className="text-xl font-bold text-gray-900">لوحة المتصدرين</h2>
         </div>
         <p className="text-sm text-gray-500 text-center py-4">
           لا توجد بيانات بعد
@@ -50,11 +50,11 @@ export function SupervisorLeaderboard({
   return (
     <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 rounded-2xl p-5 shadow-xl border-2 border-yellow-400 sticky top-4">
       <div className="flex items-center gap-2 mb-3">
-        <Trophy className="w-5 h-5 text-yellow-600" />
-        <h2 className="text-lg font-bold text-gray-900">لوحة المتصدرين</h2>
+        <Trophy className="w-6 h-6 text-yellow-600" />
+        <h2 className="text-xl font-bold text-gray-900">لوحة المتصدرين</h2>
       </div>
 
-      <p className="text-xs text-gray-600 mb-4">
+      <p className="text-sm text-gray-600 mb-4">
         متوسط الخزائن المفتوحة لكل طالب
       </p>
 
@@ -76,41 +76,41 @@ export function SupervisorLeaderboard({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {isTopThree && (
-                    <span className="text-xl flex-shrink-0">
+                    <span className="text-2xl flex-shrink-0">
                       {medals[index]}
                     </span>
                   )}
                   {!isTopThree && (
-                    <span className="text-sm text-gray-400 flex-shrink-0">
+                    <span className="text-base text-gray-400 flex-shrink-0">
                       #{index + 1}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-sm text-gray-900 truncate">
+                    <h3 className="font-bold text-base text-gray-900 truncate">
                       {entry.supervisor}
                     </h3>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-600 mt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
                       <span className="flex items-center gap-0.5">
-                        <Users className="w-2.5 h-2.5" />
+                        <Users className="w-3 h-3" />
                         {entry.studentCount}
                       </span>
                       <span className="flex items-center gap-0.5">
-                        <Target className="w-2.5 h-2.5" />
+                        <Target className="w-3 h-3" />
                         {entry.totalVaults}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-lg font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {entry.avgVaultsCompleted.toFixed(1)}
                   </div>
-                  <div className="text-[9px] text-gray-500">من 6</div>
+                  <div className="text-xs text-gray-500">من 6</div>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
                   style={{ width: `${(entry.avgVaultsCompleted / 6) * 100}%` }}
@@ -124,16 +124,16 @@ export function SupervisorLeaderboard({
       {leaderboard.length > 3 && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-3 w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors py-2 rounded-lg hover:bg-blue-50"
+          className="mt-3 w-full flex items-center justify-center gap-2 text-base text-blue-600 hover:text-blue-700 font-medium transition-colors py-2 rounded-lg hover:bg-blue-50"
         >
           {isExpanded ? (
             <>
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-5 h-5" />
               عرض أقل
             </>
           ) : (
             <>
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-5 h-5" />
               عرض الكل ({leaderboard.length})
             </>
           )}
