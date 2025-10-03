@@ -1,69 +1,91 @@
-import React from "react";
-import { CheckCircle, ArrowRight } from "lucide-react";
-import { useLocation } from "wouter";
-import { useOrganization } from "@/hooks/useOrganization";
+// src/components/FrontendConceptCard.tsx
 import { Concept } from "../../playground/config/types";
+import { Lock } from "lucide-react";
+
+interface FrontendConceptCardProps {
+  concept: Concept;
+  color: string;
+  isCompleted: boolean;
+  isLocked: boolean;
+  isActive: boolean;
+}
 
 export const FrontendConceptCard = ({
-  Icon,
-  title,
-  description,
-  examples, // Keep for compatibility but won't use
+  concept,
   color,
-  isCompleted = false,
-  url,
-}: Concept) => {
-  const [location, navigate] = useLocation();
-  const organization = useOrganization();
-
+  isCompleted,
+  isLocked,
+  isActive,
+}: FrontendConceptCardProps) => {
   const handleClick = () => {
-    const destinationUrl = organization.isMain
-      ? url
-      : `/${organization.name}${url}`;
-    navigate(destinationUrl);
+    if (isLocked) return;
+    window.location.href = concept.url; // Use concept.url instead
   };
 
   return (
     <div
-      className={`bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-        isCompleted
-          ? "border-green-300 bg-green-50"
-          : "border-gray-200 hover:border-purple-300"
-      }`}
       onClick={handleClick}
+      className={`relative group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden
+        ${isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+        ${isActive ? "ring-4 ring-blue-400 scale-105" : ""}
+        ${isCompleted ? "border-2 border-green-400" : "border-2 border-transparent"}
+      `}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
-            isCompleted ? "bg-green-100" : ""
-          }`}
-          style={{ backgroundColor: isCompleted ? "#dcfce7" : `${color}20` }}
-        >
-          <Icon
-            className="w-6 h-6"
-            style={{ color: isCompleted ? "#10b981" : color }}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-gray-900">{title}</h3>
-          <p className="text-xs text-gray-600 leading-relaxed">{description}</p>
+      {/* Glow effect for active vault */}
+      {isActive && (
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse" />
+      )}
+
+      <div className="p-6 relative z-10">
+        <div className="flex items-start justify-between gap-4">
+          {/* Content */}
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {concept.title}
+            </h3>
+            <p className="text-gray-600 text-sm">{concept.description}</p>
+
+            {/* Status badges */}
+            <div className="mt-4">
+              {isCompleted && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                  ✓ مكتمل
+                </span>
+              )}
+              {isActive && !isCompleted && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium animate-pulse">
+                  🎯 الخزنة النشطة
+                </span>
+              )}
+              {isLocked && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                  <Lock className="w-3 h-3" />
+                  مقفل
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Icon */}
+          <div className={`text-4xl ${isLocked ? "opacity-30" : ""}`}>
+            <concept.Icon className="w-12 h-12" style={{ color }} />
+          </div>
         </div>
 
-        <div className="flex-shrink-0">
-          {isCompleted ? (
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-xs font-semibold text-green-600">
-                مكتمل
-              </span>
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-xs">ابدأ</span>
-            </div>
-          )}
-        </div>
+        {/* Action Button */}
+        {!isLocked && (
+          <button
+            className={`mt-4 w-full py-2 rounded-lg font-medium transition-colors
+              ${
+                isCompleted
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }
+            `}
+          >
+            {isCompleted ? "إعادة الزيارة" : "ابدأ"}
+          </button>
+        )}
       </div>
     </div>
   );

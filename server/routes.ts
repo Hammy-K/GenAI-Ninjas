@@ -45,6 +45,7 @@ import { registerVideoFlowRoutes } from "./modules/video-flow/video-flow.route";
 import { registerVideoSubmissionsRoutes } from "./routes/video-submissions";
 import { createVideoJobsRouter } from "./modules/video-jobs/video-jobs.route";
 import { getSubmissionsAnalytics } from "./routes/submissions-analytics";
+import { registerTracksStudentsRoutes } from "./routes/tracks-students";
 
 /**
  * Legacy function for server-side prompt logging
@@ -106,6 +107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  app.use("/api/tracks-students", registerTracksStudentsRoutes());
   // Create router for API endpoints
   const apiRouter = express.Router();
 

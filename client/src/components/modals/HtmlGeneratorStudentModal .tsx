@@ -1,3 +1,4 @@
+// components/modals/HtmlGeneratorStudentModal.tsx
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import {
@@ -16,6 +17,13 @@ import { SchoolSelect } from "../common/SelectSchool";
 
 export default function HtmlGeneratorStudentModal() {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"email" | "manual">("email");
+
+  // Email step
+  const [email, setEmail] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // Manual step
   const [fullName, setFullName] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [studentGrade, setStudentGrade] = useState<string>(() => {
@@ -31,6 +39,12 @@ export default function HtmlGeneratorStudentModal() {
     label: string;
   } | null>(null);
 
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   useEffect(() => {
     if (schoolName === "مدرسة أخرى") {
       setSchoolName("");
@@ -39,7 +53,6 @@ export default function HtmlGeneratorStudentModal() {
 
   useEffect(() => {
     const studentId = Cookies.get("studentId");
-
     if (!studentId) {
       setOpen(true);
     }
@@ -53,9 +66,93 @@ export default function HtmlGeneratorStudentModal() {
         studentGrade.trim() !== "" &&
         /^05\d{8}$/.test(phoneNumber.trim()),
     );
-  }, [fullName, schoolName, phoneNumber]);
+  }, [fullName, schoolName, phoneNumber, studentGrade]);
 
-  const handleSubmit = async () => {
+  const handleEmailLookup = async () => {
+    if (!isValidEmail(email)) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال بريد إلكتروني صحيح",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEmailLoading(true);
+    setErrorMsg("");
+
+    try {
+      // 1. Check tracks_students table
+      const trackRes = await fetch(
+        `/api/tracks-students/by-email?email=${encodeURIComponent(email)}`,
+      );
+
+      if (!trackRes.ok) {
+        // Email not found - show manual entry
+        toast({
+          title: "البريد غير موجود",
+          description: "لم نجد بريدك في النظام. يرجى ملء البيانات يدوياً.",
+        });
+        setStep("manual");
+        return;
+      }
+
+      const trackStudent = await trackRes.json();
+
+      // ADD THIS LOG
+      console.log("Data from tracks_students:", trackStudent);
+      console.log("Phone number:", trackStudent.phone_number);
+
+      const studentData = {
+        email: email,
+        fullName: trackStudent.studentName || email.split("@")[0],
+        schoolName: trackStudent.school || "غير محدد",
+        phoneNumber: trackStudent.phoneNumber || "",
+      };
+
+      // ADD THIS LOG
+      console.log("Sending to /api/students:", studentData);
+
+      // 2. Create/get student record
+      const studentRes = await fetch("/api/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          fullName: trackStudent.studentName || email.split("@")[0],
+          schoolName: trackStudent.school || "غير محدد",
+          phoneNumber: trackStudent.phoneNumber || "", // Direct use, no conversion needed
+        }),
+      });
+
+      if (!studentRes.ok) {
+        throw new Error("فشل في إنشاء سجل الطالب");
+      }
+
+      const student = await studentRes.json();
+
+      // 3. Set cookie and localStorage
+      Cookies.set("studentId", student.id, { expires: 30 });
+
+      localStorage.setItem("studentName", trackStudent.studentName || email);
+      localStorage.setItem("schoolName", trackStudent.school || "");
+      localStorage.setItem("email", email);
+
+      toast({
+        title: "🎉 أهلاً بك!",
+        description: `مرحباً ${trackStudent.studentName || "بك"}! تم تسجيل دخولك بنجاح.`,
+      });
+
+      setOpen(false);
+    } catch (error: any) {
+      console.error("Email lookup error:", error);
+      setErrorMsg(error.message || "حدث خطأ. حاول مرة أخرى.");
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleManualSubmit = async () => {
     if (!isValid || loading) return;
 
     setLoading(true);
@@ -64,13 +161,12 @@ export default function HtmlGeneratorStudentModal() {
     try {
       const res = await fetch("/api/students", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
           schoolName,
           phoneNumber,
+          email: email || undefined,
         }),
       });
 
@@ -84,12 +180,13 @@ export default function HtmlGeneratorStudentModal() {
         throw new Error("لم يتم العثور على معرف الطالب.");
       }
 
-      Cookies.set("studentId", data.id, { expires: 3 });
+      Cookies.set("studentId", data.id, { expires: 30 });
 
       localStorage.setItem("studentName", fullName);
       localStorage.setItem("studentGrade", studentGrade);
       localStorage.setItem("schoolName", schoolName);
       localStorage.setItem("phoneNumber", phoneNumber);
+      if (email) localStorage.setItem("email", email);
 
       toast({
         title: "🎉 أهلاً بك!",
@@ -112,122 +209,181 @@ export default function HtmlGeneratorStudentModal() {
             👋 أهلاً بك في منشئ الألعاب!
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            قبل ما نبدأ، نحتاج بعض المعلومات البسيطة
+            {step === "email"
+              ? "أدخل بريدك الإلكتروني للبدء"
+              : "قبل ما نبدأ، نحتاج بعض المعلومات البسيطة"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="fullName" className="text-right">
-              الاسم الكامل
-            </Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="col-span-3 bg-white border-gray-300 rounded-lg"
-              placeholder="...."
-              required
-            />
-          </div>
-
-          {/* <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="schoolName" className="text-right">
-              اسم المدرسة
-            </Label>
-            <Input
-              id="schoolName"
-              value={schoolName}
-              onChange={(e) => setSchoolName(e.target.value)}
-              className="col-span-3 bg-white border-gray-300 rounded-lg"
-              placeholder="...."
-              required
-            />
-          </div> */}
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="fullName" className="text-right">
-              اسم المدرسة
-            </Label>
-            <SchoolSelect
-              onChange={(value) => {
-                setSchoolSelect(value);
-                setSchoolName(value.label);
-                console.log("school name", schoolName);
-              }}
-              value={schoolSelect}
-              showLabel={false}
-              className="w-full col-span-3"
-            />
-
-            {schoolSelect !== null && schoolSelect.id === "other" && (
-              <>
-                <div className="col-span-1" />
-
-                <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800 text-sm col-span-3">
-                  لقد اخترت <strong>مدرسة أخرى</strong>. فضلاً اكتب اسم المدرسة
-                  بشكل واضح أدناه.
-                </div>
-
-                <div className="col-span-1" />
-                {/* <Label htmlFor="schoolName">اسم المدرسة</Label> */}
-
-                <Input
-                  id="schoolName"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  placeholder="اسم المدرسة"
-                  className="bg-white border-gray-300 rounded-lg col-span-3"
-                  required
-                />
-              </>
-            )}
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="studentGrade" className="text-right">
-              الصف الدراسي
-            </Label>
-            <Input
-              id="studentGrade"
-              value={studentGrade}
-              onChange={(e) => setStudentGrade(e.target.value)}
-              className="col-span-3 bg-white border-gray-300 rounded-lg"
-              placeholder="مثال: الصف التاسع"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="phoneNumber" className="text-right">
-              رقم الجوال
-            </Label>
-            <Input
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="col-span-3 bg-white border-gray-300 rounded-lg"
-              placeholder="مثال: 0555321542"
-              required
-            />
-          </div>
-
-          {errorMsg && (
-            <div className="col-span-full">
-              <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+        {step === "email" ? (
+          // Email lookup step
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@gmail.com"
+                className={`bg-white border-gray-300 rounded-lg ${
+                  email && !isValidEmail(email) ? "border-red-500" : ""
+                }`}
+                disabled={emailLoading}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleEmailLookup();
+                  }
+                }}
+              />
+              {email && !isValidEmail(email) && (
+                <p className="text-red-500 text-xs">
+                  صيغة البريد الإلكتروني غير صحيحة
+                </p>
+              )}
             </div>
-          )}
-        </div>
 
-        <DialogFooter className="flex justify-end">
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={!isValid || loading}
-          >
-            {loading ? "جاري الحفظ..." : "بدء المهمة"}
-          </Button>
-        </DialogFooter>
+            {errorMsg && (
+              <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+            )}
+
+            <Button
+              onClick={handleEmailLookup}
+              disabled={!isValidEmail(email) || emailLoading}
+              className="w-full"
+            >
+              {emailLoading ? "جاري التحقق..." : "متابعة"}
+            </Button>
+
+            <button
+              onClick={() => setStep("manual")}
+              className="w-full text-sm text-blue-600 hover:text-blue-700 underline"
+              disabled={emailLoading}
+            >
+              ليس لدي بريد إلكتروني أو أفضل الإدخال اليدوي
+            </button>
+          </div>
+        ) : (
+          // Manual entry step
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fullName" className="text-right">
+                الاسم الكامل
+              </Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="col-span-3 bg-white border-gray-300 rounded-lg"
+                placeholder="...."
+                required
+              />
+            </div>
+
+            {/* Email field - readonly if coming from email step */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="manualEmail" className="text-right">
+                البريد الإلكتروني
+              </Label>
+              <Input
+                id="manualEmail"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`col-span-3 bg-white border-gray-300 rounded-lg ${
+                  email && !isValidEmail(email) ? "border-red-500" : ""
+                }`}
+                placeholder="example@gmail.com (اختياري)"
+                disabled={email !== "" && step === "manual"}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="schoolName" className="text-right">
+                اسم المدرسة
+              </Label>
+              <SchoolSelect
+                onChange={(value) => {
+                  setSchoolSelect(value);
+                  setSchoolName(value.label);
+                }}
+                value={schoolSelect}
+                showLabel={false}
+                className="w-full col-span-3"
+              />
+
+              {schoolSelect !== null && schoolSelect.id === "other" && (
+                <>
+                  <div className="col-span-1" />
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800 text-sm col-span-3">
+                    لقد اخترت <strong>مدرسة أخرى</strong>. فضلاً اكتب اسم
+                    المدرسة بشكل واضح أدناه.
+                  </div>
+                  <div className="col-span-1" />
+                  <Input
+                    id="schoolNameOther"
+                    value={schoolName}
+                    onChange={(e) => setSchoolName(e.target.value)}
+                    placeholder="اسم المدرسة"
+                    className="bg-white border-gray-300 rounded-lg col-span-3"
+                    required
+                  />
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="studentGrade" className="text-right">
+                الصف الدراسي
+              </Label>
+              <Input
+                id="studentGrade"
+                value={studentGrade}
+                onChange={(e) => setStudentGrade(e.target.value)}
+                className="col-span-3 bg-white border-gray-300 rounded-lg"
+                placeholder="مثال: الصف التاسع"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phoneNumber" className="text-right">
+                رقم الجوال
+              </Label>
+              <Input
+                id="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="col-span-3 bg-white border-gray-300 rounded-lg"
+                placeholder="مثال: 0555321542"
+                required
+              />
+            </div>
+
+            {errorMsg && (
+              <div className="col-span-full">
+                <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              onClick={handleManualSubmit}
+              disabled={!isValid || loading}
+              className="w-full"
+            >
+              {loading ? "جاري الحفظ..." : "بدء المهمة"}
+            </Button>
+
+            <button
+              onClick={() => setStep("email")}
+              className="w-full text-sm text-gray-600 hover:text-gray-700"
+              disabled={loading}
+            >
+              ← العودة لإدخال البريد الإلكتروني
+            </button>
+          </div>
+        )}
       </DialogContent>
     </CustomDialog>
   );

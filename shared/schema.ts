@@ -6,6 +6,7 @@ import {
   boolean,
   jsonb,
   timestamp,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -480,6 +481,7 @@ export const tracksStudents = pgTable("tracks_students", {
   grade: text("grade").notNull(),
   supervisor: text("supervisor").notNull(),
   studentEmail: text("student_email").notNull(),
+  phoneNumber: varchar("phone_number").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -489,14 +491,20 @@ export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
   noonCode: text("noon_code"),
   projectTitle: text("project_title").notNull(),
   projectLink: text("project_link").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   isFeatured: boolean("is_featured").notNull().default(false),
   email: text("email"),
 });
 
-export const insertLovableSubmissionV2Schema = createInsertSchema(lovableSubmissionsV2).omit({
+export const insertLovableSubmissionV2Schema = createInsertSchema(
+  lovableSubmissionsV2,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -512,4 +520,6 @@ export const insertTracksStudentSchema = createInsertSchema(
 export type InsertTracksStudent = z.infer<typeof insertTracksStudentSchema>;
 export type TracksStudent = typeof tracksStudents.$inferSelect;
 export type LovableSubmissionV2 = typeof lovableSubmissionsV2.$inferSelect;
-export type InsertLovableSubmissionV2 = z.infer<typeof insertLovableSubmissionV2Schema>;
+export type InsertLovableSubmissionV2 = z.infer<
+  typeof insertLovableSubmissionV2Schema
+>;

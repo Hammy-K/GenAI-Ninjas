@@ -7,6 +7,7 @@ import {
   Share2,
   Mic,
   Loader,
+  ArrowRight,
 } from "lucide-react";
 import {
   Card,
@@ -538,6 +539,8 @@ export default function AppDevAiPlayground({
                   <Card className="h-full flex flex-col border-lg bg-white border-0">
                     <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
                       <div className="flex items-center gap-2">
+                        {/* Add the Go Back button here */}
+
                         <Button
                           type="button"
                           variant="destructive"
@@ -580,39 +583,8 @@ export default function AppDevAiPlayground({
                               الكود
                             </Button>
                           </div>
-                          <Button
-                            variant="default"
-                            className={`h-8 flex items-center gap-1 text-xs ${
-                              !isProjectSaving ? "" : "animate-pulse"
-                            }`}
-                            onClick={saveAndShareProject}
-                            disabled={isProjectSaving}
-                          >
-                            {isProjectSaving ? (
-                              <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                جاري الحفظ...
-                              </>
-                            ) : (
-                              <>
-                                <Share2 className="h-3 w-3" />
-                                حفظ ومشاركة
-                              </>
-                            )}
-                          </Button>
                         </div>
                       )}
-
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={penguinAvatar}
-                          alt="د. بنجي"
-                          className="h-8 w-8 rounded-full"
-                        />
-                        <CardTitle className="font-medium text-lg">
-                          {htmlContent ? "كود HTML" : "معاينة مباشرة"}
-                        </CardTitle>
-                      </div>
                     </CardHeader>
 
                     <CardContent className="flex-1 p-0 bg-white border-lg">
@@ -656,6 +628,20 @@ export default function AppDevAiPlayground({
                         alt="د. بنجي"
                         className="h-8 w-8 rounded-full mr-2"
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          const url = organization.isMain
+                            ? "/missions/app-development/frontend-foundation"
+                            : `/${organization.name}/missions/app-development/frontend-foundation`;
+                          window.location.href = url;
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                        <span>رجوع</span>
+                      </Button>
                     </CardHeader>
 
                     <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">

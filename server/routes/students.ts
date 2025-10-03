@@ -43,23 +43,36 @@ export function registerStudentsRoutes(router: Router) {
   });
 
   studentsRoutes.post("/", async (req: Request, res: Response) => {
-    const { fullName, schoolName, phoneNumber } = req.body;
+    const { fullName, schoolName, phoneNumber, email } = req.body;
 
-    if (!fullName || !schoolName || !phoneNumber) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (email) {
+      const existing = await db
+        .select()
+        .from(students)
+        .where(eq(students.email, email))
+        .limit(1);
+      if (existing.length > 0) {
+        return res.json(existing[0]);
+      }
     }
 
-    try {
-      const inserted = await db
-        .insert(students)
-        .values({ fullName, schoolName, phoneNumber })
-        .returning();
-
-      res.status(201).json(inserted[0]);
-    } catch (error) {
-      console.error("Error creating student:", error);
-      res.status(500).json({ error: "Internal server error" });
+    if (!fullName || !schoolName) {
+      return res
+        .status(400)
+        .json({ error: "fullName and schoolName are required" });
     }
+
+    const inserted = await db
+      .insert(students)
+      .values({
+        fullName,
+        schoolName,
+        phoneNumber: phoneNumber || null,
+        email: email || null,
+      })
+      .returning();
+
+    res.status(201).json(inserted[0]);
   });
 
   router.use("/students", studentsRoutes);
