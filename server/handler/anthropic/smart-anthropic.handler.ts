@@ -20,7 +20,10 @@ export function parseClaudeResponse(claudeResponse: any): StandardAiResponse {
     let textContent = claudeResponse.content?.[0]?.text ?? "";
 
     // Remove markdown code blocks if present
-    textContent = textContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    textContent = textContent
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
 
     let parsed = textContent;
 
