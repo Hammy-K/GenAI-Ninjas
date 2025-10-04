@@ -206,7 +206,7 @@ export default function HtmlGeneratorStudentModal() {
       <DialogContent className="bg-white" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
-            👋 أهلاً بك في منشئ الألعاب!
+            👋 أهلاً بك في تصميم التطبيقات!
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
             {step === "email"

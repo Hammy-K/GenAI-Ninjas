@@ -25,7 +25,7 @@ import { PlaygroundWelcomeCard } from "./PlaygroundWelcomeCard";
 import { Button } from "../ui/button";
 import Cookies from "js-cookie";
 import { saveProject } from "@/lib/firebase";
-import HtmlGeneratorStudentModal from "../modals/HtmlGeneratorStudentModal ";
+import HtmlGeneratorStudentModal from "@/components/modals/GamesGeneratorStudentModal";
 import { ProjectShareDialog } from "./ProjectShareDialog";
 import { toast } from "@/hooks/use-toast";
 import NewProjectDialog from "./NewProjectDialog";
