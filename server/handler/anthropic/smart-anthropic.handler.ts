@@ -68,7 +68,7 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
 
   logStudentHtmlMessage(userId, message);
 
-  // Build messages correctly - no system prompt here
+  // Build messages from history
   const baseMessages: ClaudeMessage[] = history
     .map(
       (msg: any): ClaudeMessage => ({
@@ -77,13 +77,17 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
           msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
       }),
     )
-    .filter((msg) => msg.content && msg.content.trim() !== ""); // Filter out empty messages
+    .filter((msg) => msg.content && msg.content.trim() !== "");
 
-  // Add reminder as final user message
+  // Add the current user message
   baseMessages.push({
     role: "user",
-    content: ANTHROPIC_OUTPUT_REMINDER_PROMPT,
+    content: message,
   });
+
+  // Add reminder to the last user message (append it rather than creating new message)
+  const lastMessage = baseMessages[baseMessages.length - 1];
+  lastMessage.content = `${lastMessage.content}\n\n${ANTHROPIC_OUTPUT_REMINDER_PROMPT}`;
 
   for (const model of ANTHROPIC_CONFIG.FALLBACK_ORDER) {
     try {
@@ -93,7 +97,7 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
         model,
         max_tokens: ANTHROPIC_CONFIG.MAX_TOKENS,
         temperature: ANTHROPIC_CONFIG.TEMPERATURE,
-        system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT, // System prompt only goes here
+        system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT,
         messages: baseMessages,
       };
 
