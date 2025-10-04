@@ -68,28 +68,32 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
 
   logStudentHtmlMessage(userId, message);
 
-  const baseMessages: ClaudeMessage[] = [
-    { role: "assistant", content: HTML_ANTHROPIC_AI_SYSTEM_PROMPT },
-    ...history.map(
+  // Build messages correctly - no system prompt here
+  const baseMessages: ClaudeMessage[] = history
+    .map(
       (msg: any): ClaudeMessage => ({
         role: msg.role === "assistant" ? "assistant" : "user",
         content:
           msg.role === "assistant" ? msg.aiMessage || msg.content : msg.content,
       }),
-    ),
-    { role: "assistant", content: ANTHROPIC_OUTPUT_REMINDER_PROMPT },
-  ];
+    )
+    .filter((msg) => msg.content && msg.content.trim() !== ""); // Filter out empty messages
+
+  // Add reminder as final user message
+  baseMessages.push({
+    role: "user",
+    content: ANTHROPIC_OUTPUT_REMINDER_PROMPT,
+  });
 
   for (const model of ANTHROPIC_CONFIG.FALLBACK_ORDER) {
     try {
       const requestTime = new Date();
 
-      // TODO: the system prompt is sent twice, once in the baseMessages and once here
       const anthropicRequestBody: MessageCreateParamsNonStreaming = {
         model,
         max_tokens: ANTHROPIC_CONFIG.MAX_TOKENS,
         temperature: ANTHROPIC_CONFIG.TEMPERATURE,
-        system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT,
+        system: HTML_ANTHROPIC_AI_SYSTEM_PROMPT, // System prompt only goes here
         messages: baseMessages,
       };
 
@@ -110,24 +114,19 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
         rawResponse: JSON.stringify(response),
       });
 
-      // Accept only successful completions
       if (response.stop_reason === "end_turn") {
         const parsedResponse = parseClaudeResponse(response);
-
         return res.status(200).json(parsedResponse);
       }
 
-      // else try next model...
       console.warn(
         `Model [${model}] ended with stop_reason [${response.stop_reason}] — trying next.`,
       );
     } catch (err: any) {
       console.error(`Model [${model}] failed with error:`, err.message);
-      // fall through to try next model
     }
   }
 
-  // ✅ If all fallbacks fail
   return res.status(500).json({
     error: "All fallback models failed to generate a valid response.",
   });

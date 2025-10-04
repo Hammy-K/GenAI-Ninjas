@@ -46,6 +46,15 @@ export default function HtmlGeneratorStudentModal() {
   }, []);
 
   useEffect(() => {
+    console.log({
+      fullName: fullName.trim() !== "",
+      schoolName:
+        schoolName.trim() !== "" && schoolName.trim() !== "مدرسة أخرى",
+      studentGrade: studentGrade.trim() !== "",
+      phoneNumber: /^05\d{8}$/.test(phoneNumber.trim()),
+      phoneValue: phoneNumber,
+    });
+
     setIsValid(
       fullName.trim() !== "" &&
         schoolName.trim() !== "" &&
@@ -53,7 +62,7 @@ export default function HtmlGeneratorStudentModal() {
         studentGrade.trim() !== "" &&
         /^05\d{8}$/.test(phoneNumber.trim()),
     );
-  }, [fullName, schoolName, phoneNumber]);
+  }, [fullName, schoolName, phoneNumber, studentGrade]);
 
   const handleSubmit = async () => {
     if (!isValid || loading) return;
