@@ -66,9 +66,19 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
     });
   }
 
-  logStudentHtmlMessage(userId, message);
+  // Make logging non-blocking - wrap in try/catch so it doesn't crash
+  try {
+    if (userId && userId.trim() !== "") {
+      logStudentHtmlMessage(userId, message);
+    } else {
+      console.warn("Missing userId - skipping message log");
+    }
+  } catch (error) {
+    console.error("Failed to log student message:", error);
+    // Continue anyway - logging shouldn't block the request
+  }
 
-  // Build messages from history
+  // Rest of your code remains the same...
   const baseMessages: ClaudeMessage[] = history
     .map(
       (msg: any): ClaudeMessage => ({
@@ -79,13 +89,11 @@ export async function handleSmartAnthropicRequest(req: Request, res: Response) {
     )
     .filter((msg) => msg.content && msg.content.trim() !== "");
 
-  // Add the current user message
   baseMessages.push({
     role: "user",
     content: message,
   });
 
-  // Add reminder to the last user message (append it rather than creating new message)
   const lastMessage = baseMessages[baseMessages.length - 1];
   lastMessage.content = `${lastMessage.content}\n\n${ANTHROPIC_OUTPUT_REMINDER_PROMPT}`;
 
