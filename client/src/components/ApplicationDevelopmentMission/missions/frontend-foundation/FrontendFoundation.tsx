@@ -46,7 +46,7 @@ export default function FrontendFoundation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="max-w-[80%] mx-auto px-3 py-3">
+      <div className="max-w-[60%] mx-auto px-3 py-3">
         {/* Back Button */}
         <button
           onClick={() => {

@@ -36,52 +36,38 @@ export function registerTracksStudentsRoutes(): Router {
   router.get("/supervisor-leaderboard", async (req, res) => {
     try {
       const organization = req.query.organization as string;
-
       if (!organization) {
         return res.status(400).json({ error: "Organization is required" });
       }
-
       const tracksStudentsList = await db
         .select({
           supervisor: tracksStudents.supervisor,
           studentEmail: tracksStudents.studentEmail,
         })
         .from(tracksStudents);
-
       console.log("Tracks students found:", tracksStudentsList.length);
-
       const supervisorMap = new Map<string, string[]>();
-
       tracksStudentsList.forEach((student) => {
         if (!student.supervisor) return;
-
         if (!supervisorMap.has(student.supervisor)) {
           supervisorMap.set(student.supervisor, []);
         }
         supervisorMap.get(student.supervisor)!.push(student.studentEmail);
       });
-
       console.log("Supervisors found:", supervisorMap.size);
-
       const leaderboard = [];
-
       for (const [supervisor, studentEmails] of supervisorMap.entries()) {
         const studentCount = studentEmails.length;
-
         const studentsInClass = await db
           .select({ id: students.id, email: students.email })
           .from(students)
           .where(inArray(students.email, studentEmails));
-
         console.log(
           `${supervisor}: Found ${studentsInClass.length} students in students table`,
         );
-
         let totalVaults = 0;
-
         if (studentsInClass.length > 0) {
           const studentIds = studentsInClass.map((s) => s.id);
-
           const submissions = await db
             .select({
               userId: appDevFrontend.userId,
@@ -94,36 +80,33 @@ export function registerTracksStudentsRoutes(): Router {
                 eq(appDevFrontend.organization, organization),
               ),
             );
-
           const uniqueCompletions = new Set(
             submissions.map((s) => `${s.userId}-${s.mission}`),
           );
           totalVaults = uniqueCompletions.size;
-
           console.log(`${supervisor}: ${totalVaults} total vaults completed`);
         }
-
         const avgVaultsCompleted =
           studentCount > 0 ? totalVaults / studentCount : 0;
+
+        // Convert to percentage out of 100
+        const percentageCompleted = (avgVaultsCompleted / 6) * 100;
 
         leaderboard.push({
           supervisor,
           avgVaultsCompleted: parseFloat(avgVaultsCompleted.toFixed(2)),
+          percentageCompleted: parseFloat(percentageCompleted.toFixed(2)),
           totalVaults,
           studentCount,
         });
       }
-
       leaderboard.sort((a, b) => b.avgVaultsCompleted - a.avgVaultsCompleted);
-
       console.log("Final leaderboard:", leaderboard);
-
       res.json(leaderboard);
     } catch (error) {
       console.error("Error fetching supervisor leaderboard:", error);
       res.status(500).json({ error: "Failed to fetch leaderboard" });
     }
   });
-
   return router;
 }

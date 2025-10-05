@@ -103,9 +103,8 @@ export function SupervisorLeaderboard({
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-base font-bold text-blue-600">
-                    {entry.avgVaultsCompleted.toFixed(1)}
+                    {entry.percentageCompleted.toFixed(1)}%
                   </div>
-                  <div className="text-[10px] text-gray-500">من 6</div>
                 </div>
               </div>
 
@@ -113,7 +112,7 @@ export function SupervisorLeaderboard({
               <div className="mt-1.5 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
-                  style={{ width: `${(entry.avgVaultsCompleted / 6) * 100}%` }}
+                  style={{ width: `${entry.percentageCompleted}%` }}
                 />
               </div>
             </div>

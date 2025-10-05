@@ -24,18 +24,13 @@ export const FrontendMissionTrack = ({
 }: ConceptCardProps) => {
   return (
     <div className="relative">
-      {/* Header */}
-
       {/* Journey Layout */}
-      <div className="relative space-y-6">
+      <div className="relative space-y-3">
         {/* Connecting Line */}
         <div className="absolute right-[31px] top-12 bottom-12 w-0.5 bg-gradient-to-b from-blue-200 via-blue-300 to-blue-200" />
 
         {concepts.map((concept, index) => {
-          // Extract mission slug from URL
-          // URL format: "/missions/app-development/frontend-foundation/inputs-outputs"
           const missionSlug = concept.url.split("/").pop() as string;
-
           const isCompleted = progress?.[missionSlug] || false;
           const isActive = index === currentVaultIndex;
           const isLocked = index > currentVaultIndex;
@@ -64,8 +59,10 @@ export const FrontendMissionTrack = ({
                 </div>
               </div>
 
-              {/* Concept Card */}
-              <div className="mr-24">
+              {/* Concept Card - Constrained width */}
+              <div className="mr-24 max-w-xl">
+                {" "}
+                {/* Added max-w-xl here */}
                 <FrontendConceptCard
                   concept={concept}
                   color={color}
