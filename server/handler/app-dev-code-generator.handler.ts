@@ -8,9 +8,79 @@ import { logStudentHtmlMessage } from "server/services/student-html-message";
 import { createHtmlAiRequestLogs } from "server/services/html-ai-request-logs";
 import { ANTHROPIC_OUTPUT_REMINDER_PROMPT } from "server/templates/prompts/anthropic/anthropic-output-reminder.prompt";
 import { ClaudeMessage } from "server/types/ai-types/anthropic/claude";
-import { AiRequestBody } from "server/types/ai-types/common";
 import { MessageCreateParamsNonStreaming } from "@anthropic-ai/sdk/resources/index.mjs";
-import { parseClaudeResponse } from "./anthropic/anthropic.handler";
+import {
+  AiRequestBody,
+  StandardAiResponse,
+} from "server/types/ai-types/common";
+
+export function parseClaudeResponseV2(claudeResponse: any): {
+  success: boolean;
+  data: StandardAiResponse;
+} {
+  const FALLBACK: StandardAiResponse = {
+    aiMessage:
+      "عذرًا، حدث خطأ في النظام. الرجاء إعادة المحاولة بعد لحظات، فقد يكون السبب ضغطًا مؤقتًا على الخدمة.",
+    htmlContent: "",
+    isHtmlGenerated: false,
+    isConversationComplete: false,
+  };
+
+  try {
+    const raw =
+      claudeResponse?.content?.[0]?.text ??
+      claudeResponse?.content?.[0] ??
+      claudeResponse?.content ??
+      "";
+
+    if (typeof raw !== "string" || raw.trim().length === 0) {
+      return { success: false, data: FALLBACK };
+    }
+
+    // 1) Slice between the first '{' and the last '}'.
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+
+    if (start === -1 || end === -1 || end <= start) {
+      return { success: false, data: FALLBACK };
+    }
+
+    const sliced = raw.slice(start, end + 1).trim();
+
+    // 2) Parse, with double-decode fallback if result is a string.
+    let parsed: any;
+
+    try {
+      parsed = JSON.parse(sliced);
+
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+      }
+    } catch (error) {
+      console.error("JSON parsing failed: ", error);
+      return { success: false, data: FALLBACK };
+    }
+
+    // 3) Normalize to StandardAiResponse with safe defaults.
+    const normalized: StandardAiResponse = {
+      aiMessage: typeof parsed.aiMessage === "string" ? parsed.aiMessage : "",
+      htmlContent:
+        typeof parsed.htmlContent === "string" ? parsed.htmlContent : "",
+      isHtmlGenerated:
+        typeof parsed.isHtmlGenerated === "boolean"
+          ? parsed.isHtmlGenerated
+          : false,
+      isConversationComplete:
+        typeof parsed.isConversationComplete === "boolean"
+          ? parsed.isConversationComplete
+          : false,
+    };
+
+    return { success: true, data: normalized };
+  } catch {
+    return { success: false, data: FALLBACK };
+  }
+}
 
 export async function handleAppDevCodeGenerator(req: Request, res: Response) {
   const { message, history, userId, systemPrompt }: AiRequestBody = req.body;
@@ -77,9 +147,12 @@ export async function handleAppDevCodeGenerator(req: Request, res: Response) {
       });
 
       if (response.stop_reason === "end_turn") {
-        const parsedResponse = parseClaudeResponse(response);
+        const { success, data: parsedResponse } =
+          parseClaudeResponseV2(response);
 
-        return res.status(200).json(parsedResponse);
+        if (success) {
+          return res.status(200).json(parsedResponse);
+        }
       }
 
       console.warn(

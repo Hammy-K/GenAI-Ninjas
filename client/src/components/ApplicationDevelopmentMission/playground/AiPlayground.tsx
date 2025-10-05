@@ -535,7 +535,7 @@ export default function AppDevAiPlayground({
           <div className="flex-1">
             <div className="">
               <div className="flex flex-col md:flex-row h-[87vh] gap-4 p-2">
-                <div className="w-full md:w-[70%] flex flex-col h-full min-h-0">
+                <div className="w-full md:w-[60%] flex flex-col h-full min-h-0">
                   <Card className="h-full flex flex-col border-lg bg-white border-0">
                     <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
                       <div className="flex items-center gap-2">
@@ -617,7 +617,7 @@ export default function AppDevAiPlayground({
                 </div>
 
                 {/* Chat Panel */}
-                <div className="w-full md:w-[30%] h-full flex flex-col ">
+                <div className="w-full md:w-[40%] h-full flex flex-col ">
                   <Card className="h-full flex flex-col bg-white border-0">
                     <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
                       <CardTitle className="font-medium text-lg">

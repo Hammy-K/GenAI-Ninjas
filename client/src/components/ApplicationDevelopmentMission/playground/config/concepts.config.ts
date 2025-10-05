@@ -7,31 +7,16 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import type { Concept, MissionTutorials } from "./types";
+import { INPUTS_OUTPUTS_PROMPT } from "./prompts/inputs-outputs.prompt";
+import { RANDOM_SELECTION_PROMPT } from "./prompts/random-selection.prompt";
+import { BUTTONS_EVENTS_PROMPT } from "./prompts/buttons-events.prompt";
 
 export const FRONTEND_FOUNDATION_PROMPTS = {
-  inputsOutputs: `
-أنت مساعد لتعليم التعامل مع المدخلات والمخرجات في الواجهة الأمامية.
-المطلوب: مثال بسيط يوضح مدخل نصي واحد ومخرج فوري على الصفحة.
-القيود:
-- استخدم ملف HTML واحد مع <style> و <script> مضمّنين.
-- لا تستخدم مكتبات خارجية.
-التسليم:
-- أعد الكود كـ HTML كامل (<!DOCTYPE html>…)، بدون شرح إضافي.
-`,
-  buttonsEvents: `
-أنت مساعد لتعليم التعامل مع أحداث النقر في الواجهة الأمامية.
-المطلوب: صفحة فيها زر واحد على الأقل؛ عند النقر يحدث تغيير مرئي واضح (نص/لون/وضعية).
-القيود: HTML واحد، CSS و JS مضمّنان؛ لا مكتبات خارجية.
-التسليم: أعد وثيقة HTML كاملة فقط.
-`,
+  inputsOutputs: INPUTS_OUTPUTS_PROMPT,
 
-  randomSelection: `
-أنت مساعد لبناء مثال يختار عنصراً عشوائياً من قائمة ثابتة.
-المطلوب: زر + مصفوفة عناصر في JS + عرض النتيجة عند النقر.
-أضف مؤثر بصري بسيط لإبراز الاختيار.
-قيود: HTML واحد، CSS/JS داخل الصفحة، بدون مكتبات.
-التسليم: وثيقة HTML كاملة فقط.
-`,
+  buttonsEvents: BUTTONS_EVENTS_PROMPT,
+
+  randomSelection: RANDOM_SELECTION_PROMPT,
 
   conditionalLogic: `
 أنت مساعد يعرض مثالاً للمنطق الشرطي if/else في تطبيق واجهة أمامية.
@@ -153,7 +138,7 @@ export const MISSION_TUTORIALS: MissionTutorials = {
   "buttons-events": {
     videoId: "-LLPfxXaZps",
     name: "الأزرار والأحداث",
-  }, 
+  },
   "random-selection": {
     videoId: "aqFts5kygqE",
   },

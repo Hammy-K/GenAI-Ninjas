@@ -82,7 +82,7 @@ export default function AppDevelopmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-      <Header xp={xp} />
+      {/* <Header xp={xp} /> */}
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}

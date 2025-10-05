@@ -72,10 +72,6 @@ export async function saveAppDevProject(
 ): Promise<string | null> {
   const { htmlContent, studentId, organization, mission } = params;
 
-  console.log("#####################################");
-  console.log("Saving project with payload: ", params);
-  console.log("#####################################");
-
   if (!htmlContent || !studentId || !organization || !mission) {
     throw new Error("Missing required parameters");
   }

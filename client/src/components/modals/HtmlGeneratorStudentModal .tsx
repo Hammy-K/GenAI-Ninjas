@@ -1,4 +1,4 @@
-// components/modals/HtmlGeneratorStudentModal.tsx
+
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import {

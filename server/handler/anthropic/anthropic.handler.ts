@@ -106,27 +106,6 @@ export async function handleAnthropicRequest(
       messages: messages,
     });
 
-    console.log("-------------------------------------");
-    console.log(`[Response.content] : [${response.content}]`);
-    console.log(`[Response.model] : [${response.model}]`);
-    console.log(`[Response.role] : [${response.role}]`);
-    console.log(`[Response.stop_reason] : [${response.stop_reason}]`);
-    console.log(`[Response.stop_sequence] : [${response.stop_sequence}]`);
-    console.log(`[Response.type] : [${response.type}]`);
-    console.log(
-      `[Response.usage.cache_creation_input_tokens] : [${response.usage.cache_creation_input_tokens}]`,
-    );
-    console.log(
-      `[Response.usage.cache_read_input_tokens] : [${response.usage.cache_read_input_tokens}]`,
-    );
-    console.log(
-      `[Response.usage.input_tokens] : [${response.usage.input_tokens}]`,
-    );
-    console.log(
-      `[Response.usage.output_tokens] : [${response.usage.output_tokens}]`,
-    );
-    console.log("-------------------------------------");
-
     const standardResponse = parseClaudeResponse(response);
 
     return res.status(200).json(standardResponse);
