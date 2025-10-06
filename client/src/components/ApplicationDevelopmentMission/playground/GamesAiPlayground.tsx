@@ -51,6 +51,9 @@ interface AppDevAiPlaygroundProps {
   youtubeTutorialVideoId: string;
 }
 
+export const aiUniversalWelcomeMessage =
+  "هلا! أنا د. بنقي 🐧 جاهز أساعدك تبني فكرتك خطوة بخطوة 💡 يلا نبرمجها سوا! 🚀";
+
 export default function AppDevAiPlayground({
   aiWelcomeMessage,
   playgroundWelcomeCardProps,
@@ -61,7 +64,8 @@ export default function AppDevAiPlayground({
 }: AppDevAiPlaygroundProps) {
   const welcomeMessage: Message = {
     role: "assistant",
-    content: aiWelcomeMessage,
+    content: aiUniversalWelcomeMessage,
+    // content: aiWelcomeMessage,
   };
 
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
