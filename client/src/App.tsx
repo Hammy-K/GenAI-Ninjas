@@ -66,6 +66,7 @@ import ChatPage from "./pages/ChatPage";
 import VideoSubmissionsPage from "./pages/VideoSubmissionsPage";
 import { LovableAuthProvider } from "./lovable-mission/auth/AuthProvider";
 import SubmissionsDashboard from "./pages/SubmissionsDashboard";
+import LovableMissionPageV2 from "./lovable-mission/v2/LovableMissionPageV2";
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -262,6 +263,8 @@ function Router() {
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
       />
+
+      <Route path="/missions/lovable/v2" component={LovableMissionPageV2} />
 
       {/* <Route path="/missions/videos" component={VideoPage} />
       <Route path="/missions/videos/:videoId" component={VideoPlayer} /> */}

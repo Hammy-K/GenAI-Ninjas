@@ -17,7 +17,7 @@ interface FloatingActionsPanelProps {
   submitLabel: string;
 }
 
-export function FloatingActionsPanel({
+export function FloatingActionsPanelV2({
   progress,
   promptLink,
   onOpenLovable,

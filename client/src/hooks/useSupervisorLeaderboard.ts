@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export interface SupervisorLeaderboardEntry {
   supervisor: string;
   avgVaultsCompleted: number;
+  percentageCompleted: number;
   totalVaults: number;
   studentCount: number;
 }

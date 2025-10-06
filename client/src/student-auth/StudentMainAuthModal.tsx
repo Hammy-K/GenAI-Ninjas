@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthModal } from "./useAuthModal";
 import { SchoolSelect } from "@/components/common/SelectSchool";
+import { ArrowRight } from "lucide-react";
 
 export default function StudentMainAuthModal() {
   const { toast } = useToast();
@@ -97,13 +98,14 @@ export default function StudentMainAuthModal() {
               {emailLoading ? "جاري التحقق..." : "متابعة"}
             </Button>
 
-            <button
+            <Button
               onClick={() => setStep("manual")}
-              className="w-full text-sm text-blue-600 hover:text-blue-700 underline"
+              className="w-full text-sm"
               disabled={emailLoading}
+              variant="ghost"
             >
               ليس لدي بريد إلكتروني أو أفضل الإدخال اليدوي
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid gap-4 py-4">
@@ -215,13 +217,14 @@ export default function StudentMainAuthModal() {
               {loading ? "جاري الحفظ..." : "بدء المهمة"}
             </Button>
 
-            <button
+            <Button
               onClick={() => setStep("email")}
-              className="w-full text-sm text-gray-600 hover:text-gray-700"
+              className="w-full text-sm"
               disabled={loading}
+              variant="ghost"
             >
-              ← العودة لإدخال البريد الإلكتروني
-            </button>
+              <ArrowRight className="w-4 h-4" /> العودة لإدخال البريد الإلكتروني
+            </Button>
           </div>
         )}
       </DialogContent>

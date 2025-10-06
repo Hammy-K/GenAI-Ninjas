@@ -1,22 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Database,
   Loader2,
   Plus,
   Send,
-  Share2,
   Mic,
   Loader,
   ArrowRight,
+  Menu,
+  Database,
+  Youtube,
+  Maximize2,
+  X,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@/assets/Group 26087843.png";
 import confetti from "canvas-confetti";
 import Cookies from "js-cookie";
@@ -26,25 +21,23 @@ import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
 import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/HtmlGeneratorStudentModal ";
 import NewProjectDialog from "@/components/AiHtmlGenerator/NewProjectDialog";
-import { Button } from "@/components/ui/button";
-import PlaygroundWelcomeCard, {
-  PlaygroundWelcomeCardProps,
-} from "./PlaygroundWelcomeCard";
-import ChatMessage from "@/components/AiHtmlGenerator/ChatMessage";
 import { Textarea } from "@/components/ui/textarea";
 import {
   callAppDevCodeGenApi,
   saveAppDevProject,
 } from "./callAppDevCodeGenApi";
 import { MAIN_MISSION, MissionSlug } from "./config/types";
-import { AppDevProjectShareDialog } from "./AppDevProjectShareDialog";
 import { getTutorialSeen } from "../YoutubeTutorials/tutorialSeenStore";
 import YoutubeTutorialGateScreen from "../YoutubeTutorials/YoutubeTutorialGateScreen";
 import YoutubeTutorialModal from "../YoutubeTutorials/YoutubeTutorialModal";
 
+// Extended Message type to include HTML content
+interface ExtendedMessage extends Message {
+  htmlContent?: string;
+}
+
 interface AppDevAiPlaygroundProps {
   aiWelcomeMessage: string;
-  playgroundWelcomeCardProps: PlaygroundWelcomeCardProps;
   systemPrompt: string;
   mission: MissionSlug;
   mainMission: MAIN_MISSION;
@@ -53,25 +46,24 @@ interface AppDevAiPlaygroundProps {
 
 export default function AppDevAiPlayground({
   aiWelcomeMessage,
-  playgroundWelcomeCardProps,
   systemPrompt,
   mission,
   mainMission,
   youtubeTutorialVideoId,
 }: AppDevAiPlaygroundProps) {
-  const welcomeMessage: Message = {
+  const welcomeMessage: ExtendedMessage = {
     role: "assistant",
     content: aiWelcomeMessage,
   };
 
-  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+  const [messages, setMessages] = useState<ExtendedMessage[]>([welcomeMessage]);
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [htmlContent, setHtmlContent] = useState<string | undefined>(undefined);
-  const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
+  const [expandedPreviewIndex, setExpandedPreviewIndex] = useState<
+    number | null
+  >(null);
   const [isProjectSaving, setIsProjectSaving] = useState(false);
-  const [openShareProjectDialog, setOpenShareProjectDialog] = useState(false);
   const [projectId, setProjectId] = useState<string | undefined>(undefined);
   const [openNewProjectDialog, setOpenNewProjectDialog] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -83,18 +75,17 @@ export default function AppDevAiPlayground({
   const [lastSavedHtmlContent, setLastSavedHtmlContent] = useState<
     string | undefined
   >(undefined);
+  const [menuOpen, setMenuOpen] = useState(false);
   const organization = useOrganization();
 
   // youtube tutorial
   const [showYoutubeTutorialGate, setShowYoutubeTutorialGate] = useState(
     !getTutorialSeen({ org: organization.name, mainMission, mission }),
   );
-
   const [openYoutubeTutorialModal, setYoutubeTutorialOpenModal] =
     useState(false);
 
   const missionAiMessagesKey = `${mission}AiMessages`;
-  const missionAiHtmlContentKey = `${mission}AiHtmlContent`;
   const missionProjectIdKey = `${mission}ProjectId`;
   const missionLastSavedHtmlContentKey = `${mission}LastSavedHtmlContent`;
 
@@ -102,24 +93,12 @@ export default function AppDevAiPlayground({
     return localStorage.getItem(missionAiMessagesKey);
   };
 
-  const setAiMessagesToLocalStorage = (messages: Message[]) => {
+  const setAiMessagesToLocalStorage = (messages: ExtendedMessage[]) => {
     localStorage.setItem(missionAiMessagesKey, JSON.stringify(messages));
-  };
-
-  const getAiHtmlContentFromLocatStorage = () => {
-    return localStorage.getItem(missionAiHtmlContentKey);
-  };
-
-  const setAiHtmlContentToLocalStorage = (htmlContent: string) => {
-    localStorage.setItem(missionAiHtmlContentKey, htmlContent);
   };
 
   const removeAiMessagesFromLocalStorage = () => {
     localStorage.removeItem(missionAiMessagesKey);
-  };
-
-  const removeAiHtmlContentFromLocalStorage = () => {
-    localStorage.removeItem(missionAiHtmlContentKey);
   };
 
   const getProjectIdFromLocalStorage = () => {
@@ -146,18 +125,23 @@ export default function AppDevAiPlayground({
     localStorage.removeItem(missionLastSavedHtmlContentKey);
   };
 
+  // Get latest HTML content from messages
+  const getLatestHtmlContent = () => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].htmlContent) {
+        return messages[i].htmlContent;
+      }
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     const savedMessages = getAiMessagesFromLocatStorage();
-    const savedHtml = getAiHtmlContentFromLocatStorage();
     const savedProjectId = getProjectIdFromLocalStorage();
     const savedLastSavedHtml = getLastSavedHtmlContentFromLocalStorage();
 
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
-    }
-
-    if (savedHtml) {
-      setHtmlContent(savedHtml);
     }
 
     if (!projectId && savedProjectId) {
@@ -171,8 +155,7 @@ export default function AppDevAiPlayground({
 
   useEffect(() => {
     setAiMessagesToLocalStorage(messages);
-    setAiHtmlContentToLocalStorage(htmlContent || "");
-  }, [messages, htmlContent]);
+  }, [messages]);
 
   useEffect(() => {
     if (projectId) {
@@ -188,7 +171,6 @@ export default function AppDevAiPlayground({
 
   const handleTriggerConversationCompleted = () => {
     console.log("Conversation completed!");
-
     handleTriggerConfetti();
   };
 
@@ -203,28 +185,37 @@ export default function AppDevAiPlayground({
     }, 2000);
   };
 
-  const handleAiResponseSideEffects = (response: AiResponse) => {
-    if (response.isHtmlGenerated) {
-      setHtmlContent(() => response.htmlContent);
-    }
-
+  const handleAiResponseSideEffects = (
+    response: AiResponse,
+    newMessages: ExtendedMessage[],
+  ) => {
     if (response.isConversationComplete) {
       handleTriggerConversationCompleted();
+    }
+
+    // If HTML was generated, attach it to the last assistant message
+    if (response.isHtmlGenerated && response.htmlContent) {
+      const updatedMessages = [...newMessages];
+      const lastMessage = updatedMessages[updatedMessages.length - 1];
+      if (lastMessage.role === "assistant") {
+        lastMessage.htmlContent = response.htmlContent;
+      }
+      setMessages(updatedMessages);
     }
   };
 
   const sendMessage = async (userMessage: string): Promise<void> => {
     try {
-      const userMsg: Message = {
+      const userMsg: ExtendedMessage = {
         role: "user",
         content: userMessage,
       };
 
-      const newMessages: Message[] = [...messages, userMsg];
+      const newMessages: ExtendedMessage[] = [...messages, userMsg];
       setMessages(() => newMessages);
       setIsLoading(true);
 
-      const loadingMsg: Message = {
+      const loadingMsg: ExtendedMessage = {
         role: "assistant",
         content: "",
         className: "loading-animation",
@@ -241,24 +232,29 @@ export default function AppDevAiPlayground({
         systemPrompt,
       );
 
-      const assistantMsg: Message = {
+      const assistantMsg: ExtendedMessage = {
         role: "assistant",
         content: response.aiMessage,
+        htmlContent: response.isHtmlGenerated
+          ? response.htmlContent
+          : undefined,
       };
-
-      handleAiResponseSideEffects(response);
 
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
           (msg) => msg.className !== "loading-animation",
         );
+        const finalMessages = [...updatedMessages, assistantMsg];
 
-        return [...updatedMessages, assistantMsg];
+        // Handle side effects after state update
+        handleAiResponseSideEffects(response, finalMessages);
+
+        return finalMessages;
       });
     } catch (error) {
       console.error("Error sending message to API:", error);
 
-      const errorMsg: Message = {
+      const errorMsg: ExtendedMessage = {
         role: "assistant",
         content: "عذراً، حدث خطأ في الاتصال",
       };
@@ -300,58 +296,15 @@ export default function AppDevAiPlayground({
     window.open(desitinationUrl, "_blank", "noopener,noreferrer");
   };
 
-  const saveAndShareProject = async () => {
-    if (!htmlContent || isProjectSaving) {
-      console.warn("Save canceled: No HTML content or already saving");
-      return;
-    }
-
-    // check if content has changed since last save
-    if (htmlContent === lastSavedHtmlContent) {
-      setOpenShareProjectDialog(() => true);
-      handleTriggerConfetti();
-
-      return;
-    }
-
-    setIsProjectSaving(true);
-
-    try {
-      const studentId = Cookies.get("studentId");
-
-      if (!studentId) {
-        throw new Error("No student ID found in cookies");
-      }
-
-      const projectId = await saveAppDevProject({
-        htmlContent,
-        studentId,
-        organization: organization.name,
-        mission,
-      });
-
-      setProjectId(() => projectId!);
-
-      setLastSavedHtmlContent(() => htmlContent);
-
-      setOpenShareProjectDialog(() => true);
-
-      handleTriggerConfetti();
-    } catch (error) {
-      console.error("Failed to save project:", error);
-    } finally {
-      setIsProjectSaving(false);
-    }
-  };
-
   useEffect(() => {
     const autoSave = async () => {
-      if (!htmlContent) {
+      const latestHtml = getLatestHtmlContent();
+
+      if (!latestHtml) {
         return;
       }
 
-      // only save if content has changed since last save
-      if (htmlContent === lastSavedHtmlContent) {
+      if (latestHtml === lastSavedHtmlContent) {
         return;
       }
 
@@ -364,39 +317,37 @@ export default function AppDevAiPlayground({
 
       try {
         const savedProjectId = await saveAppDevProject({
-          htmlContent,
+          htmlContent: latestHtml,
           studentId,
           organization: organization.name,
           mission,
         });
 
-        setLastSavedHtmlContent(() => htmlContent);
-
+        setLastSavedHtmlContent(() => latestHtml);
         setProjectId(savedProjectId!);
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
     };
 
-    if (htmlContent && htmlContent.trim()) {
+    const latestHtml = getLatestHtmlContent();
+    if (latestHtml && latestHtml.trim()) {
       autoSave();
     }
-  }, [htmlContent]);
+  }, [messages]);
 
   const startNewProject = () => {
     setMessages([welcomeMessage]);
-    setHtmlContent(undefined);
     setLastSavedHtmlContent(undefined);
     setProjectId(undefined);
 
     removeAiMessagesFromLocalStorage();
-    removeAiHtmlContentFromLocalStorage();
     removeProjectIdFromLocalStorage();
     removeLastSavedHtmlContentFromLocalStorage();
 
     toast({
       title: "تم بدء مشروع جديد",
-      description: "يمكنك الآن بدء مشرa�ع جديد",
+      description: "يمكنك الآن بدء مشروع جديد",
       variant: "default",
     });
 
@@ -405,6 +356,7 @@ export default function AppDevAiPlayground({
 
   const handleOpenNewProjectDialog = () => {
     setOpenNewProjectDialog(() => true);
+    setMenuOpen(false);
   };
 
   const startRecording = async () => {
@@ -427,7 +379,6 @@ export default function AppDevAiPlayground({
 
         try {
           const transcribedText = await transcribeAudio(audioBlob);
-
           setInputValue(() => transcribedText.trim());
         } catch (error) {
           console.error("Error during transcription:", error);
@@ -454,7 +405,7 @@ export default function AppDevAiPlayground({
 
       toast({
         title: "خطأ في التسجيل",
-        description: "تعذر الوصول إلى اt�ميكروفون",
+        description: "تعذر الوصول إلى الميكروفون",
         variant: "destructive",
       });
     }
@@ -489,256 +440,246 @@ export default function AppDevAiPlayground({
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col text-foreground font-tajawal"
-      dir="rtl"
-    >
-      <main className="flex-1">
-        <div
-          className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal"
-          dir="rtl"
+    <div className="flex flex-col h-screen bg-gray-50 font-tajawal" dir="rtl">
+      <HtmlGeneratorStudentModal />
+
+      <NewProjectDialog
+        open={openNewProjectDialog}
+        onClose={() => setOpenNewProjectDialog(false)}
+        onConfirmed={startNewProject}
+      />
+
+      <YoutubeTutorialModal
+        open={openYoutubeTutorialModal}
+        onClose={() => setYoutubeTutorialOpenModal(false)}
+        videoId={youtubeTutorialVideoId}
+        title="شرح المهمة"
+        description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت"
+      />
+
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <button
+          onClick={() => {
+            const url = organization.isMain
+              ? "/missions/app-development/frontend-foundation"
+              : `/${organization.name}/missions/app-development/frontend-foundation`;
+            window.location.href = url;
+          }}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
-          <HtmlGeneratorStudentModal />
+          <ArrowRight className="w-5 h-5" />
+          <span className="font-medium">رجوع</span>
+        </button>
 
-          <AppDevProjectShareDialog
-            onClose={() => {
-              setOpenShareProjectDialog(() => false);
-            }}
-            shareUrl={`${window.location.origin}/app-development/projects/${projectId}`}
-            open={openShareProjectDialog}
+        <div className="flex items-center gap-2">
+          <img
+            src={penguinAvatar}
+            alt="د. بنجي"
+            className="w-8 h-8 rounded-full"
           />
+          <h1 className="text-lg font-bold text-gray-900">د. بنجي</h1>
+        </div>
 
-          <NewProjectDialog
-            open={openNewProjectDialog}
-            onClose={() => {
-              setOpenNewProjectDialog(() => false);
-            }}
-            onConfirmed={startNewProject}
-          />
-
+        <div className="relative">
           <button
-            onClick={() => setYoutubeTutorialOpenModal(true)}
-            className="fixed bottom-4 left-4 px-4 py-2 rounded-full shadow bg-purple-600 text-white hover:bg-purple-700 transition"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            🎥 عرض الشرح
+            <Menu className="w-5 h-5" />
           </button>
 
-          {/* Reopen modal */}
-          <YoutubeTutorialModal
-            open={openYoutubeTutorialModal}
-            onClose={() => setYoutubeTutorialOpenModal(false)}
-            videoId={youtubeTutorialVideoId}
-            title="شرح المهمة"
-            description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت"
-          />
-
-          <div className="flex-1">
-            <div className="">
-              <div className="flex flex-col md:flex-row h-[87vh] gap-4 p-2">
-                <div className="w-full md:w-[60%] flex flex-col h-full min-h-0">
-                  <Card className="h-full flex flex-col border-lg bg-white border-0">
-                    <CardHeader className="p-3 flex flex-row justify-between items-center border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        {/* Add the Go Back button here */}
-
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={handleOpenNewProjectDialog}
-                        >
-                          <Plus className="ml-2 h-4 w-4" />
-                          <span>بدء مشروع جديد</span>
-                        </Button>
-                        <Button
-                          variant="default"
-                          className="flex items-center gap-2"
-                          onClick={goToSubmissions}
-                        >
-                          <Database className="h-4 w-4" />
-                          <span>عرض جميع المشاريع</span>
-                        </Button>
-                      </div>
-
-                      {htmlContent && (
-                        <div className="flex items-center gap-2 px-4 py-2">
-                          <div className="flex border rounded overflow-hidden">
-                            <Button
-                              type="button"
-                              variant={
-                                viewMode === "preview" ? "outline" : "default"
-                              }
-                              className="rounded-none px-3 py-1 h-8 text-xs"
-                              onClick={() => setViewMode("preview")}
-                            >
-                              معاينة
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={
-                                viewMode === "code" ? "outline" : "default"
-                              }
-                              className="rounded-none px-3 py-1 h-8 text-xs"
-                              onClick={() => setViewMode("code")}
-                            >
-                              الكود
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </CardHeader>
-
-                    <CardContent className="flex-1 p-0 bg-white border-lg">
-                      {htmlContent ? (
-                        viewMode === "preview" ? (
-                          <div className="flex-grow bg-white h-full bg-white">
-                            <div className="w-full h-full overflow-hidden">
-                              <iframe
-                                title="HTML Preview"
-                                srcDoc={htmlContent}
-                                className="w-full h-full border-0"
-                                sandbox="allow-scripts allow-popups allow-forms"
-                                loading="lazy"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <pre className="text-xs p-4 whitespace-pre-wrap overflow-auto max-h-96 bg-gray-50 rounded">
-                            <code>{htmlContent}</code>
-                          </pre>
-                        )
-                      ) : (
-                        <PlaygroundWelcomeCard
-                          {...playgroundWelcomeCardProps}
-                        />
-                      )}
-                    </CardContent>
-                    <CardFooter className=" m-0 pb-2"></CardFooter>
-                  </Card>
-                </div>
-
-                {/* Chat Panel */}
-                <div className="w-full md:w-[40%] h-full flex flex-col ">
-                  <Card className="h-full flex flex-col bg-white border-0">
-                    <CardHeader className="p-3 flex flex-row space-x-2 justify-end items-center border-b border-gray-200 rouneded-full">
-                      <CardTitle className="font-medium text-lg">
-                        د. بنجي
-                      </CardTitle>
-                      <img
-                        src={penguinAvatar}
-                        alt="د. بنجي"
-                        className="h-8 w-8 rounded-full mr-2"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          const url = organization.isMain
-                            ? "/missions/app-development/frontend-foundation"
-                            : `/${organization.name}/missions/app-development/frontend-foundation`;
-                          window.location.href = url;
-                        }}
-                        className="flex items-center gap-1"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        <span>رجوع</span>
-                      </Button>
-                    </CardHeader>
-
-                    <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                      <ScrollArea className="flex-1 chat-area p-4">
-                        <div className="space-y-4 mt-3">
-                          {messages.length > 0 ? (
-                            messages.map((message, index) => (
-                              <div key={index} className="flex flex-col">
-                                <ChatMessage message={message} />
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center text-gray-400 py-8 text-sm">
-                              ابدأ محادثة مع د. بنجي
-                            </div>
-                          )}
-                          <div ref={bottomRef} />
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-
-                    <CardFooter className="border-t p-3 border-gray-200">
-                      <div className="flex gap-2 w-full items-center">
-                        {/* Textarea */}
-                        <div className="flex-1 relative">
-                          <Textarea
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={
-                              isRecording
-                                ? "جاري التسجيل..."
-                                : "اكتب رسالة وبنجي في مساعدتك ..."
-                            }
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit();
-                              }
-                            }}
-                            disabled={isLoading || isRecording}
-                            className="w-full min-h-10 max-h-32 px-3 py-2 text-right bg-white border border-gray-200 rounded-md resize-none overflow-y-auto"
-                            dir="rtl"
-                            rows={1}
-                            style={{
-                              height: "auto",
-                            }}
-                            onInput={(e) => {
-                              const target = e.target as HTMLTextAreaElement;
-                              target.style.height = "auto";
-                              target.style.height = target.scrollHeight + "px";
-                            }}
-                          />
-                        </div>
-
-                        {/* Button - Mic or Send */}
-                        <div className="flex-shrink-0">
-                          {!inputValue.trim() || isRecording ? (
-                            <button
-                              className={`p-2 rounded-md transition-colors ${
-                                isRecording
-                                  ? "text-red-500 bg-red-50 animate-pulse"
-                                  : isProcessingAudio
-                                    ? "text-blue-500 bg-blue-50"
-                                    : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              onClick={handleMicClick}
-                              disabled={isProcessingAudio || isLoading}
-                            >
-                              {isProcessingAudio ? (
-                                <Loader
-                                  className="animate-spin duration-700 primary"
-                                  size={20}
-                                />
-                              ) : (
-                                <Mic size={20} />
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleSubmit}
-                              disabled={isLoading || !inputValue.trim()}
-                              className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
-                            >
-                              <Send size={20} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </div>
+          {/* Menu Dropdown */}
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-20"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute left-0 top-12 bg-white rounded-lg shadow-xl p-2 min-w-[200px] z-30 border border-gray-200">
+                <button
+                  onClick={handleOpenNewProjectDialog}
+                  className="w-full text-right px-4 py-3 hover:bg-gray-50 rounded flex items-center gap-3 text-gray-700"
+                >
+                  <Plus className="w-4 h-4 text-red-500" />
+                  <span>بدء مشروع جديد</span>
+                </button>
+                <button
+                  onClick={() => {
+                    goToSubmissions();
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-right px-4 py-3 hover:bg-gray-50 rounded flex items-center gap-3 text-gray-700"
+                >
+                  <Database className="w-4 h-4 text-blue-500" />
+                  <span>عرض جميع المشاريع</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setYoutubeTutorialOpenModal(true);
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-right px-4 py-3 hover:bg-gray-50 rounded flex items-center gap-3 text-gray-700"
+                >
+                  <Youtube className="w-4 h-4 text-purple-500" />
+                  <span>عرض الشرح</span>
+                </button>
               </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {messages.map((msg, idx) => (
+            <div key={idx}>
+              {/* Message bubble */}
+              <div
+                className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}
+              >
+                {msg.className === "loading-animation" ? (
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-2xl px-4 py-3">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                ) : (
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                      msg.role === "user"
+                        ? "bg-white border border-gray-200 text-gray-900"
+                        : "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Card (if this message has HTML) */}
+              {msg.htmlContent && (
+                <div className="flex justify-end mt-2">
+                  <div className="w-[90%] bg-white rounded-2xl shadow-lg border-2 border-purple-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-3 flex items-center justify-between border-b border-purple-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🎨</span>
+                        <span className="font-bold text-gray-900">
+                          معاينة المشروع
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setExpandedPreviewIndex(idx)}
+                        className="p-2 hover:bg-white rounded-lg transition-colors text-gray-600"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="p-4">
+                      <div
+                        className="relative bg-gray-100 rounded-lg overflow-hidden"
+                        style={{ height: "400px" }}
+                      >
+                        <iframe
+                          srcDoc={msg.htmlContent}
+                          className="w-full h-full border-0"
+                          sandbox="allow-scripts allow-popups allow-forms"
+                          title={`Preview ${idx}`}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        جرب التفاعل مع المشروع بالضغط على العناصر
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      {/* Expanded Preview Overlay */}
+      {expandedPreviewIndex !== null &&
+        messages[expandedPreviewIndex]?.htmlContent && (
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-40 flex flex-col">
+            <div className="bg-gray-900 px-4 py-3 flex items-center justify-between">
+              <span className="text-white font-bold">معاينة كاملة</span>
+              <button
+                onClick={() => setExpandedPreviewIndex(null)}
+                className="p-2 text-white hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-white">
+              <iframe
+                srcDoc={messages[expandedPreviewIndex].htmlContent}
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-popups allow-forms"
+                title="Full Preview"
+              />
             </div>
           </div>
+        )}
+
+      {/* Input Area */}
+      <div className="bg-white border-t border-gray-200 px-4 py-3 sticky bottom-0">
+        <div className="max-w-4xl mx-auto flex items-end gap-2">
+          <button
+            onClick={handleMicClick}
+            disabled={isLoading || isProcessingAudio}
+            className={`p-3 rounded-xl transition-colors flex-shrink-0 ${
+              isRecording
+                ? "text-red-500 bg-red-50 animate-pulse"
+                : isProcessingAudio
+                  ? "text-blue-500 bg-blue-50"
+                  : "text-gray-500 hover:bg-gray-100"
+            }`}
+          >
+            {isProcessingAudio ? (
+              <Loader className="w-5 h-5 animate-spin" />
+            ) : (
+              <Mic className="w-5 h-5" />
+            )}
+          </button>
+
+          <div className="flex-1 relative">
+            <Textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder={
+                isRecording ? "جاري التسجيل..." : "اكتب رسالة ودعني أساعدك..."
+              }
+              disabled={isLoading || isRecording}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-right text-sm min-h-[48px] max-h-[120px]"
+              rows={1}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = Math.min(target.scrollHeight, 120) + "px";
+              }}
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!inputValue.trim() || isLoading}
+            className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          >
+            <Send className="w-5 h-5" />
+          </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

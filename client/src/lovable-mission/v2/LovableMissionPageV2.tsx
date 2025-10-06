@@ -3,15 +3,16 @@ import { Container } from "../layout/Container";
 import { ChatArea } from "../chat/ChatArea";
 import { ChatInput } from "../chat/ChatInput";
 import { EmptyWelcomeSeed } from "../chat/EmptyWelcomeSeed";
-import { SubmitProjectModal } from "../submissions/SubmitProjectModal";
 import { useLovableChat } from "../hooks/useLovableChat";
 import { toastError, toastSuccess } from "../ui/Toast";
 import { LABELS } from "../constants";
-import { FloatingActionsPanel } from "../ui/FloatingActionsPanel";
 import { ChatLayout } from "../ui/ChatLayout";
 import { useLocation } from "wouter";
 import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 import StudentMainAuthModal from "@/student-auth/StudentMainAuthModal";
+import { progress } from "framer-motion";
+import { FloatingActionsPanelV2 } from "./FloatingActionsPanelV2";
+import { SubmitProjectModalV2 } from "./SubmitProjectModalV2";
 
 export default function LovableMissionPageV2() {
   const {
@@ -58,7 +59,7 @@ export default function LovableMissionPageV2() {
 
       <div className="mx-auto max-w-7xl py-6">
         <div className="flex items-start justify-center gap-6">
-          <FloatingActionsPanel
+          <FloatingActionsPanelV2
             progress={progress}
             promptLink={promptLink}
             onOpenLovable={handleOpenLovable}
@@ -89,7 +90,7 @@ export default function LovableMissionPageV2() {
         </div>
       </div>
 
-      <SubmitProjectModal
+      <SubmitProjectModalV2
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onToast={({ type, message }) =>
