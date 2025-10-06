@@ -104,7 +104,7 @@ export async function handleAppDevCodeGenerator(req: Request, res: Response) {
 
   logStudentHtmlMessage(userId, message);
 
-  const baseMessages: ClaudeMessage[] = [
+  var baseMessages: ClaudeMessage[] = [
     { role: "assistant", content: systemPrompt },
     { role: "assistant", content: ANTHROPIC_OUTPUT_REMINDER_PROMPT },
     ...history.map(
@@ -116,6 +116,10 @@ export async function handleAppDevCodeGenerator(req: Request, res: Response) {
     ),
     { role: "assistant", content: ANTHROPIC_OUTPUT_REMINDER_PROMPT },
   ];
+
+  baseMessages = baseMessages.filter(
+    (msg) => msg.content && msg.content.trim() !== "",
+  );
 
   for (const model of ANTHROPIC_CONFIG.FALLBACK_ORDER) {
     try {

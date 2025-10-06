@@ -10,6 +10,9 @@ import type { Concept, MissionTutorials } from "./types";
 import { INPUTS_OUTPUTS_PROMPT } from "./prompts/inputs-outputs.prompt";
 import { RANDOM_SELECTION_PROMPT } from "./prompts/random-selection.prompt";
 import { BUTTONS_EVENTS_PROMPT } from "./prompts/buttons-events.prompt";
+import { CONDITIONAL_LOGIC_PROMPT } from "./prompts/conditional-logic.prompt";
+import { LAYOUT_DESIGN_PROMPT } from "./prompts/layout-design.prompt";
+import { DYNAMIC_IMAGES_PROMPT } from "./prompts/dynamic-images.prompt";
 
 export const FRONTEND_FOUNDATION_PROMPTS = {
   inputsOutputs: INPUTS_OUTPUTS_PROMPT,
@@ -18,29 +21,11 @@ export const FRONTEND_FOUNDATION_PROMPTS = {
 
   randomSelection: RANDOM_SELECTION_PROMPT,
 
-  conditionalLogic: `
-أنت مساعد يعرض مثالاً للمنطق الشرطي if/else في تطبيق واجهة أمامية.
-المطلوب: مدخل (نص/رقم/اختيار) → نتيجة مختلفة بناءً على شروط واضحة.
-أضف رسائل أخطاء بسيطة للمدخلات غير الصالحة.
-قيود: HTML واحد، CSS/JS مضمّنان، لا مكتبات خارجية.
-التسليم: وثيقة HTML كاملة فقط.
-`,
+  conditionalLogic: CONDITIONAL_LOGIC_PROMPT,
 
-  layoutDesign: `
-أنت مساعد يركز على التخطيط والتصميم باستخدام CSS فقط.
-المطلوب: صفحة تعرض تخطيطاً بسيطاً (رأس/محتوى/تذييل أو شبكة بطاقات) مع ثيمين قابلين للتبديل.
-استخدم متغيرات CSS للألوان، واجعل التبديل بزر واحد.
-قيود: HTML واحد، CSS/JS داخليان، لا مكتبات.
-التسليم: وثيقة HTML كاملة فقط.
-`,
+  layoutDesign: LAYOUT_DESIGN_PROMPT,
 
-  dynamicImages: `
-أنت مساعد يعلّم تغيير الصور ديناميكياً بحسب المدخل أو حدث المستخدم.
-المطلوب: صور محلية/روابط آمنة + منطق بسيط يبدّل src عند النقر أو بناءً على قيمة المدخل.
-أضف حالة تحميل/بديلة عند فشل الصورة.
-قيود: HTML واحد، CSS/JS داخليان، لا مكتبات.
-التسليم: وثيقة HTML كاملة فقط.
-`,
+  dynamicImages: DYNAMIC_IMAGES_PROMPT,
 } as const;
 
 export const FRONTEND_FOUNDATION_CONCEPTS: Concept[] = [

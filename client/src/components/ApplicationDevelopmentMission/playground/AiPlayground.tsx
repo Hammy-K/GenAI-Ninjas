@@ -548,7 +548,7 @@ export default function AppDevAiPlayground({
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       msg.role === "user"
                         ? "bg-white border border-gray-200 text-gray-900"
-                        : "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                        : "text-gray-900"
                     }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">

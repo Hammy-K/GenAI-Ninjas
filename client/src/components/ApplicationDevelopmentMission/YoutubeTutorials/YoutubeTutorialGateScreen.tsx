@@ -38,7 +38,13 @@ export default function YoutubeTutorialGateScreen({
       {/* Header */}
       <div className="shrink-0 border-b border-gray-200 p-2 md:p-2 mx-auto flex items-center flex-col">
         <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
-        {description && <p className="mt-2 text-gray-600">{description}</p>}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
+        >
+          {primaryCtaText}
+        </button>
       </div>
 
       {/* Body (scrollable when needed, but video height capped by viewport) */}
@@ -59,26 +65,21 @@ export default function YoutubeTutorialGateScreen({
               // className="rounded-2xl"
             />
           </div>
-
-          <ul className="mt-2 text-sm text-gray-600 list-disc pr-5 space-y-1 max-w-3xl">
-            <li>الفيديو قصير ويساعدك على فهم فكرة المهمة بسرعة.</li>
-            <li>يمكنك دائمًا إعادة مشاهدة الشرح من الزر العائم لاحقًا.</li>
-          </ul>
         </div>
       </div>
 
       {/* Footer / actions */}
       <div className="shrink-0 p-4 md:p-2 pt-0 flex flex-col gap-3">
         <div className="flex items-center gap-2 w-full justify-center">
-          <button
+          {/* <button
             type="button"
             onClick={handleDismiss}
             className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
           >
             {primaryCtaText}
-          </button>
+          </button> */}
 
-          {showSkip && (
+          {/* {showSkip && (
             <button
               type="button"
               onClick={handleDismiss}
@@ -86,7 +87,7 @@ export default function YoutubeTutorialGateScreen({
             >
               {secondaryCtaText}
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>
