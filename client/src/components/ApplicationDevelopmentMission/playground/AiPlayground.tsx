@@ -563,12 +563,6 @@ export default function AppDevAiPlayground({
                 <div className="flex justify-end mt-2">
                   <div className="w-[90%] bg-white rounded-2xl shadow-lg border-2 border-purple-200 overflow-hidden">
                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-3 flex items-center justify-between border-b border-purple-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">🎨</span>
-                        <span className="font-bold text-gray-900">
-                          معاينة المشروع
-                        </span>
-                      </div>
                       <button
                         onClick={() => setExpandedPreviewIndex(idx)}
                         className="p-2 hover:bg-white rounded-lg transition-colors text-gray-600"
