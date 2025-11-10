@@ -14,6 +14,7 @@ export interface LovableSubmissionWhere extends Record<string, unknown> {
   id?: number;
   search?: string;
   studentName?: string;
+  schoolName?: string;
   noonCode?: string;
   email?: string;
   projectTitle?: string;
@@ -33,6 +34,8 @@ function col(
     case "id":
       return lovableSubmissionsV2.id;
     case "studentName":
+      return lovableSubmissionsV2.studentName;
+    case "schoolName":
       return lovableSubmissionsV2.studentName;
     case "noonCode":
       return lovableSubmissionsV2.noonCode;
@@ -77,6 +80,7 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
     conditions.push(
       or(
         ilike(lovableSubmissionsV2.studentName, `%${search}%`),
+        ilike(lovableSubmissionsV2.schoolName, `%${search}%`),
         ilike(lovableSubmissionsV2.projectTitle, `%${search}%`),
         ilike(lovableSubmissionsV2.noonCode, `%${search}%`),
         ilike(lovableSubmissionsV2.email, `%${search}%`),
@@ -88,6 +92,7 @@ function buildWhere(opts?: LovableSubmissionFindOptions) {
     or(
       isNull(lovableSubmissionsV2.studentName),
       sql`lower(${lovableSubmissionsV2.studentName}) NOT LIKE 'noon%'`,
+      sql`lower(${lovableSubmissionsV2.schoolName}) NOT LIKE 'noon%'`,
     ),
   );
 

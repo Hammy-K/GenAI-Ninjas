@@ -25,7 +25,9 @@ import { PlaygroundWelcomeCard } from "./PlaygroundWelcomeCard";
 import { Button } from "../ui/button";
 import Cookies from "js-cookie";
 import { saveProject } from "@/lib/firebase";
-import HtmlGeneratorStudentModal from "@/components/modals/GamesGeneratorStudentModal";
+import { useLocation } from "wouter";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
+import StudentMainAuthModal from "@/student-auth/StudentMainAuthModal";
 import { ProjectShareDialog } from "./ProjectShareDialog";
 import { toast } from "@/hooks/use-toast";
 import NewProjectDialog from "./NewProjectDialog";
@@ -40,13 +42,6 @@ const welcomeMessage: Message = {
 كل اللي عليك: توصف لي فكرتك، وأنا أكتب لك الكود ✨
     `,
 };
-
-// const logWithTimestamp = (message: string, data?: any) => {
-//   const timestamp = new Date().toISOString();
-//   console.log("***********************");
-//   console.log(`[${timestamp}] ${message}`, data ? data : "");
-//   console.log("***********************");
-// };
 
 export default function AiHtmlGenerator() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
@@ -496,7 +491,7 @@ export default function AiHtmlGenerator() {
           className="min-h-screen flex flex-col bg-[#f5f2e8] text-foreground font-tajawal"
           dir="rtl"
         >
-          <HtmlGeneratorStudentModal />
+          <StudentMainAuthModal />
 
           <ProjectShareDialog
             onClose={() => {

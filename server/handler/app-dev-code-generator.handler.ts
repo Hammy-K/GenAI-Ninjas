@@ -102,7 +102,8 @@ export async function handleAppDevCodeGenerator(req: Request, res: Response) {
     });
   }
 
-  logStudentHtmlMessage(userId, message);
+  if (userId.trim() !== "" && message.trim() !== "")
+    logStudentHtmlMessage(userId, message.trim());
 
   var baseMessages: ClaudeMessage[] = [
     { role: "assistant", content: systemPrompt },

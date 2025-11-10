@@ -17,7 +17,8 @@ export type MissionSlug =
   | "random-selection"
   | "conditional-logic"
   | "layout-design"
-  | "dynamic-images";
+  | "dynamic-images"
+  | "final-project";
 
 export type MAIN_MISSION =
   | "discovery"
@@ -33,5 +34,3 @@ export type MissionTutorial = {
 };
 
 export type MissionTutorials = Record<MissionSlug, MissionTutorial>;
-
-

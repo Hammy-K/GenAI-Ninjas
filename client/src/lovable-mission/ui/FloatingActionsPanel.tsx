@@ -62,28 +62,28 @@ export function FloatingActionsPanel({
       </section>
 
       {/* Submission */}
-      <section
+      {/* <section
         aria-labelledby="submission-title"
         className="pt-4 border-t border-gray-100"
-      >
-        <h2
+      > */}
+      {/* <h2
           id="submission-title"
           className="text-sm font-semibold text-gray-900 mb-3 text-center"
         >
           سلم مشروعك
-        </h2>
+        </h2> */}
 
-        <div className="grid gap-2">
-          <Button
+      {/* <div className="grid gap-2"> */}
+      {/* <Button
             type="button"
             onClick={onSubmitProject}
             className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
           >
             <Upload className="w-4 h-4" />
             {LABELS.submitProject}
-          </Button>
+          </Button> */}
 
-          <Button
+      {/* <Button
             type="button"
             variant="outline"
             onClick={onViewSubmissions}
@@ -93,7 +93,7 @@ export function FloatingActionsPanel({
             عرض المشاريع
           </Button>
         </div>
-      </section>
+      </section> */}
 
       <section
         aria-labelledby="restart"

@@ -15,7 +15,8 @@ type MissionSlug =
   | "random-selection"
   | "conditional-logic"
   | "layout-design"
-  | "dynamic-images";
+  | "dynamic-images"
+  | "final-project";
 
 export interface AppDevFrontendRowWithStudent {
   id: number;

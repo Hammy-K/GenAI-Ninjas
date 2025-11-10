@@ -18,6 +18,7 @@ const TABS: { key: FrontendSubMission; label: string }[] = [
   { key: "conditional-logic", label: "المنطق الشرطي" },
   { key: "layout-design", label: "التصميم والتخطيط" },
   { key: "dynamic-images", label: "الصور الديناميكية" },
+  { key: "final-project", label: "المشروع النهائي" },
 ];
 
 export default function ProjectTabs({ activeTab, onTabChange }: TabsProps) {

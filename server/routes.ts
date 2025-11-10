@@ -6,12 +6,10 @@ import express, {
 } from "express";
 import { createServer, type Server } from "http";
 
-// Import route modules directly
+// Import route modules
 import { registerAITextRoutes } from "./routes/ai-text";
 import { registerAIImageRoutes } from "./routes/ai-image";
 import { registerGalleryRoutes } from "./routes/gallery";
-// Use either Firebase routes (old) or Project routes (new)
-// import { registerFirebaseRoutes } from "./routes/firebase";
 import { registerProjectRoutes } from "./routes/projects";
 import { registerAIAssistantRoutes } from "./routes/ai-assistant";
 import { registerLogsRoutes } from "./routes/logs";
@@ -19,13 +17,6 @@ import { registerAppBuilderRoutes } from "./routes/app-builder";
 import { registerLovableMissionRoutes } from "./routes/lovable-mission";
 import { registerHTMLProjectsRoutes } from "./routes/html-projects";
 import { createUnifiedThreadRouter } from "./routes/unified-thread";
-
-// Import services
-import { logEvent, logError } from "./services";
-import { buildSystemPrompt } from "./templates/prompts";
-
-// Import OpenAI client
-import OpenAI from "openai";
 import { registerStudentsRoutes } from "./routes/students";
 import { registerFeedbackRoutes } from "./routes/feedback";
 import { registerHtmlAiRoute } from "./routes/html-ai";
@@ -46,45 +37,54 @@ import { registerVideoSubmissionsRoutes } from "./routes/video-submissions";
 import { createVideoJobsRouter } from "./modules/video-jobs/video-jobs.route";
 import { getSubmissionsAnalytics } from "./routes/submissions-analytics";
 import { registerTracksStudentsRoutes } from "./routes/tracks-students";
+import { registerProjectSubmissionsRoutes } from "./routes/project-submissions";
 
-/**
- * Legacy function for server-side prompt logging
- * @deprecated Use logEvent from services/logging instead
- */
-function logServerPrompt(
-  promptType: string,
-  promptContent: string,
-  metadata: any = {},
-) {
-  try {
-    console.log(`[Server Analytics] Logging ${promptType} prompt`);
-    console.log(`[Server Analytics] Length: ${promptContent.length} chars`);
-    console.log(`[Server Analytics] Metadata:`, JSON.stringify(metadata));
-  } catch (error) {
-    console.error("[Server Analytics] Failed to log prompt:", error);
-  }
-}
+//Ali's Additions
+import path from "path";
+import { runAIPollMigration } from "./migrations/ai-poll-migration";
+import aiPollRouter from "./routes/ai-poll";
+import mediaAssetsRoutes from "./routes/mediaAssetsRoutes";
+import videoLibraryRouter from "./routes/video-library";
+import textLibraryRouter from "./routes/text-library";
+//--------------------------------------------------------------------------------
+
+// Import services
+import { logEvent, logError } from "./services";
+import { buildSystemPrompt } from "./templates/prompts";
+
+// Import OpenAI client
+import OpenAI from "openai";
+import { registerCopilotRoutes } from "./modules/copilot-kit/copilot-kit.route";
+import { registerMangaEvaluationRoutes } from "./routes/manga-evaluation";
+import { registerMediaClipsRoutes } from "./modules/media/clips/clips.route";
+import { registerMediaClipVotesRoutes } from "./modules/media/clip-votes/clip-votes.route";
 
 /**
  * Register all API routes for the application
- * @param app Express application instance
- * @returns HTTP server instance
  */
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.json());
-  // Serve generated images from the server
+
+  // Serve static files
   app.use(
     "/generated-images",
     express.static("server/public/generated-images"),
   );
-
-  // Serve generated videos from the server
   app.use(
     "/generated-videos",
     express.static("server/public/generated-videos"),
   );
 
-  // Add a utility endpoint to clear session data (temporary, for debugging)
+  //Ali's Additions
+  await runAIPollMigration();
+  app.use("/uploads", express.static("server/public/uploads"));
+  app.use("/api/media-assets", mediaAssetsRoutes);
+  app.use("/api/ai-poll", aiPollRouter);
+  app.use(textLibraryRouter);
+  app.use(videoLibraryRouter);
+  //--------------------------------------------------------------------------------
+
+  // Debug endpoint to clear session
   app.get("/api/debug/clear-session", (req: Request, res: Response) => {
     if (req.session) {
       req.session.destroy((err) => {
@@ -94,71 +94,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .status(500)
             .json({ success: false, error: "Failed to clear session" });
         }
-        return res.status(200).json({
-          success: true,
-          message:
-            "Session cleared successfully. Refresh the page to see changes.",
-        });
+        return res
+          .status(200)
+          .json({ success: true, message: "Session cleared successfully" });
       });
     } else {
-      return res.status(200).json({
-        success: true,
-        message: "No active session to clear. Refresh the page to start fresh.",
-      });
+      return res
+        .status(200)
+        .json({ success: true, message: "No active session to clear" });
     }
   });
 
+  // Mount tracks students routes
   app.use("/api/tracks-students", registerTracksStudentsRoutes());
-  // Create router for API endpoints
+
+  // Create API router
   const apiRouter = express.Router();
 
-  // Add the health check endpoint to the router first
+  // Health check endpoint
   apiRouter.get("/health", (_req, res) => {
     console.log("Health check endpoint called");
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Submissions analytics endpoint
+  // Submissions analytics
   apiRouter.get("/submissions-analytics", getSubmissionsAnalytics);
 
-  // Mount the video flow routes onto the apiRouter
+  // Video routes
   apiRouter.use("/video-flow", registerVideoFlowRoutes());
-
-  // Mount the new robust video jobs routes
   apiRouter.use("/video-jobs", createVideoJobsRouter());
-
-  // Mount the entire apiRouter to the main app at the '/api' path
-  app.use("/api", apiRouter);
+  apiRouter.use("/video-submissions", registerVideoSubmissionsRoutes());
 
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  // Mount the unified thread router
-  apiRouter.use("/ai", createUnifiedThreadRouter(openai));
-
   if (!process.env.OPENAI_API_KEY) {
     console.warn(
-      "\n⚠️  WARNING: OPENAI_API_KEY environment variable is not set. AI features will not work properly.\n",
+      "⚠️  WARNING: OPENAI_API_KEY not set. AI features will not work.",
     );
   }
 
-  // Register direct text generation route to handle client requests
+  // Register manga evaluation routes
+  registerMangaEvaluationRoutes(app);
+
+  // Mount unified thread router
+  apiRouter.use("/ai", createUnifiedThreadRouter(openai));
+
+  // Direct text generation endpoint
   apiRouter.post("/ai/text", async (req: Request, res: Response) => {
     try {
       const { prompt, messageHistory = [], maxTokens = 1000 } = req.body;
 
-      // Log the text generation request
       logEvent("text_generation", prompt, {
         message_history_length: messageHistory.length,
         prompt_length: prompt.length,
         max_tokens: maxTokens,
       });
 
-      // Use OpenAI client
       const systemPrompt = {
         role: "system",
         content:
-          'أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية (من 13 إلى 18 سنة). شغلك إنك تساعد الطلاب يتعلمون ويستكشفون عالم الذكاء الاصطناعي التوليدي (GenAI) بطريقة تفاعلية وممتعة. ردودك دايمًا تكون بلهجة سعودية عامية، آمنة، مفيدة، وبأسلوب يناسب أعمارهم. استخدم نبرة مرحة كأنك تتكلم مع خويك — خلك خفيف دم، طبيعي، واستعمل إيموجيز لما يناسب 😊. تقدر تسألهم، تمزح مزح خفيف، أو تقول توقفات (زي: "مممم... خلني أفكر 😄") عشان تحسسهم إنك تتفاعل معهم. ركز على مساعدتهم يفهمون GenAI، يجربون أدوات جديدة، ويطلعون أفكار ومشاريع يفتخرون فيها. لو سأل الطالب عن شي تعليمي عام، عادي ترد عليه، بس حاول ترجع تركّز معه على المهمة أو الخطوة اللي هو فيها داخل المنصة. والمهم! لا ترد على أي محتوى مسيء، خطر، أو غير لائق (زي العنف أو المواضيع الجنسية). لو أحد كتب شي مايناسب، نبهه بلطافة، ووضح له إنك موجود عشان تساعده يتعلم ويبدع بأفكار ممتعة وآمنة. خلك دايمًا إيجابي، محفّز، وخلي التجربة كأنها مغامرة تعليمية ممتعة.',
+          "أنت الدكتور بنجي (Dr. Pengy) — مرشد ذكي، ممتع، وصديق لطلاب الثانوي في السعودية...",
       };
 
       const response = await openai.chat.completions.create({
@@ -182,91 +178,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register direct prompt analysis route to handle client requests
+  // Prompt analysis endpoint
   apiRouter.post("/ai/analyze-prompt", async (req: Request, res: Response) => {
     try {
       const { prompt, messageHistory = [] } = req.body;
 
-      // Log the prompt analysis request
       logEvent("prompt_analysis", prompt, {
         message_history_length: messageHistory?.length || 0,
         prompt_length: prompt?.length || 0,
       });
 
-      // TASK_INSTRUCTIONS.PROMPT_ANALYSIS
-      // Use OpenAI client with JSON response format
       const systemPrompt = {
         role: "system",
-        content: `
-             جاوب بالعربي دايما
-
-        أنت مقيم صارم ومنصف للتوجيهات المقدمة للذكاء الاصطناعي. هدفك مساعدة الطلاب على التحسن من خلال تقييم صادق وبناء.
-
-        **معايير التقييم الأربعة (كل معيار من 1-10):**
-
-        1. **التفاصيل والوضوح (Clarity & Detail):**
-           • 1-3: غامض جداً، مصطلحات مبهمة، لا يمكن فهم المطلوب أو هناك التباس كبير
-           • 4-6: واضح جزئياً لكن ينقصه تفاصيل مهمة، أو يحتاج توضيح إضافي لفهم المقصود
-           • 7-8: واضح ومفصل مع تفاصيل كافية، قد ينقصه مثال أو سياق بسيط
-           • 9-10: واضح تماماً مع أمثلة وسياق كامل، يسهل فهمه من القراءة الأولى
-
-        2. **التحديد والدقة (Specificity):**
-           • 1-3: مبهم تماماً، لا يحدد المخرجات أو الشكل المطلوب، طلبات عامة جداً
-           • 4-6: يحدد المطلوب جزئياً لكن ينقصه تفاصيل مهمة حول الشكل أو المحتوى
-           • 7-8: محدد بوضوح مع ذكر معظم التفاصيل المطلوبة
-           • 9-10: محدد بدقة عالية، يذكر الشكل والطول والقيود والمتطلبات
-
-        3. **التنظيم والهيكل (Structure & Organization):**
-           • 1-3: فوضوي، أفكار متناثرة، صعب المتابعة
-           • 4-6: تنظيم أساسي لكن يحتاج ترتيب أفضل أو تقسيم واضح
-           • 7-8: منظم جيداً مع تسلسل منطقي واضح
-           • 9-10: تنظيم ممتاز مع فقرات وعناوين ونقاط مرقمة حسب الحاجة
-
-        4. **الإيجاز والملاءمة (Conciseness & Relevance):**
-           • 1-3: مليء بالحشو أو قصير جداً لدرجة عدم الفائدة
-           • 4-6: به بعض الحشو أو ينقصه معلومات ضرورية
-           • 7-8: موجز ومركز مع معلومات ضرورية
-           • 9-10: مثالي في الطول، كل كلمة لها معنى ومبرر
-
-        **أنماط التوجيهات الضعيفة (تستحق 1-4 درجات):**
-        - طلبات من كلمة أو جملة واحدة مقتضبة ("اكتب قصة")
-        - توجيهات مبهمة ("اكتب شيء جيد عن الموضوع")
-        - تعليمات متناقضة أو غير منطقية
-        - عدم تحديد النوع أو الطول المطلوب للمخرجات
-        - استخدام لغة غير واضحة أو معقدة بلا مبرر
-
-        **قواعد التقييم الصارمة:**
-        • كن صارماً ومنصفاً - معظم التوجيهات الطلابية تحتاج تحسين
-        • الدرجات 8+ محجوزة للتوجيهات المتميزة فقط
-        • الدرجات 6-7 للتوجيهات الجيدة التي تحتاج تحسينات بسيطة
-        • الدرجات 4-5 للتوجيهات المتوسطة التي تحتاج تحسينات أساسية
-        • الدرجات 1-3 للتوجيهات الضعيفة جداً
-        • استخدم النطاق الكامل 1-10، لا تتجنب الدرجات المنخفضة
-        • إذا كان التوجيه يحتاج إعادة كتابة شبه كاملة، لا تتجاوز درجة 5
-
-        **الدرجة النهائية:** متوسط المعايير الأربعة (مقرب لأقرب عدد صحيح)
-
-        **ملاحظاتك يجب أن تكون:**
-        • صادقة ومباشرة لكن بأسلوب أخ كبير داعم
-        • تركز على أهم نقاط الضعف أولاً
-        • تذكر نقطة قوة واحدة إن وجدت
-
-        **مخرجاتك يجب أن تكون بصيغة JSON صالحة** دون أي تعليقات:
-
-        \`\`\`json
-        {
-          "score": 4,
-          "breakdown": {
-            "clarity": 5,
-            "specificity": 3,
-            "organization": 4,
-            "conciseness": 4
-          },
-          "feedback": "التوجيه مفهوم بشكل عام لكنه ينقصه تحديد واضح للمخرجات المطلوبة والشكل المتوقع. التنظيم يحتاج تحسين باستخدام نقاط أو فقرات واضحة.",
-          "improvement": "حدد بالضبط شكل الإجابة المطلوبة (مقال، قائمة، تقرير؟) وطولها التقريبي. استخدم نقاط مرقمة لتنظيم المطالب المختلفة."
-        }
-        \`\`\`
-          `,
+        content: `جاوب بالعربي دايما. أنت مقيم صارم ومنصف للتوجيهات المقدمة للذكاء الاصطناعي...`,
       };
 
       const response = await openai.chat.completions.create({
@@ -280,7 +204,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         response_format: { type: "json_object" },
       });
 
-      // Safely parse the response
       let result = {
         score: 8,
         feedback: "توجيه جيد!",
@@ -288,11 +211,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       try {
-        // Get the content and parse it
         const content = response.choices[0].message.content || "{}";
         const parsed = JSON.parse(content);
 
-        // Validate and ensure all required fields exist
         if (
           typeof parsed.score === "number" &&
           parsed.feedback &&
@@ -305,7 +226,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }
       } catch (parseError) {
-        // Log the error and use the default values
         logError(
           "prompt_analysis_parse",
           parseError instanceof Error ? parseError : "Unknown error",
@@ -321,7 +241,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "prompt_analysis_direct",
         error instanceof Error ? error : "Unknown error",
       );
-      // Return a fallback response
       return res.json({
         score: 8,
         feedback: "توجيه جيد! استمر بالعمل الرائع.",
@@ -331,12 +250,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // HTML Generation Route - handles creating web pages based on user prompts
+  // HTML generation endpoint
   apiRouter.post("/ai/generate-html", async (req: Request, res: Response) => {
     try {
       const { messageHistory = [] } = req.body;
 
-      // Validate message history
       const userMessages = messageHistory.filter(
         (msg: { role: string; content: string }) => msg.role === "user",
       );
@@ -346,38 +264,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get the latest user message for logging
       const latestUserMessage = userMessages[userMessages.length - 1];
 
-      // Log the HTML generation request
       logEvent("html_generation", latestUserMessage.content, {
         message_history_length: messageHistory.length,
       });
 
-      // Build the system prompt using our template
       const systemPrompt = {
         role: "system",
         content: buildSystemPrompt("DR_PENGY", "HTML_GENERATION"),
       };
 
-      // Make the API request with optimized parameters
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [systemPrompt, ...messageHistory],
-        temperature: 0.2, // Keep low for consistency
-        max_tokens: 4000, // Higher to allow full HTML pages
+        temperature: 0.2,
+        max_tokens: 4000,
         presence_penalty: 0.0,
         frequency_penalty: 0.0,
       });
 
-      // Extract response content
       const responseContent = response.choices[0].message.content || "";
       let generatedHTML = "";
       let explanatoryMessage = "";
       let isGeneratingHTMLPhase = false;
 
-      // Determine if we're in questioning phase or generation phase
-      // Enhanced detection for when the model is asking clarifying questions
       const isQuestioningPhase =
         responseContent.indexOf("<!DOCTYPE html>") === -1 &&
         (responseContent.includes("?") ||
@@ -388,12 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           responseContent.includes("توصف أكثر"));
 
       if (isQuestioningPhase) {
-        // In questioning phase, pass through the questions as a message
         explanatoryMessage = responseContent;
         isGeneratingHTMLPhase = false;
 
-        // Pass through a minimal HTML structure - NOT a fallback, just to maintain the UI flow
-        // This is empty HTML with a message that Dr. Pengy is asking questions
         generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -406,26 +314,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </body>
 </html>`;
       } else {
-        // Extract HTML directly from the response
         const doctypeIndex = responseContent.indexOf("<!DOCTYPE html>");
 
         if (doctypeIndex >= 0) {
-          // We found DOCTYPE, so we're in HTML generation phase
           isGeneratingHTMLPhase = true;
 
-          // Extract just the content from doctype to </html> closing tag
           const htmlContent = responseContent.substring(doctypeIndex);
           const closingHtmlTagIndex = htmlContent.indexOf("</html>");
 
           if (closingHtmlTagIndex > 0) {
-            // Found the closing tag - extract ONLY up to and including </html>
-            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7); // +7 to include the </html> tag
+            generatedHTML = htmlContent.substring(0, closingHtmlTagIndex + 7);
 
-            // All explanatory text is either before the DOCTYPE or will be moved to the chat
             let explanationText = "";
-
             if (doctypeIndex > 0) {
-              // There's text before the DOCTYPE
               explanationText = responseContent
                 .substring(0, doctypeIndex)
                 .trim();
@@ -434,7 +335,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             explanatoryMessage =
               explanationText || "سويت لك الصفحة! شوف النتيجة 👈\n\nايش رأيك؟";
           } else {
-            // Found DOCTYPE but no closing HTML tag - fix the HTML by adding the closing tag
             generatedHTML = htmlContent;
 
             if (!generatedHTML.includes("</body>")) {
@@ -444,7 +344,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               generatedHTML += "\n</html>";
             }
 
-            // Extract any text before DOCTYPE as explanatory message
             if (doctypeIndex > 0) {
               explanatoryMessage = responseContent
                 .substring(0, doctypeIndex)
@@ -455,12 +354,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } else {
-          // If no DOCTYPE found, send the entire response back to the user as a message
-          // This allows the model to communicate when it can't generate proper HTML
           explanatoryMessage = responseContent;
           isGeneratingHTMLPhase = false;
 
-          // Get just enough HTML to show an empty preview
           generatedHTML = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -475,24 +371,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Log generation status
       logEvent("html_generation_success", latestUserMessage.content, {
         model: "gpt-4o",
         html_size: generatedHTML.length,
         html_type: generatedHTML.includes("<script") ? "interactive" : "static",
       });
 
-      // Send response with a flag indicating if we're generating HTML or asking questions
       return res.json({
         html: generatedHTML,
         message: {
           role: "assistant",
           content: explanatoryMessage || "تم إنشاء الصفحة",
         },
-        isGeneratingHTML: isGeneratingHTMLPhase, // Add flag to tell client whether to close chat (only when generating HTML)
+        isGeneratingHTML: isGeneratingHTMLPhase,
       });
     } catch (error) {
-      // Log and handle errors
       logError(
         "html_generation",
         error instanceof Error ? error : "Unknown error",
@@ -510,11 +403,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register other route modules
+  // Register all other route modules on apiRouter
   registerAITextRoutes(apiRouter, openai);
   registerAIImageRoutes(apiRouter, openai);
   registerGalleryRoutes(apiRouter);
-  // Use the new ProjectRoutes that store HTML in PostgreSQL
   registerProjectRoutes(apiRouter);
   registerAIAssistantRoutes(apiRouter, openai);
   registerLogsRoutes(apiRouter);
@@ -536,26 +428,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAiChatRoutes(apiRouter);
   registerImageGenerationRoutes(apiRouter);
   registerAudioTtsRoutes(apiRouter);
+  registerProjectSubmissionsRoutes(apiRouter);
+  registerCopilotRoutes(apiRouter);
+  registerMediaClipsRoutes(apiRouter);
+  registerMediaClipVotesRoutes(apiRouter);
 
-  // Register video flow routes
-  apiRouter.use("/video-flow", registerVideoFlowRoutes());
+  // DEBUG: Log all registered routes
+  console.log("🔍 DEBUG: Checking registered routes on apiRouter:");
+  apiRouter.stack.forEach((r) => {
+    if (r.route) {
+      const methods = Object.keys(r.route.methods).join(",").toUpperCase();
+      console.log(`📍 Route: ${methods} /api${r.route.path}`);
+    }
+  });
 
-  // Register video submissions routes
-  apiRouter.use("/video-submissions", registerVideoSubmissionsRoutes());
-
-  // Apply the API router to all /api routes
+  // Mount API router
   app.use("/api", apiRouter);
 
   // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error("Global error handler caught:", err);
-
     logError("global_error", err instanceof Error ? err : "Unknown error");
-
-    // Don't expose server errors to clients
-    res.status(500).json({
-      error: "An internal server error occurred",
-    });
+    res.status(500).json({ error: "An internal server error occurred" });
   });
 
   // Create and return HTTP server

@@ -10,7 +10,7 @@ function forceLogoutAndReload() {
 export function StudentAccountCard() {
   const [name, setName] = useState(() => ls.get(storageKeys.studentName));
   const [school, setSchool] = useState(() => ls.get(storageKeys.schoolName));
-  const [countdown, setCountdown] = useState(10); // seconds
+  const [countdown, setCountdown] = useState(120); // seconds
 
   useEffect(() => {
     // poll every 1s, max 10 seconds
@@ -34,7 +34,7 @@ export function StudentAccountCard() {
         // If timer hit 0 and still no name, force logout & reload
         if (next <= 0) {
           clearInterval(timer);
-          forceLogoutAndReload();
+          // forceLogoutAndReload();
         }
         return next;
       });

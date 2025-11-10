@@ -1,3 +1,4 @@
+// src/missions/image-generation/hooks/useImageGeneration.ts
 import { useCallback, useRef, useState, useMemo } from "react";
 import type { ImageGenRequest, ImagePayload } from "./image-generation.types";
 import { generateImage } from "./image-generation.api";
@@ -15,7 +16,11 @@ import { toastSuccess, toastError } from "@/lovable-mission/ui/Toast";
 
 export type UIState = "idle" | "submitting" | "result" | "error";
 
-export function useImageGeneration(initialPrompt = "") {
+export function useImageGeneration(
+  initialPrompt = "",
+  referenceImageUrl?: string,
+  userEmail?: string, // NEW: Add userEmail parameter
+) {
   const [prompt, setPrompt] = useState<string>(initialPrompt);
   const [size, setSize] = useState<ImageSize>(DEFAULT_IMAGE_SIZE);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -23,15 +28,18 @@ export function useImageGeneration(initialPrompt = "") {
   const [error, setError] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
-  const lastRequestRef = useRef<{ prompt: string; size: ImageSize } | null>(
-    null,
-  );
+
+  const lastRequestRef = useRef<{
+    prompt: string;
+    size: ImageSize;
+    referenceImageUrl?: string;
+    userEmail?: string; // NEW: Store email in last request
+  } | null>(null);
 
   const uiState: UIState = useMemo(() => {
     if (isLoading) return "submitting";
     if (error) return "error";
     if (images.length > 0) return "result";
-
     return "idle";
   }, [isLoading, error, images.length]);
 
@@ -45,6 +53,14 @@ export function useImageGeneration(initialPrompt = "") {
         return null;
       }
 
+      // NEW: Validate email
+      if (!userEmail || !userEmail.trim()) {
+        const emailErr = "البريد الإلكتروني مطلوب";
+        setError(emailErr);
+        toastError(emailErr);
+        return null;
+      }
+
       setError(null);
       setIsLoading(true);
       abortRef.current?.abort();
@@ -52,11 +68,13 @@ export function useImageGeneration(initialPrompt = "") {
 
       const body: ImageGenRequest = {
         prompt,
-        size: '1024x1024',
+        size: "1024x1024",
         n: opts?.n ?? 1,
+        referenceImageUrl,
+        userEmail, // NEW: Include email in request
       };
 
-      lastRequestRef.current = { prompt, size };
+      lastRequestRef.current = { prompt, size, referenceImageUrl, userEmail };
 
       try {
         const resp = await generateImage(body, {
@@ -67,26 +85,23 @@ export function useImageGeneration(initialPrompt = "") {
           setError(resp.error);
           toastError(resp.error);
           setImages([]);
-
           return null;
         }
 
         setImages(resp.images);
-        toastSuccess("تم توليد الصورة بنجاح");
-
+        toastSuccess("تم توليد الصورة بنجاح وحفظها");
         return resp.images;
       } catch (err: any) {
         const msg = "حدث خطأ أثناء طلب التوليد. حاول مرة أخرى.";
         setError(msg);
         toastError(msg);
         setImages([]);
-
         return null;
       } finally {
         setIsLoading(false);
       }
     },
-    [prompt, size],
+    [prompt, size, referenceImageUrl, userEmail], // NEW: Add userEmail to dependencies
   );
 
   const generateAgain = useCallback(async () => {
@@ -104,6 +119,8 @@ export function useImageGeneration(initialPrompt = "") {
       prompt: last.prompt,
       size: last.size,
       n: 1,
+      referenceImageUrl: last.referenceImageUrl,
+      userEmail: last.userEmail, // NEW: Include email from last request
     };
 
     try {
@@ -120,15 +137,12 @@ export function useImageGeneration(initialPrompt = "") {
 
       setImages(resp.images);
       toastSuccess("تم توليد الصورة مرة أخرى");
-
       return resp.images;
     } catch {
       const msg = "حدث خطأ أثناء طلب التوليد. حاول مرة أخرى.";
-
       setError(msg);
       toastError(msg);
       setImages([]);
-
       return null;
     } finally {
       setIsLoading(false);
@@ -144,14 +158,11 @@ export function useImageGeneration(initialPrompt = "") {
   }, []);
 
   const resetToPrompt = useCallback(() => {
-    // Clear error but keep prompt so the user can edit it
     setError(null);
-    // Keep images untouched (they should be cleared when successfully regenerated)
   }, []);
 
   const download = useCallback(async (dataUrl: string, filename?: string) => {
     const name = filename ?? `image-${Date.now()}.png`;
-
     const ok = await downloadDataUrl(dataUrl, name);
 
     if (ok) toastSuccess("تم تنزيل الصورة");
@@ -182,7 +193,6 @@ export function useImageGeneration(initialPrompt = "") {
     images,
     error,
     uiState,
-
     submit,
     generateAgain,
     newPrompt,

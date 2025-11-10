@@ -3,7 +3,6 @@ import type {
   ImageGenResponse,
   ImageGenError,
 } from "./image-generation.types";
-
 import { API_PATH } from "./image-generation.constants";
 
 async function safeJson(res: Response) {
@@ -19,6 +18,8 @@ export async function generateImage(
   opts?: { signal?: AbortSignal },
 ): Promise<ImageGenResponse> {
   try {
+    // Simply pass the body as-is to the backend
+    // The backend will handle the reference image
     const res = await fetch(API_PATH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

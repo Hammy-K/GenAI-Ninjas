@@ -429,7 +429,7 @@ export default function AppDevAiPlayground({
     }
   };
 
-  if (showYoutubeTutorialGate) {
+  if (showYoutubeTutorialGate && youtubeTutorialVideoId.trim() !== "") {
     return (
       <YoutubeTutorialGateScreen
         org={organization.name}
@@ -453,14 +453,15 @@ export default function AppDevAiPlayground({
         onConfirmed={startNewProject}
       />
 
-      <YoutubeTutorialModal
-        open={openYoutubeTutorialModal}
-        onClose={() => setYoutubeTutorialOpenModal(false)}
-        videoId={youtubeTutorialVideoId}
-        title="شرح المهمة"
-        description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت"
-      />
-
+      {youtubeTutorialVideoId.trim() !== "" && (
+        <YoutubeTutorialModal
+          open={openYoutubeTutorialModal}
+          onClose={() => setYoutubeTutorialOpenModal(false)}
+          videoId={youtubeTutorialVideoId}
+          title="شرح المهمة"
+          description="يمكنك مشاهدة الفيديو مرة أخرى في أي وقت"
+        />
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <button

@@ -43,6 +43,7 @@ export function registerAppDevFrontendRoutes(router: Router) {
           | "conditional-logic"
           | "layout-design"
           | "dynamic-images"
+          | "final-project"
           | undefined,
         isFeatured:
           typeof q.isFeatured === "string"

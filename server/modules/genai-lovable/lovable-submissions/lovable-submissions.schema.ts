@@ -9,6 +9,7 @@ export const lovableSubmissionsV2 = pgTable("lovable_submissions_v2", {
   projectLink: text("project_link").notNull(),
   email: text("email"),
   phoneNumber: text("phone_number"),
+  schoolName: text("school_name"),
 
   isFeatured: boolean("is_featured").notNull().default(false),
 

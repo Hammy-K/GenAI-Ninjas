@@ -7,9 +7,11 @@ import {
   jsonb,
   timestamp,
   varchar,
+  json,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm"; // Added
 
 // User schema for potential future authentication
 export const users = pgTable("users", {
@@ -18,6 +20,60 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firebaseUid: text("firebase_uid").unique(), // Add Firebase UID for anonymous auth integration
 });
+
+export const generatedImages = pgTable("generated_images", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(), // Student email
+  prompt: text("prompt").notNull(),
+  imageDataUrl: text("image_data_url").notNull(), // Base64 data URL
+  referenceImageUrl: text("reference_image_url"),
+  size: text("size").default("1024x1024"),
+  missionType: text("mission_type").default("pengy_redemption"), // For tracking which mission
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGeneratedImageSchema = createInsertSchema(
+  generatedImages,
+).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type GeneratedImage = typeof generatedImages.$inferSelect;
+export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
+
+export const projectSubmissions = pgTable("project_submissions", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  userName: text("user_name").notNull(),
+  missionId: text("mission_id").notNull(),
+  projectId: text("project_id").notNull(),
+  projectName: text("project_name").notNull(),
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const projectSubmissionVotes = pgTable("project_submission_votes", {
+  id: serial("id").primaryKey(),
+  submissionId: integer("submission_id")
+    .notNull()
+    .references(() => projectSubmissions.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  voteType: text("vote_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertProjectSubmissionSchema = createInsertSchema(
+  projectSubmissions,
+).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ProjectSubmission = typeof projectSubmissions.$inferSelect;
+export type InsertProjectSubmission = z.infer<
+  typeof insertProjectSubmissionSchema
+>;
 
 // Quest progress schema to store user progress
 export const quests = pgTable("quests", {
@@ -158,6 +214,100 @@ export const htmlProjects = pgTable("html_projects", {
   organization: text("organization").default("main"),
   isFeatured: boolean("is_featured").default(false),
 });
+
+// Ali's Addisions
+// AI Poll Sessions Table
+export const aiPollSessions = pgTable("ai_poll_sessions", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 6 }).notNull().unique(),
+  title: varchar("title").notNull(),
+  videoEmbed: text("video_embed").notNull(),
+  correctAnswer: varchar("correct_answer").notNull(),
+  status: varchar("status"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+// AI Poll Votes Table
+export const aiPollVotes = pgTable("ai_poll_votes", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id"),
+  studentName: varchar("student_name").notNull(),
+  teacherName: varchar("teacher_name").notNull(),
+  gender: varchar("gender").notNull(),
+  selectedAnswer: varchar("selected_answer").notNull(),
+  isCorrect: boolean("is_correct").notNull(),
+  votedAt: timestamp("voted_at"),
+});
+
+// AI Poll Relations
+export const aiPollSessionsRelations = relations(
+  aiPollSessions,
+  ({ many }) => ({
+    votes: many(aiPollVotes),
+  }),
+);
+
+export const aiPollVotesRelations = relations(aiPollVotes, ({ one }) => ({
+  session: one(aiPollSessions, {
+    fields: [aiPollVotes.sessionId],
+    references: [aiPollSessions.id],
+  }),
+}));
+
+export const videoLibrary = pgTable("video_library", {
+  code: text("code").primaryKey(),
+  title: text("title").notNull(),
+  videos: json("videos").notNull(), // Array of {title, embedCode}
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Video Library Tables
+export const videoLibrarySessions = pgTable("video_library_sessions", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const videoLibraryVideos = pgTable("video_library_videos", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id")
+    .notNull()
+    .references(() => videoLibrarySessions.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  embedCode: text("embed_code").notNull(),
+  order: integer("order").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const textLibrary = pgTable("text_library", {
+  code: text("code").primaryKey(),
+  title: text("title").notNull(),
+  texts: json("texts").notNull(), // Array of {title, content}
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAiPollSessionSchema = createInsertSchema(
+  aiPollSessions,
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiPollVoteSchema = createInsertSchema(aiPollVotes).omit({
+  id: true,
+  votedAt: true,
+});
+
+export type InsertAiPollSession = z.infer<typeof insertAiPollSessionSchema>;
+export type InsertAiPollVote = z.infer<typeof insertAiPollVoteSchema>;
+
+export type AiPollSession = typeof aiPollSessions.$inferSelect;
+export type AiPollVote = typeof aiPollVotes.$inferSelect;
+
+//------------------------------------------------------------------------------------------
 
 // Define insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({

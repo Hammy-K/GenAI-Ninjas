@@ -10,9 +10,19 @@ type UseAuthModalParams = {
   onAuthed?: (studentId: string | number) => void;
 };
 
+export type ManualFormErrors = {
+  fullName?: string;
+  schoolSelect?: string;
+  schoolName?: string;
+  studentGrade?: string;
+  phoneNumber?: string;
+  email?: string;
+};
+
 export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
+  const [manualErrors, setManualErrors] = useState<ManualFormErrors>({});
 
   // email step
   const [email, setEmail] = useState("");
@@ -69,7 +79,7 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
         description: "يرجى إدخال بريد إلكتروني صحيح",
         variant: "destructive",
       });
-      
+
       return;
     }
 
@@ -84,9 +94,9 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
           title: "البريد غير موجود",
           description: "لم نجد بريدك في النظام. يرجى ملء البيانات يدوياً.",
         });
-        
+
         setStep("manual");
-        
+
         return;
       }
 
@@ -118,11 +128,42 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
     }
   };
 
+  function buildManualErrors(): ManualFormErrors {
+    const errs: ManualFormErrors = {};
+    const pickedOther = schoolSelect !== null && schoolSelect.id === "other";
+    const schoolOk = pickedOther
+      ? nonEmpty(schoolName)
+      : nonEmpty(schoolSelect?.label || "");
+
+    if (!nonEmpty(fullName)) errs.fullName = "رجاءً أدخل الاسم كاملًا.";
+
+    if (!schoolOk) {
+      errs[pickedOther ? "schoolName" : "schoolSelect"] = pickedOther
+        ? "اكتب اسم المدرسة بوضوح."
+        : "اختر المدرسة.";
+    }
+
+    if (!nonEmpty(studentGrade)) errs.studentGrade = "رجاءً أدخل الصف الدراسي.";
+
+    if (!isValidSaudiMobile(phoneNumber))
+      errs.phoneNumber = "رجاءً أدخل رقم جوال سعودي صحيح.";
+
+    // email is optional — add only if you want format checks when present:
+    if (email?.trim() && !isValidEmail(email.trim().toLowerCase()))
+      errs.email = "رجاءً أدخل بريدًا صحيحًا.";
+
+    return errs;
+  }
+
   const handleManualSubmit = async (
     toast: (args: { title: string; description?: string }) => void,
   ) => {
-    if (!isValidManual || loading) return;
+    if (!isValidManual || loading) {
+      setManualErrors(buildManualErrors());
+      return;
+    }
 
+    setManualErrors({});
     setLoading(true);
     setErrorMsg("");
 
@@ -173,6 +214,8 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
     setOpen,
     step,
     setStep,
+    manualErrors,
+    setManualErrors,
 
     email,
     setEmail,

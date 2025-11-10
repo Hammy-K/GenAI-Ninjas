@@ -1,6 +1,7 @@
 export type SubmissionPayload = {
   studentName?: string;
   email?: string;
+  schoolName?: string;
   projectTitle?: string;
   projectLink?: string;
 };
@@ -29,6 +30,7 @@ export function validateSubmissionPayload(
 ): ValidationResult {
   const studentName = (p.studentName ?? "").trim();
   const email = (p.email ?? "").trim().toLowerCase();
+  const schoolName = (p.schoolName ?? "").trim();
   const projectTitle = (p.projectTitle ?? "").trim();
   const projectLink = (p.projectLink ?? "").trim();
 
@@ -36,13 +38,21 @@ export function validateSubmissionPayload(
     return { ok: false, userMessage: "الاسم مطلوب. الرجاء إدخال اسم الطالب." };
   }
 
-  if (!email) {
+  if (!schoolName) {
     return {
       ok: false,
-      userMessage: "البريد الإلكتروني مطلوب. الرجاء تسجيل الدخول بحساب Google.",
+      userMessage: "اسم المدرسة مطلوب. الرجاء إدخال اسم المدرسة.",
     };
   }
-  if (!EMAIL_RE.test(email)) {
+
+  // if (!email) {
+  //   return {
+  //     ok: false,
+  //     userMessage: "البريد الإلكتروني مطلوب. الرجاء تسجيل الدخول بحساب Google.",
+  //   };
+  // }
+
+  if (email && !EMAIL_RE.test(email)) {
     return {
       ok: false,
       userMessage: "البريد الإلكتروني غير صالح. الرجاء التأكد من صحة البريد.",
@@ -56,6 +66,7 @@ export function validateSubmissionPayload(
   if (!projectLink) {
     return { ok: false, userMessage: "رابط المشروع مطلوب." };
   }
+
   if (!isValidProjectLink(projectLink)) {
     return {
       ok: false,
@@ -66,6 +77,6 @@ export function validateSubmissionPayload(
 
   return {
     ok: true,
-    data: { studentName, email, projectTitle, projectLink },
+    data: { studentName, email, projectTitle, projectLink, schoolName },
   };
 }

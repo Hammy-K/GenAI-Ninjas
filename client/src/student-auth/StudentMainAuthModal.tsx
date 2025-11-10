@@ -37,6 +37,8 @@ export default function StudentMainAuthModal() {
     loading,
     errorMsg,
     isValidManual,
+    manualErrors,
+    setManualErrors,
 
     // validators
     isValidEmail,
@@ -113,15 +115,24 @@ export default function StudentMainAuthModal() {
               <Label htmlFor="fullName" className="text-right">
                 الاسم الكامل
               </Label>
+
               <Input
                 id="fullName"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (manualErrors.fullName)
+                    setManualErrors((p) => ({ ...p, fullName: undefined }));
+                }}
                 className="col-span-3 bg-white border-gray-300 rounded-lg"
                 placeholder="...."
                 required
               />
             </div>
+
+            {manualErrors.fullName && (
+              <p className="text-red-600 text-xs">{manualErrors.fullName}</p>
+            )}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="manualEmail" className="text-right">
@@ -131,13 +142,21 @@ export default function StudentMainAuthModal() {
                 id="manualEmail"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+
+                  if (manualErrors.email)
+                    setManualErrors((p) => ({ ...p, email: undefined }));
+                }}
                 className={`col-span-3 bg-white border-gray-300 rounded-lg ${
                   email && !isValidEmail(email) ? "border-red-500" : ""
                 }`}
                 placeholder="example@gmail.com (اختياري)"
               />
             </div>
+            {manualErrors.email && (
+              <p className="text-red-600 text-xs">{manualErrors.email}</p>
+            )}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="schoolName" className="text-right">
@@ -147,12 +166,28 @@ export default function StudentMainAuthModal() {
               <SchoolSelect
                 onChange={(value) => {
                   setSchoolSelect(value);
-                  if (value?.id !== "other") setSchoolName(value?.label ?? "");
+
+                  if (manualErrors.schoolSelect)
+                    setManualErrors((p) => ({ ...p, schoolSelect: undefined }));
+
+                  if (value?.id !== "other") {
+                    setSchoolName(value?.label ?? "");
+
+                    if (manualErrors.schoolName) {
+                      setManualErrors((p) => ({ ...p, schoolName: undefined }));
+                    }
+                  }
                 }}
                 value={schoolSelect}
                 showLabel={false}
                 className="w-full col-span-3"
               />
+
+              {manualErrors.schoolSelect && (
+                <p className="text-red-600 text-xs">
+                  {manualErrors.schoolSelect}
+                </p>
+              )}
 
               {schoolSelect !== null && schoolSelect.id === "other" && (
                 <>
@@ -165,12 +200,25 @@ export default function StudentMainAuthModal() {
                   <Input
                     id="schoolNameOther"
                     value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
+                    onChange={(e) => {
+                      setSchoolName(e.target.value);
+                      if (manualErrors.schoolName)
+                        setManualErrors((p) => ({
+                          ...p,
+                          schoolName: undefined,
+                        }));
+                    }}
                     placeholder="اسم المدرسة"
                     className="bg-white border-gray-300 rounded-lg col-span-3"
                     required
                   />
                 </>
+              )}
+
+              {manualErrors.schoolName && (
+                <p className="text-red-600 text-xs">
+                  {manualErrors.schoolName}
+                </p>
               )}
             </div>
 
@@ -181,11 +229,21 @@ export default function StudentMainAuthModal() {
               <Input
                 id="studentGrade"
                 value={studentGrade}
-                onChange={(e) => setStudentGrade(e.target.value)}
+                onChange={(e) => {
+                  setStudentGrade(e.target.value);
+                  if (manualErrors.studentGrade)
+                    setManualErrors((p) => ({ ...p, studentGrade: undefined }));
+                }}
                 className="col-span-3 bg-white border-gray-300 rounded-lg"
                 placeholder="مثال: الصف التاسع"
                 required
               />
+
+              {manualErrors.studentGrade && (
+                <p className="text-red-600 text-xs">
+                  {manualErrors.studentGrade}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -195,11 +253,21 @@ export default function StudentMainAuthModal() {
               <Input
                 id="phoneNumber"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                  if (manualErrors.phoneNumber)
+                    setManualErrors((p) => ({ ...p, phoneNumber: undefined }));
+                }}
                 className="col-span-3 bg-white border-gray-300 rounded-lg"
                 placeholder="مثال: 0555321542"
                 required
               />
+
+              {manualErrors.phoneNumber && (
+                <p className="text-red-600 text-xs">
+                  {manualErrors.phoneNumber}
+                </p>
+              )}
             </div>
 
             {errorMsg && (
@@ -211,7 +279,7 @@ export default function StudentMainAuthModal() {
             <Button
               type="submit"
               onClick={() => handleManualSubmit(toast)}
-              disabled={!isValidManual || loading}
+              disabled={loading}
               className="w-full"
             >
               {loading ? "جاري الحفظ..." : "بدء المهمة"}

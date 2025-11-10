@@ -87,6 +87,7 @@ export function registerLovableSubmissionsRoutes(router: Router): void {
         "id",
         "studentName",
         "noonCode",
+        "schoolName",
         "projectTitle",
         "projectLink",
         "email",

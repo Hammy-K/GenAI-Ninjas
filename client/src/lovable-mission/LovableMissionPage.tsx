@@ -10,8 +10,8 @@ import { LABELS } from "./constants";
 import { FloatingActionsPanel } from "./ui/FloatingActionsPanel";
 import { ChatLayout } from "./ui/ChatLayout";
 import { useLocation } from "wouter";
-import { GoogleSignInCTA } from "./ui/auth/GoogleSignInCta";
-import { useLovableAuth } from "./auth/AuthProvider";
+// import { GoogleSignInCTA } from "./ui/auth/GoogleSignInCta";
+// import { useLovableAuth } from "./auth/AuthProvider";
 
 export default function LovableMissionPage() {
   const {
@@ -27,8 +27,7 @@ export default function LovableMissionPage() {
     resetAll,
   } = useLovableChat();
 
-  const { user } = useLovableAuth();
-
+  // const { user } = useLovableAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const promptLink = lastResponse?.lovablePromptLink;
   const [, navigate] = useLocation();
@@ -43,22 +42,22 @@ export default function LovableMissionPage() {
   };
 
   const handleOpenSubmitModal = () => {
-    if (!user) {
-      toastError("الرجاء تسجيل الدخول عبر Google قبل إرسال المشروع.");
-      return;
-    }
+    // if (!user) {
+    //   toastError("الرجاء تسجيل الدخول عبر Google قبل إرسال المشروع.");
+    //   return;
+    // }
     setModalOpen(true);
   };
 
-  if (!user) {
-    return (
-      <Container>
-        <div className="mx-auto max-w-3xl py-10">
-          <GoogleSignInCTA />
-        </div>
-      </Container>
-    );
-  }
+  // if (!user) {
+  //   return (
+  //     <Container>
+  //       <div className="mx-auto max-w-3xl py-10">
+  //         <GoogleSignInCTA />
+  //       </div>
+  //     </Container>
+  //   );
+  // }
 
   return (
     <Container>
@@ -74,7 +73,6 @@ export default function LovableMissionPage() {
             resetLabel={LABELS.restart}
             submitLabel={LABELS.submitProject}
           />
-
           <ChatLayout className="flex-[1_1_960px]">
             <div className="flex-1 min-h-0 overflow-y-auto">
               {history.length === 0 && <EmptyWelcomeSeed />}
@@ -84,7 +82,6 @@ export default function LovableMissionPage() {
                 isLoading={isLoading}
               />
             </div>
-
             <ChatInput
               value={draft}
               onChange={setDraft}
@@ -94,7 +91,6 @@ export default function LovableMissionPage() {
           </ChatLayout>
         </div>
       </div>
-
       <SubmitProjectModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

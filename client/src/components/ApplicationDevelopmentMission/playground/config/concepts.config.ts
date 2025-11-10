@@ -13,6 +13,7 @@ import { BUTTONS_EVENTS_PROMPT } from "./prompts/buttons-events.prompt";
 import { CONDITIONAL_LOGIC_PROMPT } from "./prompts/conditional-logic.prompt";
 import { LAYOUT_DESIGN_PROMPT } from "./prompts/layout-design.prompt";
 import { DYNAMIC_IMAGES_PROMPT } from "./prompts/dynamic-images.prompt";
+import { FINAL_PROJECT_PROMPT } from "./prompts/final-project.prompt";
 
 export const FRONTEND_FOUNDATION_PROMPTS = {
   inputsOutputs: INPUTS_OUTPUTS_PROMPT,
@@ -26,6 +27,8 @@ export const FRONTEND_FOUNDATION_PROMPTS = {
   layoutDesign: LAYOUT_DESIGN_PROMPT,
 
   dynamicImages: DYNAMIC_IMAGES_PROMPT,
+
+  finalProject: FINAL_PROJECT_PROMPT,
 } as const;
 
 export const FRONTEND_FOUNDATION_CONCEPTS: Concept[] = [
@@ -112,6 +115,21 @@ export const FRONTEND_FOUNDATION_CONCEPTS: Concept[] = [
     isCompleted: false,
     url: "/missions/app-development/frontend-foundation/dynamic-images",
     systemPrompt: FRONTEND_FOUNDATION_PROMPTS.dynamicImages,
+  },
+  {
+    Icon: GitBranch,
+    title: "المشروع النهائي",
+    description:
+      "مشروع واحد يجمع ٤+ مفاهيم (مدخلات/أزرار/عشوائية/منطق/تصميم/صور) ثم نبني الكود النهائي",
+    examples: [
+      "لعبة مزاجيّة: مدخلات + أزرار + منطق + صور ديناميكية",
+      "لوحة توصيات: نص المستخدم → اقتراحات عشوائية + أزرار تحكم + تلوين بالحالات",
+      "بروفايل تفاعلي: نموذج بيانات + منطق درجات + شبكة بطاقات متجاوبة",
+    ],
+    color: "#3B82F6",
+    isCompleted: false,
+    url: "/missions/app-development/frontend-foundation/final-project",
+    systemPrompt: FRONTEND_FOUNDATION_PROMPTS.finalProject,
   },
 ];
 

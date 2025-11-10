@@ -14,6 +14,7 @@ export const appDevFrontendMissionEnum = pgEnum("appdev_frontend_mission", [
   "conditional-logic",
   "layout-design",
   "dynamic-images",
+  "final-project",
 ]);
 
 export const appDevFrontend = pgTable("app_dev_frontend", {

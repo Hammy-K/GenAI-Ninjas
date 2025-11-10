@@ -30,4 +30,7 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+  server: {
+    allowedHosts: true, // Add this line
+  },
 });

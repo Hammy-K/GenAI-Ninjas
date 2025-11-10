@@ -39,6 +39,7 @@ export function SubmitProjectModalV2({
   defaultNoonCode = "",
 }: Props) {
   const [studentName, setStudentName] = useState(defaultStudentName);
+  const [schoolName, setSchoolName] = useState("");
   const [noonCode, setNoonCode] = useState(defaultNoonCode);
 
   const [projectTitle, setProjectTitle] = useState("");
@@ -50,7 +51,9 @@ export function SubmitProjectModalV2({
   useEffect(() => {
     if (open) {
       const storedName = ls.get(storageKeys.studentName);
+      const storedSchoolName = ls.get(storageKeys.schoolName);
       setStudentName(defaultStudentName || storedName || "");
+      setSchoolName(storedSchoolName || "");
       setNoonCode(defaultNoonCode || "");
       setProjectTitle("");
       setProjectLink("");
@@ -93,15 +96,16 @@ export function SubmitProjectModalV2({
     // 🔐 Require authenticated identity from student-auth
     const name = (ls.get(storageKeys.studentName) || studentName || "").trim();
     const email = (ls.get(storageKeys.email) || "").trim();
+    const schoolName = (ls.get(storageKeys.schoolName) || "").trim();
 
-    if (!name || !email) {
+    if (!name || !schoolName) {
       onToast?.({
         type: "error",
         message:
           "أنت غير مسجل دخول أو انتهت الجلسة. الرجاء تسجيل الدخول ثم المحاولة مرة أخرى.",
       });
-      clearAuthSession();
-      window.location.reload();
+      // clearAuthSession();
+      // window.location.reload();
       return;
     }
 
@@ -121,7 +125,8 @@ export function SubmitProjectModalV2({
         body: JSON.stringify({
           studentName: name,
           email,
-          phoneNumber, // ✅ send phone in payload
+          phoneNumber,
+          schoolName,
           // noonCode: noonCode.trim(), // enable later if needed
           projectTitle: projectTitle.trim(),
           projectLink: projectLink.trim(),
@@ -135,8 +140,13 @@ export function SubmitProjectModalV2({
       onToast?.({ type: "success", message: "تم حفظ المشروع بنجاح" });
       onSubmitted?.(data);
       onClose();
-    } catch {
-      onToast?.({ type: "error", message: "تعذر حفظ المشروع" });
+    } catch (error) {
+      console.error(error);
+
+      onToast?.({
+        type: "error",
+        message: "تعذر حفظ المشروع",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -162,14 +172,6 @@ export function SubmitProjectModalV2({
         {/* Form body — labels on top, consistent with student modal */}
         <div className="grid gap-4 py-2">
           {/* Name/NoonCode inputs remain hidden to keep UX minimal; values come from storage. */}
-
-          <div>
-            {ls.get(storageKeys.studentName)}
-            <br />
-            {ls.get(storageKeys.email)}
-            <br />
-            {ls.get(storageKeys.phoneNumber)}
-          </div>
 
           <div className="grid gap-2">
             <Label htmlFor="projectTitle">عنوان المشروع</Label>

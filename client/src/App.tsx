@@ -27,6 +27,7 @@ import HtmlProjectsList from "./components/HTMLProjectsList";
 import { HTMLStandalone } from "./components/stages/HTMLStandalone";
 import AiHtmlGenerator from "./components/AiHtmlGenerator/AiHtmlGenerator";
 import HTMLProjectsPage from "./components/HTMLProjectsList/HTMLProjectsPage";
+import InnovationChallenge from "@/pages/InnovationChallenge";
 import VideoPage from "./components/VideoGallery/VideoPage";
 import VideoPlayer from "./components/VideoGallery/VideoPlayer";
 import GalleryManagerPage from "./pages/admin/GalleryManagerPage";
@@ -68,6 +69,23 @@ import { LovableAuthProvider } from "./lovable-mission/auth/AuthProvider";
 import SubmissionsDashboard from "./pages/SubmissionsDashboard";
 import LovableMissionPageV2 from "./lovable-mission/v2/LovableMissionPageV2";
 import YouTubeVideoPage from "./pages/VideoPage";
+import MangaStoryPlanner from "./pages/MangaPlanner";
+import { PengyRedemption } from "@/image-generation/components/PengyRedemption";
+import ProjectSubmissionsGallery from "@/pages/ProjectSubmissionGallery";
+import FinalProjectPlayground from "./components/ApplicationDevelopmentMission/missions/frontend-foundation/FinalProjectPlayground";
+import ClipsMissionPage from "./pages/Clips/ClipsMissionPage";
+import ClipsSubmissionsPage from "./pages/Clips/clips-submissions/ClipsSubmissionPage";
+
+// Ali's Additions
+import AIPollControl from "./pages/AIPollControl";
+import AIPollVote from "./pages/AIPollVote";
+import MediaAssetsControl from "./pages/MediaAssetsControl";
+import MediaAssetsGallery from "./pages/MediaAssetsGallery";
+import VideoLibraryAdmin from "./pages/VideoLibraryAdmin";
+import VideoLibrary from "./pages/VideoLibrary";
+import TextLibraryAdmin from "./pages/TextLibraryAdmin";
+import TextLibrary from "./pages/TextLibrary";
+//--------------------------------------------------------------------------------
 
 // Wrapper components for HTML Generator routes
 function HTMLGeneratorWrapper() {
@@ -99,11 +117,14 @@ function Router() {
     <Switch>
       {/* <Route path="/:prefix(ffm)?/" component={Dashboard} /> */}
       <Route path="/" component={Dashboard} />
+      <Route path="/innovation-challenge" component={InnovationChallenge} />
       <Route path="/ffm/" component={Dashboard} />
       <Route path="/intro-mission" component={IntroMission} />
       <Route path="/prompt-engineering" component={PromptEngineering} />
       <Route path="/ffm/intro-mission" component={IntroMission} />
       <Route path="/missions/ai-html-generator" component={AiHtmlGenerator} />
+      <Route path="/missions/manga-planner" component={MangaStoryPlanner} />
+      <Route path="/pengy-redemption" component={PengyRedemption} />
       <Route
         path="/video-generator/video-generator-chat"
         component={VideoGeneratorChatMissionPage}
@@ -125,6 +146,18 @@ function Router() {
         path="/ffm/missions/app-development"
         component={AppDevelopmentPage}
       />
+      {/* Ali's Additions */}
+      <Route path="/ai-poll/control" component={AIPollControl} />
+      <Route path="/ai-poll/:identifier" component={AIPollVote} />
+
+      <Route path="/admin/media-assets" component={MediaAssetsControl} />
+      <Route path="/gallery101" component={MediaAssetsGallery} />
+
+      <Route path="/video-library/admin" component={VideoLibraryAdmin} />
+      <Route path="/video-library/:code" component={VideoLibrary} />
+
+      <Route path="/text-library-admin" component={TextLibraryAdmin} />
+      <Route path="/text-library/:code" component={TextLibrary} />
       {/* ################# Application Development Routes ########################## */}
       <Route
         path="/missions/app-development/frontend-foundation"
@@ -153,6 +186,11 @@ function Router() {
       <Route
         path="/missions/app-development/frontend-foundation/dynamic-images"
         component={DynamicImagesPlayground}
+      />
+
+      <Route
+        path="/missions/app-development/frontend-foundation/final-project"
+        component={FinalProjectPlayground}
       />
 
       <Route
@@ -307,6 +345,17 @@ function Router() {
       />
       {/* ########################## admin routes ############################# */}
       <Route path="/analytics" component={SubmissionsDashboard} />
+      <Route
+        path="/project-submissions-gallery"
+        component={() => <ProjectSubmissionsGallery />}
+      />
+
+      <Route path="/missions/clips" component={ClipsMissionPage} />
+      <Route
+        path="missions/clips/submissions"
+        component={ClipsSubmissionsPage}
+      />
+
       <Route component={NotFound} />
     </Switch>
   );

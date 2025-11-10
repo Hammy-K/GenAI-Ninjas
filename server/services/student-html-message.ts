@@ -2,14 +2,15 @@ import { db } from "../db";
 import { studentHtmlMessages } from "../schemas/student_html_messages";
 
 export async function logStudentHtmlMessage(
-  studentId: string,
-  message: string,
+  studentId?: string | null,
+  message?: string | null,
 ) {
-  if (!studentId || !message) {
-    throw new Error("Missing studentId or message");
-  }
+  const id = typeof studentId === "string" ? studentId.trim() : "";
+  const msg = typeof message === "string" ? message.trim() : "";
+
+  if (!id || !msg) return; // quietly no-op if missing/blank
 
   return db
     .insert(studentHtmlMessages)
-    .values({ studentId, message, createdAt: new Date() });
+    .values({ studentId: id, message: msg, createdAt: new Date() });
 }

@@ -37,6 +37,7 @@ import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevel
 import ApplicationDevelopmentMissionIntroCard from "@/components/ApplicationDevelopmentMission/ApplicaitonDevelopmentMissionIntroCard";
 import { StudentService } from "@/services/student.service";
 import { SchoolSelect } from "@/components/common/SelectSchool";
+import StudentMainAuthModal from "@/student-auth/StudentMainAuthModal";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -455,8 +456,10 @@ export default function Dashboard() {
     >
       <Header xp={xp} />
 
+      <StudentMainAuthModal />
+
       {/* Profile information form (shown only on first visit) */}
-      {showProfileForm && (
+      {/* {showProfileForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md p-6 bg-white">
             <h2 className="text-xl font-bold text-center mb-4">مرحباً بك!</h2>
@@ -464,7 +467,6 @@ export default function Dashboard() {
               فضلاً أدخل معلوماتك الأساسية لبدء الرحلة التعليمية
             </p>
 
-            {/* Show form error if any */}
             {formError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
@@ -475,7 +477,6 @@ export default function Dashboard() {
             )}
 
             {showCaptcha ? (
-              /* CAPTCHA Screen */
               <div className="text-center">
                 <div>
                   <h3 className="text-lg font-bold mb-2">
@@ -504,7 +505,6 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              /* Main Form */
               <form onSubmit={handleProfileSubmit}>
                 <div>
                   <div>
@@ -530,17 +530,6 @@ export default function Dashboard() {
                       required
                     />
                   </div>
-                  {/* <div className="my-2">
-                    <Label htmlFor="schoolName">اسم المدرسة</Label>
-                    <Input
-                      id="schoolName"
-                      value={schoolName}
-                      onChange={(e) => setSchoolName(e.target.value)}
-                      placeholder="اسم المدرسة"
-                      className="mt-1 bg-white border-gray-300 rounded-lg"
-                      required
-                    />
-                  </div> */}
 
                   <div className="my-2">
                     <SchoolSelect
@@ -595,7 +584,7 @@ export default function Dashboard() {
             )}
           </Card>
         </div>
-      )}
+      )} */}
 
       {/* Main content */}
       <main className="flex-grow p-4 md:p-6">

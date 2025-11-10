@@ -3,28 +3,50 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAppBuilderSteps } from "./scripts/seed-app-builder-steps";
-import "./modules/video-jobs/video-jobs.worker"; // Start video job worker
+import "./modules/video-jobs/video-jobs.worker";
 
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Trust proxy headers from Replit infrastructure
-app.set('trust proxy', 1);
+// CORS - Allow external requests to POST submissions
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-// Setup express-session with proper security
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'ai-gallery-app-secret',
-  resave: false,
-  saveUninitialized: false, // Security: don't create empty sessions
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', // HTTPS required in production
-    httpOnly: true, // Prevent XSS attacks
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Compatible with OAuth flows
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
-}));
 
+  next();
+});
+
+// Trust proxy headers from Replit
+app.set("trust proxy", 1);
+
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "ai-gallery-app-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: "lax",
+    },
+  }),
+);
+
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -43,11 +65,9 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
-
       log(logLine);
     }
   });
@@ -55,53 +75,57 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialize server
 (async () => {
-  // Seed the App Builder steps
+  // Seed database
   try {
     await seedAppBuilderSteps();
     log("Successfully seeded App Builder steps");
   } catch (error) {
     console.error("Failed to seed App Builder steps:", error);
   }
-  
-  // Serve generated videos statically
-  app.use('/generated-videos', express.static('server/public/generated-videos', {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.mp4')) {
-        res.setHeader('Content-Type', 'video/mp4');
-        res.setHeader('Content-Disposition', 'inline');
-      }
-    }
-  }));
 
+  // Serve generated videos
+  app.use(
+    "/generated-videos",
+    express.static("server/public/generated-videos", {
+      setHeaders: (res, path) => {
+        if (path.endsWith(".mp4")) {
+          res.setHeader("Content-Type", "video/mp4");
+          res.setHeader("Content-Disposition", "inline");
+        }
+      },
+    }),
+  );
+
+  // Register all routes
   const server = await registerRoutes(app);
 
+  // Error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
     res.status(status).json({ message });
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup Vite in development or serve static in production
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // Start server
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();
