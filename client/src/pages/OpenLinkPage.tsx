@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function OpenLinkPage() {
-  const missionLink = "https://noonai.noon.edu.sa/reset";
+  const missionLink =
+    "https://ai.noon.edu.sa/project/PROJEC_5D3VPOR-J0h99MKf4NPBug/MISSIO_-015RKuv3oV8CueCBLtPUV";
 
   const handleOpenLink = () => {
     window.open(missionLink, "_blank", "noopener,noreferrer");
