@@ -76,6 +76,7 @@ import FinalProjectPlayground from "./components/ApplicationDevelopmentMission/m
 import ClipsMissionPage from "./pages/Clips/ClipsMissionPage";
 import ClipsSubmissionsPage from "./pages/Clips/clips-submissions/ClipsSubmissionPage";
 import OpenLinkPage from "./pages/OpenLinkPage";
+import { StarterPromptChallenge } from "@/components/stages/StarterPromptChallenge";
 
 // Ali's Additions
 import AIPollControl from "./pages/AIPollControl";
@@ -119,6 +120,10 @@ function Router() {
       {/* <Route path="/:prefix(ffm)?/" component={Dashboard} /> */}
       <Route path="/" component={Dashboard} />
       <Route path="/open-link" component={OpenLinkPage} />
+      <Route
+        path="/starter-prompt-challenge"
+        component={StarterPromptChallenge}
+      />
       <Route path="/innovation-challenge" component={InnovationChallenge} />
       <Route path="/ffm/" component={Dashboard} />
       <Route path="/intro-mission" component={IntroMission} />
