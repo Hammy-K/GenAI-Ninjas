@@ -125,12 +125,12 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
           content: buildSystemPrompt("DR_PENGY", "PROMPT_ANALYSIS"),
         };
 
-        // Include message history, few-shot examples, and the current prompt
+        // Include system prompt, few-shot examples, message history, and the current prompt
+        // FIXED: Removed duplicate system prompt
         const messages = [
           systemPrompt,
           ...fewShotExamples,
           ...messageHistory,
-          systemPrompt,
           { role: "user", content: prompt },
         ];
 
@@ -199,6 +199,100 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
     },
   );
 
+  // Starter Prompt analysis endpoint (NEW)
+  aiRoutes.post(
+    "/analyze-starter-prompt",
+    validatePrompt,
+    async (req: Request, res: Response) => {
+      try {
+        const { prompt, messageHistory = [] } = req.body;
+
+        // Log the starter prompt analysis request
+        logEvent("starter_prompt_analysis", prompt, {
+          message_history_length: messageHistory.length,
+          prompt_length: prompt.length,
+        });
+
+        // Build the system prompt specifically for starter prompt analysis
+        const systemPrompt = {
+          role: "system",
+          content: buildSystemPrompt("DR_PENGY", "STARTER_PROMPT_ANALYSIS"),
+        };
+
+        // Include system prompt, message history, and the current prompt
+        const messages = [
+          systemPrompt,
+          ...messageHistory,
+          { role: "user", content: prompt },
+        ];
+
+        const response = await openai.chat.completions.create({
+          model: GPT_MODEL,
+          messages,
+          temperature: 0.5, // Lower temperature for more consistent evaluations
+          response_format: { type: "json_object" },
+        });
+
+        // Safely parse the JSON response
+        let result;
+        try {
+          const messageContent = response.choices[0].message.content || "{}";
+          result = JSON.parse(messageContent);
+
+          // Validate that we have all required fields with correct types
+          if (typeof result.score !== "number" || !result.score) {
+            result.score = 5; // Default to middle score for starter prompts
+          }
+
+          if (!result.feedback || typeof result.feedback !== "string") {
+            result.feedback = "توجيه جيد! حاول إضافة المزيد من التفاصيل.";
+          }
+
+          if (!result.improvement || typeof result.improvement !== "string") {
+            result.improvement =
+              "تذكر الإجابة على الأسئلة الأربعة: ما هو؟ كيف يبدو؟ ماذا يفعل؟ ومتطلبات خاصة؟";
+          }
+
+          // Ensure score is within range
+          result.score = Math.max(1, Math.min(10, Math.round(result.score)));
+        } catch (parseError) {
+          logError(
+            "starter_prompt_analysis_parse",
+            parseError instanceof Error ? parseError : "Unknown error",
+            {
+              response_content: response.choices[0].message.content,
+            },
+          );
+
+          // Provide a robust fallback structure if parsing fails
+          result = {
+            score: 5,
+            feedback: "حاول إضافة المزيد من التفاصيل عن التطبيق.",
+            improvement:
+              "تذكر الإجابة على الأسئلة الأربعة: ما هو؟ كيف يبدو؟ ماذا يفعل؟ ومتطلبات خاصة؟",
+          };
+        }
+
+        // Log the analysis result with score
+        logEvent("starter_prompt_analysis_result", prompt, {
+          score: result.score,
+          passed_threshold: result.score >= 7,
+          model: GPT_MODEL,
+        });
+
+        return res.json(result);
+      } catch (error) {
+        logError(
+          "starter_prompt_analysis",
+          error instanceof Error ? error : "Unknown error",
+        );
+        return res
+          .status(500)
+          .json({ error: "Failed to analyze starter prompt" });
+      }
+    },
+  );
+
   // HTML generation endpoint with chat history
   aiRoutes.post("/generate-html", async (req: Request, res: Response) => {
     try {
@@ -231,8 +325,8 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
       // Trim message history to reduce tokens
       const trimmedHistory = trimMessageHistory(messageHistory, 4);
 
-      // Always start with the system prompt, then include message history
-      const messages = [systemPrompt, ...trimmedHistory, systemPrompt];
+      // FIXED: Only include system prompt once at the beginning
+      const messages = [systemPrompt, ...trimmedHistory];
 
       // Use specific parameters for consistent, high-quality code
       const response = await openai.chat.completions.create({

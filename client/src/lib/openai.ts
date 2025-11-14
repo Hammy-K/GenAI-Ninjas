@@ -97,6 +97,28 @@ export async function analyzePrompt(
   }
 }
 
+export async function analyzeStarterPrompt(
+  prompt: string,
+): Promise<PromptAnalysisResponse> {
+  try {
+    const response = await apiRequest(
+      "POST",
+      "/api/ai/text/analyze-starter-prompt",
+      {
+        prompt,
+      },
+    );
+    return await response.json();
+  } catch (error) {
+    console.error("Error analyzing starter prompt:", error);
+    return {
+      score: 0,
+      feedback: "حدث خطأ في تحليل التوجيه.",
+      improvement: "",
+    };
+  }
+}
+
 export type CodeGenerationResponse = {
   html: string;
   css: string;
