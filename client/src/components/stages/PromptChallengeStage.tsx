@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,13 @@ import { analyzePrompt } from "@/lib/openai";
 import { useStageState } from "@/hooks/useStageState";
 import { validateInput, validatePromptAnalyzerInput } from "@/lib/inputFilter";
 import { trackStageProgress, logPromptToFirestore } from "@/lib/firebase";
+import confetti from "canvas-confetti";
 import penguinPngPath from "@assets/Penguin.png";
+import celebrationSound from "@/assets/wow.mp3";
+
+// Base64 encoded celebration sound (short chime)
+const CELEBRATION_SOUND =
+  "data:audio/mp3;base64,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";
 
 interface PromptChallengeStageProps {
   onComplete: () => void;
@@ -69,10 +75,18 @@ export function PromptChallengeStage({
   const [nameInput, setNameInput] = useState("");
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const weakPrompt = "صمم لي لعبة";
   const goodPromptExample =
     "أبغى لعبة بسيطة فيها شخصية تقفز وتتخطى عقبات زي Flappy Bird، بألوان زاهية ومناسبة للأطفال";
   const badPromptExample = "سوي لي تطبيق";
+
+  // Initialize audio on mount
+  useEffect(() => {
+    audioRef.current = new Audio(celebrationSound);
+    audioRef.current.volume = 0.5;
+  }, []);
 
   // Check if student has entered their name
   useEffect(() => {
@@ -84,9 +98,43 @@ export function PromptChallengeStage({
   // Fetch leaderboard on mount and periodically
   useEffect(() => {
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 5000); // Refresh every 5 seconds
+    const interval = setInterval(fetchLeaderboard, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const celebrate = () => {
+    // Play sound
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+
+    // Fire confetti from the left
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x: 0.1, y: 0.6 },
+      colors: ["#22c55e", "#eab308", "#3b82f6", "#f43f5e", "#a855f7"],
+    });
+
+    // Fire confetti from the right
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x: 0.9, y: 0.6 },
+      colors: ["#22c55e", "#eab308", "#3b82f6", "#f43f5e", "#a855f7"],
+    });
+
+    // Fire more confetti after a short delay
+    setTimeout(() => {
+      confetti({
+        particleCount: 50,
+        spread: 100,
+        origin: { x: 0.5, y: 0.5 },
+        colors: ["#22c55e", "#eab308", "#3b82f6"],
+      });
+    }, 250);
+  };
 
   const fetchLeaderboard = async () => {
     try {
@@ -180,7 +228,13 @@ export function PromptChallengeStage({
 
       // Show score animation
       setShowScoreAnimation(true);
-      setTimeout(() => setShowScoreAnimation(false), 2000);
+
+      // Celebrate if score is 7 or above
+      if (result.score >= 7) {
+        celebrate();
+      }
+
+      setTimeout(() => setShowScoreAnimation(false), 2500);
 
       setAnalysis(result);
 
@@ -276,21 +330,27 @@ export function PromptChallengeStage({
     <div className="prompt-challenge-stage">
       {/* Score Animation Overlay */}
       {showScoreAnimation && state.analysis && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="text-center animate-bounce">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="text-center">
             <div
-              className={`text-9xl font-bold ${
+              className={`text-9xl font-bold animate-bounce ${
                 state.analysis.score >= 7 ? "text-green-400" : "text-amber-400"
               }`}
+              style={{
+                textShadow:
+                  state.analysis.score >= 7
+                    ? "0 0 40px rgba(34, 197, 94, 0.5)"
+                    : "0 0 40px rgba(234, 179, 8, 0.5)",
+              }}
             >
               {state.analysis.score}
             </div>
-            <div className="text-3xl text-white mt-4">
+            <div className="text-4xl text-white mt-6 font-bold">
               {state.analysis.score >= 7 ? "🎉 ممتاز!" : "💪 حاول مرة ثانية!"}
             </div>
-            {state.lastRank && (
-              <div className="text-xl text-white/80 mt-2">
-                ترتيبك: #{state.lastRank}
+            {state.lastRank && state.analysis.score >= 7 && (
+              <div className="text-2xl text-yellow-400 mt-4 animate-pulse">
+                🏆 ترتيبك: #{state.lastRank}
               </div>
             )}
           </div>
