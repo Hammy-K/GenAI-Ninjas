@@ -173,6 +173,11 @@ export function PromptChallengeStage({
 
       const result = await analyzePrompt(state.improvedPrompt);
 
+      // Check if we got an error response
+      if (!result || typeof result.score !== "number" || result.error) {
+        throw new Error(result?.error || "Failed to analyze prompt");
+      }
+
       // Show score animation
       setShowScoreAnimation(true);
       setTimeout(() => setShowScoreAnimation(false), 2000);

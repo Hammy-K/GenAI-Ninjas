@@ -181,6 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Prompt analysis endpoint
   apiRouter.post("/ai/analyze-prompt", async (req: Request, res: Response) => {
+    console.log("🔥 analyze-prompt called with:", req.body);
     try {
       const { prompt, messageHistory = [] } = req.body;
 
@@ -237,16 +238,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       return res.json(result);
-    } catch (error) {
+    } } catch (error) {
       logError(
         "prompt_analysis_direct",
         error instanceof Error ? error : "Unknown error",
       );
-      return res.json({
-        score: 8,
-        feedback: "توجيه جيد! استمر بالعمل الرائع.",
-        improvement:
-          "يمكنك إضافة المزيد من التفاصيل المحددة للحصول على نتائج أفضل.",
+      return res.status(500).json({
+        error: "Failed to analyze prompt",
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });

@@ -1,5 +1,5 @@
 import { db } from "server/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import {
   promptChallengeScores,
   PromptChallengeScore,
@@ -7,7 +7,34 @@ import {
 } from "@shared/schema";
 
 export const LeaderboardModel = {
-  async create(data: NewPromptChallengeScore): Promise<PromptChallengeScore> {
+  async upsertScore(
+    data: NewPromptChallengeScore,
+  ): Promise<PromptChallengeScore> {
+    // Check if student already has an entry
+    const [existing] = await db
+      .select()
+      .from(promptChallengeScores)
+      .where(eq(promptChallengeScores.studentName, data.studentName))
+      .limit(1);
+
+    if (existing) {
+      // Only update if new score is higher
+      if (data.score > existing.score) {
+        const [updated] = await db
+          .update(promptChallengeScores)
+          .set({
+            score: data.score,
+            prompt: data.prompt,
+            createdAt: sql`now()`,
+          })
+          .where(eq(promptChallengeScores.id, existing.id))
+          .returning();
+        return updated;
+      }
+      return existing;
+    }
+
+    // Create new entry
     const [row] = await db
       .insert(promptChallengeScores)
       .values(data)
@@ -28,34 +55,28 @@ export const LeaderboardModel = {
     return rows;
   },
 
-  async getStudentBestScore(
+  async getStudentScore(
     studentName: string,
   ): Promise<PromptChallengeScore | null> {
     const [row] = await db
       .select()
       .from(promptChallengeScores)
       .where(eq(promptChallengeScores.studentName, studentName))
-      .orderBy(desc(promptChallengeScores.score))
       .limit(1);
 
     return row ?? null;
   },
 
-  async getStudentRank(score: number): Promise<number> {
-    const higherScores = await db
-      .select()
-      .from(promptChallengeScores)
-      .where(eq(promptChallengeScores.score, score));
-
-    // Count how many unique scores are higher
+  async getStudentRank(studentName: string): Promise<number> {
     const allScores = await db
-      .select({ score: promptChallengeScores.score })
+      .select({
+        studentName: promptChallengeScores.studentName,
+        score: promptChallengeScores.score,
+      })
       .from(promptChallengeScores)
       .orderBy(desc(promptChallengeScores.score));
 
-    const uniqueScores = [...new Set(allScores.map((r) => r.score))];
-    const rank = uniqueScores.findIndex((s) => s <= score) + 1;
-
-    return rank || uniqueScores.length + 1;
+    const rank = allScores.findIndex((r) => r.studentName === studentName) + 1;
+    return rank || allScores.length + 1;
   },
 };

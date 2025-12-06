@@ -82,10 +82,13 @@ export async function generateText(
 export async function analyzePrompt(
   prompt: string,
 ): Promise<PromptAnalysisResponse> {
+  console.log("🔥 Frontend calling analyzePrompt with:", prompt);
+
   try {
     const response = await apiRequest("POST", "/api/ai/analyze-prompt", {
       prompt,
     });
+    console.log("🔥 Response from API:", response);
     return await response.json();
   } catch (error) {
     console.error("Error analyzing prompt:", error);
