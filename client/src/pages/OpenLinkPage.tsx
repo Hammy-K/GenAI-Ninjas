@@ -34,7 +34,7 @@ export default function OpenLinkPage() {
             {/* Title */}
             <div className="space-y-3">
               <h1 className="text-3xl font-bold text-gray-800">
-                جاهز تصمم لعتك؟!
+                جاهز تصمم لعبتك؟!
               </h1>
               <p className="text-gray-600 text-lg">
                 افتح الرابط في متصفح التابلت لبدء المهمة

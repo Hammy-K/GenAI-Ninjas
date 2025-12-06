@@ -12,6 +12,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm"; // Added
+import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
 
 // User schema for potential future authentication
 export const users = pgTable("users", {
@@ -29,6 +30,15 @@ export const generatedImages = pgTable("generated_images", {
   referenceImageUrl: text("reference_image_url"),
   size: text("size").default("1024x1024"),
   missionType: text("mission_type").default("pengy_redemption"), // For tracking which mission
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const promptChallengeScores = pgTable("prompt_challenge_scores", {
+  id: serial("id").primaryKey(),
+  studentName: text("student_name").notNull(),
+  score: integer("score").notNull(),
+  prompt: text("prompt"),
+  sessionCode: text("session_code"), // optional: to separate different class sessions
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -620,6 +630,8 @@ export type StudentFacilitatorAssignment =
   typeof studentFacilitatorAssignments.$inferSelect;
 export type VideoSubmission = typeof videoSubmissions.$inferSelect;
 export type VideoJob = typeof videoJobs.$inferSelect;
+export type PromptChallengeScore = typeof promptChallengeScores.$inferSelect;
+export type NewPromptChallengeScore = typeof promptChallengeScores.$inferInsert;
 
 // Tracks Students table for CSV data upload
 export const tracksStudents = pgTable("tracks_students", {

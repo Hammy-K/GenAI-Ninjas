@@ -169,7 +169,7 @@ export function StarterPromptChallenge({
             الأمر الضعيف:
           </p>
           <p className="text-3xl md:text-4xl font-bold text-[#2d3748]">
-            {weakPrompt}
+            صمم لي تطبيق يعطيني آيات من القرآن
           </p>
         </div>
 

@@ -38,6 +38,7 @@ import { createVideoJobsRouter } from "./modules/video-jobs/video-jobs.route";
 import { getSubmissionsAnalytics } from "./routes/submissions-analytics";
 import { registerTracksStudentsRoutes } from "./routes/tracks-students";
 import { registerProjectSubmissionsRoutes } from "./routes/project-submissions";
+import { registerLeaderboardRoutes } from "./modules/leaderboard/leaderboard.route";
 
 //Ali's Additions
 import path from "path";
@@ -432,6 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerCopilotRoutes(apiRouter);
   registerMediaClipsRoutes(apiRouter);
   registerMediaClipVotesRoutes(apiRouter);
+  registerLeaderboardRoutes(apiRouter);
 
   // DEBUG: Log all registered routes
   console.log("🔍 DEBUG: Checking registered routes on apiRouter:");
