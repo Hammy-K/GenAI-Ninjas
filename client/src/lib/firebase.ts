@@ -11,7 +11,6 @@ import {
   DocumentData,
   Firestore,
 } from "firebase/firestore";
-import { getAnalytics, logEvent } from "firebase/analytics";
 
 /**
  * Configuration object for Firebase
@@ -28,10 +27,11 @@ const firebaseConfig = {
 let firebaseApp: FirebaseApp | null = null;
 let firestoreDb: Firestore | null = null;
 let firebaseAnalytics: any = null;
+let logEventFn: ((analytics: any, eventName: string, eventParams?: Record<string, any>) => void) | null = null;
 let firebaseConfigured = false;
 let firebaseConfigurationError: any = null;
 
-// Initialize Firebase and Firestore
+// Initialize Firebase and Firestore synchronously
 try {
   console.log("Checking Firebase configuration:", {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY
@@ -58,19 +58,24 @@ try {
   // Initialize Firestore
   firestoreDb = getFirestore(firebaseApp);
 
-  // Initialize Analytics
-  try {
-    // getAnalytics() will throw in environments where analytics is not supported (like Node.js)
-    firebaseAnalytics = getAnalytics(firebaseApp);
-  } catch (analyticsError) {
-    console.warn(
-      "Firebase Analytics initialization failed. Analytics features will be disabled:",
-      analyticsError,
-    );
-  }
-
   firebaseConfigured = true;
   console.log("Firebase configuration validated successfully!");
+
+  // Initialize Analytics asynchronously using dynamic import
+  // This prevents ad blockers from crashing the entire app
+  (async () => {
+    try {
+      const analyticsModule = await import("firebase/analytics");
+      firebaseAnalytics = analyticsModule.getAnalytics(firebaseApp!);
+      logEventFn = analyticsModule.logEvent;
+      console.log("Firebase Analytics initialized successfully!");
+    } catch (analyticsError) {
+      console.warn(
+        "Firebase Analytics initialization failed (likely blocked by ad blocker). Analytics features will be disabled:",
+        analyticsError,
+      );
+    }
+  })();
 } catch (error) {
   console.error("Invalid Firebase configuration:", error);
   firebaseConfigurationError = error;
@@ -370,7 +375,7 @@ export function trackStageProgress(
   additionalData: Record<string, any> = {},
 ): void {
   try {
-    if (!isFirebaseReady() || !firebaseApp || !firebaseAnalytics) {
+    if (!isFirebaseReady() || !firebaseApp || !firebaseAnalytics || !logEventFn) {
       console.log(
         `[Analytics Tracking Disabled] Stage Progress: ${stageName}/${stepName}`,
       );
@@ -379,7 +384,7 @@ export function trackStageProgress(
 
     // Log the event to Firebase Analytics
     const eventName = `stage_${stageName}_${stepName}`;
-    logEvent(firebaseAnalytics, eventName, {
+    logEventFn(firebaseAnalytics, eventName, {
       stage_name: stageName,
       step_name: stepName,
       timestamp: new Date().toISOString(),
@@ -411,8 +416,8 @@ export async function logPromptToFirestore(
     }
 
     // Track in analytics
-    if (firebaseAnalytics) {
-      logEvent(firebaseAnalytics, "prompt_sent", {
+    if (firebaseAnalytics && logEventFn) {
+      logEventFn(firebaseAnalytics, "prompt_sent", {
         prompt_type: promptType,
         content_length: promptContent.length,
         timestamp: new Date().toISOString(),

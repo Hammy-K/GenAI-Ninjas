@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       return res.json(result);
-    } } catch (error) {
+    } catch (error) {
       logError(
         "prompt_analysis_direct",
         error instanceof Error ? error : "Unknown error",
