@@ -50,7 +50,7 @@ export function useStoryboardChat() {
       console.error("Chat error:", err);
       const errorMsg: ChatMessage = {
         role: "assistant",
-        content: "أعتذر، حدث خطأ أثناء معالجة رسالتك. يرجى المحاولة مرة أخرى."
+        content: "تعذّرت معالجة رسالتك. أعد إرسالها، وإن استمرّ الخطأ حدّث الصفحة."
       };
       append(errorMsg);
     } finally {

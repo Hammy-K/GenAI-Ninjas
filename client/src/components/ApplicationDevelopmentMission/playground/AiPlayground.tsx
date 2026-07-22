@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import penguinAvatar from "@/assets/Group 26087843.png";
-import confetti from "canvas-confetti";
+import { celebrate } from "@/lib/celebrate";
 import Cookies from "js-cookie";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -179,14 +179,7 @@ export default function AppDevAiPlayground({
   };
 
   const handleTriggerConfetti = () => {
-    confetti({
-      particleCount: 500,
-      spread: 1080,
-    });
-
-    setTimeout(() => {
-      confetti.reset();
-    }, 2000);
+    celebrate("small");
   };
 
   const handleAiResponseSideEffects = (

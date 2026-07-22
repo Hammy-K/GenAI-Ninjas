@@ -1,20 +1,36 @@
 import * as React from "react"
+import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion"
 
 import { cn } from "@/lib/utils"
+import { press } from "@/lib/motion"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  const reduce = useReducedMotion()
+  const classes = cn(
+    "rounded-lg border bg-card text-card-foreground shadow-sm",
+    className
+  )
+
+  // A card that is tappable responds to touch like any interactive element (§4);
+  // a card that is only a container does not, so a stray tap never scales it.
+  const interactive = typeof props.onClick === "function"
+  if (interactive) {
+    return (
+      <motion.div
+        ref={ref}
+        className={classes}
+        whileTap={reduce ? undefined : press.whileTap}
+        transition={press.transition}
+        {...(props as HTMLMotionProps<"div">)}
+      />
+    )
+  }
+
+  return <div ref={ref} className={classes} {...props} />
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<

@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, Send } from "lucide-react";
-import { Confetti } from "@/components/ui/confetti";
+import { celebrate } from "@/lib/celebrate";
 import penguinAvatar from "@/assets/JourneyAvatar.png";
 
 // Define the initial flappy bird game that students can play
@@ -263,7 +263,6 @@ export default function GameDevMission() {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
 
   // Current mission stage
   const [stage, setStage] = useState<MissionStage>(MissionStage.INTRODUCTION);
@@ -342,9 +341,8 @@ export default function GameDevMission() {
           
         case MissionStage.COMPLETION:
           message.content = "تهانينا! 🎉 لقد أكملت مهمة 'لماذا نحب الألعاب' بنجاح!\n\nلقد تعلمت أساسيات تصميم الألعاب، وفكرت في ما يجعل الألعاب ممتعة، وبدأت في تطوير فكرة لعبة خاصة بك.\n\nيمكنك الآن العودة إلى لوحة المهام لاستكشاف المزيد من المهمات أو مواصلة تطوير مهاراتك في تصميم الألعاب!";
-          // Show confetti for completion
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3000);
+          // Celebrate mission completion (small — matches other mission completions)
+          celebrate('small');
           break;
           
         default:
@@ -412,11 +410,10 @@ export default function GameDevMission() {
     };
     
     setMessages(prev => [...prev, userReflection]);
-    
-    // Show confetti and advance to next stage
-    setShowConfetti(true);
+
+    // Celebrate the step and advance to next stage
+    celebrate('micro');
     setTimeout(() => {
-      setShowConfetti(false);
       advanceStage();
     }, 1500);
   };
@@ -432,11 +429,10 @@ export default function GameDevMission() {
     };
     
     setMessages(prev => [...prev, userGameIdea]);
-    
-    // Show confetti and advance to next stage
-    setShowConfetti(true);
+
+    // Celebrate the step and advance to next stage
+    celebrate('micro');
     setTimeout(() => {
-      setShowConfetti(false);
       advanceStage();
     }, 1500);
   };
@@ -684,9 +680,6 @@ export default function GameDevMission() {
           </div>
         </div>
       </main>
-      
-      {/* Confetti effect when completing a stage */}
-      {showConfetti && <Confetti />}
     </div>
   );
 }

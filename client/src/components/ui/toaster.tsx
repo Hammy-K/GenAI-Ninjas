@@ -12,7 +12,8 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider>
+    // RTL: swipe-to-dismiss travels toward the start (left) edge.
+    <ToastProvider swipeDirection="left">
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>

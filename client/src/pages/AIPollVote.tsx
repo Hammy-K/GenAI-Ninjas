@@ -59,8 +59,11 @@ export default function AIPollVote() {
     try {
       const response = await fetch("/api/ai-poll/teachers");
       const data = await response.json();
-      setMaleTeachers(data.male);
-      setFemaleTeachers(data.female);
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+      setMaleTeachers(data.male || []);
+      setFemaleTeachers(data.female || []);
     } catch (err) {
       console.error("Error loading teachers:", err);
     }
@@ -123,6 +126,18 @@ export default function AIPollVote() {
     return teachers.filter((t) => t.includes(teacherSearch));
   };
 
+  const startAnotherRound = () => {
+    setStudentName("");
+    setGender("");
+    setTeacherName("");
+    setTeacherNameOther("");
+    setSelectedAnswer("");
+    setTeacherSearch("");
+    setIsCorrect(false);
+    setError("");
+    setStep("info");
+  };
+
   if (error && !session) {
     return (
       <div
@@ -153,6 +168,17 @@ export default function AIPollVote() {
       </div>
     );
   }
+
+  // Only two scenes exist, so the AI-generated one is derivable from the
+  // learner's own choice plus whether it was correct — the API deliberately
+  // does not send the answer key to students.
+  const chosenSceneLabel = selectedAnswer === "A" ? "المشهد A" : "المشهد B";
+  const aiScene = isCorrect
+    ? selectedAnswer
+    : selectedAnswer === "A"
+      ? "B"
+      : "A";
+  const realScene = aiScene === "A" ? "B" : "A";
 
   return (
     <div
@@ -246,19 +272,46 @@ export default function AIPollVote() {
                     className="mb-2"
                   />
                   <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg">
-                    {getFilteredTeachers().map((teacher) => (
-                      <button
-                        key={teacher}
-                        onClick={() => setTeacherName(teacher)}
-                        className={`w-full text-right p-3 hover:bg-purple-50 transition border-b border-gray-200 ${
-                          teacherName === teacher
-                            ? "bg-purple-100 font-semibold"
-                            : ""
-                        }`}
-                      >
-                        {teacher}
-                      </button>
-                    ))}
+                    {getFilteredTeachers().length === 0 ? (
+                      (gender === "male" ? maleTeachers : femaleTeachers)
+                        .length === 0 ? (
+                        <div className="p-6 text-center">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <User className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="text-gray-600 text-sm mb-3">
+                            تعذّر تحميل قائمة المعلمين
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadTeachers}
+                          >
+                            أعد المحاولة
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center">
+                          <p className="text-gray-600 text-sm">
+                            لا يوجد معلم بهذا الاسم
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      getFilteredTeachers().map((teacher) => (
+                        <button
+                          key={teacher}
+                          onClick={() => setTeacherName(teacher)}
+                          className={`w-full text-right p-3 hover:bg-purple-50 transition border-b border-gray-200 ${
+                            teacherName === teacher
+                              ? "bg-purple-100 font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {teacher}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -367,9 +420,28 @@ export default function AIPollVote() {
               )}
             </div>
 
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            <p className="text-gray-500 text-base mb-1">
+              اخترت: {chosenSceneLabel}
+            </p>
+
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
               {isCorrect ? "أحسنت! إجابتك صحيحة! 🎉" : "إجابتك غير صحيحة"}
             </h2>
+
+            <div className="bg-blue-50 border border-blue-100 p-6 rounded-lg mb-6">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Video className="w-5 h-5 text-blue-600" />
+                <p className="font-semibold text-gray-800">الإجابة الصحيحة</p>
+              </div>
+              <p className="text-gray-700 mb-2">
+                المشهد {realScene} هو المشهد الحقيقي، والمشهد {aiScene} هو المولد
+                بالذكاء الاصطناعي.
+              </p>
+              <p className="text-sm text-gray-600">
+                تعرف المشهد المولد من تفاصيل مثل حركة الأيدي والإضاءة والظلال غير
+                الطبيعية.
+              </p>
+            </div>
 
             <p className="text-gray-600 text-lg mb-6">
               {isCorrect
@@ -377,7 +449,7 @@ export default function AIPollVote() {
                 : "لا تقلق، أحياناً يكون من الصعب التمييز بين المشاهد الحقيقية والمولدة بالذكاء الاصطناعي"}
             </p>
 
-            <div className="bg-purple-50 p-6 rounded-lg">
+            <div className="bg-purple-50 p-6 rounded-lg mb-6">
               <p className="font-semibold text-gray-800 mb-2">
                 شكراً لمشاركتك!
               </p>
@@ -386,6 +458,10 @@ export default function AIPollVote() {
                 لوحة التحكم.
               </p>
             </div>
+
+            <Button onClick={startAnotherRound} className="w-full">
+              جرّب مرة أخرى
+            </Button>
           </Card>
         )}
       </div>

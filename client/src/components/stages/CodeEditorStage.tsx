@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, ArrowRight, Code, RefreshCw, Wand2 } from "lucide-react";
 import { useStageState } from "@/hooks/useStageState";
 import { useXpTracker } from "@/hooks/useXpTracker";
-import { Confetti } from "@/components/ui/confetti";
+import { celebrate } from "@/lib/celebrate";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { generateCode } from "@/lib/openai";
@@ -98,7 +98,6 @@ export function CodeEditorStage({
   const { t } = useTranslation();
   const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } =
     useXpTracker();
-  const [showConfetti, setShowConfetti] = useState(false);
   const [buildPrompt, setBuildPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
@@ -164,8 +163,7 @@ export function CodeEditorStage({
     if (!state.hasEarnedXp) {
       if (awardIfNotAlreadyAwarded(onEarnXp, 20, "code_editor_changes")) {
         setState((prev) => ({ ...prev, hasEarnedXp: true }));
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
+        celebrate('micro');
       }
     }
   };
@@ -191,8 +189,7 @@ export function CodeEditorStage({
     try {
       // Award XP for using the AI code generation feature if not already awarded
       if (awardIfNotAlreadyAwarded(onEarnXp, 30, "ai_code_generation")) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
+        celebrate('micro');
       }
 
       const result = await generateCode(buildPrompt);
@@ -237,7 +234,6 @@ export function CodeEditorStage({
 
   return (
     <div className="code-editor-stage">
-      {showConfetti && <Confetti />}
       <div className="max-w-5xl mx-auto">
         <Card className="mb-6">
           <CardHeader>

@@ -127,7 +127,7 @@ export function SceneCard({
 
         if (Date.now() - startTime > TIMEOUT_MS) {
           console.log(`Polling timeout for scene ${sceneNumber} after ${pollAttempts} attempts`);
-          setGenerationError(`انتهت مهلة إنشاء الفيديو بعد ${TIMEOUT_MINUTES} دقائق`);
+          setGenerationError("استغرق إنشاء الفيديو وقتًا أطول من المتوقّع فتوقّفنا عن الانتظار. اضغط ‘إعادة المحاولة’ لبدء إنشاء المشهد من جديد.");
           onComplete(false);
           setIsPolling(false);
           return;
@@ -151,7 +151,7 @@ export function SceneCard({
         } else if (statusResult.status === "failed") {
           console.log(`❌ Video failed for scene ${sceneNumber} after ${pollAttempts} attempts`);
           setVideoResult(statusResult);
-          setGenerationError("فشل في إنشاء الفيديو");
+          setGenerationError("لم ينجح إنشاء فيديو هذا المشهد. اضغط ‘إعادة المحاولة’، وإن تكرّر الأمر بسّط وصف المشهد وأعد المحاولة.");
           onComplete(false);
           setIsPolling(false);
           if (pollTimerRef.current) {
@@ -216,7 +216,7 @@ export function SceneCard({
         
         // Other errors - stop polling immediately
         console.log("Unhandled error type, stopping polling");
-        setGenerationError("حدث خطأ غير متوقع - يرجى المحاولة مرة أخرى");
+        setGenerationError("توقّف إنشاء الفيديو بسبب خطأ غير متوقّع. اضغط ‘إعادة المحاولة’ لبدء المشهد من جديد.");
         setIsPolling(false);
       }
     };
@@ -251,20 +251,20 @@ export function SceneCard({
         onComplete(true);
       } else if (data.status === "failed") {
         // Video failed immediately
-        setGenerationError("فشل في إنشاء الفيديو");
+        setGenerationError("لم ينجح إنشاء فيديو هذا المشهد. اضغط ‘إعادة المحاولة’، وإن تكرّر الأمر بسّط وصف المشهد وأعد المحاولة.");
         onComplete(false);
       } else if (data.status === "processing" && data.jobId) {
         // Start polling for video completion
         startPolling(data.jobId);
       } else {
         // Unknown status
-        setGenerationError("حالة غير معروفة للفيديو");
+        setGenerationError("لم نتمكّن من معرفة حالة الفيديو. اضغط ‘إعادة المحاولة’ لبدء إنشاء المشهد من جديد.");
         onComplete(false);
       }
     },
     onError: (error: any) => {
       console.error(`Video generation failed for scene ${sceneNumber}:`, error);
-      setGenerationError("فشل في بدء إنشاء الفيديو");
+      setGenerationError("تعذّر بدء إنشاء الفيديو. تأكّد من اتصالك بالإنترنت واضغط ‘إعادة المحاولة’.");
       setVideoResult(null);
       onComplete(false);
     },

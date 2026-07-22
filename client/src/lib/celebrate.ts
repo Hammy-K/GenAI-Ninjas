@@ -1,6 +1,30 @@
-import * as confetti from "canvas-confetti";
+import confetti from "canvas-confetti";
+import wowSound from "@/assets/wow.mp3";
+import { isSoundEnabled } from "@/hooks/useSoundSetting";
 
 export type CelebrationTier = "micro" | "small" | "medium" | "large";
+
+// One shared, lazily-created audio element for the celebratory cue.
+let wowAudio: HTMLAudioElement | null = null;
+
+/**
+ * Play the celebration sound, gated by the persisted sound setting (§5: sound is
+ * opt-out and respected everywhere). Independent of reduced motion — sound is not
+ * motion. Reserved for small+ tiers; a single step (micro) never earns a "wow".
+ */
+function playWow(): void {
+  if (typeof window === "undefined" || !isSoundEnabled()) return;
+  try {
+    if (!wowAudio) {
+      wowAudio = new Audio(wowSound);
+      wowAudio.volume = 0.5;
+    }
+    wowAudio.currentTime = 0;
+    void wowAudio.play().catch(() => {});
+  } catch {
+    // Audio unsupported or autoplay-blocked — celebration is still non-blocking.
+  }
+}
 
 /** Check if motion is reduced in user preferences */
 function prefersReducedMotion(): boolean {
@@ -38,6 +62,10 @@ export function celebrate(tier: CelebrationTier): void {
 
   // Haptic always fires (can be user-disabled separately)
   haptic(tier);
+
+  // Sound follows the same hierarchy (§5): the celebratory cue plays for a
+  // completed lesson and above, never for a single micro step. Gated by setting.
+  if (tier !== "micro") playWow();
 
   // Only fire confetti if motion is not reduced
   if (reduced) return;

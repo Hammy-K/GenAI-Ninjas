@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { HTMLGenerator } from "../../components/stages/HTMLGenerator";
 import StudentInfoModal from "@/components/modals/StudentInfoModal";
 import { useLocation } from "wouter";
+import { useQuest } from "@/hooks/useQuest";
 import { Button } from "@/components/ui/button";
 import { Database, Users } from "lucide-react";
 
@@ -14,6 +15,9 @@ export default function HTMLGeneratorV2Page() {
 
   // For navigation
   const [location, setLocation] = useLocation();
+
+  // Persist XP and badges so finished work survives navigation and reload.
+  const { earnXp, unlockBadge } = useQuest();
 
   // Track if student info is completed
   const [isStudentInfoCompleted, setIsStudentInfoCompleted] = useState(hasStudentInfo);
@@ -50,10 +54,10 @@ export default function HTMLGeneratorV2Page() {
           <StudentInfoModal onComplete={handleStudentInfoComplete} />
         )}
         <HTMLGenerator
-          onComplete={() => {}}
-          onEarnXp={() => {}}
-          onUnlockBadge={() => {}}
-          onBack={() => {}}
+          onComplete={() => setLocation("/")}
+          onEarnXp={earnXp}
+          onUnlockBadge={unlockBadge}
+          onBack={() => setLocation("/")}
         />
       </main>
     </div>

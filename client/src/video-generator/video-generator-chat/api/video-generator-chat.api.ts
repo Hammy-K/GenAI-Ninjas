@@ -4,7 +4,7 @@ import {
 } from "../types/video-generator-chat.types";
 
 const API_PATH = "/api/ai-chat/openai";
-const GENERIC_ERROR_AR = "حدث خطأ أثناء توليد الرد. يرجى المحاولة مجددا.";
+const GENERIC_ERROR_AR = "تعذّر توليد ردّ المساعد. أعد إرسال رسالتك بعد لحظات، وإن استمرّ الخطأ حدّث الصفحة.";
 
 async function safeJson(res: Response) {
   try {

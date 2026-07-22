@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "./ChatMessage";
 import { callAiApi, transcribeAudio } from "./ai-html-api";
 import penguinAvatar from "@/assets/Group 26087843.png";
-import confetti from "canvas-confetti";
+import { celebrate } from "@/lib/celebrate";
 import { PlaygroundWelcomeCard } from "./PlaygroundWelcomeCard";
 import { Button } from "../ui/button";
 import Cookies from "js-cookie";
@@ -172,14 +172,7 @@ export default function AiHtmlGenerator() {
   };
 
   const handleTriggerConfetti = () => {
-    confetti({
-      particleCount: 500,
-      spread: 1080,
-    });
-
-    setTimeout(() => {
-      confetti.reset();
-    }, 2000);
+    celebrate("small");
   };
 
   const handleAiResponseSideEffects = (response: AiResponse) => {
@@ -238,7 +231,7 @@ export default function AiHtmlGenerator() {
 
       const errorMsg: Message = {
         role: "assistant",
-        content: "عذراً، حدث خطأ في الاتصال",
+        content: "تعذّر الاتصال بالخادم فلم يصل ردّي. تأكّد من اتصالك بالإنترنت ثم أعد إرسال رسالتك.",
       };
 
       setMessages((prevMessages) => {
@@ -441,7 +434,7 @@ export default function AiHtmlGenerator() {
 
           toast({
             title: "خطأ في التسجيل",
-            description: "حدث خطأ أثناء تحويل الصوت إلى نص",
+            description: "لم نتمكّن من تحويل تسجيلك الصوتي إلى نص. أعد التسجيل بصوت أوضح في مكان هادئ، أو اكتب طلبك يدويًا.",
             variant: "destructive",
           });
         } finally {
@@ -461,7 +454,7 @@ export default function AiHtmlGenerator() {
 
       toast({
         title: "خطأ في التسجيل",
-        description: "تعذر الوصول إلى اt�ميكروفون",
+        description: "تعذّر الوصول إلى الميكروفون. امنح المتصفّح إذن استخدام الميكروفون من إعدادات الموقع ثم حاول مرة أخرى.",
         variant: "destructive",
       });
     }

@@ -73,6 +73,13 @@ export function RobustSceneCard({
     }
   }, [hasCompletedVideo, hasFailed, isSceneValid, isGenerating, onComplete]);
 
+  // Log the raw (English) failure reason to the console for developers only — never shown to the learner.
+  useEffect(() => {
+    if (hasFailed && videoResult?.error) {
+      console.error(`Video generation failed for scene ${sceneNumber}:`, videoResult.error);
+    }
+  }, [hasFailed, videoResult?.error, sceneNumber]);
+
   const handleGenerate = async () => {
     if (!canGenerate) return;
 
@@ -95,10 +102,9 @@ export function RobustSceneCard({
       
       console.log(`Started video generation for scene ${sceneNumber}:`, result);
     } catch (error) {
+      // Log the raw (English) error to the console for developers only — never surface it to the learner.
       console.error(`Failed to start video generation for scene ${sceneNumber}:`, error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setGenerationError(`فشل في بدء إنشاء الفيديو: ${errorMessage}`);
-      setJobError(errorMessage);
+      setGenerationError("تعذّر بدء إنشاء الفيديو. اضغط 'إعادة المحاولة'، وإن استمرّ الخطأ حدّث الصفحة.");
     } finally {
       setIsGenerating(false);
     }
@@ -151,7 +157,7 @@ export function RobustSceneCard({
         case "completed":
           return "تم إنشاء الفيديو بنجاح! ✅";
         case "failed":
-          return `فشل في إنشاء الفيديو: ${videoResult.error || 'خطأ غير معروف'}`;
+          return "تعذّر بدء إنشاء الفيديو. اضغط 'إعادة المحاولة'، وإن استمرّ الخطأ حدّث الصفحة.";
       }
     }
     
