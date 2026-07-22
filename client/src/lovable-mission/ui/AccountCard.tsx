@@ -4,7 +4,7 @@ import { useLovableAuth } from "../auth/AuthProvider";
 import { toastError } from "../ui/Toast";
 import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// className="ml-auto inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-gray-200 hover:bg-gray-50"
+// className="ml-auto inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-card"
 type Props = {
   className?: string;
   googleIconSrc?: string; // e.g., "/icons/google.svg"
@@ -36,7 +36,7 @@ export function AccountCard({ className = "", googleIconSrc }: Props) {
     >
       {/* <h2
         id="account-title"
-        className="text-sm font-semibold text-gray-900 mb-2 text-center"
+        className="text-sm font-semibold text-foreground mb-2 text-center"
       >
         حسابك
       </h2> */}
@@ -57,7 +57,7 @@ export function AccountCard({ className = "", googleIconSrc }: Props) {
             <div className="text-sm font-semibold truncate">
               {user.displayName}
             </div>
-            <div className="text-xs text-gray-500 truncate">{user.email}</div>
+            <div className="text-xs text-muted truncate">{user.email}</div>
           </div>
 
           <Button
@@ -77,7 +77,7 @@ export function AccountCard({ className = "", googleIconSrc }: Props) {
         <button
           type="button"
           onClick={handleSignIn}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 shadow-sm hover:shadow transition bg-white"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border shadow-sm hover:shadow transition bg-background"
         >
           {googleIconSrc ? (
             <img src={googleIconSrc} alt="" className="w-4 h-4" />

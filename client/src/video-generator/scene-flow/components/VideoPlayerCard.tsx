@@ -78,9 +78,9 @@ export function VideoPlayerCard({
       default:
         return {
           bgColor: "bg-gradient-to-r from-purple-50 to-indigo-50",
-          borderColor: "border-purple-300",
-          textColor: "text-purple-800",
-          icon: <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />,
+          borderColor: "border-primary",
+          textColor: "text-primary",
+          icon: <Loader2 className="w-4 h-4 text-primary animate-spin" />,
           message: "جاري الإنشاء...",
         };
     }
@@ -102,7 +102,7 @@ export function VideoPlayerCard({
           </span>
         </div>
 
-        <span className="text-xs text-gray-500 font-mono">
+        <span className="text-xs text-muted font-mono">
           #{result.jobId.substring(0, 6)}
         </span>
       </div>
@@ -112,7 +112,7 @@ export function VideoPlayerCard({
         <div className="p-3 space-y-3">
           <video
             controls
-            className="w-full rounded-lg border border-gray-200 bg-black shadow-sm"
+            className="w-full rounded-lg border border-border bg-black shadow-sm"
             style={{ maxHeight: "200px" }}
             data-testid={`video-player-${sceneNumber}`}
           >
@@ -165,7 +165,7 @@ export function VideoPlayerCard({
 
       {/* Processing Message */}
       {result.status === "processing" && (
-        <div className="p-3 text-purple-700">
+        <div className="p-3 text-primary">
           <p className="text-xs">يتم إنشاء الفيديو الآن، انتظر قليلاً...</p>
         </div>
       )}

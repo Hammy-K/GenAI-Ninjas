@@ -1,14 +1,14 @@
 export function HeaderSkeleton() {
   return (
     <div className="flex items-center justify-between py-3">
-      <div className="h-5 w-40 bg-gray-200 rounded" />
+      <div className="h-5 w-40 bg-border rounded" />
       <div className="flex gap-2">
-        <div className="h-6 w-16 bg-gray-200 rounded-full" />
-        <div className="h-6 w-16 bg-gray-200 rounded-full" />
-        <div className="h-6 w-16 bg-gray-200 rounded-full" />
-        <div className="h-6 w-16 bg-gray-200 rounded-full" />
+        <div className="h-6 w-16 bg-border rounded-full" />
+        <div className="h-6 w-16 bg-border rounded-full" />
+        <div className="h-6 w-16 bg-border rounded-full" />
+        <div className="h-6 w-16 bg-border rounded-full" />
       </div>
-      <div className="h-8 w-[220px] bg-gray-200 rounded" />
+      <div className="h-8 w-[220px] bg-border rounded" />
     </div>
   );
 }

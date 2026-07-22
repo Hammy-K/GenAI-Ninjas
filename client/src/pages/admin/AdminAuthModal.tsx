@@ -36,7 +36,7 @@ export default function AdminAuthModal({ open }: { open: boolean }) {
 
   return (
     <CustomDialog open={open}>
-      <DialogContent className="bg-white w-full md:w-1/3 lg:w-1/4">
+      <DialogContent className="bg-background w-full md:w-1/3 lg:w-1/4">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-xl font-bold text-center">
             🔐 تسجيل دخول المدير
@@ -60,7 +60,7 @@ export default function AdminAuthModal({ open }: { open: boolean }) {
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="bg-white border border-gray-300 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
+              className="bg-background border border-border focus:outline-none focus:border-border focus:ring-1 focus:ring-gray-500"
               placeholder="admin"
               required
               disabled={submitting}
@@ -79,7 +79,7 @@ export default function AdminAuthModal({ open }: { open: boolean }) {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-white border border-gray-300 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
+              className="bg-background border border-border focus:outline-none focus:border-border focus:ring-1 focus:ring-gray-500"
               placeholder="••••••••"
               required
               disabled={submitting}

@@ -28,7 +28,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: Props) {
         <textarea
           ref={ref}
           dir="rtl"
-          className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none max-h-40"
+          className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none max-h-40"
           placeholder="اكتب رسالتك..."
           rows={1}
           value={value}
@@ -45,7 +45,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: Props) {
         <button
           onClick={onSend}
           disabled={disabled || !value.trim()}
-          className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+          className="p-2 text-muted hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
           aria-disabled={disabled || !value.trim()}
           aria-label="إرسال"
         >

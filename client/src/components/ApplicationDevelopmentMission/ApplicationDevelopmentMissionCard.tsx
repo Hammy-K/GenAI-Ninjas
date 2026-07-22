@@ -9,7 +9,7 @@ interface ApplicationDevelopmentMissionCardPropsType {
   description: string;
   features: string[];
   path: string;
-  color: string;
+  colorVar: string;
   missions: number;
   isLocked: boolean;
 }
@@ -20,7 +20,7 @@ export const ApplicationDevelopmentMissionCard = ({
   description,
   features,
   path,
-  color,
+  colorVar,
   missions,
   isLocked = false,
 }: ApplicationDevelopmentMissionCardPropsType) => {
@@ -38,11 +38,12 @@ export const ApplicationDevelopmentMissionCard = ({
 
   return (
     <div
-      className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200 transition-all duration-300 overflow-hidden ${
+      className={`bg-card/80 backdrop-blur-sm rounded-2xl shadow-normal border transition-all duration-300 overflow-hidden ${
         isLocked
           ? "opacity-60 cursor-not-allowed"
-          : "cursor-pointer hover:shadow-xl hover:-translate-y-1 hover:border-purple-300"
+          : "cursor-pointer hover:shadow-elevated hover:-translate-y-1"
       }`}
+      style={{ borderColor: isLocked ? "var(--color-border)" : colorVar }}
       onClick={handleClick}
     >
       {/* Header Section */}
@@ -50,25 +51,25 @@ export const ApplicationDevelopmentMissionCard = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
-              style={{ backgroundColor: `${color}15` }}
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-subtle"
+              style={{ backgroundColor: colorVar, opacity: 0.15 }}
             >
-              <Icon className="w-6 h-6" style={{ color }} />
+              <Icon className="w-6 h-6" style={{ color: colorVar }} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-              <span className="text-xs text-gray-500">{missions} مهام</span>
+              <h3 className="text-lg font-bold text-foreground">{title}</h3>
+              <span className="text-xs text-muted">{missions} مهام</span>
             </div>
           </div>
 
           {isLocked ? (
-            <Lock className="w-5 h-5 text-gray-400" />
+            <Lock className="w-5 h-5 text-muted" />
           ) : (
-            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+            <ArrowRight className="w-5 h-5 text-muted group-hover:text-primary transition-colors" />
           )}
         </div>
 
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+        <p className="text-muted text-sm leading-relaxed mb-4">
           {description}
         </p>
       </div>
@@ -79,11 +80,11 @@ export const ApplicationDevelopmentMissionCard = ({
           {features.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 text-sm text-gray-700"
+              className="flex items-center gap-3 text-sm text-foreground"
             >
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: colorVar }}
               />
               <span>{feature}</span>
             </div>
@@ -92,7 +93,7 @@ export const ApplicationDevelopmentMissionCard = ({
       </div>
 
       {/* Bottom Accent */}
-      <div className="h-1 w-full" style={{ backgroundColor: color }} />
+      <div className="h-1 w-full" style={{ backgroundColor: colorVar }} />
     </div>
   );
 };

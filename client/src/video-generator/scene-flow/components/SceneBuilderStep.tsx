@@ -60,11 +60,11 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
               <Film className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">أنشئ مشاهدك</h2>
-              <p className="text-xs text-purple-600 font-medium">
+              <h2 className="text-xl font-bold text-foreground">أنشئ مشاهدك</h2>
+              <p className="text-xs text-primary font-medium">
                 6 مشاهد • 5 ثوانِ لكل مشهد
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted">
                 {completedCount} من 6 مكتمل
               </p>
             </div>
@@ -83,8 +83,8 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
                     completedScenes[index]
                       ? "bg-green-500 text-white shadow-md hover:bg-green-600 cursor-pointer"
                       : index === currentScene
-                        ? "bg-purple-500 text-white shadow-md scale-110"
-                        : "bg-gray-200 text-gray-500 hover:bg-gray-300 cursor-pointer"
+                        ? "bg-primary0 text-white shadow-md scale-110"
+                        : "bg-border text-muted hover:bg-gray-300 cursor-pointer"
                   }`}
                   data-testid={`scene-dot-${index + 1}`}
                   title={`انتقل إلى المشهد ${index + 1}`}
@@ -126,15 +126,15 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
               <Send className="w-6 h-6 text-white" />
             </div>
             <div className="text-right">
-              <h3 className="text-lg font-bold text-gray-900">جاهز للتقديم؟</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-bold text-foreground">جاهز للتقديم؟</h3>
+              <p className="text-sm text-muted">
                 يمكنك إرسال مشروعك في أي وقت
               </p>
             </div>
             <Button
               onClick={onComplete}
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg"
+              className="border-primary text-primary hover:bg-primary rounded-xl shadow-lg"
               data-testid="button-navigate-to-submission"
             >
               <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export function SceneBuilderStep({ onComplete }: SceneBuilderStepProps) {
 
         {/* Compact Progress Bar */}
         <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-border rounded-full h-2">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500 rounded-full"
               style={{ width: `${(completedCount / 6) * 100}%` }}

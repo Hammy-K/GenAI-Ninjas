@@ -50,11 +50,11 @@ export default function LovableProjectCard({ project }: Props) {
       tabIndex={0}
       onClick={openProject}
       onKeyDown={onKeyActivate}
-      className="relative bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+      className="relative bg-background rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer"
       aria-label={`فتح مشروع: ${project.projectTitle}`}
     >
       {/* Preview area */}
-      <div className="w-full aspect-video bg-gray-50 border-b border-gray-100 relative">
+      <div className="w-full aspect-video bg-card border-b border-gray-100 relative">
         {!failed ? (
           <>
             {loading && <PreviewSkeleton />}
@@ -86,11 +86,11 @@ export default function LovableProjectCard({ project }: Props) {
         </h3>
 
         <div className="mt-2 text-sm text-center">
-          <p className="text-gray-700">
+          <p className="text-foreground">
             👤 {project.studentName || "طالب غير معروف"}
             {project.noonCode ? ` • كود: ${project.noonCode}` : ""}
           </p>
-          <p className="text-gray-500 text-xs mt-1">
+          <p className="text-muted text-xs mt-1">
             🗓️{" "}
             {new Intl.DateTimeFormat("ar-SA", {
               calendar: "gregory",
@@ -106,7 +106,7 @@ export default function LovableProjectCard({ project }: Props) {
           </p>
         </div>
 
-        {/* <div className="mt-3 flex justify-center text-xs text-gray-500">
+        {/* <div className="mt-3 flex justify-center text-xs text-muted">
           <Button>فتح المشروع</Button>
         </div> */}
       </div>

@@ -20,7 +20,7 @@ export const TypingBubble = memo(({ dir = "rtl" }: Props) => {
   // Match assistant bubble style
   const bubbleBase =
     "relative rounded-lg px-3 py-1 text-sm leading-6 whitespace-pre-wrap break-words";
-  const assistantStyles = "bg-white text-gray-900 rounded-bl-none";
+  const assistantStyles = "bg-white text-foreground rounded-bl-none";
 
   return (
     <div className={`flex justify-end`} dir={dir} aria-live="polite">
@@ -31,18 +31,18 @@ export const TypingBubble = memo(({ dir = "rtl" }: Props) => {
       >
         <div className="flex items-center gap-1">
           <motion.span
-            className="inline-block w-2 h-2 rounded-full bg-gray-400"
+            className="inline-block w-2 h-2 rounded-full bg-muted"
             variants={dotVariants}
             animate="animate"
           />
           <motion.span
-            className="inline-block w-2 h-2 rounded-full bg-gray-400"
+            className="inline-block w-2 h-2 rounded-full bg-muted"
             variants={dotVariants}
             animate="animate"
             transition={{ delay: 0.15 }}
           />
           <motion.span
-            className="inline-block w-2 h-2 rounded-full bg-gray-400"
+            className="inline-block w-2 h-2 rounded-full bg-muted"
             variants={dotVariants}
             animate="animate"
             transition={{ delay: 0.3 }}

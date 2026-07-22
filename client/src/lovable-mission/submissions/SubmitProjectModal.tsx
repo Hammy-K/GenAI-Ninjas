@@ -139,7 +139,7 @@ export function SubmitProjectModal({
         if (!v) onClose();
       }}
     >
-      <DialogContent className="bg-white" dir="rtl">
+      <DialogContent className="bg-background" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
             📤 إرسال مشروع Lovable
@@ -159,7 +159,7 @@ export function SubmitProjectModal({
               value={studentName}
               onChange={(e) => setStudentName(e.target.value)}
               placeholder="مثال: علي محمد"
-              className="bg-white border-gray-300 rounded-lg"
+              className="bg-background border-border rounded-lg"
               aria-invalid={attempted && !!errors.studentName}
             />
             {attempted && errors.studentName && (
@@ -174,7 +174,7 @@ export function SubmitProjectModal({
               value={noonCode}
               onChange={(e) => setNoonCode(e.target.value)}
               placeholder="مثال: N1234"
-              className="bg-white border-gray-300 rounded-lg"
+              className="bg-background border-border rounded-lg"
             />
 
             {attempted && errors.noonCode && (
@@ -189,7 +189,7 @@ export function SubmitProjectModal({
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
               placeholder="مثال: مساعد الدراسة الذكي"
-              className="bg-white border-gray-300 rounded-lg"
+              className="bg-background border-border rounded-lg"
               aria-invalid={attempted && !!errors.projectTitle}
             />
             {attempted && errors.projectTitle && (
@@ -205,7 +205,7 @@ export function SubmitProjectModal({
               value={projectLink}
               onChange={(e) => setProjectLink(e.target.value)}
               placeholder="https://xxx.lovable.app"
-              className="bg-white border-gray-300 rounded-lg"
+              className="bg-background border-border rounded-lg"
               aria-invalid={attempted && !!errors.projectLink}
             />
             {attempted && errors.projectLink && (

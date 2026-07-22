@@ -44,10 +44,10 @@ export function GoogleSignInStep({ onComplete }: GoogleSignInStepProps) {
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
               <span className="text-3xl">🚀</span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               ابدأ رحلتك
             </h2>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-muted text-sm leading-relaxed">
               سجل دخولك لإنشاء مقاطع فيديو رائعة بالذكاء الاصطناعي
             </p>
           </div>
@@ -100,14 +100,14 @@ export function GoogleSignInStep({ onComplete }: GoogleSignInStepProps) {
           </Button>
 
           {/* Footer Text */}
-          <p className="mt-6 text-xs text-gray-500 leading-relaxed">
+          <p className="mt-6 text-xs text-muted leading-relaxed">
             آمن وسريع • يتم حفظ تقدمك تلقائياً
           </p>
         </div>
 
         {/* Bottom Decorative Elements */}
         <div className="mt-8 flex justify-center gap-2">
-          <div className="w-2 h-2 bg-purple-400 rounded-full opacity-60"></div>
+          <div className="w-2 h-2 bg-primary rounded-full opacity-60"></div>
           <div className="w-2 h-2 bg-indigo-400 rounded-full opacity-40"></div>
           <div className="w-2 h-2 bg-purple-300 rounded-full opacity-20"></div>
         </div>

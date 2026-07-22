@@ -86,11 +86,11 @@ function SceneFlowContent() {
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               استوديو الفيديو
             </h1>
           </div>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-muted">
             أنشئ فيديوهات رائعة بالذكاء الاصطناعي
           </p>
         </div>

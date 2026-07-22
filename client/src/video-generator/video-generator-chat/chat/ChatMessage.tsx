@@ -13,9 +13,9 @@ export function ChatMessage({ message, onCopy }: Props) {
   const bubbleBase =
     "relative rounded-lg px-3 py-1 text-sm leading-6 whitespace-pre-wrap break-words";
 
-  const assistantStyles = "bg-white text-gray-900 rounded-bl-none";
+  const assistantStyles = "bg-white text-foreground rounded-bl-none";
 
-  const userStyles = "bg-gray-200 text-gray-900 rounded-br-none";
+  const userStyles = "bg-border text-foreground rounded-br-none";
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(message.content);
@@ -47,7 +47,7 @@ export function ChatMessage({ message, onCopy }: Props) {
               handleCopy();
             }}
             title="نسخ"
-            className="absolute -bottom-6 left-0 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+            className="absolute -bottom-6 left-0 p-1 rounded hover:bg-gray-100 text-muted hover:text-foreground"
             aria-label="نسخ"
           >
             <Copy className="h-3 w-3" />

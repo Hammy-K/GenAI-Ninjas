@@ -106,7 +106,7 @@ export default function GalleryManagerPage() {
   });
 
   return (
-    <Card className="p-4 bg-white border-0">
+    <Card className="p-4 bg-background border-0">
       <CardHeader>
         <CardTitle className="text-2xl">إدارة الصور في المعرض</CardTitle>
         <CardDescription>

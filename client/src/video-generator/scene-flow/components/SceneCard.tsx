@@ -292,20 +292,20 @@ export function SceneCard({
   };
 
   const getStatusIcon = () => {
-    if (isLocked) return <Lock className="w-4 h-4 text-gray-400" />;
+    if (isLocked) return <Lock className="w-4 h-4 text-muted" />;
     if (isCompleted) return <CheckCircle className="w-4 h-4 text-green-600" />;
     if (videoResult?.status === "processing")
-      return <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />;
+      return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
     return <div className="w-4 h-4 rounded-full border-2 border-purple-400" />;
   };
 
   const getCardStyle = () => {
-    if (isLocked) return "border-gray-200 bg-gray-50/50";
+    if (isLocked) return "border-border bg-card/50";
     if (isCompleted)
       return "border-green-300 bg-gradient-to-r from-green-50 to-emerald-50";
     if (isExpanded)
-      return "border-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg";
-    return "border-gray-200 bg-white hover:border-purple-200 hover:shadow-md";
+      return "border-primary bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg";
+    return "border-border bg-white hover:border-purple-200 hover:shadow-md";
   };
 
   return (
@@ -324,11 +324,11 @@ export function SceneCard({
               {getStatusIcon()}
             </div>
             <div className="text-right">
-              <h3 className="text-sm font-bold text-gray-900">
+              <h3 className="text-sm font-bold text-foreground">
                 المشهد {sceneNumber}
               </h3>
               {scene.description && (
-                <p className="text-xs text-gray-600 max-w-32 truncate">
+                <p className="text-xs text-muted max-w-32 truncate">
                   {scene.description.substring(0, 20)}...
                 </p>
               )}
@@ -345,15 +345,15 @@ export function SceneCard({
 
             {videoResult?.status === "processing" && (
               <div className="flex items-center gap-1 bg-purple-100 px-2 py-0.5 rounded-full">
-                <Loader2 className="w-3 h-3 text-purple-600 animate-spin" />
-                <span className="text-xs font-medium text-purple-800">
+                <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                <span className="text-xs font-medium text-primary">
                   إنشاء
                 </span>
               </div>
             )}
 
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? "" : "-rotate-90"}`}
+              className={`w-4 h-4 text-muted transition-transform ${isExpanded ? "" : "-rotate-90"}`}
             />
           </div>
         </CollapsibleTrigger>
@@ -362,8 +362,8 @@ export function SceneCard({
         <CollapsibleContent>
           <div className="px-3 pb-3">
             {isLocked ? (
-              <div className="text-center py-6 text-gray-500">
-                <Lock className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+              <div className="text-center py-6 text-muted">
+                <Lock className="w-6 h-6 mx-auto mb-2 text-muted" />
                 <p className="text-xs">أكمل المشهد السابق</p>
               </div>
             ) : (
@@ -371,7 +371,7 @@ export function SceneCard({
                 {/* Description */}
                 <div>
                   <div className="flex items-center gap-1 mb-2">
-                    <Film className="w-3 h-3 text-purple-600" />
+                    <Film className="w-3 h-3 text-primary" />
                     <Label className="text-xs font-semibold">وصف المشهد</Label>
                   </div>
                   <Textarea
@@ -383,7 +383,7 @@ export function SceneCard({
                     data-testid={`input-description-${sceneNumber}`}
                   />
                   <div
-                    className={`text-xs mt-1 ${scene.description.length >= 10 ? "text-green-600" : "text-gray-500"}`}
+                    className={`text-xs mt-1 ${scene.description.length >= 10 ? "text-green-600" : "text-muted"}`}
                   >
                     {scene.description.length >= 10 ? "✓" : "○"}{" "}
                     {scene.description.length}/10
@@ -393,7 +393,7 @@ export function SceneCard({
                 {/* Voiceover */}
                 <div>
                   <div className="flex items-center gap-1 mb-2">
-                    <Mic className="w-3 h-3 text-purple-600" />
+                    <Mic className="w-3 h-3 text-primary" />
                     <Label className="text-xs font-semibold">
                       التعليق الصوتي
                     </Label>
@@ -407,7 +407,7 @@ export function SceneCard({
                     data-testid={`input-voiceover-${sceneNumber}`}
                   />
                   <div
-                    className={`text-xs mt-1 ${scene.voiceover.length >= 5 ? "text-green-600" : "text-gray-500"}`}
+                    className={`text-xs mt-1 ${scene.voiceover.length >= 5 ? "text-green-600" : "text-muted"}`}
                   >
                     {scene.voiceover.length >= 5 ? "✓" : "○"}{" "}
                     {scene.voiceover.length}/5
@@ -430,7 +430,7 @@ export function SceneCard({
                       className={`flex items-center gap-1 p-2 border-2 rounded-lg flex-1 transition-all cursor-pointer ${
                         scene.aspectRatio === "16:9"
                           ? "bg-purple-100 border-purple-400 shadow-md"
-                          : "bg-white/80 border-gray-300 hover:border-purple-300"
+                          : "bg-white/80 border-border hover:border-primary"
                       }`}
                       onClick={() => updateField("aspectRatio", "16:9")}
                     >
@@ -443,8 +443,8 @@ export function SceneCard({
                         htmlFor={`ratio-169-${sceneNumber}`}
                         className={`text-xs cursor-pointer font-semibold ${
                           scene.aspectRatio === "16:9"
-                            ? "text-purple-800"
-                            : "text-gray-600"
+                            ? "text-primary"
+                            : "text-muted"
                         }`}
                       >
                         أفقي
@@ -454,7 +454,7 @@ export function SceneCard({
                       className={`flex items-center gap-1 p-2 border-2 rounded-lg flex-1 transition-all cursor-pointer ${
                         scene.aspectRatio === "9:16"
                           ? "bg-purple-100 border-purple-400 shadow-md"
-                          : "bg-white/80 border-gray-300 hover:border-purple-300"
+                          : "bg-white/80 border-border hover:border-primary"
                       }`}
                       onClick={() => updateField("aspectRatio", "9:16")}
                     >
@@ -467,8 +467,8 @@ export function SceneCard({
                         htmlFor={`ratio-916-${sceneNumber}`}
                         className={`text-xs cursor-pointer font-semibold ${
                           scene.aspectRatio === "9:16"
-                            ? "text-purple-800"
-                            : "text-gray-600"
+                            ? "text-primary"
+                            : "text-muted"
                         }`}
                       >
                         عمودي

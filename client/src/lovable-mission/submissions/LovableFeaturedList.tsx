@@ -43,9 +43,9 @@
 //     return (
 //       <div className="flex flex-col items-center justify-center py-12 px-6">
 //         <div className="mb-4">
-//           <FolderOpen className="w-16 h-16 text-gray-300" strokeWidth={1} />
+//           <FolderOpen className="w-16 h-16 text-muted" strokeWidth={1} />
 //         </div>
-//         <p className="text-gray-500 text-lg font-medium mb-1">لا توجد مشاريع</p>
+//         <p className="text-muted text-lg font-medium mb-1">لا توجد مشاريع</p>
 //         <p className="text-gray-400 text-sm text-center max-w-sm">
 //           سيتم عرض المشاريع المنشورة هنا
 //         </p>

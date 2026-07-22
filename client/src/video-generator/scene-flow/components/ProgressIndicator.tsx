@@ -26,7 +26,7 @@ export function ProgressIndicator({ currentStep, totalSteps, className }: Progre
                 ? 'bg-blue-600 border-blue-600 text-white'
                 : step.number < currentStep
                 ? 'bg-green-600 border-green-600 text-white'
-                : 'bg-gray-200 border-gray-300 text-gray-500'
+                : 'bg-border border-border text-muted'
             )}
           >
             {step.number < currentStep ? (
@@ -47,7 +47,7 @@ export function ProgressIndicator({ currentStep, totalSteps, className }: Progre
             <p
               className={cn(
                 'text-sm font-medium',
-                step.number <= currentStep ? 'text-gray-900' : 'text-gray-500'
+                step.number <= currentStep ? 'text-foreground' : 'text-muted'
               )}
             >
               {step.label}

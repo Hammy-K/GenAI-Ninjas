@@ -15,14 +15,14 @@ export function GoogleSignInCTA() {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 min-h-[60vh]">
       <h1 className="text-2xl font-bold mb-2">مرحباً 👋</h1>
-      <p className="text-gray-600 mb-6">
+      <p className="text-muted mb-6">
         لتجربة مهمة Lovable وحفظ مشروعك في المعرض، سجّل الدخول بحساب Google.
       </p>
 
       <button
         type="button"
         onClick={handleClick}
-        className="inline-flex items-center gap-3 px-5 py-3 rounded-lg border border-gray-300 shadow-sm hover:shadow transition bg-white"
+        className="inline-flex items-center gap-3 px-5 py-3 rounded-lg border border-border shadow-sm hover:shadow transition bg-background"
       >
         {/* Google “G” icon (SVG) */}
         <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
@@ -48,7 +48,7 @@ export function GoogleSignInCTA() {
         </span>
       </button>
 
-      <p className="text-xs text-gray-500 mt-3">
+      <p className="text-xs text-muted mt-3">
         سنستخدم اسمك وبريدك فقط لحفظ مشروعك.
       </p>
     </div>

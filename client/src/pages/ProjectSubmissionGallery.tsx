@@ -312,7 +312,7 @@ export default function ProjectSubmissionsGallery({
       )}
 
       {userEmail && (
-        <div className="mb-4 text-center text-sm text-gray-600">
+        <div className="mb-4 text-center text-sm text-muted">
           مرحباً {userEmail}
         </div>
       )}
@@ -327,7 +327,7 @@ export default function ProjectSubmissionsGallery({
             className={`gap-2 ${
               viewMode === "gallery"
                 ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-                : "text-gray-700 hover:text-purple-600"
+                : "text-foreground hover:text-primary"
             }`}
           >
             <LayoutGrid className="w-5 h-5" />
@@ -340,7 +340,7 @@ export default function ProjectSubmissionsGallery({
             className={`gap-2 ${
               viewMode === "leaderboard"
                 ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-                : "text-gray-700 hover:text-purple-600"
+                : "text-foreground hover:text-primary"
             }`}
           >
             <Award className="w-5 h-5" />
@@ -355,7 +355,7 @@ export default function ProjectSubmissionsGallery({
           variant={genderFilter === "all" ? "default" : "outline"}
           onClick={() => setGenderFilter("all")}
           className={
-            genderFilter === "all" ? "bg-purple-600 hover:bg-purple-700" : ""
+            genderFilter === "all" ? "bg-primary hover:bg-primary" : ""
           }
         >
           الكل
@@ -364,7 +364,7 @@ export default function ProjectSubmissionsGallery({
           variant={genderFilter === "male" ? "default" : "outline"}
           onClick={() => setGenderFilter("male")}
           className={
-            genderFilter === "male" ? "bg-purple-600 hover:bg-purple-700" : ""
+            genderFilter === "male" ? "bg-primary hover:bg-primary" : ""
           }
         >
           طلاب
@@ -373,7 +373,7 @@ export default function ProjectSubmissionsGallery({
           variant={genderFilter === "female" ? "default" : "outline"}
           onClick={() => setGenderFilter("female")}
           className={
-            genderFilter === "female" ? "bg-purple-600 hover:bg-purple-700" : ""
+            genderFilter === "female" ? "bg-primary hover:bg-primary" : ""
           }
         >
           طالبات
@@ -384,7 +384,7 @@ export default function ProjectSubmissionsGallery({
       {viewMode === "gallery" && (
         <div className="mb-6">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted w-5 h-5" />
             <Input
               type="text"
               placeholder="ابحث بالطالب أو الميسّر..."
@@ -408,18 +408,18 @@ export default function ProjectSubmissionsGallery({
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <thead className="bg-card border-b-2 border-border">
                     <tr>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold text-foreground">
                         الترتيب
                       </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold text-foreground">
                         المدرسة
                       </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                      <th className="px-6 py-4 text-right text-sm font-bold text-foreground">
                         الميسّر
                       </th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">
+                      <th className="px-6 py-4 text-center text-sm font-bold text-foreground">
                         عدد المشاريع
                       </th>
                     </tr>
@@ -432,7 +432,7 @@ export default function ProjectSubmissionsGallery({
                       return (
                         <tr
                           key={`${entry.school_name}-${entry.facilitator_name}`}
-                          className={`hover:bg-gray-50 transition-colors ${
+                          className={`hover:bg-card transition-colors ${
                             isTopThree
                               ? "bg-gradient-to-l from-yellow-50 to-transparent"
                               : ""
@@ -471,7 +471,7 @@ export default function ProjectSubmissionsGallery({
                               className={`inline-flex items-center justify-center w-12 h-12 rounded-full font-bold ${
                                 isTopThree
                                   ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white text-xl"
-                                  : "bg-gray-100 text-gray-700 text-lg"
+                                  : "bg-gray-100 text-foreground text-lg"
                               }`}
                             >
                               {entry.count}
@@ -487,7 +487,7 @@ export default function ProjectSubmissionsGallery({
           </Card>
 
           {leaderboardData.length === 0 && (
-            <div className="text-center text-gray-500 mt-12">
+            <div className="text-center text-muted mt-12">
               <p className="text-xl">لا توجد بيانات لعرضها</p>
             </div>
           )}
@@ -523,7 +523,7 @@ export default function ProjectSubmissionsGallery({
                   <h3 className="font-bold text-lg mb-2">
                     {submission.project_name}
                   </h3>
-                  <div className="space-y-1 text-sm text-gray-600">
+                  <div className="space-y-1 text-sm text-muted">
                     <p>
                       <strong>الطالب:</strong> {submission.user_name}
                     </p>
@@ -594,7 +594,7 @@ export default function ProjectSubmissionsGallery({
           </div>
 
           {filteredSubmissions.length === 0 && !loading && (
-            <div className="text-center text-gray-500 mt-12">
+            <div className="text-center text-muted mt-12">
               <p className="text-xl">
                 {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد مشاريع بعد"}
               </p>

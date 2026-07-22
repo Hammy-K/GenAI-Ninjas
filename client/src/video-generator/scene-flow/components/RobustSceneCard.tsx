@@ -123,20 +123,20 @@ export function RobustSceneCard({
   };
 
   const getStatusIcon = () => {
-    if (isLocked) return <Lock className="w-4 h-4 text-gray-400" />;
+    if (isLocked) return <Lock className="w-4 h-4 text-muted" />;
     if (hasCompletedVideo) return <CheckCircle className="w-4 h-4 text-green-600" />;
-    if (isGenerating) return <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />;
+    if (isGenerating) return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
     if (hasFailed) return <AlertTriangle className="w-4 h-4 text-red-500" />;
     return <div className="w-4 h-4 rounded-full border-2 border-purple-400" />;
   };
 
   const getCardStyle = () => {
-    if (isLocked) return "border-gray-200 bg-gray-50/50";
+    if (isLocked) return "border-border bg-card/50";
     if (hasCompletedVideo)
       return "border-green-300 bg-gradient-to-r from-green-50 to-emerald-50";
     if (isExpanded)
-      return "border-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg";
-    return "border-gray-200 bg-white hover:border-purple-200 hover:shadow-md";
+      return "border-primary bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg";
+    return "border-border bg-white hover:border-purple-200 hover:shadow-md";
   };
 
   const getStatusMessage = () => {
@@ -170,22 +170,22 @@ export function RobustSceneCard({
           <div className="flex items-center gap-3">
             {getStatusIcon()}
             <div className="text-left">
-              <h3 className="font-medium text-gray-900">
+              <h3 className="font-medium text-foreground">
                 المشهد {sceneNumber}
               </h3>
               {statusMessage && (
-                <p className="text-sm text-gray-600 mt-1">{statusMessage}</p>
+                <p className="text-sm text-muted mt-1">{statusMessage}</p>
               )}
             </div>
           </div>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-4 w-4 text-muted" />
         </CollapsibleTrigger>
 
         <CollapsibleContent className="space-y-4 pt-4">
           {!isLocked && (
             <>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Film className="w-4 h-4" />
                   وصف المشهد
                 </Label>
@@ -196,13 +196,13 @@ export function RobustSceneCard({
                   className="min-h-[100px] resize-none"
                   disabled={isGenerating}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   {scene.description.length}/10 حرف على الأقل
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Mic className="w-4 h-4" />
                   النص الصوتي
                 </Label>
@@ -213,13 +213,13 @@ export function RobustSceneCard({
                   className="min-h-[80px] resize-none"
                   disabled={isGenerating}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   {scene.voiceover.length}/5 أحرف على الأقل
                 </p>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-700">
+                <Label className="text-sm font-medium text-foreground">
                   نسبة العرض إلى الارتفاع
                 </Label>
                 <RadioGroup
@@ -278,7 +278,7 @@ export function RobustSceneCard({
                 {isGenerating && (
                   <Button
                     disabled
-                    className="flex-1 bg-gray-400 text-white cursor-not-allowed"
+                    className="flex-1 bg-muted text-white cursor-not-allowed"
                   >
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     جاري الإنشاء...

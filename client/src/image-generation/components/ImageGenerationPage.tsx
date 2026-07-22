@@ -48,7 +48,7 @@ export function ImageGenerationPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f5f2e8] text-foreground font-tajawal">
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-tajawal">
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           {uiState === "idle" && (

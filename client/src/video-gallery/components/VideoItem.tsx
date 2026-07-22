@@ -44,12 +44,12 @@ export default function VideoItem({ categorySlug, video }: Props) {
           )}
         </div>
 
-        <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
+        <h3 className="font-bold text-foreground mb-1 line-clamp-2">
           {video.title}
         </h3>
 
         {video.description && (
-          <p className="text-sm text-gray-600 line-clamp-2">
+          <p className="text-sm text-muted line-clamp-2">
             {video.description}
           </p>
         )}
@@ -103,12 +103,12 @@ export default function VideoItem({ categorySlug, video }: Props) {
 //         )}
 //       </div>
 
-//       <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
+//       <h3 className="font-bold text-foreground mb-1 line-clamp-2">
 //         {video.title}
 //       </h3>
 
 //       {video.description && (
-//         <p className="text-sm text-gray-600 line-clamp-2">
+//         <p className="text-sm text-muted line-clamp-2">
 //           {video.description}
 //         </p>
 //       )}

@@ -18,7 +18,7 @@ export function ProgressChips({ progress }: Props) {
               ? "bg-green-100 text-green-800"
               : state === "pulse"
                 ? "bg-yellow-100 text-yellow-800 animate-pulse"
-                : "bg-gray-100 text-gray-500"
+                : "bg-gray-100 text-muted"
           }`}
         >
           {labelMap[key as keyof typeof chips]}

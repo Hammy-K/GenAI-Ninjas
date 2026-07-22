@@ -28,7 +28,7 @@ export default function VideoPlayerPage() {
   if (!video || !category) {
     return (
       <div
-        className="min-h-screen bg-[#f5f2e8] flex items-center justify-center p-6"
+        className="min-h-screen bg-background flex items-center justify-center p-6"
         dir="rtl"
       >
         <div className="text-center max-w-md">
@@ -38,7 +38,7 @@ export default function VideoPlayerPage() {
           <h2 className="text-2xl font-bold text-red-600 mb-2">
             الفيديو غير موجود
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted">
             تحقق من الرابط أو عُد إلى صفحة المعرض.
           </p>
           <a
@@ -53,17 +53,17 @@ export default function VideoPlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f2e8] p-4" dir="rtl">
+    <div className="min-h-screen bg-background p-4" dir="rtl">
       <div className="max-w-6xl mx-auto">
         <VideoPlayerHeader categoryTitle={category.title} />
 
         <div className="mx-auto max-w-2xl mt-6">
           <div className="shrink-0 mb-4 text-center">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">
               {video.title}
             </h2>
             {video.description && (
-              <p className="mt-2 text-gray-600">{video.description}</p>
+              <p className="mt-2 text-muted">{video.description}</p>
             )}
           </div>
 
@@ -87,12 +87,12 @@ export default function VideoPlayerPage() {
             </div>
 
             {/* Three-way distribution: prev (right), spacer (center), next (left) */}
-            <div className="p-4 bg-gray-50 border-t border-gray-200">
+            <div className="p-4 bg-card border-t border-border">
               <div className="flex items-center justify-between gap-2">
                 {/* السابق (right edge in RTL because it's the first item) */}
                 {nav.prev ? (
                   <a
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg bg-white border border-border hover:bg-card text-foreground flex items-center gap-1"
                     href={buildVideoRoute(category.slug, nav.prev.slug)}
                   >
                     <ChevronsRight className="w-4 h-4" />
@@ -106,14 +106,14 @@ export default function VideoPlayerPage() {
                 )}
 
                 {/* Center placeholder */}
-                <div className="text-xs text-gray-400 select-none">
+                <div className="text-xs text-muted select-none">
                   {/* ضع تلميحًا هنا لاحقًا إن رغبت */}
                 </div>
 
                 {/* التالي (left edge in RTL because it's the last item) */}
                 {nav.next ? (
                   <a
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg bg-white border border-border hover:bg-card text-foreground flex items-center gap-1"
                     href={buildVideoRoute(category.slug, nav.next.slug)}
                   >
                     التالي

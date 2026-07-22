@@ -66,10 +66,10 @@ export function FacilitatorSelectStep({
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
               <GraduationCap className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               تخصيص المعلم
             </h2>
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted text-sm">
               سيتم تخصيص معلمك تلقائياً لبدء إنشاء المحتوى
             </p>
           </div>
@@ -140,8 +140,8 @@ export function FacilitatorSelectStep({
           {!isLoading && assignedFacilitator && (
             <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-purple-600" />
-                <span className="text-purple-800 font-medium">
+                <CheckCircle className="w-5 h-5 text-primary" />
+                <span className="text-primary font-medium">
                   تم تخصيص معلمك تلقائياً وسيتم الانتقال للخطوة التالية...
                 </span>
               </div>
@@ -149,14 +149,14 @@ export function FacilitatorSelectStep({
           )}
 
           {/* Footer */}
-          <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
+          <p className="mt-6 text-xs text-muted text-center leading-relaxed">
             آمن ومحمي • سيتم تخصيص معلمك تلقائياً
           </p>
         </div>
 
         {/* Progress Indicator */}
         <div className="mt-8 flex justify-center gap-2">
-          <div className="w-8 h-2 bg-purple-400 rounded-full"></div>
+          <div className="w-8 h-2 bg-primary rounded-full"></div>
           <div className="w-2 h-2 bg-purple-300 rounded-full"></div>
           <div className="w-2 h-2 bg-purple-200 rounded-full"></div>
         </div>

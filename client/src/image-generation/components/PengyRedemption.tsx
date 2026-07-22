@@ -62,7 +62,7 @@ export function PengyRedemption() {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-gray-50 p-4"
+      className="flex items-center justify-center min-h-screen bg-card p-4"
       dir="rtl"
     >
       <div className="w-full max-w-[1090px] h-[700px] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
@@ -80,8 +80,8 @@ export function PengyRedemption() {
             {/* Left Column */}
             <div className="space-y-4">
               {/* GIF Section */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-3">
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <h3 className="font-semibold text-foreground mb-3">
                   ردود فعل الطلاب
                 </h3>
                 <div className="bg-gray-100 rounded-lg overflow-hidden">
@@ -94,8 +94,8 @@ export function PengyRedemption() {
               </div>
 
               {/* Reference Image */}
-              <div className="flex items-center bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="flex items-center font-semibold text-gray-900 mb-3">
+              <div className="flex items-center bg-card rounded-lg p-4 border border-border">
+                <h3 className="flex items-center font-semibold text-foreground mb-3">
                   صورة بنجي المرجعية
                 </h3>
                 <div className="flex items-center gap-3">
@@ -111,8 +111,8 @@ export function PengyRedemption() {
             {/* Right Column */}
             <div className="flex flex-col space-y-4">
               {/* Email Input */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-2">
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <h3 className="font-semibold text-foreground mb-2">
                   أدخل إيميل نون
                 </h3>
                 <input
@@ -120,7 +120,7 @@ export function PengyRedemption() {
                   value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
                   placeholder="name@noonacademy.com أو name@noon.edu.sa"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   disabled={isLoading}
                 />
                 {userEmail &&
@@ -130,19 +130,19 @@ export function PengyRedemption() {
                       يجب أن ينتهي الإيميل بـ @noonacademy.com أو @noon.edu.sa
                     </p>
                   )}
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted mt-1">
                   سيتم حفظ صورتك في قاعدة البيانات
                 </p>
               </div>
 
               {/* Generation Interface */}
-              <div className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-200 flex flex-col">
+              <div className="flex-1 bg-card rounded-lg p-4 border border-border flex flex-col">
                 {uiState === "idle" ? (
                   <div className="flex flex-col h-full">
-                    <h3 className="font-semibold text-gray-900 mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       صِف مشهد المانجا
                     </h3>
-                    <p className="text-xs text-gray-600 mb-3">
+                    <p className="text-xs text-muted mb-3">
                       صف كيف سيرد بنجي على التعليقات السلبية - هل سيتدرب؟ هل
                       سيصلح المشاكل؟ كن مبدعًا!
                     </p>
@@ -167,7 +167,7 @@ export function PengyRedemption() {
                 ) : uiState === "submitting" ? (
                   <div className="flex-1 flex flex-col items-center justify-center">
                     <LoadingView />
-                    <p className="text-gray-600 mt-3 text-sm">
+                    <p className="text-muted mt-3 text-sm">
                       جاري الإنشاء...
                     </p>
                   </div>

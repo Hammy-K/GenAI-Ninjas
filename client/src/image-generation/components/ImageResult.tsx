@@ -31,21 +31,21 @@ export function ImageResult({
 
         <button
           onClick={onCopy}
-          className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm"
         >
           <Copy size={16} /> نسخ
         </button>
 
         <button
           onClick={onGenerateAgain}
-          className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm"
         >
           توليد مرة أخرى
         </button>
 
         <button
           onClick={onNewPrompt}
-          className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm"
         >
           برومبت جديد
         </button>

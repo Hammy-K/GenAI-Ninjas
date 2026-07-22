@@ -25,7 +25,7 @@ export function CopyButton({
       type="button"
       onClick={handleCopy}
       title={title}
-      className={`inline-flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 ${className ?? ""}`}
+      className={`inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-card ${className ?? ""}`}
     >
       <Copy className="h-3 w-3" />
       {title}

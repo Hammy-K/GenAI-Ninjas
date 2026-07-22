@@ -22,8 +22,8 @@ export function PromptCard({
   };
 
   return (
-    <div className="w-full mx-auto max-w-3xl border border-gray-200 rounded-lg bg-white">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
+    <div className="w-full mx-auto max-w-3xl border border-border rounded-lg bg-background">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <h3 className="text-sm font-semibold">{title}</h3>
         <div className="flex items-center gap-2">
           {actions}
@@ -31,7 +31,7 @@ export function PromptCard({
             type="button"
             onClick={handleCopy}
             title="نسخ"
-            className="inline-flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+            className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-card"
           >
             <Copy className="h-3 w-3" />
             نسخ
@@ -40,13 +40,13 @@ export function PromptCard({
       </div>
 
       <pre
-        className="px-3 py-3 text-sm whitespace-pre-wrap break-words bg-gray-50"
+        className="px-3 py-3 text-sm whitespace-pre-wrap break-words bg-card"
         dir="rtl"
       >
         {promptText}
       </pre>
 
-      <div className="px-3 py-2 text-xs text-gray-500">
+      <div className="px-3 py-2 text-xs text-muted">
         ✨ نصيحة: ادخل على Lovable، الصق النص، جرّب 2–3 تعديلات بسيطة ثم انشر.
       </div>
     </div>

@@ -23,7 +23,7 @@ export default function LovableProjectsPageHeader({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-base md:text-lg text-gray-700 leading-relaxed">
+            <p className="text-base md:text-lg text-foreground leading-relaxed">
               {subtitle}
             </p>
           )}

@@ -47,6 +47,47 @@
 }
 
 @layer base {
+  :root {
+    /* Semantic colour tokens */
+    --color-primary: 260 47% 50%;
+    --color-primary-light: 260 75% 75%;
+    --color-primary-dark: 260 47% 35%;
+
+    --color-success: 160 84% 39%;
+    --color-warning: 38 92% 50%;
+    --color-danger: 0 91% 71%;
+    --color-info: 217 91% 60%;
+
+    /* UI neutrals */
+    --color-background: 0 0% 100%;
+    --color-foreground: 0 0% 15%;
+    --color-card: 0 0% 98%;
+    --color-border: 0 0% 90%;
+    --color-muted: 0 0% 40%;
+
+    /* Mission states */
+    --color-mission-locked: 0 0% 85%;
+    --color-mission-available: 260 47% 50%;
+    --color-mission-active: 260 60% 50%;
+    --color-mission-completed: 160 84% 39%;
+    --color-mission-mastered: 38 92% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(260, 47%, 50%), hsl(260, 80%, 65%));
+    --gradient-success: linear-gradient(135deg, hsl(160, 84%, 39%), hsl(160, 84%, 55%));
+    --gradient-warning: linear-gradient(135deg, hsl(38, 92%, 50%), hsl(38, 92%, 65%));
+    --gradient-celebratory: linear-gradient(135deg, hsl(260, 47%, 50%), hsl(320, 80%, 60%));
+
+    /* Radius */
+    --radius: 12px;
+
+    /* Shadows */
+    --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-normal: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  }
+
   * {
     @apply border-border;
   }
@@ -54,7 +95,7 @@
   body {
     @apply font-tajawal antialiased bg-background text-foreground;
   }
-  
+
   /* RTL Support */
   html[dir="rtl"] {
     text-align: right;

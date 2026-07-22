@@ -44,7 +44,7 @@ export function PromptInput({
       readOnly={readOnly}
       placeholder={placeholder}
       rows={minLines}
-      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none bg-white"
+      className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none bg-white"
       onInput={resize}
       style={{ overflow: "auto" }}
     />

@@ -36,7 +36,7 @@ export default function CategoryTabs({
                   "flex items-center gap-2 px-4 py-2 rounded-md font-medium whitespace-nowrap text-sm",
                   isActive
                     ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md"
-                    : "text-purple-700 hover:bg-purple-100 hover:text-purple-800",
+                    : "text-primary hover:bg-card hover:text-primary",
                 )}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: isActive ? 1.05 : 1 }}
@@ -92,7 +92,7 @@ export default function CategoryTabs({
 //                 "px-4 py-2 rounded-full text-sm font-medium border transition",
 //                 isActive
 //                   ? "bg-violet-600 text-white border-violet-700 shadow"
-//                   : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50",
+//                   : "bg-white text-foreground border-border hover:bg-card",
 //               )}
 //             >
 //               {t.label}

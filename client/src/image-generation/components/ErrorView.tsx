@@ -12,7 +12,7 @@ export function ErrorView({ error, onRetry, onEdit }: Props) {
       <div className="mt-3 flex gap-2 justify-end">
         <button
           onClick={onEdit}
-          className="rounded-md border border-gray-200 px-3 py-2 bg-white text-sm"
+          className="rounded-md border border-border px-3 py-2 bg-white text-sm"
         >
           تعديل البرومبت
         </button>

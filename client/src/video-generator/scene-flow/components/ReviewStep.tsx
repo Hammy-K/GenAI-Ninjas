@@ -21,10 +21,10 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center shadow-xl">
             <CheckCircle className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             إبداعك جاهز!
           </h2>
-          <p className="text-gray-600">تم إنشاء جميع فيديوهاتك بنجاح</p>
+          <p className="text-muted">تم إنشاء جميع فيديوهاتك بنجاح</p>
         </div>
 
         {/* Success Stats */}
@@ -34,27 +34,27 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
               <Video className="w-6 h-6 text-green-600" />
             </div>
             <div className="text-xl font-bold text-green-600">3</div>
-            <div className="text-xs text-gray-600">فيديوهات</div>
+            <div className="text-xs text-muted">فيديوهات</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 text-center shadow-lg">
             <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-purple-600" />
+              <CheckCircle className="w-6 h-6 text-primary" />
             </div>
-            <div className="text-xl font-bold text-purple-600">100%</div>
-            <div className="text-xs text-gray-600">نجح</div>
+            <div className="text-xl font-bold text-primary">100%</div>
+            <div className="text-xs text-muted">نجح</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 text-center shadow-lg">
             <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-xl flex items-center justify-center">
               <span className="text-blue-600 font-bold text-sm">AI</span>
             </div>
             <div className="text-xl font-bold text-blue-600">Veo</div>
-            <div className="text-xs text-gray-600">تقنية</div>
+            <div className="text-xs text-muted">تقنية</div>
           </div>
         </div>
 
         {/* Main Actions */}
         <div className="bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-6 shadow-lg mb-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+          <h3 className="text-lg font-bold text-foreground mb-4 text-center">
             ماذا تريد أن تفعل الآن؟
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -111,7 +111,7 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
             onClick={onBack}
             variant="outline"
             size="lg"
-            className="w-full h-12 border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl"
+            className="w-full h-12 border-primary text-primary hover:bg-primary rounded-xl"
             data-testid="button-back-to-scenes"
           >
             <ArrowLeft className="ml-2 w-4 h-4" />
@@ -131,11 +131,11 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
 
         {/* Quick Tips */}
         <div className="mt-6 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 shadow-lg">
-          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <span className="text-yellow-500">💡</span>
             نصائح سريعة
           </h4>
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-2 text-sm text-muted">
             <div className="flex items-start gap-2">
               <span className="text-purple-500 mt-0.5">•</span>
               <span>يمكنك تحميل كل فيديو منفرداً من المشاهد</span>

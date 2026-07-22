@@ -27,14 +27,14 @@ export function FloatingActionsPanel({
 }: FloatingActionsPanelProps) {
   return (
     <aside
-      className="w-80 bg-white border border-gray-200 rounded-2xl shadow-sm p-5 flex flex-col gap-6 sticky top-6"
+      className="w-80 bg-background border border-border rounded-2xl shadow-sm p-5 flex flex-col gap-6 sticky top-6"
       aria-label="لوحة الإجراءات والتقدم"
     >
       {/* Progress */}
       <section aria-labelledby="progress-title">
         <h2
           id="progress-title"
-          className="text-lg font-semibold text-gray-900 mb-3 text-center"
+          className="text-lg font-semibold text-foreground mb-3 text-center"
         >
           خطوات المشروع
         </h2>
@@ -48,7 +48,7 @@ export function FloatingActionsPanel({
       >
         <h2
           id="quick-actions-title"
-          className="text-sm font-semibold text-gray-900 mb-3 text-center"
+          className="text-sm font-semibold text-foreground mb-3 text-center"
         >
           اطلع بفكرتك مع بنجي و بعدين:
         </h2>
@@ -68,7 +68,7 @@ export function FloatingActionsPanel({
       > */}
       {/* <h2
           id="submission-title"
-          className="text-sm font-semibold text-gray-900 mb-3 text-center"
+          className="text-sm font-semibold text-foreground mb-3 text-center"
         >
           سلم مشروعك
         </h2> */}
@@ -77,7 +77,7 @@ export function FloatingActionsPanel({
       {/* <Button
             type="button"
             onClick={onSubmitProject}
-            className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+            className="w-full gap-2 bg-primary hover:bg-primary text-white"
           >
             <Upload className="w-4 h-4" />
             {LABELS.submitProject}
@@ -87,7 +87,7 @@ export function FloatingActionsPanel({
             type="button"
             variant="outline"
             onClick={onViewSubmissions}
-            className="w-full gap-2 text-gray-700 border-gray-200 bg-gray-50 hover:text-white"
+            className="w-full gap-2 text-foreground border-border bg-card hover:text-white"
           >
             <FolderOpen className="w-4 h-4" />
             عرض المشاريع

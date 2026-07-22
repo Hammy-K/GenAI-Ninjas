@@ -35,12 +35,12 @@ export function SubmitRow({
   return (
     <div className="flex flex-col items-center gap-3">
       {/* <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-700">الحجم:</label>
+        <label className="text-sm text-foreground">الحجم:</label>
         <select
           value={size}
           onChange={(e) => onSizeChange(e.target.value as ImageSize)}
           disabled={disabled || hasResult}
-          className="rounded-md border border-gray-200 px-2 py-1 text-sm bg-white"
+          className="rounded-md border border-border px-2 py-1 text-sm bg-white"
         >
           {sizes.map((s) => (
             <option key={s} value={s}>
@@ -49,7 +49,7 @@ export function SubmitRow({
           ))}
         </select>
 
-        <span className="ml-3 text-sm text-gray-500">{label}</span>
+        <span className="ml-3 text-sm text-muted">{label}</span>
       </div> */}
 
       <div className="flex items-center gap-3">
@@ -65,14 +65,14 @@ export function SubmitRow({
           <>
             <button
               onClick={onGenerateAgain}
-              className="rounded-md border border-gray-200 px-3 py-2 text-sm bg-white"
+              className="rounded-md border border-border px-3 py-2 text-sm bg-white"
             >
               توليد مرة أخرى
             </button>
 
             <button
               onClick={onNewPrompt}
-              className="rounded-md bg-white border border-gray-200 px-3 py-2 text-sm"
+              className="rounded-md bg-white border border-border px-3 py-2 text-sm"
             >
               برومبت جديد
             </button>

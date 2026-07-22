@@ -20,7 +20,7 @@ export function UsageTracker({ className }: UsageTrackerProps) {
     return (
       <div className={cn("text-center", className)}>
         <div className="animate-pulse bg-white/80 backdrop-blur-sm border border-purple-200 rounded-xl p-3">
-          <div className="h-3 bg-gray-200 rounded w-32 mx-auto"></div>
+          <div className="h-3 bg-border rounded w-32 mx-auto"></div>
         </div>
       </div>
     );
@@ -51,9 +51,9 @@ export function UsageTracker({ className }: UsageTrackerProps) {
     }
     return {
       bgColor: "bg-gradient-to-r from-purple-50 to-indigo-50",
-      borderColor: "border-purple-300",
-      textColor: "text-purple-800",
-      icon: <Video className="w-4 h-4 text-purple-600" />,
+      borderColor: "border-primary",
+      textColor: "text-primary",
+      icon: <Video className="w-4 h-4 text-primary" />,
       message: `${remaining} فيديو متاح`,
     };
   };
@@ -75,12 +75,12 @@ export function UsageTracker({ className }: UsageTrackerProps) {
               key={i}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
                 i < usage.used
-                  ? "bg-gray-400 scale-90"
+                  ? "bg-muted scale-90"
                   : isAtLimit
                     ? "bg-red-400"
                     : isNearLimit
                       ? "bg-yellow-400"
-                      : "bg-purple-400"
+                      : "bg-primary"
               }`}
               data-testid={`usage-dot-${i + 1}`}
             />
@@ -94,7 +94,7 @@ export function UsageTracker({ className }: UsageTrackerProps) {
 
         {/* Success indicator when not at limit */}
         {!isAtLimit && !isNearLimit && (
-          <CheckCircle className="w-4 h-4 text-purple-600" />
+          <CheckCircle className="w-4 h-4 text-primary" />
         )}
       </div>
     </div>

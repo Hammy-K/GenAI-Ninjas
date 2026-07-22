@@ -22,7 +22,7 @@ export default function VideosHomePage() {
   const homeHref = organization.isMain ? "/" : `/${organization.name}`;
 
   return (
-    <div className="min-h-screen bg-[#f5f2e8] font-sans" dir="rtl">
+    <div className="min-h-screen bg-background font-sans" dir="rtl">
       <div className="max-w-6xl mx-auto p-2">
         <div className="mb-4 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 rounded-2xl border border-purple-200 shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
@@ -38,7 +38,7 @@ export default function VideosHomePage() {
               </div>
             </div>
 
-            <p className="text-purple-100 text-center">
+            <p className="text-primary text-center">
               اختر فئة من التبويبات أدناه لعرض فيديوهاتها
             </p>
 
@@ -67,8 +67,8 @@ export default function VideosHomePage() {
         />
 
         {category?.description && (
-          // {<div className="bg-white rounded-xl p-4 shadow-md border border-purple-100 mb-6 text-gray-700 text-center">}
-          <div className="text-gray-700 text-center mb-4">
+          // {<div className="bg-white rounded-xl p-4 shadow-md border border-purple-100 mb-6 text-foreground text-center">}
+          <div className="text-foreground text-center mb-4">
             {category.description}
           </div>
         )}

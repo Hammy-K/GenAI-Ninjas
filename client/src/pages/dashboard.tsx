@@ -260,117 +260,6 @@ export default function Dashboard() {
 
   // Animation cleanup effect - removed as it was causing issues with streams display
 
-  // Add the pulse animation styles
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `
-      @keyframes pulse {
-        0% {
-          box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.7);
-        }
-        70% {
-          box-shadow: 0 0 0 10px rgba(167, 139, 250, 0);
-        }
-        100% {
-          box-shadow: 0 0 0 0 rgba(167, 139, 250, 0);
-        }
-      }
-      .pulse {
-        animation: pulse 2s infinite;
-      }
-      
-      .mission-highlight {
-        border: 2px solid #a78bfa;
-        box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
-      }
-
-      .stream-card {
-        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        position: relative;
-        transform-origin: center;
-      }
-      
-      .stream-card:hover:not(.locked):not(.selected) {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.4);
-      }
-      
-      .stream-card.locked {
-        opacity: 0.7;
-        filter: grayscale(0.8);
-      }
-      
-      .stream-grid.content-active .stream-card.selected {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1.1);
-        width: 80%;
-        max-width: 320px;
-        margin: 0 auto;
-        z-index: 10;
-        box-shadow: 0 20px 50px -15px rgba(167, 139, 250, 0.6);
-        padding: 1rem !important;
-      }
-      
-      /* Make title slightly smaller in expanded view */
-      .stream-grid.content-active .stream-card.selected h3 {
-        font-size: 1rem;
-      }
-      
-      .stream-grid {
-        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-      
-      .stream-grid.content-active .stream-card:not(.selected) {
-        opacity: 0.15;
-        transform: scale(0.85) translateY(20px);
-        pointer-events: none;
-      }
-      
-      .stream-status {
-        font-size: 0.75rem;
-        transition: all 0.3s ease;
-      }
-      
-      .intro-mission-card {
-        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        max-height: 200px;
-        overflow: hidden;
-        opacity: 1;
-      }
-      
-      .intro-mission-card.collapsed {
-        max-height: 0;
-        margin: 0;
-        padding: 0;
-        opacity: 0;
-        border: none;
-      }
-      
-      /* Grid layout for content container to fix spacing issues */
-      .content-container {
-        display: grid;
-        grid-template-areas: "content";
-      }
-      
-      .intro-mission-card {
-        grid-area: content;
-        will-change: max-height, opacity;
-        transform: translateZ(0);
-      }
-      
-      .stream-grid {
-        grid-area: content;
-        will-change: transform, opacity;
-        transform: translateZ(0);
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
 
   // Define stream data with icons, titles and lock status
   const streams = [
@@ -379,9 +268,9 @@ export default function Dashboard() {
       title: "تصميم العاب خرافية",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-gradient-primary rounded-2xl transform rotate-3"></div>
           <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <Gamepad2 className="w-14 h-14 text-purple-600" strokeWidth={1.5} />
+            <Gamepad2 className="w-14 h-14 text-primary" strokeWidth={1.5} />
           </div>
         </div>
       ),
@@ -392,9 +281,9 @@ export default function Dashboard() {
       title: "تطوير تطبيقات ممتعة",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-gradient-info rounded-2xl transform rotate-3"></div>
           <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <AppWindow className="w-14 h-14 text-blue-500" strokeWidth={1.5} />
+            <AppWindow className="w-14 h-14 text-info" strokeWidth={1.5} />
           </div>
         </div>
       ),
@@ -405,9 +294,9 @@ export default function Dashboard() {
       title: "انشاء محتوى و قصص",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-gradient-warning rounded-2xl transform rotate-3"></div>
           <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <PenTool className="w-14 h-14 text-amber-500" strokeWidth={1.5} />
+            <PenTool className="w-14 h-14 text-warning" strokeWidth={1.5} />
           </div>
         </div>
       ),
@@ -418,10 +307,10 @@ export default function Dashboard() {
       title: "تجارب علمية وتقنية (STEM)",
       icon: (
         <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl transform rotate-3"></div>
+          <div className="absolute inset-0 bg-gradient-success rounded-2xl transform rotate-3"></div>
           <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
             <FlaskRound
-              className="w-14 h-14 text-emerald-500"
+              className="w-14 h-14 text-success"
               strokeWidth={1.5}
             />
           </div>
@@ -451,7 +340,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-white text-gray-800 font-tajawal"
+      className="min-h-screen flex flex-col bg-background text-foreground font-tajawal"
       dir="rtl"
     >
       <Header xp={xp} />
@@ -463,7 +352,7 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md p-6 bg-white">
             <h2 className="text-xl font-bold text-center mb-4">مرحباً بك!</h2>
-            <p className="text-sm text-gray-600 mb-6 text-center">
+            <p className="text-sm text-muted-600 mb-6 text-center">
               فضلاً أدخل معلوماتك الأساسية لبدء الرحلة التعليمية
             </p>
 
@@ -482,7 +371,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-bold mb-2">
                     اضغط على القلب 💜 قبل ما تبدأ
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-600">
                     هذا للتأكد من أنك طالب حقيقي وليس روبوت
                   </p>
                 </div>
@@ -514,7 +403,7 @@ export default function Dashboard() {
                       value={studentName}
                       onChange={(e) => setStudentName(e.target.value)}
                       placeholder="الاسم الكامل"
-                      className="mt-1 bg-white border-gray-300 rounded-lg"
+                      className="mt-1 bg-white border-border-300 rounded-lg"
                       required
                     />
                   </div>
@@ -526,7 +415,7 @@ export default function Dashboard() {
                       value={studentGrade}
                       onChange={(e) => setStudentGrade(e.target.value)}
                       placeholder="مثال: الصف التاسع"
-                      className="mt-1 bg-white border-gray-300 rounded-lg"
+                      className="mt-1 bg-white border-border-300 rounded-lg"
                       required
                     />
                   </div>
@@ -554,7 +443,7 @@ export default function Dashboard() {
                           value={schoolName}
                           onChange={(e) => setSchoolName(e.target.value)}
                           placeholder="اسم المدرسة"
-                          className="mt-1 bg-white border-gray-300 rounded-lg"
+                          className="mt-1 bg-white border-border-300 rounded-lg"
                           required
                         />
                       </>
@@ -567,7 +456,7 @@ export default function Dashboard() {
                       id="phoneNumber"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="mt-1 bg-white border-gray-300 rounded-lg"
+                      className="mt-1 bg-white border-border-300 rounded-lg"
                       placeholder="مثال: 0555321542"
                       required
                     />
@@ -593,7 +482,7 @@ export default function Dashboard() {
           <div className="flex flex-col-reverse md:flex-row gap-6">
             {/* Left column: Streams & Journey UI */}
             <div className="w-full md:w-2/3">
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
+              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-border-100">
                 {/* Intro Mission Card - Always shown on top but collapses when stream is selected */}
                 {/* <div
                   className={`relative mb-8 min-h-[145px] bg-gradient-to-r from-purple-50 to-indigo-50 p-5 pb-7 rounded-xl border border-purple-100 intro-mission-card ${showStreamContent ? "collapsed" : ""}`}
@@ -607,27 +496,27 @@ export default function Dashboard() {
                   </div>
 
                   <div className="text-right ml-16 min-h-[120px] flex flex-col">
-                    <h2 className="text-xl font-bold text-purple-700">
+                    <h2 className="text-xl font-bold text-primary-700">
                       المهمة التعريفية
                     </h2>
-                    <p className="text-m text-purple-600">
+                    <p className="text-m text-primary-600">
                       تعرف على الذكاء الاصطناعي التوليدي
                     </p>
 
                     <div className="text-right absolute bottom-5 right-6">
                       <span
-                        className={`text-sm ${isMission1Complete ? "text-green-600" : "text-purple-600"}`}
+                        className={`text-sm ${isMission1Complete ? "text-success-600" : "text-primary-600"}`}
                       >
                         {isMission1Complete ? "مكتملة" : "غير مكتملة"}
                       </span>
                       <div
-                        className={`h-3 w-3 rounded-full ${isMission1Complete ? "bg-green-500" : "bg-purple-500 animate-pulse"} mr-2 ml-2 inline-block`}
+                        className={`h-3 w-3 rounded-full ${isMission1Complete ? "bg-success-500" : "bg-primary-500 animate-pulse"} mr-2 ml-2 inline-block`}
                       ></div>
                     </div>
 
                     <div className="mt-auto pt-4 flex justify-end">
                       <Button
-                        className={`absolute bottom-4 left-4 w-32 text-center ${isMission1Complete ? "bg-purple-200 hover:bg-purple-300 text-purple-800" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
+                        className={`absolute bottom-4 left-4 w-32 text-center ${isMission1Complete ? "bg-primary-200 hover:bg-primary-300 text-primary-800" : "bg-primary-500 hover:bg-primary-600 text-white"}`}
                         onClick={() => handleStartMission(1)}
                       >
                         {isMission1Complete ? "إعادة المهمة" : "⭐ ابدأ هنا ⭐"}
@@ -660,7 +549,7 @@ export default function Dashboard() {
                     <div
                       className={`${showStreamContent ? "opacity-0 pointer-events-none absolute" : "opacity-100"} transition-all duration-500`}
                     >
-                      <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                      <h2 className="text-xl font-bold text-muted-800 mb-6 text-center">
                         اختر مسارك التعليمي
                       </h2>
 
@@ -671,15 +560,15 @@ export default function Dashboard() {
                             onClick={() => handleStreamSelect(stream.id)}
                             className={`stream-card bg-white rounded-xl p-6 border shadow-sm cursor-pointer ${
                               stream.isLocked
-                                ? "locked border-gray-200"
+                                ? "locked border-border-200"
                                 : "border-purple-200 hover:border-purple-300"
                             } ${selectedStream === stream.id ? "selected" : ""}`}
                           >
                             <div
                               className={`absolute top-2 left-2 stream-status flex items-center ${selectedStream === stream.id ? "opacity-100" : "opacity-0"}`}
                             >
-                              <div className="w-2 h-2 rounded-full bg-green-500 ml-1"></div>
-                              <span className="text-xs text-green-600">
+                              <div className="w-2 h-2 rounded-full bg-success-500 ml-1"></div>
+                              <span className="text-xs text-success-600">
                                 متاح
                               </span>
                             </div>
@@ -692,13 +581,13 @@ export default function Dashboard() {
 
                             <div className="flex justify-center items-center">
                               {stream.isLocked ? (
-                                <div className="flex items-center text-gray-500 text-sm">
+                                <div className="flex items-center text-muted-500 text-sm">
                                   <Lock className="w-4 h-4 ml-1" />
                                   <span>أكمل المهمة التعريفية للفتح</span>
                                 </div>
                               ) : (
-                                <div className="flex items-center text-purple-600 text-sm">
-                                  <div className="w-2 h-2 rounded-full bg-green-500 ml-2"></div>
+                                <div className="flex items-center text-primary-600 text-sm">
+                                  <div className="w-2 h-2 rounded-full bg-success-500 ml-2"></div>
                                   <span>متاح</span>
                                 </div>
                               )}
@@ -714,7 +603,7 @@ export default function Dashboard() {
                       <div className="flex items-center mb-6">
                         <Button
                           variant="ghost"
-                          className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                          className="text-muted-600 hover:text-muted-900 flex items-center gap-1"
                           onClick={handleBackToStreams}
                         >
                           <ArrowRight className="h-4 w-4" />
@@ -735,7 +624,7 @@ export default function Dashboard() {
                                   href="/missions/game-dev"
                                   className="block transform hover:scale-105 transition-transform"
                                 >
-                                  <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-green-400 h-36 flex flex-col items-center justify-center text-center">
+                                  <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-green-400 h-36 flex flex-col items-center justify-center text-center">
                                     <div className="text-2xl mb-2">🎮</div>
                                     <div className="font-medium text-sm">
                                       ليش نحب الألعاب؟
@@ -745,85 +634,85 @@ export default function Dashboard() {
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">💡</div>
                                   <div className="font-medium text-sm">
                                     وش فكرة لعبتك؟
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎯</div>
                                   <div className="font-medium text-sm">
                                     الأساسيات والميكانيكيات الرئيسية
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🧪</div>
                                   <div className="font-medium text-sm">
                                     نموذج أولي لأول مرحلة
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎨</div>
                                   <div className="font-medium text-sm">
                                     الرسوميات والفن
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🎵</div>
                                   <div className="font-medium text-sm">
                                     الصوت والموسيقى
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🔁</div>
                                   <div className="font-medium text-sm">
                                     الاختبار والتعديل
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
 
                               <div className="relative">
-                                <div className="bg-purple-50 hover:bg-purple-100 p-4 rounded-lg shadow-md border-2 border-gray-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
+                                <div className="bg-primary-50 hover:bg-primary-100 p-4 rounded-lg shadow-md border-2 border-border-300 h-36 flex flex-col items-center justify-center text-center opacity-70">
                                   <div className="text-2xl mb-2">🚀</div>
                                   <div className="font-medium text-sm">
                                     النشر، الإطلاق، والمشاركة
                                   </div>
                                   <div className="absolute top-2 left-2">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-5 w-5 text-muted-400" />
                                   </div>
                                 </div>
                               </div>
@@ -839,7 +728,7 @@ export default function Dashboard() {
 
             {/* Right column: Student Profile Card - with sticky positioning */}
             <div className="w-full md:w-1/3 md:sticky md:top-4 self-start">
-              <Card className="border border-gray-100 rounded-xl p-5">
+              <Card className="border border-border-100 rounded-xl p-5">
                 {/* Profile picture */}
                 <div className="flex flex-col w-full justify-center items-center mb-5">
                   {!organization.isMain && (
@@ -852,45 +741,45 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-                    <User className="w-10 h-10 text-purple-400" />
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    <User className="w-10 h-10 text-primary" />
                   </div>
                 </div>
 
                 {/* Profile details - 2 column layout */}
                 <div className="grid grid-cols-2 gap-y-3 mb-6 text-sm">
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">اسم الطالب</p>
+                    <p className="font-medium text-muted-500">اسم الطالب</p>
                   </div>
                   <div>
                     <p className="font-medium">{studentName || "-"}</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">الصف الدراسي</p>
+                    <p className="font-medium text-muted-500">الصف الدراسي</p>
                   </div>
                   <div>
                     <p className="font-medium">{studentGrade || "-"}</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">اسم المدرسة</p>
+                    <p className="font-medium text-muted-500">اسم المدرسة</p>
                   </div>
                   <div>
                     <p className="font-medium">{schoolName || "-"}</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">
+                    <p className="font-medium text-muted-500">
                       (XP) نقاط الخبرة
                     </p>
                   </div>
                   <div>
-                    <p className="font-medium text-purple-600">{xp} نقطة</p>
+                    <p className="font-medium text-primary">{xp} نقطة</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium text-gray-500">
+                    <p className="font-medium text-muted-500">
                       المهمات المكتملة
                     </p>
                   </div>
@@ -903,7 +792,7 @@ export default function Dashboard() {
 
                 {/* Badges section
                 <div className="mb-5">
-                  <h3 className="font-semibold text-gray-600 mb-3">
+                  <h3 className="font-semibold text-muted-600 mb-3">
                     الشارات المكتسبة
                   </h3>
                   <div className="flex space-x-2 space-x-reverse">
@@ -914,16 +803,16 @@ export default function Dashboard() {
                         .map((badge, index) => (
                           <div
                             key={index}
-                            className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center"
+                            className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center"
                             title={badge.replace('_badge', '').replace(/_/g, ' ')}
                           >
                             {badgeIcons[badge] || (
-                              <Star className="h-5 w-5 text-purple-500" />
+                              <Star className="h-5 w-5 text-primary-500" />
                             )}
                           </div>
                         ))
                     ) : (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-500">
                         لم تحصل على أي شارات بعد
                       </p>
                     )}

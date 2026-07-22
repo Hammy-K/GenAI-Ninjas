@@ -50,7 +50,7 @@ export function ProgressDisplay({
         <div className="relative">
           <div
             onClick={handleVideoClick}
-            className="relative aspect-video w-full rounded-lg overflow-hidden cursor-pointer group border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+            className="relative aspect-video w-full rounded-lg overflow-hidden cursor-pointer group border border-border shadow-sm hover:shadow-md transition-all duration-200"
           >
             {/* Video Iframe */}
             <iframe
@@ -89,7 +89,7 @@ export function ProgressDisplay({
               {/* Close Button */}
               <button
                 onClick={handleCloseVideo}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
+                className="absolute -top-12 right-0 text-white hover:text-muted transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
                 aria-label="إغلاق الفيديو"
                 style={{ zIndex: 2147483647 }}
               >

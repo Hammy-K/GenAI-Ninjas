@@ -18,7 +18,7 @@ export default function VideoPlayerHeader({
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-white mb-1">مشغل الفيديو</h1>
-          <p className="text-purple-100">الفئة: {categoryTitle}</p>
+          <p className="text-primary">الفئة: {categoryTitle}</p>
         </div>
         <Link to="/missions/videos">
           <button className="flex items-center gap-2 text-white/90 hover:text-white font-medium transition group">

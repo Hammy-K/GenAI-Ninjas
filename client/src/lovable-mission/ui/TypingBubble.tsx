@@ -20,7 +20,7 @@ export const TypingBubble = memo(({ dir = "rtl" }: Props) => {
   // Match assistant bubble style
   const bubbleBase =
     "relative rounded-lg px-3 py-1 text-sm leading-6 whitespace-pre-wrap break-words";
-  const assistantStyles = "bg-white text-gray-900 rounded-bl-none";
+  const assistantStyles = "bg-background text-foreground rounded-bl-none";
 
   return (
     <div className={`flex justify-end`} dir={dir} aria-live="polite">

@@ -13,7 +13,6 @@ import EmptyMission from "@/pages/missions/empty";
 import GameDevMission from "@/pages/missions/game-dev";
 import HTMLGeneratorV2 from "@/pages/missions/html-generator-v2";
 import HtmlGeneratorV2SubmissionsPage from "@/pages/missions/html-generator-v2/submissions";
-import LovableMission from "@/pages/lovable-mission";
 import IntroMission from "@/pages/intro-mission";
 import PromptEngineering from "@/pages/prompt-engineering";
 // import LovableSubmissionsPage  from "@/pages/lovable-submissions";
@@ -66,7 +65,6 @@ import ChatPage from "./pages/ChatPage";
 import VideoSubmissionsPage from "./pages/VideoSubmissionsPage";
 import { LovableAuthProvider } from "./lovable-mission/auth/AuthProvider";
 import SubmissionsDashboard from "./pages/SubmissionsDashboard";
-import LovableMissionPageV2 from "./lovable-mission/v2/LovableMissionPageV2";
 import YouTubeVideoPage from "./pages/VideoPage";
 import MangaStoryPlanner from "./pages/MangaPlanner";
 import { PengyRedemption } from "@/image-generation/components/PengyRedemption";
@@ -286,12 +284,6 @@ function Router() {
         component={AppBuilderActivity}
       />
       <Route path="/missions/lovables" component={LovablesActivity} />
-      <Route path="/missions/old-lovable" component={LovableMission} />
-      <Route
-        path="/missions/old-lovable/submissions"
-        component={LovableSubmissionsPage}
-      />
-
       <Route
         path="/missions/lovable"
         component={() => (
@@ -304,8 +296,6 @@ function Router() {
         path="/missions/lovable/submissions"
         component={LovableSubmissionsPage}
       />
-
-      <Route path="/missions/lovable/v2" component={LovableMissionPageV2} />
 
       {/* <Route path="/missions/videos" component={VideoPage} />
       <Route path="/missions/videos/:videoId" component={VideoPlayer} /> */}

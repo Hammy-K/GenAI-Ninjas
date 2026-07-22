@@ -3,7 +3,7 @@ import VideoSubmissionsList from "@/components/VideoSubmissions/VideoSubmissions
 export default function VideoSubmissionsPage() {
   return (
     <div
-      className="px-48 mx-auto bg-[#f5f2e8] text-foreground font-tajawal"
+      className="px-48 mx-auto bg-background text-foreground font-tajawal"
       dir="rtl"
     >
       <div className="py-8">

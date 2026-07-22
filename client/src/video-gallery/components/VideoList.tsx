@@ -11,8 +11,8 @@ export default function VideoList({
   if (!videos.length) {
     return (
       <div className="text-center py-16">
-        <p className="text-xl font-bold text-gray-700 mb-2">لا توجد فيديوهات</p>
-        <p className="text-sm text-gray-500">
+        <p className="text-xl font-bold text-foreground mb-2">لا توجد فيديوهات</p>
+        <p className="text-sm text-muted">
           سيتم إضافة محتوى هذه الفئة قريبًا.
         </p>
       </div>

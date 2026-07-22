@@ -45,12 +45,12 @@ export default function HtmlGamesExportPage() {
   return (
     <div className="p-6">
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-background rounded-lg shadow-sm p-6">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               تصدير مشاريع HTML الألعاب
             </h1>
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted text-sm">
               قم بتخصيص معايير التصدير واحصل على ملف CSV
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function HtmlGamesExportPage() {
                 <div className="flex items-center gap-1.5">
                   <Label.Root
                     htmlFor="org-select"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-foreground"
                   >
                     الجهة (Organization)
                   </Label.Root>
@@ -80,7 +80,7 @@ export default function HtmlGamesExportPage() {
                         <button
                           type="button"
                           aria-label="شرح الخيارات"
-                          className="inline-flex items-center rounded p-0.5 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="inline-flex items-center rounded p-0.5 text-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <HelpCircle className="w-4 h-4" />
                         </button>
@@ -89,7 +89,7 @@ export default function HtmlGamesExportPage() {
                         <Tooltip.Content
                           side="left"
                           align="center"
-                          className="max-w-xs rounded-md bg-gray-100 px-3 py-2 text-gray-800 shadow-lg text-left"
+                          className="max-w-xs rounded-md bg-card px-3 py-2 text-foreground shadow-lg text-left"
                           dir="ltr"
                         >
                           <div>
@@ -123,7 +123,7 @@ export default function HtmlGamesExportPage() {
                 >
                   <Select.Trigger
                     id="org-select"
-                    className="inline-flex w-full items-center justify-between rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="inline-flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-sm shadow-sm hover:bg-card focus:outline-none focus:ring-2 focus:ring-primary"
                     aria-label="Organization"
                   >
                     <Select.Value />
@@ -133,7 +133,7 @@ export default function HtmlGamesExportPage() {
                   </Select.Trigger>
 
                   <Select.Portal>
-                    <Select.Content className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
+                    <Select.Content className="overflow-hidden rounded-md border border-border bg-background shadow-lg">
                       <Select.Viewport className="p-1">
                         <SelectItem value="all" text="all" />
                         <SelectItem value="main" text="main" />
@@ -148,7 +148,7 @@ export default function HtmlGamesExportPage() {
               <div className="space-y-1.5">
                 <Label.Root
                   htmlFor="n"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   <Hash className="w-4 h-4 inline ml-2" />
                   عدد المشاريع لكل طالب
@@ -159,7 +159,7 @@ export default function HtmlGamesExportPage() {
                   min="1"
                   value={formData.n}
                   onChange={(e) => handleInputChange("n", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="1"
                   inputMode="numeric"
                 />
@@ -169,7 +169,7 @@ export default function HtmlGamesExportPage() {
               <div className="space-y-1.5">
                 <Label.Root
                   htmlFor="from"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   <Calendar className="w-4 h-4 inline ml-2" />
                   من تاريخ
@@ -179,7 +179,7 @@ export default function HtmlGamesExportPage() {
                   type="date"
                   value={formData.from}
                   onChange={(e) => handleInputChange("from", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -187,7 +187,7 @@ export default function HtmlGamesExportPage() {
               <div className="space-y-1.5">
                 <Label.Root
                   htmlFor="to"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   <Calendar className="w-4 h-4 inline ml-2" />
                   إلى تاريخ
@@ -197,7 +197,7 @@ export default function HtmlGamesExportPage() {
                   type="date"
                   value={formData.to}
                   onChange={(e) => handleInputChange("to", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -205,7 +205,7 @@ export default function HtmlGamesExportPage() {
               <div className="space-y-1.5 md:col-span-1">
                 <Label.Root
                   htmlFor="school"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   <School className="w-4 h-4 inline ml-2" />
                   المدرسة
@@ -215,7 +215,7 @@ export default function HtmlGamesExportPage() {
                   type="text"
                   value={formData.school}
                   onChange={(e) => handleInputChange("school", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="اسم المدرسة (اختياري)"
                 />
               </div>
@@ -224,7 +224,7 @@ export default function HtmlGamesExportPage() {
               <div className="space-y-1.5 md:col-span-1">
                 <Label.Root
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   <User className="w-4 h-4 inline ml-2" />
                   اسم الطالب
@@ -234,7 +234,7 @@ export default function HtmlGamesExportPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="اسم الطالب (اختياري)"
                 />
               </div>
@@ -277,7 +277,7 @@ function SelectItem({
   return (
     <Select.Item
       value={value}
-      className="relative flex w-full select-none items-center rounded-[6px] px-3 py-2 text-sm outline-none data-[highlighted]:bg-gray-100 data-[state=checked]:font-medium"
+      className="relative flex w-full select-none items-center rounded-[6px] px-3 py-2 text-sm outline-none data-[highlighted]:bg-card data-[state=checked]:font-medium"
     >
       <Select.ItemText>{text}</Select.ItemText>
       <Select.ItemIndicator className="absolute right-2 inline-flex items-center">

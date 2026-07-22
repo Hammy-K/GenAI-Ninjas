@@ -122,8 +122,8 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-3xl flex items-center justify-center shadow-xl">
             <Send className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">أرسل مشروعك</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground mb-2">أرسل مشروعك</h2>
+          <p className="text-muted">
             شارك مشروعك النهائي معنا لمراجعته وتقييمه
           </p>
         </div>
@@ -135,7 +135,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="email"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-foreground"
               >
                 البريد الإلكتروني
               </Label>
@@ -144,7 +144,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
                 type="email"
                 {...register("email")}
                 readOnly
-                className="bg-gray-50 border-gray-300 text-gray-600 cursor-not-allowed"
+                className="bg-card border-border text-muted cursor-not-allowed"
                 data-testid="input-email"
               />
               {errors.email && (
@@ -156,7 +156,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="link"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-foreground"
               >
                 رابط المشروع <span className="text-red-500">*</span>
               </Label>
@@ -177,7 +177,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="projectName"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-foreground"
               >
                 اسم المشروع <span className="text-red-500">*</span>
               </Label>
@@ -234,7 +234,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
             onClick={onBack}
             variant="outline"
             size="lg"
-            className="w-full h-12 border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl"
+            className="w-full h-12 border-primary text-primary hover:bg-primary rounded-xl"
             data-testid="button-back-to-scenes"
           >
             <ArrowRight className="ml-2 w-4 h-4" />
@@ -244,11 +244,11 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
 
         {/* Form Guidelines */}
         <div className="mt-6 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl p-4 shadow-lg">
-          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <span className="text-blue-500">ℹ️</span>
             تعليمات المشروع
           </h4>
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-2 text-sm text-muted">
             <div className="flex items-start gap-2">
               <span className="text-purple-500 mt-0.5">•</span>
               <span>تأكد أن رابط المشروع يعمل ويمكن الوصول إليه</span>
