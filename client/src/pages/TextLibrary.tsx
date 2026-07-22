@@ -128,6 +128,35 @@ export default function TextLibrary() {
     );
   }
 
+  if (session?.texts?.length === 0) {
+    return (
+      <div
+        className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4"
+        dir="rtl"
+      >
+        <Card className="w-full max-w-md shadow-xl border-blue-200">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                <FileText className="h-8 w-8 text-blue-600" />
+              </div>
+              <p className="text-xl text-gray-800 font-semibold">
+                لا توجد نصوص في هذه الجلسة بعد
+              </p>
+              <Button
+                size="lg"
+                onClick={() => window.history.back()}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg"
+              >
+                العودة
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4"

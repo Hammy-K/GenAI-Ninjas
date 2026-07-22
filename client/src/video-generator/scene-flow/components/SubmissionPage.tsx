@@ -47,7 +47,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
 
   const onSubmit = async (data: SubmissionFormData) => {
     if (!user?.email) {
-      setError("لم يتم العثور على بريد إلكتروني للمستخدم");
+      setError("لم نتعرّف على بريدك الإلكتروني. سجّل الدخول من جديد ثم أعد إرسال المشروع.");
       return;
     }
 
@@ -79,7 +79,7 @@ export function SubmissionPage({ onBack }: SubmissionPageProps) {
       setIsSubmitted(true);
     } catch (err) {
       console.error("Failed to submit project:", err);
-      setError("حدث خطأ أثناء إرسال المشروع. حاول مرة أخرى.");
+      setError("لم يصل مشروعك إلينا. تحقّق من اتصالك بالإنترنت وصحّة الرابط ثم اضغط ‘إرسال’ من جديد.");
     } finally {
       setIsSubmitting(false);
     }

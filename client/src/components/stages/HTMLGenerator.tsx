@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Confetti } from "@/components/ui/confetti";
+import { celebrate } from "@/lib/celebrate";
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ import { Label } from "@radix-ui/react-label";
 import { useOrganization } from "@/hooks/useOrganization";
 
 interface HTMLGeneratorStageProps {
-  onComplete: () => void;
+  onComplete: (result?: { shareUrl?: string | null }) => void;
   onEarnXp: (amount: number, source?: string) => void;
   onUnlockBadge: (badgeName: string, source?: string) => void;
   onBack: () => void;
@@ -120,7 +120,6 @@ export function HTMLGenerator({
   const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } =
     useXpTracker();
   const organizationInfo = useOrganization();
-  const [showConfetti, setShowConfetti] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Get the current location for routing
@@ -271,7 +270,8 @@ export function HTMLGenerator({
         setState((prev) => ({
           ...prev,
           error:
-            clarificationResult.error || "Failed to get clarifying question",
+            clarificationResult.error ||
+            "تعذّر علينا فهم طلبك الآن. جرّب توضيح فكرتك بكلمات أبسط ثم اضغط ‘إرسال’ مرة أخرى.",
           isLoading: false,
         }));
         return;
@@ -297,12 +297,11 @@ export function HTMLGenerator({
 
       console.log("State Messages after: ", state.messages);
     } catch (error) {
+      console.error("Failed to get clarifying question:", error);
       setState((prev) => ({
         ...prev,
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to get clarifying question",
+          "تعذّر علينا فهم طلبك الآن. جرّب توضيح فكرتك بكلمات أبسط ثم اضغط ‘إرسال’ مرة أخرى.",
         isLoading: false,
       }));
     }
@@ -344,7 +343,9 @@ export function HTMLGenerator({
       if (summaryResult.error) {
         setState((prev) => ({
           ...prev,
-          error: summaryResult.error || "Failed to get project summary",
+          error:
+            summaryResult.error ||
+            "لم نتمكّن من تلخيص فكرة مشروعك. أعد المحاولة بعد لحظات، وإذا تكرّر الخطأ حدّث الصفحة وابدأ من جديد.",
           isLoading: false,
         }));
         return;
@@ -365,12 +366,11 @@ export function HTMLGenerator({
         isLoading: false,
       }));
     } catch (error) {
+      console.error("Failed to get project summary:", error);
       setState((prev) => ({
         ...prev,
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to get project summary",
+          "لم نتمكّن من تلخيص فكرة مشروعك. أعد المحاولة بعد لحظات، وإذا تكرّر الخطأ حدّث الصفحة وابدأ من جديد.",
         isLoading: false,
       }));
     }
@@ -403,7 +403,9 @@ export function HTMLGenerator({
       if (htmlResponse.error) {
         setState((prev) => ({
           ...prev,
-          error: htmlResponse.error || "Failed to generate HTML",
+          error:
+            htmlResponse.error ||
+            "لم ننجح في إنشاء صفحتك هذه المرة. اضغط ‘إرسال’ لإعادة المحاولة، أو بسّط وصف ما تريده وأعد الطلب.",
           isLoading: false,
         }));
         return;
@@ -450,15 +452,15 @@ export function HTMLGenerator({
           )
         ) {
           setState((prev) => ({ ...prev, hasEarnedXp: true }));
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3000);
+          celebrate('micro');
         }
       }
     } catch (error) {
+      console.error("Failed to generate HTML:", error);
       setState((prev) => ({
         ...prev,
         error:
-          error instanceof Error ? error.message : "Failed to generate HTML",
+          "لم ننجح في إنشاء صفحتك هذه المرة. اضغط ‘إرسال’ لإعادة المحاولة، أو بسّط وصف ما تريده وأعد الطلب.",
         isLoading: false,
       }));
     }
@@ -511,7 +513,9 @@ export function HTMLGenerator({
       if (summaryResult.error) {
         setState((prev) => ({
           ...prev,
-          error: summaryResult.error || "Failed to get project summary",
+          error:
+            summaryResult.error ||
+            "لم نتمكّن من تلخيص فكرة مشروعك. أعد المحاولة بعد لحظات، وإذا تكرّر الخطأ حدّث الصفحة وابدأ من جديد.",
           isLoading: false,
         }));
         return;
@@ -537,9 +541,11 @@ export function HTMLGenerator({
 
       console.log("State Messages after: ", state.messages);
     } catch (error) {
+      console.error("Failed to update HTML:", error);
       setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Failed to update HTML",
+        error:
+          "تعذّر تطبيق تعديلك على الصفحة. أعد إرسال طلب التعديل، وإن استمرّ الخطأ حدّث الصفحة.",
         isLoading: false,
       }));
     }
@@ -699,8 +705,7 @@ export function HTMLGenerator({
         if (
           awardIfNotAlreadyAwarded(onEarnXp, 20, "html_generator_first_prompt")
         ) {
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3000);
+          celebrate('micro');
         }
       }
 
@@ -781,13 +786,16 @@ export function HTMLGenerator({
           setState((prev) => ({
             ...prev,
             isLoading: false,
-            error: "Unexpected flow state. Please try again.",
+            error:
+              "حدث خطأ غير متوقّع في هذه الخطوة. اضغط ‘إرسال’ للمحاولة من جديد، وإن استمرّ الأمر حدّث الصفحة.",
           }));
       }
     } catch (error) {
+      console.error("Error in handleSubmit:", error);
       setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "An error occurred",
+        error:
+          "تعذّر إكمال العملية. أعد المحاولة، وإذا تكرّر الخطأ حدّث الصفحة وابدأ من جديد.",
         isLoading: false,
       }));
     }
@@ -820,7 +828,11 @@ export function HTMLGenerator({
         has_shared_link: state.hasSharedLink,
       });
 
-      onComplete();
+      // Close the share dialog and hand the session loop's close to the parent,
+      // passing the link to what the learner just made so the completion screen
+      // can offer to open it.
+      setState((prev) => ({ ...prev, showShareDialog: false }));
+      onComplete({ shareUrl: state.shareUrl });
     } else {
       // Show a toast notification explaining the requirements
       toast({
@@ -872,15 +884,17 @@ export function HTMLGenerator({
       } else {
         setState((prev) => ({
           ...prev,
-          error: "Project not found",
+          error:
+            "لم نعثر على هذا المشروع؛ ربّما تم حذفه أو أنّ الرابط غير صحيح. تحقّق من الرابط أو ابدأ مشروعًا جديدًا.",
           isLoading: false,
         }));
       }
     } catch (error) {
+      console.error("Failed to load project:", error);
       setState((prev) => ({
         ...prev,
         error:
-          error instanceof Error ? error.message : "Failed to load project",
+          "تعذّر تحميل المشروع. تأكّد من اتصالك بالإنترنت ثم حدّث الصفحة للمحاولة من جديد.",
         isLoading: false,
       }));
     }
@@ -1029,7 +1043,8 @@ export function HTMLGenerator({
         if (error instanceof Error) {
           return {
             ...prev,
-            error: error.message,
+            error:
+              "لم يُحفَظ مشروعك. تأكّد من اتصالك بالإنترنت واضغط ‘حفظ’ مرة أخرى (احتفظنا بنسخة مؤقتة من عملك على جهازك).",
             isSaving: false,
           };
         }
@@ -1072,9 +1087,11 @@ export function HTMLGenerator({
         }
       })
       .catch((err) => {
+        console.error("Failed to copy URL to clipboard:", err);
         setState((prev) => ({
           ...prev,
-          error: "Failed to copy URL to clipboard",
+          error:
+            "تعذّر نسخ الرابط تلقائيًا. حدّد الرابط من شريط العنوان وانسخه يدويًا، أو أعد الضغط على زر النسخ.",
         }));
       });
   };
@@ -1185,7 +1202,6 @@ export function HTMLGenerator({
       {/* Student Info Modal */}
       <HtmlGeneratorStudentModal />
 
-      {showConfetti && <Confetti />}
       {/* Share Project Dialog */}
       <Dialog
         open={state.showShareDialog}
@@ -1278,6 +1294,14 @@ export function HTMLGenerator({
           </div> */}
 
           <DialogFooter className="sm:justify-start mt-4">
+            {/* Once the project is saved and its link copied, this is the primary
+                action that closes the session loop (fires onComplete → completion
+                screen). Before that, only "إغلاق" shows. */}
+            {state.hasSharedLink && (
+              <Button type="button" onClick={handleContinue}>
+                أنهيت المهمة 🎉
+              </Button>
+            )}
             <Button
               type="button"
               variant="secondary"

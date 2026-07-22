@@ -1,7 +1,7 @@
 import type { ChatMessage } from "@/lovable-mission/types/lovable.types";
 
 const API_PATH = "/api/ai-chat/openai";
-const GENERIC_ERROR_AR = "حدث خطأ أثناء توليد الرد. يرجى المحاولة مجددا.";
+const GENERIC_ERROR_AR = "تعذّر توليد ردّ المساعد. أعد إرسال رسالتك بعد لحظات، وإن استمرّ الخطأ حدّث الصفحة.";
 
 // System prompt for Dr. Pengy storyboard conversation  
 const STORYBOARD_SYSTEM_PROMPT = `أنت د. بنجي، خبير في الثقافة السعودية والحكايات. مهمتك هي مساعدة الطلاب في تطوير فكرة قصة وتحويلها إلى storyboard مكون من 6 مشاهد لفيديو فيروسي مدته 30 ثانية.

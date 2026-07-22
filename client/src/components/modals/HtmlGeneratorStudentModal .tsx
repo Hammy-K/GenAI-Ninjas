@@ -146,7 +146,7 @@ export default function HtmlGeneratorStudentModal() {
       setOpen(false);
     } catch (error: any) {
       console.error("Email lookup error:", error);
-      setErrorMsg(error.message || "حدث خطأ. حاول مرة أخرى.");
+      setErrorMsg("تعذّر التحقّق من بريدك الإلكتروني. تأكّد من كتابته بشكل صحيح ثم أعد المحاولة.");
     } finally {
       setEmailLoading(false);
     }
@@ -195,7 +195,8 @@ export default function HtmlGeneratorStudentModal() {
 
       setOpen(false);
     } catch (error: any) {
-      setErrorMsg(error.message || "حدث خطأ غير متوقع.");
+      console.error("Student save error:", error);
+      setErrorMsg("تعذّر حفظ بياناتك. تحقّق من اتصالك بالإنترنت وأعد المحاولة، وإن استمرّ الخطأ حدّث الصفحة.");
     } finally {
       setLoading(false);
     }

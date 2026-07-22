@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { celebrate } from "@/lib/celebrate";
 
 interface Zone {
   id: string;
@@ -26,6 +27,7 @@ const AppBuilderActivity: React.FC = () => {
   const [draggedBlock, setDraggedBlock] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [shakingZone, setShakingZone] = useState<string | null>(null);
+  const [hintZone, setHintZone] = useState<string | null>(null);
 
   const blocks: Block[] = [
     { id: 'header-block', type: 'header', name: 'Header', emoji: '🎬', color: 'bg-red-500' },
@@ -72,13 +74,22 @@ const AppBuilderActivity: React.FC = () => {
       if (updatedZones.every(zone => zone.filled)) {
         setTimeout(() => {
           setShowSuccess(true);
-          showConfetti();
+          celebrate('small');
         }, 500);
       }
     } else {
       // Wrong placement - shake animation
       setShakingZone(zoneId);
       setTimeout(() => setShakingZone(null), 600);
+
+      // Reveal the correct target zone so the learner is not guessing blind.
+      // The correct zone id equals the dragged block's type (block -> zone mapping).
+      const correctZoneId = draggedBlock;
+      setHintZone(correctZoneId);
+      setTimeout(
+        () => setHintZone(prev => (prev === correctZoneId ? null : prev)),
+        2500
+      );
     }
     
     setDraggedBlock(null);
@@ -87,39 +98,6 @@ const AppBuilderActivity: React.FC = () => {
   const handleReset = () => {
     setZones(zones.map(zone => ({ ...zone, filled: false })));
     setShowSuccess(false);
-  };
-
-  const showConfetti = () => {
-    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
-    
-    for (let i = 0; i < 100; i++) {
-      setTimeout(() => {
-        const confetti = document.createElement('div');
-        confetti.style.cssText = `
-          position: fixed;
-          width: 8px;
-          height: 8px;
-          background: ${colors[Math.floor(Math.random() * colors.length)]};
-          left: ${Math.random() * 100}vw;
-          top: -10px;
-          pointer-events: none;
-          z-index: 1000;
-          border-radius: 50%;
-        `;
-        
-        document.body.appendChild(confetti);
-        
-        confetti.animate([
-          { transform: 'translateY(-10px) rotate(0deg)', opacity: 1 },
-          { transform: 'translateY(100vh) rotate(720deg)', opacity: 0 }
-        ], {
-          duration: 3000 + Math.random() * 1000,
-          easing: 'ease-out'
-        }).onfinish = () => {
-          confetti.remove();
-        };
-      }, i * 30);
-    }
   };
 
   const getZoneContent = (zoneId: string) => {
@@ -137,13 +115,21 @@ const AppBuilderActivity: React.FC = () => {
       );
     }
     
+    const isHinted = hintZone === zoneId;
+
     return (
-      <div className={`h-full flex items-center justify-center border-3 border-dashed border-gray-400 rounded-lg bg-gray-50 ${
-        shakingZone === zoneId ? 'animate-shake' : ''
-      }`}>
-        <div className="text-center text-gray-500">
-          <div className="text-2xl mb-2">📦</div>
-          <div className="font-medium">Drop {zone?.name.replace(' Zone', '')} Here</div>
+      <div className={`h-full flex items-center justify-center border-3 border-dashed rounded-lg ${
+        isHinted
+          ? 'border-yellow-400 bg-yellow-50 ring-4 ring-yellow-300 animate-pulse'
+          : 'border-gray-400 bg-gray-50'
+      } ${shakingZone === zoneId ? 'animate-shake' : ''}`}>
+        <div className={`text-center ${isHinted ? 'text-yellow-700' : 'text-gray-500'}`}>
+          <div className="text-2xl mb-2">{isHinted ? '👉' : '📦'}</div>
+          {isHinted ? (
+            <div className="font-bold">هذا مكانها الصحيح، ضعها هنا</div>
+          ) : (
+            <div className="font-medium">Drop {zone?.name.replace(' Zone', '')} Here</div>
+          )}
         </div>
       </div>
     );

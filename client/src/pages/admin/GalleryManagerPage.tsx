@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Trash } from "lucide-react";
+import { AlertCircle, Trash, ImageOff, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -45,6 +45,7 @@ export default function GalleryManagerPage() {
     data: galleryData,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: [
       "/api/gallery/all",
@@ -110,7 +111,7 @@ export default function GalleryManagerPage() {
       <CardHeader>
         <CardTitle className="text-2xl">إدارة الصور في المعرض</CardTitle>
         <CardDescription>
-          <b>{galleryData?.images.length}</b> صور في المعرض.
+          <b>{galleryData?.images?.length ?? 0}</b> صور في المعرض.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -121,6 +122,15 @@ export default function GalleryManagerPage() {
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>حدث خطأ أثناء تحميل الصور.</AlertDescription>
           </Alert>
+        ) : galleryData?.images?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+            <ImageOff className="w-10 h-10 text-muted-foreground" />
+            <p className="text-muted-foreground">لا توجد صور في المعرض بعد</p>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="w-4 h-4 ml-2" />
+              تحديث
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
             {galleryData?.images.map((img) => (

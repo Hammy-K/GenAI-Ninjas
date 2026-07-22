@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
+import { FolderOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Video {
@@ -70,19 +71,36 @@ export default function VideoLibrary() {
           </CardHeader>
         </Card>
 
-        {session?.videos.map((video, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle className="text-lg">{video.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="video-container"
-                dangerouslySetInnerHTML={{ __html: video.embedCode }}
-              />
+        {session?.videos?.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 flex flex-col items-center text-center">
+              <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-lg text-gray-700 mb-6">
+                لا توجد فيديوهات في هذه الجلسة بعد
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+              >
+                العودة
+              </Link>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          session?.videos.map((video, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle className="text-lg">{video.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="video-container"
+                  dangerouslySetInnerHTML={{ __html: video.embedCode }}
+                />
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

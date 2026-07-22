@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Home, ImageIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useOrganization } from "@/hooks/useOrganization";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 import logoImage from "../../assets/logo.png";
 import MCITWhiteLogo from "@/assets/MCIT-white-logo.png";
 
@@ -74,6 +75,8 @@ export function Header({ xp }: HeaderProps) {
             />
           </svg>
         </div>
+
+        <SoundToggle className="text-white hover:text-white/80 focus:outline-none transition-colors" />
 
         <button
           className="text-white hover:text-white/80 focus:outline-none transition-colors ml-2"

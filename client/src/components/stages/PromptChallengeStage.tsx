@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,8 @@ import { analyzePrompt } from "@/lib/openai";
 import { useStageState } from "@/hooks/useStageState";
 import { validateInput, validatePromptAnalyzerInput } from "@/lib/inputFilter";
 import { trackStageProgress, logPromptToFirestore } from "@/lib/firebase";
-import confetti from "canvas-confetti";
 import penguinPngPath from "@assets/Penguin.png";
-import celebrationSound from "@/assets/wow.mp3";
+import { celebrate as celebrateFx } from "@/lib/celebrate";
 
 // Base64 encoded celebration sound (short chime)
 const CELEBRATION_SOUND =
@@ -75,18 +74,10 @@ export function PromptChallengeStage({
   const [nameInput, setNameInput] = useState("");
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const weakPrompt = "صمم لي لعبة";
   const goodPromptExample =
     "أبغى لعبة بسيطة فيها شخصية تقفز وتتخطى عقبات زي Flappy Bird، بألوان زاهية ومناسبة للأطفال";
   const badPromptExample = "سوي لي تطبيق";
-
-  // Initialize audio on mount
-  useEffect(() => {
-    audioRef.current = new Audio(celebrationSound);
-    audioRef.current.volume = 0.5;
-  }, []);
 
   // Check if student has entered their name
   useEffect(() => {
@@ -101,40 +92,6 @@ export function PromptChallengeStage({
     const interval = setInterval(fetchLeaderboard, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const celebrate = () => {
-    // Play sound
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-
-    // Fire confetti from the left
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { x: 0.1, y: 0.6 },
-      colors: ["#22c55e", "#eab308", "#3b82f6", "#f43f5e", "#a855f7"],
-    });
-
-    // Fire confetti from the right
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { x: 0.9, y: 0.6 },
-      colors: ["#22c55e", "#eab308", "#3b82f6", "#f43f5e", "#a855f7"],
-    });
-
-    // Fire more confetti after a short delay
-    setTimeout(() => {
-      confetti({
-        particleCount: 50,
-        spread: 100,
-        origin: { x: 0.5, y: 0.5 },
-        colors: ["#22c55e", "#eab308", "#3b82f6"],
-      });
-    }, 250);
-  };
 
   const fetchLeaderboard = async () => {
     try {
@@ -231,7 +188,7 @@ export function PromptChallengeStage({
 
       // Celebrate if score is 7 or above
       if (result.score >= 7) {
-        celebrate();
+        celebrateFx("small");
       }
 
       setTimeout(() => setShowScoreAnimation(false), 2500);

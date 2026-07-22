@@ -1,19 +1,28 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { press, hoverLift } from "@/lib/motion";
 
+// Variants whose design lifts on hover; applied via framer whileHover.
+const LIFT_VARIANTS = new Set(["default", "destructive", "positive"]);
+
+// framer owns `transform` (it animates the whileTap scale by writing inline
+// transform every frame). The CSS transition must therefore NOT include transform,
+// and the hover lift must not be a CSS transform — both would fight framer. Hover
+// shadow/colour still transition; the lift is applied via whileHover below.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-[color,background-color,border-color,box-shadow] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md hover:shadow-lg hover:from-white-700 hover:to-white-700 transform hover:-translate-y-0.5",
+          "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md hover:shadow-lg hover:from-white-700 hover:to-white-700",
         destructive:
-          "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700 transform hover:-translate-y-0.5",
+          "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700",
         positive:
-          "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-green-700 transform hover:-translate-y-0.5",
+          "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-green-700",
         outline:
           "border-2 border-purple-300 bg-white/80 backdrop-blur-sm text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-sm hover:shadow-md",
         secondary:
@@ -43,12 +52,28 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+    const reduce = useReducedMotion();
+    const classes = cn(buttonVariants({ variant, size, className }));
+
+    // asChild delegates rendering to the child element (Radix Slot); the child
+    // owns its own press affordance, so we do not wrap it in motion.
+    if (asChild) {
+      return <Slot className={classes} ref={ref} {...props} />;
+    }
+
+    // Every button responds to touch within 100ms with a spring press (§4).
+    // Reduced motion holds it still. The cast bridges React's DOM event handler
+    // types and framer's motion prop types (they conflict on drag/animation
+    // handlers that buttons never use); runtime passthrough is unaffected.
+    const lifts = !reduce && LIFT_VARIANTS.has(variant ?? "default");
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+      <motion.button
+        className={classes}
         ref={ref}
-        {...props}
+        whileHover={lifts ? hoverLift : undefined}
+        whileTap={reduce ? undefined : press.whileTap}
+        transition={press.transition}
+        {...(props as HTMLMotionProps<"button">)}
       />
     );
   },

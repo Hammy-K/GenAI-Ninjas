@@ -794,7 +794,7 @@ Keep it simple and functional - this is a 30-minute build focusing on core funct
             </div>
 
             {/* Live Gallery */}
-            {submittedApps.length > 0 && (
+            {submittedApps.length > 0 ? (
               <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
                   🏆 Live Gallery - Apps Built Today
@@ -839,6 +839,34 @@ Keep it simple and functional - this is a 30-minute build focusing on core funct
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8" dir="rtl">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                  🏆 Live Gallery - Apps Built Today
+                </h2>
+
+                <div className="flex flex-col items-center justify-center text-center py-8">
+                  <div className="text-6xl mb-4">🖼️</div>
+                  <p className="text-lg text-gray-600 mb-6">لا توجد تطبيقات في المعرض بعد</p>
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: conversationState.submissionData.appTitle || 'My App',
+                          url: conversationState.appUrl || ''
+                        });
+                      } else {
+                        navigator.clipboard.writeText(conversationState.appUrl || '');
+                        alert('App URL copied to clipboard!');
+                      }
+                    }}
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    كن أول من يشارك
+                  </button>
                 </div>
               </div>
             )}

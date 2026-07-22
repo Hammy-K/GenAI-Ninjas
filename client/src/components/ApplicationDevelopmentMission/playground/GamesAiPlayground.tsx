@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import penguinAvatar from "@/assets/Group 26087843.png";
-import confetti from "canvas-confetti";
 import Cookies from "js-cookie";
+import { celebrate } from "@/lib/celebrate";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
@@ -197,14 +197,7 @@ export default function AppDevAiPlayground({
   };
 
   const handleTriggerConfetti = () => {
-    confetti({
-      particleCount: 500,
-      spread: 1080,
-    });
-
-    setTimeout(() => {
-      confetti.reset();
-    }, 2000);
+    celebrate("small");
   };
 
   const handleAiResponseSideEffects = (response: AiResponse) => {

@@ -1,4 +1,10 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useQuest } from "@/hooks/useQuest";
+import MissionComplete from "@/components/MissionComplete";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { page } from "@/lib/motion";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -87,8 +93,49 @@ import TextLibraryAdmin from "./pages/TextLibraryAdmin";
 import TextLibrary from "./pages/TextLibrary";
 //--------------------------------------------------------------------------------
 
-// Wrapper components for HTML Generator routes
+// Wrapper components for HTML Generator routes.
+// Intro mission = mission 1 (see intro-mission.tsx). The AI game builder is the
+// second mission in the journey.
+const GAME_DESIGN_MISSION_ID = 2;
+
 function HTMLGeneratorWrapper() {
+  const [, navigate] = useLocation();
+  const { earnXp, unlockBadge, completeMission } = useQuest();
+
+  // XP earned during this session, so the completion screen can count it up.
+  const sessionXpRef = useRef(0);
+  const [completion, setCompletion] = useState<{
+    xp: number;
+    shareUrl?: string | null;
+  } | null>(null);
+
+  // The previously no-op callbacks now reach the persistent quest state. Awards
+  // survive navigation and reload; useQuest dedupes by source so nothing double-counts.
+  const handleEarnXp = (amount: number, source?: string) => {
+    sessionXpRef.current += amount;
+    earnXp(amount, source);
+  };
+
+  const handleComplete = (result?: { shareUrl?: string | null }) => {
+    completeMission(GAME_DESIGN_MISSION_ID);
+    setCompletion({ xp: sessionXpRef.current, shareUrl: result?.shareUrl });
+  };
+
+  if (completion) {
+    return (
+      <MissionComplete
+        missionTitle="تصميم لعبة بالذكاء الاصطناعي"
+        xpEarned={completion.xp}
+        summary="لعبتك جاهزة ومحفوظة."
+        viewUrl={completion.shareUrl}
+        viewLabel="افتح لعبتك"
+        nextHint="جاهز للمهمة الجاية؟ كمّل رحلتك."
+        continueLabel="الرجوع إلى الرحلة"
+        onContinue={() => navigate("/")}
+      />
+    );
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col text-foreground font-tajawal"
@@ -96,10 +143,10 @@ function HTMLGeneratorWrapper() {
     >
       <main className="flex-1">
         <HTMLGenerator
-          onComplete={() => {}}
-          onEarnXp={() => {}}
-          onUnlockBadge={() => {}}
-          onBack={() => {}}
+          onComplete={handleComplete}
+          onEarnXp={handleEarnXp}
+          onUnlockBadge={unlockBadge}
+          onBack={() => navigate("/")}
         />
       </main>
     </div>
@@ -107,10 +154,16 @@ function HTMLGeneratorWrapper() {
 }
 
 function Router() {
+  const [location] = useLocation();
+  const reduce = useReducedMotion();
   return (
-    <Switch>
-      {/* <Route path="/:prefix(ffm)?/" component={Dashboard} /> */}
-      <Route path="/" component={Dashboard} />
+    <AnimatePresence mode="wait">
+      {/* Keyed on location so AnimatePresence snapshots the outgoing route and
+          cross-fades it out before the next fades in (§4 page transitions). */}
+      <motion.div key={location} {...page(!!reduce)}>
+        <Switch location={location}>
+          {/* <Route path="/:prefix(ffm)?/" component={Dashboard} /> */}
+          <Route path="/" component={Dashboard} />
       <Route path="/open-link" component={OpenLinkPage} />
       <Route path="/submissions" component={AllSubmissionsPage} />
       <Route
@@ -348,8 +401,10 @@ function Router() {
         component={ClipsSubmissionsPage}
       />
 
-      <Route component={NotFound} />
-    </Switch>
+          <Route component={NotFound} />
+        </Switch>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -357,7 +412,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
+        {/* A render error in any route shows a recovery screen instead of a
+            white screen (§3.6). Toaster stays outside so it survives. */}
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
         <Toaster />
         {/* Debug panel removed as requested */}
       </AuthProvider>

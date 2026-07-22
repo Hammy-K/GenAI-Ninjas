@@ -28,13 +28,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateInput } from "@/lib/inputFilter";
-import AIGameGeneratorIntroCard from "@/components/AiHtmlGenerator/AiGameGeneratorIntroCard";
-import IntroMissionCard from "@/components/Dashboard/IntroMissionCard";
-import AIAppBuilderIntroCard from "@/components/Dashboard/AIAppBuilderIntroCard";
-import AIVideoIntroCard from "@/components/VideoGallery/AiVideosIntroCard";
+import { JourneySpine } from "@/components/JourneySpine";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useOrganization } from "@/hooks/useOrganization";
-import { ApplicationDevelopmentMissionCard } from "@/components/ApplicationDevelopmentMission/ApplicationDevelopmentMissionCard";
-import ApplicationDevelopmentMissionIntroCard from "@/components/ApplicationDevelopmentMission/ApplicaitonDevelopmentMissionIntroCard";
 import { StudentService } from "@/services/student.service";
 import { SchoolSelect } from "@/components/common/SelectSchool";
 import StudentMainAuthModal from "@/student-auth/StudentMainAuthModal";
@@ -49,10 +45,6 @@ export default function Dashboard() {
     completedMissions,
     isMissionCompleted,
   } = useQuest();
-
-  // Stream navigation state
-  const [selectedStream, setSelectedStream] = useState<string | null>(null);
-  const [showStreamContent, setShowStreamContent] = useState(false);
 
   // Student profile data - using state to handle user input
   const [studentName, setStudentName] = useState<string>(() => {
@@ -129,16 +121,6 @@ export default function Dashboard() {
     if (!isMission3Complete) return 3;
     return 4;
   };
-
-  const nextActiveMission = getNextActiveMission();
-
-  // Debug logging
-  console.log("Dashboard rendered with:", {
-    completedMissions,
-    isMission1Complete,
-    currentStage,
-    nextActiveMission,
-  });
 
   // Navigation handlers
   const handleStartMission = (missionNumber: number) => {
@@ -251,92 +233,21 @@ export default function Dashboard() {
       //If all validations pass, show the CAPTCHA
       setShowCaptcha(true);
     } catch (error: any) {
-      setFormError("عذراً، حدث خطأ. يُرجى التسجيل مرة أخرى أو تحديث الصفحة.");
+      setFormError(
+        "لم نتمكّن من حفظ بياناتك. تأكّد من اتصالك بالإنترنت ثم أعد إرسال النموذج، وإن استمرّ الخطأ حدّث الصفحة.",
+      );
       console.error("Error saving student data: ", error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Animation cleanup effect - removed as it was causing issues with streams display
-
-
-  // Define stream data with icons, titles and lock status
-  const streams = [
-    {
-      id: "games",
-      title: "تصميم العاب خرافية",
-      icon: (
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-primary rounded-2xl transform rotate-3"></div>
-          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <Gamepad2 className="w-14 h-14 text-primary" strokeWidth={1.5} />
-          </div>
-        </div>
-      ),
-      isLocked: !isMission1Complete,
-    },
-    {
-      id: "apps",
-      title: "تطوير تطبيقات ممتعة",
-      icon: (
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-info rounded-2xl transform rotate-3"></div>
-          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <AppWindow className="w-14 h-14 text-info" strokeWidth={1.5} />
-          </div>
-        </div>
-      ),
-      isLocked: true, // Always locked for now
-    },
-    {
-      id: "content",
-      title: "انشاء محتوى و قصص",
-      icon: (
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-warning rounded-2xl transform rotate-3"></div>
-          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <PenTool className="w-14 h-14 text-warning" strokeWidth={1.5} />
-          </div>
-        </div>
-      ),
-      isLocked: true, // Always locked for now
-    },
-    {
-      id: "science",
-      title: "تجارب علمية وتقنية (STEM)",
-      icon: (
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 bg-gradient-success rounded-2xl transform rotate-3"></div>
-          <div className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center">
-            <FlaskRound
-              className="w-14 h-14 text-success"
-              strokeWidth={1.5}
-            />
-          </div>
-        </div>
-      ),
-      isLocked: true, // Always locked for now
-    },
-  ];
-
-  // Handle stream selection (reverted to original functionality)
-  const handleStreamSelect = (streamId: string) => {
-    // Find the stream
-    const stream = streams.find((s) => s.id === streamId);
-
-    // Don't do anything if stream is locked
-    if (stream?.isLocked) return;
-
-    setSelectedStream(streamId);
-    setShowStreamContent(true);
-  };
-
-  // Handle back button from stream to streams grid
-  const handleBackToStreams = () => {
-    setSelectedStream(null);
-    setShowStreamContent(false);
-  };
+  // NOTE: The dashboard previously carried a four-stream grid where three streams
+  // were hardcoded `isLocked: true` with no unlock path — a permanent lock teaches
+  // learners the product is broken (GAMIFIED_UX §1). That grid was already commented
+  // out; the journey now shows only what exists (the intro cards below). The dead
+  // streams data, its handlers, and stream state have been removed entirely rather
+  // than shipping a lock with no way to open it.
 
   return (
     <div
@@ -525,21 +436,7 @@ export default function Dashboard() {
                   </div>
                 </div> */}
 
-                <IntroMissionCard
-                  isComplete={isMission1Complete}
-                  showStreamContent={showStreamContent}
-                  onStartMission={() => handleStartMission(1)}
-                />
-
-                <AIGameGeneratorIntroCard />
-
-                <AIAppBuilderIntroCard />
-
-                <AIVideoIntroCard />
-
-                {organization.isMain && (
-                  <ApplicationDevelopmentMissionIntroCard />
-                )}
+                <JourneySpine />
 
                 {/* Stream Content Container - Changes based on state */}
                 {/* <div className="min-h-[400px] content-container">
@@ -775,7 +672,9 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-medium text-primary">{xp} نقطة</p>
+                    <p className="font-medium text-primary">
+                      <AnimatedNumber value={xp} /> نقطة
+                    </p>
                   </div>
 
                   <div className="text-right">
@@ -785,7 +684,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="font-medium">
-                      {completedMissions.length} / 20
+                      <AnimatedNumber value={completedMissions.length} /> / 20
                     </p>
                   </div>
                 </div>
