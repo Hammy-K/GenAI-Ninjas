@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
+import { CONFIG } from "../config";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: CONFIG.ai.openai.apiKey });
 
 interface EvaluateStoryRequest {
   authorName: string;
@@ -89,7 +90,7 @@ ${eventsText}`;
 
     // Call OpenAI API
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: CONFIG.ai.openai.models.GPT_4O_MINI,
       messages: [
         {
           role: "system",

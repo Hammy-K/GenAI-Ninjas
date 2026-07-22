@@ -66,7 +66,7 @@ export interface IStorage {
 
   // Gallery methods
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
-  getAllGalleryImages(): Promise<GalleryImage[]>;
+  getAllGalleryImages(limit?: number, offset?: number): Promise<GalleryImage[]>;
   getGalleryImage(id: number): Promise<GalleryImage | undefined>;
   incrementLike(
     imageId: number,
@@ -256,11 +256,13 @@ export class DatabaseStorage implements IStorage {
     return galleryImage;
   }
 
-  async getAllGalleryImages(): Promise<GalleryImage[]> {
+  async getAllGalleryImages(limit: number = 50, offset: number = 0): Promise<GalleryImage[]> {
     return db
       .select()
       .from(galleryImages)
-      .orderBy(desc(galleryImages.createdAt));
+      .orderBy(desc(galleryImages.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async deleteGalleryImage(imageId: number): Promise<void> {
@@ -281,13 +283,7 @@ export class DatabaseStorage implements IStorage {
     sessionId: string,
     firebaseUid?: string,
   ): Promise<GalleryImage | undefined> {
-    // First check if the user has already liked this image
-    if (await this.hasLiked(imageId, sessionId, firebaseUid)) {
-      // Just return the image without incrementing likes
-      return this.getGalleryImage(imageId);
-    }
-
-    // Record the like
+    // Record the like (assumes caller has already checked hasLiked)
     await db.insert(galleryLikes).values({
       imageId,
       sessionId,
@@ -311,12 +307,6 @@ export class DatabaseStorage implements IStorage {
     sessionId: string,
     firebaseUid?: string,
   ): Promise<GalleryImage | undefined> {
-    // First check if the user has liked this image
-    if (!(await this.hasLiked(imageId, sessionId, firebaseUid))) {
-      // If not liked, just return the image without changes
-      return this.getGalleryImage(imageId);
-    }
-
     // Build the conditions for finding the like
     const conditions = [
       eq(galleryLikes.imageId, imageId),
@@ -328,7 +318,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(galleryLikes.firebaseUid, firebaseUid));
     }
 
-    // Delete the like record
+    // Delete the like record (assumes caller has already checked hasLiked)
     await db.delete(galleryLikes).where(and(...conditions));
 
     // Decrement the likes count using SQL, ensuring it doesn't go below 0

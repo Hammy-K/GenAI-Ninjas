@@ -1,9 +1,23 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import pgSession from "connect-pg-simple";
+import { pool } from "./db";
 import { registerRoutes } from "./routes";
+import { CONFIG } from "./config";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAppBuilderSteps } from "./scripts/seed-app-builder-steps";
 import "./modules/video-jobs/video-jobs.worker";
+
+// Process-level error handlers
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
 
 const app = express();
 
@@ -31,14 +45,20 @@ app.use((req, res, next) => {
 // Trust proxy headers from Replit
 app.set("trust proxy", 1);
 
-// Session configuration
+// Session configuration with Postgres-backed storage
+const sessionStore = new (pgSession(session))({
+  pool: pool, // reuse the Neon connection pool
+  tableName: "sessions", // connect-pg-simple will create this table
+});
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "ai-gallery-app-secret",
+    store: sessionStore,
+    secret: CONFIG.auth.sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: CONFIG.environment.isProduction,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: "lax",
@@ -101,13 +121,7 @@ app.use((req, res, next) => {
   // Register all routes
   const server = await registerRoutes(app);
 
-  // Error handler
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Note: Global error handler is now registered in routes.ts
 
   // Setup Vite in development or serve static in production
   if (app.get("env") === "development") {

@@ -3,7 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { WelcomeStage } from '@/components/stages/WelcomeStage';
 import { TryAIStage } from '@/components/stages/TryAIStage';
-import { HTMLGeneratorStage } from '@/components/stages/HTMLGeneratorStage';
+import { HTMLGenerator } from '@/components/stages/HTMLGenerator';
 import { PromptChallengeStage } from '@/components/stages/PromptChallengeStage';
 import { SubmissionFormStage } from '@/components/stages/SubmissionFormStage';
 import { WrapUpStage } from '@/components/stages/WrapUpStage';
@@ -54,8 +54,8 @@ export default function Home() {
         );
       case 4:
         return (
-          <HTMLGeneratorStage 
-            onComplete={goToNextStage} 
+          <HTMLGenerator
+            onComplete={goToNextStage}
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}
             onBack={goToPrevStage}

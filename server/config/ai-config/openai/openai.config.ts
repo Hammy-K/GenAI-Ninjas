@@ -1,9 +1,12 @@
 import OpenAI from "openai";
+import { CONFIG } from "../../index";
 
+// Initialize OpenAI client with centralized config
 export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: CONFIG.ai.openai.apiKey,
 });
 
-export const OPENAI_TEMPERATURE = 0.1;
-
-export const OPENAI_GPT_4_1_MINI_MODEL = "gpt-4.1-mini";
+// Re-export configuration constants from centralized config
+export const OPENAI_TEMPERATURE = CONFIG.ai.openai.config.temperature;
+export const OPENAI_MODELS = CONFIG.ai.openai.models;
+export const OPENAI_GPT_4_1_MINI_MODEL = CONFIG.ai.openai.models.GPT_4_1_MINI;

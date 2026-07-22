@@ -9,6 +9,8 @@ import { assistantLogs } from '@shared/schema';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { requireAdmin } from '../middleware/auth';
+import { sendServerError } from '../middleware/response';
 
 export function registerLogsRoutes(router: Router) {
   const logsRoutes = Router();
@@ -17,7 +19,7 @@ export function registerLogsRoutes(router: Router) {
    * Export all assistant logs as CSV
    * This streams data from the database to minimize memory usage
    */
-  logsRoutes.get('/export', async (req: Request, res: Response) => {
+  logsRoutes.get('/export', requireAdmin, async (req: Request, res: Response) => {
     try {
       // Create a temporary file for the CSV
       const tempDir = os.tmpdir();
@@ -83,10 +85,10 @@ export function registerLogsRoutes(router: Router) {
       });
     } catch (error) {
       console.error('Error exporting logs:', error);
-      res.status(500).json({ 
-        error: 'Failed to export logs',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
+      sendServerError(
+        res,
+        error instanceof Error ? error.message : 'Failed to export logs'
+      );
     }
   });
 

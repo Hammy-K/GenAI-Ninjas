@@ -103,7 +103,14 @@ interface HTMLGeneratorState {
   showSatisfactionButtons: boolean;
 }
 
-export function HTMLStandalone({
+/**
+ * Canonical HTML Generator component
+ *
+ * Consolidates four nearly-identical implementations (HTMLStandalone, HTMLGeneratorStage, HTMLGeneratorV2, HTMLGeneratorV2Fixed).
+ * Implements the clarify-confirm-generate-modify-satisfied flow for AI-powered HTML generation.
+ * Requires student ID for analytics tracking and uses Firebase for project persistence.
+ */
+export function HTMLGenerator({
   onComplete,
   onEarnXp,
   onUnlockBadge,
@@ -112,6 +119,7 @@ export function HTMLStandalone({
   const { t } = useTranslation();
   const { isAlreadyAwarded, markAsAwarded, awardIfNotAlreadyAwarded } =
     useXpTracker();
+  const organizationInfo = useOrganization();
   const [showConfetti, setShowConfetti] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -904,7 +912,7 @@ export function HTMLStandalone({
         }
 
         // Add a safety timeout to prevent indefinite hanging
-        const savePromise = saveProject(state.currentHTML, studentId);
+        const savePromise = saveProject(state.currentHTML, studentId, organizationInfo.name || "default");
 
         // Extend timeout to 30 seconds for Firebase operations in Replit
         const timeoutPromise = new Promise<string>((resolve) => {

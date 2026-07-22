@@ -5,6 +5,7 @@
 import { Router, Request, Response } from "express";
 import { Session } from "express-session";
 import OpenAI from "openai";
+import { CONFIG } from "../config";
 import { logEvent, logError, createAssistantService } from "../services";
 import {
   validateChatHistory,
@@ -21,8 +22,8 @@ import { v4 as uuidv4 } from "uuid";
 // Session tracking for TryAI Assistant
 const TRYAI_SESSION_PREFIX = "tryai_";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const GPT_MODEL = "gpt-4o";
+// Use centralized model configuration
+const GPT_MODEL = CONFIG.ai.openai.models.GPT_4O;
 
 // Extended request with TryAI session
 interface RequestWithTryAISession extends Request {
@@ -334,7 +335,7 @@ export function registerAITextRoutes(router: Router, openai: OpenAI) {
         messages,
         temperature: 0.3, // Lower temperature for more consistent code
         top_p: 0.95,
-        max_tokens: 2000, // Allow enough tokens for complex HTML
+        max_tokens: CONFIG.tokens.TEXT_GENERATION_MAX_TOKENS,
       });
 
       // Extract HTML from the response

@@ -1,5 +1,5 @@
 import { db } from "server/db";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql, gt } from "drizzle-orm";
 import {
   promptChallengeScores,
   PromptChallengeScore,
@@ -68,15 +68,27 @@ export const LeaderboardModel = {
   },
 
   async getStudentRank(studentName: string): Promise<number> {
-    const allScores = await db
-      .select({
-        studentName: promptChallengeScores.studentName,
-        score: promptChallengeScores.score,
-      })
+    // Get the student's score first
+    const [studentScore] = await db
+      .select({ score: promptChallengeScores.score })
       .from(promptChallengeScores)
-      .orderBy(desc(promptChallengeScores.score));
+      .where(eq(promptChallengeScores.studentName, studentName))
+      .limit(1);
 
-    const rank = allScores.findIndex((r) => r.studentName === studentName) + 1;
-    return rank || allScores.length + 1;
+    if (!studentScore) {
+      // Student not found, return last possible rank
+      const [countResult] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(promptChallengeScores);
+      return (countResult?.count || 0) + 1;
+    }
+
+    // Count how many students have a higher score
+    const [rankResult] = await db
+      .select({ rank: sql<number>`COUNT(*) + 1` })
+      .from(promptChallengeScores)
+      .where(gt(promptChallengeScores.score, studentScore.score));
+
+    return rankResult?.rank || 1;
   },
 };

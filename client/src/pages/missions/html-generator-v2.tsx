@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { HTMLGeneratorV2 } from "../../components/stages/HTMLGeneratorV2Fixed";
+import { HTMLGenerator } from "../../components/stages/HTMLGenerator";
 import StudentInfoModal from "@/components/modals/StudentInfoModal";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export default function HTMLGeneratorV2Page() {
         {!isStudentInfoCompleted && (
           <StudentInfoModal onComplete={handleStudentInfoComplete} />
         )}
-        <HTMLGeneratorV2
+        <HTMLGenerator
           onComplete={() => {}}
           onEarnXp={() => {}}
           onUnlockBadge={() => {}}

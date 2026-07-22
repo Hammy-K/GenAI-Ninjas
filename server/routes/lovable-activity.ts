@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import OpenAI from "openai";
+import { CONFIG } from "../config";
 import { logEvent, logError } from "../services";
 
 export interface LovableSubmission {
@@ -51,7 +52,7 @@ export function registerLovableActivityRoutes(router: Router, openai: OpenAI) {
       }
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: CONFIG.ai.openai.models.GPT_4O,
         messages,
         temperature,
         max_tokens: maxTokens

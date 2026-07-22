@@ -5,6 +5,11 @@ import express, {
   type NextFunction,
 } from "express";
 import { createServer, type Server } from "http";
+import {
+  sendSuccess,
+  sendError,
+  sendCreated,
+} from "./middleware/response";
 
 // Import route modules
 import { registerAITextRoutes } from "./routes/ai-text";
@@ -53,6 +58,9 @@ import textLibraryRouter from "./routes/text-library";
 import { logEvent, logError } from "./services";
 import { buildSystemPrompt } from "./templates/prompts";
 
+// Import configuration
+import { CONFIG } from "./config";
+
 // Import OpenAI client
 import OpenAI from "openai";
 import { registerCopilotRoutes } from "./modules/copilot-kit/copilot-kit.route";
@@ -91,18 +99,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.destroy((err) => {
         if (err) {
           console.error("Failed to destroy session:", err);
-          return res
-            .status(500)
-            .json({ success: false, error: "Failed to clear session" });
+          return sendError(res, "Failed to clear session", 500);
         }
-        return res
-          .status(200)
-          .json({ success: true, message: "Session cleared successfully" });
+        return sendSuccess(res, { message: "Session cleared successfully" });
       });
     } else {
-      return res
-        .status(200)
-        .json({ success: true, message: "No active session to clear" });
+      return sendSuccess(res, { message: "No active session to clear" });
     }
   });
 
@@ -115,7 +117,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   apiRouter.get("/health", (_req, res) => {
     console.log("Health check endpoint called");
-    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+    sendSuccess(res, {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    });
   });
 
   // Submissions analytics
@@ -127,9 +132,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.use("/video-submissions", registerVideoSubmissionsRoutes());
 
   // Initialize OpenAI client
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = new OpenAI({ apiKey: CONFIG.ai.openai.apiKey });
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!CONFIG.ai.openai.apiKey) {
     console.warn(
       "⚠️  WARNING: OPENAI_API_KEY not set. AI features will not work.",
     );
@@ -159,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: CONFIG.ai.openai.models.GPT_4O,
         messages: [
           systemPrompt,
           ...messageHistory,
@@ -169,13 +174,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         temperature: 0.7,
       });
 
-      return res.json({ text: response.choices[0].message.content });
+      return sendSuccess(res, { text: response.choices[0].message.content });
     } catch (error) {
       logError(
         "text_generation_direct",
         error instanceof Error ? error : "Unknown error",
       );
-      return res.status(500).json({ error: "Failed to generate text" });
+      return sendError(res, "Failed to generate text", 500);
     }
   });
 
@@ -196,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: CONFIG.ai.openai.models.GPT_4O,
         messages: [
           systemPrompt,
           ...messageHistory,
@@ -237,16 +242,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      return res.json(result);
+      return sendSuccess(res, result);
     } catch (error) {
       logError(
         "prompt_analysis_direct",
         error instanceof Error ? error : "Unknown error",
       );
-      return res.status(500).json({
-        error: "Failed to analyze prompt",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+      return sendError(
+        res,
+        error instanceof Error ? error.message : "Failed to analyze prompt",
+        500
+      );
     }
   });
 
@@ -259,9 +265,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (msg: { role: string; content: string }) => msg.role === "user",
       );
       if (userMessages.length === 0) {
-        return res.status(400).json({
-          error: "At least one user message is required in messageHistory",
-        });
+        return sendError(
+          res,
+          "At least one user message is required in messageHistory",
+          400
+        );
       }
 
       const latestUserMessage = userMessages[userMessages.length - 1];
@@ -276,10 +284,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: CONFIG.ai.openai.models.GPT_4O,
         messages: [systemPrompt, ...messageHistory],
         temperature: 0.2,
-        max_tokens: 4000,
+        max_tokens: CONFIG.tokens.HTML_GENERATION_MAX_TOKENS,
         presence_penalty: 0.0,
         frequency_penalty: 0.0,
       });
@@ -372,12 +380,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       logEvent("html_generation_success", latestUserMessage.content, {
-        model: "gpt-4o",
+        model: CONFIG.ai.openai.models.GPT_4O,
         html_size: generatedHTML.length,
         html_type: generatedHTML.includes("<script") ? "interactive" : "static",
       });
 
-      return res.json({
+      return sendSuccess(res, {
         html: generatedHTML,
         message: {
           role: "assistant",
@@ -391,15 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error instanceof Error ? error : "Unknown error",
       );
 
-      return res.status(500).json({
-        error: "Failed to generate HTML",
-        html: "",
-        message: {
-          role: "assistant",
-          content:
-            "حدث خطأ في عملية توليد HTML. هل يمكنك إعادة صياغة طلبك بشكل مختلف؟",
-        },
-      });
+      return sendError(res, "Failed to generate HTML", 500);
     }
   });
 
@@ -448,9 +448,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
     console.error("Global error handler caught:", err);
     logError("global_error", err instanceof Error ? err : "Unknown error");
-    res.status(500).json({ error: "An internal server error occurred" });
+    sendError(res, message, status);
   });
 
   // Create and return HTTP server

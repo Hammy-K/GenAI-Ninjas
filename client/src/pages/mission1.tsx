@@ -5,7 +5,7 @@ import { WelcomeStage } from "@/components/stages/WelcomeStage";
 import { TryAIStage } from "@/components/stages/TryAIStage";
 import { ImageGenerationStage } from "@/components/stages/ImageGenerationStage";
 import { SimpleGalleryStage as GalleryExplorationStage } from "@/components/stages/SimpleGalleryStage";
-import { HTMLGeneratorStage } from "@/components/stages/HTMLGeneratorStage";
+import { HTMLGenerator } from "@/components/stages/HTMLGenerator";
 import { PromptChallengeStage } from "@/components/stages/PromptChallengeStage";
 import { SubmissionFormStage } from "@/components/stages/SubmissionFormStage";
 import { WrapUpStage } from "@/components/stages/WrapUpStage";
@@ -241,7 +241,7 @@ export default function Mission1() {
         );
       case 6:
         return (
-          <HTMLGeneratorStage
+          <HTMLGenerator
             onComplete={goToNextStage}
             onEarnXp={earnXp}
             onUnlockBadge={unlockBadge}

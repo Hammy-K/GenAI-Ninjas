@@ -1,30 +1,20 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { CONFIG } from "../../index";
 
+// Initialize Anthropic client with centralized config
 export const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: CONFIG.ai.anthropic.apiKey,
 });
 
-const CLAUDE_MODELS = {
-  CLAUDE_HAIKU_3_5: "claude-3-5-haiku-20250606",
-  CLAUDE_SONNET_3_5: "claude-3-5-sonnet-20250606",
-  CLAUDE_SONNET_3_7: "claude-3-7-sonnet-20250219",
-  CLAUDE_SONNET_4: "claude-sonnet-4-20250514",
-  CLAUDE_SONNET_4_5: "claude-sonnet-4-5-20250929",
-} as const;
+// Re-export model definitions from centralized config
+export const CLAUDE_MODELS = CONFIG.ai.anthropic.models;
 
-const CLAUDE_MODEL_FALLBACK_ORDER = [
-  CLAUDE_MODELS.CLAUDE_SONNET_4_5,
-  CLAUDE_MODELS.CLAUDE_SONNET_4,
-  CLAUDE_MODELS.CLAUDE_SONNET_3_7,
-  CLAUDE_MODELS.CLAUDE_SONNET_3_5,
-  CLAUDE_MODELS.CLAUDE_HAIKU_3_5,
-];
-
+// Export configuration constants from centralized config
 export const ANTHROPIC_CONFIG = {
-  TEMPERATURE: 0.1,
-  MAX_TOKENS: 16000,
+  TEMPERATURE: CONFIG.ai.anthropic.config.temperature,
+  MAX_TOKENS: CONFIG.ai.anthropic.config.maxTokens,
   MODELS: CLAUDE_MODELS,
-  FALLBACK_ORDER: CLAUDE_MODEL_FALLBACK_ORDER,
+  FALLBACK_ORDER: CONFIG.ai.anthropic.fallbackOrder,
 };
 
 // import Anthropic from "@anthropic-ai/sdk";

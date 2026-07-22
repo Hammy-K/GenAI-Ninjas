@@ -5,14 +5,15 @@
  * with persistent thread history for better contextual understanding.
  */
 import OpenAI from "openai";
+import { CONFIG } from "../config";
 import { logEvent, logError } from "./logging";
 import { logAssistantInteraction, extractTokenUsage } from "./assistant-logger";
 import { number } from "zod";
 
-// Constants for the Assistants
-const HTML_ASSISTANT_ID = "asst_8KzUOWHXMVpF1okBkE3AmnVq"; // HTML generator assistant
-const TRYAI_ASSISTANT_ID = "asst_x31y8qYnTlwvs1gAxKCNG5KB"; // TryAI stage assistant
-const LOVABLE_MISSION_ASSISTANT_ID = "asst_L23zNIrbAjmHwouCGGqRr1fA"; // Lovable mission assistant
+// Constants for the Assistants - pulled from centralized config
+const HTML_ASSISTANT_ID = CONFIG.assistants.htmlGenerator;
+const TRYAI_ASSISTANT_ID = CONFIG.assistants.tryaiStage;
+const LOVABLE_MISSION_ASSISTANT_ID = CONFIG.assistants.lovableMission;
 
 // Thread Map for session persistence
 // Using a file-backed storage solution would be better in production
@@ -137,7 +138,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: HTML_ASSISTANT_ID,
-          model: "gpt-4o", // Assistants use GPT-4o by default
+          model: CONFIG.ai.openai.models.GPT_4O, // Assistants use GPT-4o by default
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
@@ -174,7 +175,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: HTML_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
@@ -201,7 +202,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: HTML_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: messageHistory,
           responseContent: {
             message: latestAssistantMessage.content,
@@ -229,7 +230,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: HTML_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: messageHistory,
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
@@ -251,7 +252,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: HTML_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: messageHistory,
           responseContent: { error: errorMessage },
           errorMessage: errorMessage,
@@ -558,7 +559,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: TRYAI_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: { prompt, messageHistory },
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
@@ -589,7 +590,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: TRYAI_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: { prompt, messageHistory },
           responseContent: { error: errorMsg },
           errorMessage: errorMsg,
@@ -641,7 +642,7 @@ export class AssistantService {
           sessionId,
           threadId,
           assistantId: TRYAI_ASSISTANT_ID,
-          model: "gpt-4o",
+          model: CONFIG.ai.openai.models.GPT_4O,
           promptContent: { prompt, messageHistory },
           responseContent: { error: errorMessage },
           errorMessage: errorMessage,

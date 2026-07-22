@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import { useEffect } from "react";
 import Dashboard from "@/pages/dashboard";
 import Mission1 from "@/pages/mission1";
 import GameMission from "@/pages/game-mission";
@@ -24,7 +23,7 @@ import ResetIntro from "@/components/ResetIntro";
 import { DebugPanel } from "@/components/debug/DebugPanel";
 import { AuthProvider } from "./contexts/AuthContext";
 import HtmlProjectsList from "./components/HTMLProjectsList";
-import { HTMLStandalone } from "./components/stages/HTMLStandalone";
+import { HTMLGenerator } from "./components/stages/HTMLGenerator";
 import AiHtmlGenerator from "./components/AiHtmlGenerator/AiHtmlGenerator";
 import HTMLProjectsPage from "./components/HTMLProjectsList/HTMLProjectsPage";
 import InnovationChallenge from "@/pages/InnovationChallenge";
@@ -98,7 +97,7 @@ function HTMLGeneratorWrapper() {
       dir="rtl"
     >
       <main className="flex-1">
-        <HTMLStandalone
+        <HTMLGenerator
           onComplete={() => {}}
           onEarnXp={() => {}}
           onUnlockBadge={() => {}}
@@ -110,12 +109,6 @@ function HTMLGeneratorWrapper() {
 }
 
 function Router() {
-  // Set the HTML dir and lang attributes for RTL support
-  useEffect(() => {
-    document.documentElement.dir = "rtl"; // Set to RTL for right-to-left layout
-    document.documentElement.lang = "ar"; // Use Arabic as the default language for RTL
-  }, []);
-
   return (
     <Switch>
       {/* <Route path="/:prefix(ffm)?/" component={Dashboard} /> */}
@@ -361,7 +354,7 @@ function Router() {
 
       <Route path="/missions/clips" component={ClipsMissionPage} />
       <Route
-        path="missions/clips/submissions"
+        path="/missions/clips/submissions"
         component={ClipsSubmissionsPage}
       />
 

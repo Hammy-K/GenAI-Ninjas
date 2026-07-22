@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { createHash } from "crypto";
 import {
   GoogleAuthRequestZ,
   FacilitatorConfirmRequestZ,
@@ -11,6 +12,9 @@ import {
 import { firebaseAdminService } from "../../services/auth/firebase-admin.service";
 import { facilitatorService } from "../../services/facilitator/facilitator.service";
 import { usageService } from "../../services/usage/usage.service";
+import { db } from "../../db";
+import { videoJobs } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // Rate limiting: Track user requests (userId -> lastRequestTimestamp)
 const userRateLimit = new Map<string, number>();
@@ -18,6 +22,15 @@ const RATE_LIMIT_WINDOW_SECONDS = 10;
 import { veoService } from "../../services/ai/provider/vertex/veo.service";
 import { createVertexAIClient } from "../../services/ai/provider/vertex/vertex.client";
 import { registerAdminRoutes } from "./admin.routes";
+import { requireAdmin } from "../../middleware/auth";
+
+/**
+ * Helper function to create a hash for request idempotency
+ */
+function createRequestHash(firebaseUid: string, scene: any): string {
+  const content = `${firebaseUid}:${JSON.stringify(scene)}`;
+  return createHash("sha256").update(content).digest("hex");
+}
 
 // Extend Express Request type to include our session user data
 declare module "express-session" {
@@ -25,6 +38,7 @@ declare module "express-session" {
     user?: {
       uid: string;
       email: string;
+      isAdmin?: boolean;
     };
     facilitator?: {
       name: string;
@@ -38,8 +52,8 @@ declare module "express-session" {
 export function registerVideoFlowRoutes(): Router {
   const router = Router();
 
-  // Register admin routes
-  router.use("/admin", registerAdminRoutes());
+  // Register admin routes with requireAdmin middleware
+  router.use("/admin", requireAdmin, registerAdminRoutes());
 
   /**
    * GET /api/video-flow/admin/reset-credits
@@ -409,7 +423,8 @@ export function registerVideoFlowRoutes(): Router {
 
   /**
    * POST /api/video-flow/generate
-   * Generate a video using the Veo 3 Fast model with student-specific facilitator credentials
+   * Enqueue a video generation job - returns immediately with a job ID
+   * The video generation runs asynchronously via the background worker
    */
   router.post("/generate", async (req: Request, res: Response) => {
     try {
@@ -424,7 +439,7 @@ export function registerVideoFlowRoutes(): Router {
       const userId = req.session.user.uid;
       const currentTime = Date.now();
       const lastRequestTime = userRateLimit.get(userId);
-      
+
       if (lastRequestTime && (currentTime - lastRequestTime) < (RATE_LIMIT_WINDOW_SECONDS * 1000)) {
         const waitTime = Math.ceil((RATE_LIMIT_WINDOW_SECONDS * 1000 - (currentTime - lastRequestTime)) / 1000);
         return res.status(429).json({
@@ -459,58 +474,36 @@ export function registerVideoFlowRoutes(): Router {
 
       const { scene } = parseResult.data;
 
-      // NEW: Get student-specific facilitator credentials
-      const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
-        req.session.user.email
-      );
+      // Create request hash for idempotency
+      const requestHash = createRequestHash(req.session.user.uid, scene);
 
-      if (!facilitatorCredentials) {
-        // Fallback to old system if no database credentials found
-        if (!req.session.facilitator) {
-          return res
-            .status(400)
-            .json({ error: "No facilitator assigned. Please select a facilitator first." });
-        }
-
-        const facilitatorApiKey = facilitatorService.getFacilitatorApiKey(
-          req.session.facilitator.name,
-        );
-        if (!facilitatorApiKey) {
-          return res
-            .status(500)
-            .json({ error: "Facilitator API key not available" });
-        }
-
-        // Use old system
-        const result = await veoService.generateVideo(scene, facilitatorApiKey);
-        
-        if (result.status === "completed") {
-          usageService.incrementUsage(req.session.user.uid);
-        }
-
-        const response: GenerateVideoResponse = result;
-        return res.json(response);
-      }
-
-      // NEW: Create custom VertexAI client with student's facilitator credentials
-      const customVertexClient = createVertexAIClient(facilitatorCredentials);
-      
       // Build prompt using veoService logic
       const prompt = veoService.buildPrompt(scene);
-      
-      // Generate video with custom client
-      const result = await customVertexClient.generateVideo({
-        prompt,
-        aspectRatio: scene.aspectRatio,
-      });
 
-      // Increment usage only if generation was successful
-      if (result.status === "completed") {
-        usageService.incrementUsage(req.session.user.uid);
-      }
+      // Create a video job record with status='queued'
+      const jobRecord = await db
+        .insert(videoJobs)
+        .values({
+          firebaseUid: req.session.user.uid,
+          prompt,
+          aspectRatio: scene.aspectRatio,
+          status: "queued",
+          requestHash,
+          attemptCount: 0,
+        })
+        .returning({ id: videoJobs.id });
 
-      const response: GenerateVideoResponse = result;
-      res.json(response);
+      const jobId = String(jobRecord[0].id);
+
+      // Increment usage immediately (we've validated the limit)
+      usageService.incrementUsage(req.session.user.uid);
+
+      // Return 202 Accepted with job ID - client should poll /status/:jobId
+      const response: GenerateVideoResponse = {
+        jobId,
+        status: "processing",
+      };
+      res.status(202).json(response);
     } catch (error) {
       console.error("Video generation error:", error);
       const response: GenerateVideoResponse = {
@@ -524,7 +517,7 @@ export function registerVideoFlowRoutes(): Router {
 
   /**
    * GET /api/video-flow/status/:jobId
-   * Check video generation job status with student-specific facilitator credentials
+   * Check video generation job status - works with database job IDs
    */
   router.get("/status/:jobId", async (req: Request, res: Response) => {
     try {
@@ -548,15 +541,59 @@ export function registerVideoFlowRoutes(): Router {
         return res.status(400).json(response);
       }
 
-      // FIXED: Decode the URL-encoded job ID
-      const decodedJobId = decodeURIComponent(jobId);
-      console.log("Status check for operation:", decodedJobId, "for user:", req.session.user.email);
+      console.log("Status check for job:", jobId, "for user:", req.session.user.email);
 
+      // Try to parse as a database job ID first
+      const jobIdNum = parseInt(jobId, 10);
+      if (!isNaN(jobIdNum)) {
+        // This is a database job ID
+        const job = await db
+          .select()
+          .from(videoJobs)
+          .where(eq(videoJobs.id, jobIdNum))
+          .limit(1);
+
+        if (job.length === 0) {
+          const response: GenerateVideoResponse = {
+            jobId,
+            status: "failed",
+            error: "Job not found",
+          };
+          return res.status(404).json(response);
+        }
+
+        const jobRecord = job[0];
+        console.log("Job status from database:", {
+          id: jobRecord.id,
+          status: jobRecord.status,
+          hasVideoUrl: !!jobRecord.videoUrl,
+          hasError: !!jobRecord.errorMessage
+        });
+
+        // Map database status to response format
+        let responseStatus: "processing" | "completed" | "failed" = "processing";
+        if (jobRecord.status === "completed") {
+          responseStatus = "completed";
+        } else if (jobRecord.status === "failed" || jobRecord.status === "expired") {
+          responseStatus = "failed";
+        }
+
+        const response: GenerateVideoResponse = {
+          jobId,
+          status: responseStatus,
+          videoUrl: jobRecord.videoUrl || undefined,
+          error: jobRecord.errorMessage || undefined,
+        };
+        return res.json(response);
+      }
+
+      // Fallback: Treat as legacy Vertex operation ID
+      console.log("Treating job ID as Vertex operation ID");
       let result;
       let credentialsSource = "none";
 
       try {
-        // NEW: Get student-specific facilitator credentials for status check
+        // Get student-specific facilitator credentials for status check
         const facilitatorCredentials = await facilitatorService.getCredentialsForStudent(
           req.session.user.email
         );
@@ -566,14 +603,14 @@ export function registerVideoFlowRoutes(): Router {
           console.log("Using database facilitator credentials for status check");
           // Use custom client with student's facilitator credentials
           const customVertexClient = createVertexAIClient(facilitatorCredentials);
-          result = await customVertexClient.checkJobStatus(decodedJobId);
+          result = await customVertexClient.checkJobStatus(jobId);
         } else if (req.session.facilitator?.name) {
           // Fallback: Use legacy facilitator credentials with veoService
           credentialsSource = "legacy";
           console.log("Using legacy facilitator credentials for status check:", req.session.facilitator.name);
           const apiKey = facilitatorService.getFacilitatorApiKey(req.session.facilitator.name);
           if (apiKey && facilitatorService.isValidFacilitator(req.session.facilitator.name)) {
-            result = await veoService.checkJobStatus(decodedJobId);
+            result = await veoService.checkJobStatus(jobId);
           } else {
             throw new Error("Invalid or missing legacy facilitator API key");
           }
@@ -581,17 +618,16 @@ export function registerVideoFlowRoutes(): Router {
           credentialsSource = "default";
           // Final fallback: Use veoService
           console.warn("No facilitator credentials found for student, using default veoService");
-          result = await veoService.checkJobStatus(decodedJobId);
+          result = await veoService.checkJobStatus(jobId);
         }
       } catch (credentialsError) {
         console.error("Error getting facilitator credentials:", credentialsError);
         // Try veoService as final fallback
         credentialsSource = "fallback";
         console.log("Attempting status check with veoService as fallback");
-        result = await veoService.checkJobStatus(decodedJobId);
+        result = await veoService.checkJobStatus(jobId);
       }
 
-      // Log only essential status info, not the massive video data
       console.log("Status check result:", {
         jobId: result.jobId,
         status: result.status,
@@ -599,14 +635,6 @@ export function registerVideoFlowRoutes(): Router {
         hasError: !!result.error,
         credentialsSource
       });
-
-      // Increment usage if video just completed
-      if (
-        result.status === "completed" &&
-        !usageService.hasExceededLimit(req.session.user.uid)
-      ) {
-        usageService.incrementUsage(req.session.user.uid);
-      }
 
       const response: GenerateVideoResponse = result;
       res.json(response);
@@ -623,10 +651,6 @@ export function registerVideoFlowRoutes(): Router {
         jobId: req.params.jobId || "",
         status: "failed",
         error: `Status check failed: ${errorMessage}`,
-        errorCode: error instanceof Error && errorMessage.includes('facilitator') ? 'FACILITATOR_ERROR' : 
-                  error instanceof Error && errorMessage.includes('credentials') ? 'CREDENTIALS_ERROR' : 
-                  error instanceof Error && errorMessage.includes('Not authenticated') ? 'AUTH_ERROR' : 
-                  'UNKNOWN_ERROR'
       };
       res.status(500).json(response);
     }

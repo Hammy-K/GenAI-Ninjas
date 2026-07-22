@@ -6,11 +6,23 @@ import { z } from "zod";
 
 const router = Router();
 
-// Admin password (change this!)
-const ADMIN_PASSWORD = process.env.AI_POLL_PASSWORD || "admin123";
+// Admin password from environment variable
+const ADMIN_PASSWORD = process.env.AI_POLL_PASSWORD;
+
+// Validate that password is configured
+if (!ADMIN_PASSWORD) {
+  console.warn(
+    "WARNING: AI_POLL_PASSWORD environment variable is not set. " +
+      "Admin endpoints will reject all requests."
+  );
+}
 
 // Middleware to verify password
 function verifyPassword(req: any, res: any, next: any) {
+  if (!ADMIN_PASSWORD) {
+    return res.status(500).json({ error: "Admin password not configured on server" });
+  }
+
   const password = req.body.password || req.query.password;
 
   if (password !== ADMIN_PASSWORD) {

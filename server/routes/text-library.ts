@@ -5,8 +5,16 @@ import { eq } from "drizzle-orm";
 
 const router = Router();
 
-// Static admin password
-const ADMIN_PASSWORD = "textlib2025";
+// Admin password from environment variable
+const ADMIN_PASSWORD = process.env.TEXT_LIBRARY_ADMIN_PASSWORD;
+
+// Validate that password is configured
+if (!ADMIN_PASSWORD) {
+  console.warn(
+    "WARNING: TEXT_LIBRARY_ADMIN_PASSWORD environment variable is not set. " +
+      "Admin endpoints will reject all requests."
+  );
+}
 
 // Generate random 6-character code
 function generateCode(): string {
@@ -21,6 +29,12 @@ function generateCode(): string {
 // Create a new text library session
 router.post("/api/text-library", async (req, res) => {
   try {
+    if (!ADMIN_PASSWORD) {
+      return res
+        .status(500)
+        .json({ error: "Admin password not configured on server" });
+    }
+
     const { password, title, texts } = req.body;
 
     if (password !== ADMIN_PASSWORD) {
@@ -90,6 +104,12 @@ router.get("/api/text-library/:code", async (req, res) => {
 // Delete session
 router.delete("/api/text-library/:code", async (req, res) => {
   try {
+    if (!ADMIN_PASSWORD) {
+      return res
+        .status(500)
+        .json({ error: "Admin password not configured on server" });
+    }
+
     const { code } = req.params;
     const { password } = req.body;
 
@@ -116,6 +136,12 @@ router.delete("/api/text-library/:code", async (req, res) => {
 // Get all sessions (for admin)
 router.post("/api/text-library/list", async (req, res) => {
   try {
+    if (!ADMIN_PASSWORD) {
+      return res
+        .status(500)
+        .json({ error: "Admin password not configured on server" });
+    }
+
     const { password } = req.body;
 
     if (password !== ADMIN_PASSWORD) {

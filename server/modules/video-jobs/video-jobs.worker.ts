@@ -319,8 +319,8 @@ class VideoJobWorker {
 // Singleton instance
 export const videoJobWorker = new VideoJobWorker();
 
-// Do not auto-start the worker - we're using video-flow system instead
-// videoJobWorker.start();
+// Enable the worker to process video jobs in the background
+videoJobWorker.start();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

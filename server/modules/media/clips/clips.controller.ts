@@ -4,6 +4,14 @@ import { ClipsModel } from "./clips.model";
 import { normalizeLimitOffset, toOrderDir } from "../media.utils";
 import type { ClipFindOptions } from "./clips.types";
 import { clipsStorageUtil } from "./clips-storage.util";
+import {
+  sendSuccess,
+  sendError,
+  sendCreated,
+  sendBadRequest,
+  sendNotFound,
+  sendServerError,
+} from "../../../middleware/response";
 
 export const upload = multer({ storage: multer.memoryStorage() });
 
@@ -18,20 +26,19 @@ export const ClipsController = {
       };
 
       if (!file)
-        return res
-          .status(400)
-          .json({ ok: false, error: "يجب إرفاق ملف فيديو صالح للرفع." });
+        return sendBadRequest(
+          res,
+          "يجب إرفاق ملف فيديو صالح للرفع."
+        );
 
       if (!title)
-        return res
-          .status(400)
-          .json({ ok: false, error: "عنوان الفيديو مطلوب." });
+        return sendBadRequest(res, "عنوان الفيديو مطلوب.");
 
       if (!trackStudentEmail) {
-        return res.status(400).json({
-          ok: false,
-          error: "يجب إرسال البريد الإلكتروني للطالب لإتمام العملية.",
-        });
+        return sendBadRequest(
+          res,
+          "يجب إرسال البريد الإلكتروني للطالب لإتمام العملية."
+        );
       }
 
       const clipUrl = await clipsStorageUtil.uploadClip(file.buffer);
@@ -42,13 +49,13 @@ export const ClipsController = {
         clipUrl,
       });
 
-      res.status(201).json({ ok: true, data: row });
+      sendCreated(res, row);
     } catch (err: any) {
       console.error("createViaUpload error:", err?.message || err);
-      res.status(500).json({
-        ok: false,
-        error: "تعذّر رفع الفيديو. الرجاء المحاولة مرة أخرى لاحقًا.",
-      });
+      sendServerError(
+        res,
+        "تعذّر رفع الفيديو. الرجاء المحاولة مرة أخرى لاحقًا."
+      );
     }
   },
 
@@ -90,13 +97,13 @@ export const ClipsController = {
         viewerEmail,
       });
 
-      res.json({ ok: true, ...out });
+      sendSuccess(res, out);
     } catch (err: any) {
       console.error("clips.list error:", err?.message || err);
-      res.status(500).json({
-        ok: false,
-        error: "تعذّر جلب البيانات. الرجاء المحاولة لاحقًا.",
-      });
+      sendServerError(
+        res,
+        "تعذّر جلب البيانات. الرجاء المحاولة لاحقًا."
+      );
     }
   },
 
@@ -111,16 +118,18 @@ export const ClipsController = {
       const row = await ClipsModel.findById(id, { viewerEmail });
 
       if (!row)
-        return res
-          .status(404)
-          .json({ ok: false, error: "لم يتم العثور على المقطع المطلوب." });
+        return sendNotFound(
+          res,
+          "لم يتم العثور على المقطع المطلوب."
+        );
 
-      res.json({ ok: true, data: row });
+      sendSuccess(res, row);
     } catch (err: any) {
       console.error("clips.findById error:", err?.message || err);
-      res
-        .status(500)
-        .json({ ok: false, error: "لم يتم العثور على المقطع المطلوب." });
+      sendServerError(
+        res,
+        "لم يتم العثور على المقطع المطلوب."
+      );
     }
   },
 
@@ -136,13 +145,13 @@ export const ClipsController = {
         await ClipsModel.softDelete(id);
       }
 
-      res.json({ ok: true });
+      sendSuccess(res, { message: "Clip deleted successfully" });
     } catch (err: any) {
       console.error("clips.remove error:", err?.message || err);
-      res.status(500).json({
-        ok: false,
-        error: "تعذّر حذف المقطع. الرجاء المحاولة لاحقًا.",
-      });
+      sendServerError(
+        res,
+        "تعذّر حذف المقطع. الرجاء المحاولة لاحقًا."
+      );
     }
   },
   // ADD THIS method inside `export const ClipsController = { ... }`
@@ -152,9 +161,10 @@ export const ClipsController = {
         (req.query.email as string | undefined)?.trim()?.toLowerCase() || "";
 
       if (!email) {
-        return res
-          .status(400)
-          .json({ ok: false, error: "يجب إرسال البريد الإلكتروني." });
+        return sendBadRequest(
+          res,
+          "يجب إرسال البريد الإلكتروني."
+        );
       }
 
       const limit = req.query.limit ? Number(req.query.limit) : 1; // default latest
@@ -174,13 +184,13 @@ export const ClipsController = {
         withDeleted,
       });
 
-      res.json({ ok: true, ...out });
+      sendSuccess(res, out);
     } catch (err: any) {
       console.error("clips.findByEmail error:", err?.message || err);
-      res.status(500).json({
-        ok: false,
-        error: "تعذّر جلب البيانات. الرجاء المحاولة لاحقًا.",
-      });
+      sendServerError(
+        res,
+        "تعذّر جلب البيانات. الرجاء المحاولة لاحقًا."
+      );
     }
   },
 };

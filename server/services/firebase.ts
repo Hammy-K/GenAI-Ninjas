@@ -6,6 +6,7 @@ import axios from 'axios';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { CONFIG } from '../config';
 import { logEvent, logError } from './logging';
 
 // Initialize Firebase Admin if not already initialized
@@ -15,20 +16,20 @@ let firebaseApp: any;
 const initializeFirebase = () => {
   if (!firebaseApp) {
     try {
-      // Check for required environment variables
-      if (!process.env.VITE_FIREBASE_PROJECT_ID) {
-        throw new Error('Missing Firebase project ID environment variable');
+      // Check for required configuration
+      if (!CONFIG.firebase.projectId) {
+        throw new Error('Missing Firebase project ID in configuration');
       }
 
-      // Use environment variables for configuration
+      // Use configuration for Firebase initialization
       firebaseApp = initializeApp({
         // If service account is available, use it; otherwise use project ID only
-        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-        storageBucket: `${process.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
+        projectId: CONFIG.firebase.projectId,
+        storageBucket: CONFIG.firebase.storageBucket,
       });
 
       logEvent('firebase', 'Firebase Admin initialized successfully', {
-        project_id: process.env.VITE_FIREBASE_PROJECT_ID
+        project_id: CONFIG.firebase.projectId
       });
     } catch (error) {
       logError('firebase_init', error instanceof Error ? error : 'Unknown error');

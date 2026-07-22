@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import OpenAI from 'openai';
+import { CONFIG } from '../config';
 import { moderateContent } from '../moderation';
 import { logEvent } from '../services';
 
@@ -16,7 +17,7 @@ const threadRequestSchema = z.object({
     content: z.string()
   })),
   threadId: z.string().nullable().optional(),
-  model: z.string().default('gpt-4o')
+  model: z.string().default(CONFIG.ai.openai.models.GPT_4O)
 });
 
 // Create router for unified thread endpoint
@@ -72,7 +73,7 @@ export function registerUnifiedThreadRouter(router: Router, openai: OpenAI) {
         model,
         messages,
         temperature: isHtmlMode ? 0.2 : 0.7, // Lower temperature for HTML generation
-        max_tokens: isHtmlMode ? 4000 : 1000 // More tokens for HTML generation
+        max_tokens: isHtmlMode ? CONFIG.tokens.HTML_GENERATION_MAX_TOKENS : CONFIG.tokens.GENERAL_CONVERSATION_MAX_TOKENS
       });
       
       // Create or retrieve thread ID (for client-side tracking)

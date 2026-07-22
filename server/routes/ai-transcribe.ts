@@ -1,6 +1,7 @@
 import openai from "@shared/openai";
 import { Router, Request, Response } from "express";
 import multer from "multer";
+import { CONFIG } from "../config";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -32,7 +33,7 @@ export function registerTranscribeRoute(router: Router) {
 
         const transcription = await openai.audio.transcriptions.create({
           file: audioFile,
-          model: "gpt-4o-transcribe", // gpt-4o-mini-transcribe
+          model: CONFIG.ai.openai.models.WHISPER_1,
           language: "ar",
           response_format: "text",
         });

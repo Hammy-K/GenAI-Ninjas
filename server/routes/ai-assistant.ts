@@ -5,6 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { Session } from 'express-session';
 import OpenAI from 'openai';
+import { CONFIG } from '../config';
 import { AssistantService, createAssistantService } from '../services/assistant';
 import { logEvent, logError } from '../services';
 import { logAssistantInteraction } from '../services/assistant-logger';
@@ -232,8 +233,8 @@ export function registerAIAssistantRoutes(router: Router, openai: OpenAI) {
       await logAssistantInteraction({
         sessionId,
         threadId,
-        assistantId: "asst_L23zNIrbAjmHwouCGGqRr1fA", // Lovable Mission Assistant ID
-        model: "gpt-4o", // Assistants use GPT-4o by default
+        assistantId: CONFIG.assistants.lovableMission,
+        model: CONFIG.ai.openai.models.GPT_4O,
         promptContent: { message: message, history: messageHistory },
         responseContent: { response: assistantResponse },
         firebaseUid: firebaseUid || null,

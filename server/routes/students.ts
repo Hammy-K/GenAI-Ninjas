@@ -1,18 +1,55 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { db } from "../db";
 import { students } from "../schemas/students";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { asyncHandler } from "../middleware/asyncHandler";
+import { requireAuth } from "../middleware/auth";
+import {
+  sendSuccess,
+  sendError,
+  sendCreated,
+  sendNotFound,
+  sendBadRequest,
+  sendServerError,
+} from "../middleware/response";
 
 export function registerStudentsRoutes(router: Router) {
   const studentsRoutes = Router();
 
-  studentsRoutes.get("/", async (_req: Request, res: Response) => {
+  studentsRoutes.get("/", requireAuth, async (req: Request, res: Response) => {
     try {
-      const allStudents = await db.select().from(students).orderBy(students.id);
-      res.json(allStudents);
+      // Parse pagination parameters
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const offset = (page - 1) * limit;
+
+      // Get total count
+      const [countResult] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(students);
+      const totalCount = countResult?.count || 0;
+
+      // Fetch paginated students
+      const allStudents = await db
+        .select()
+        .from(students)
+        .orderBy(students.id)
+        .limit(limit)
+        .offset(offset);
+
+      // Return paginated response
+      sendSuccess(res, {
+        data: allStudents,
+        pagination: {
+          totalCount,
+          currentPage: page,
+          pageSize: limit,
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      });
     } catch (error) {
       console.error("Error fetching students:", error);
-      res.status(500).json({ error: "Internal server error" });
+      sendServerError(res, "Internal server error");
     }
   });
 
@@ -20,7 +57,7 @@ export function registerStudentsRoutes(router: Router) {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return res.status(400).json({ error: "Invalid ID" });
+      return sendBadRequest(res, "Invalid ID");
     }
 
     try {
@@ -32,48 +69,52 @@ export function registerStudentsRoutes(router: Router) {
       const student = result[0];
 
       if (!student) {
-        return res.status(404).json({ error: "Student not found" });
+        return sendNotFound(res, "Student not found");
       }
 
-      res.json(student);
+      sendSuccess(res, student);
     } catch (error) {
       console.error(`Error fetching student ${id}:`, error);
-      res.status(500).json({ error: "Internal server error" });
+      sendServerError(res, "Internal server error");
     }
   });
 
-  studentsRoutes.post("/", async (req: Request, res: Response) => {
-    const { fullName, schoolName, phoneNumber, email } = req.body;
+  studentsRoutes.post(
+    "/",
+    asyncHandler(async (req: Request, res: Response) => {
+      const { fullName, schoolName, phoneNumber, email } = req.body;
 
-    if (email) {
-      const existing = await db
-        .select()
-        .from(students)
-        .where(eq(students.email, email))
-        .limit(1);
-      if (existing.length > 0) {
-        return res.json(existing[0]);
+      if (email) {
+        const existing = await db
+          .select()
+          .from(students)
+          .where(eq(students.email, email))
+          .limit(1);
+        if (existing.length > 0) {
+          return sendSuccess(res, existing[0]);
+        }
       }
-    }
 
-    if (!fullName || !schoolName) {
-      return res
-        .status(400)
-        .json({ error: "fullName and schoolName are required" });
-    }
+      if (!fullName || !schoolName) {
+        return sendBadRequest(
+          res,
+          "fullName and schoolName are required"
+        );
+      }
 
-    const inserted = await db
-      .insert(students)
-      .values({
-        fullName,
-        schoolName,
-        phoneNumber: phoneNumber || null,
-        email: email || null,
-      })
-      .returning();
+      const inserted = await db
+        .insert(students)
+        .values({
+          fullName,
+          schoolName,
+          phoneNumber: phoneNumber || null,
+          email: email || null,
+        })
+        .returning();
 
-    res.status(201).json(inserted[0]);
-  });
+      sendCreated(res, inserted[0]);
+    })
+  );
 
   router.use("/students", studentsRoutes);
 }

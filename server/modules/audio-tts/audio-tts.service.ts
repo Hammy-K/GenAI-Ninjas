@@ -1,4 +1,5 @@
 import { openai } from "server/config/ai-config/openai/openai.config";
+import { CONFIG } from "server/config";
 
 export async function generateSpeech({
   input,
@@ -10,7 +11,7 @@ export async function generateSpeech({
   instructions?: string;
 }): Promise<Buffer> {
   const result = await openai.audio.speech.create({
-    model: "gpt-4o-mini-tts",
+    model: CONFIG.ai.openai.models.TTS_1,
     voice,
     input,
     instructions,

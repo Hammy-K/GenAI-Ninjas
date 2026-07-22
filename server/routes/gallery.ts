@@ -13,6 +13,14 @@ import {
 } from "@shared/schema";
 import { db } from "../db";
 import { SessionData } from "express-session";
+import {
+  sendSuccess,
+  sendError,
+  sendCreated,
+  sendNotFound,
+  sendBadRequest,
+  sendServerError,
+} from "../middleware/response";
 
 // Extended request type with gallery session
 interface RequestWithGallery extends Request {
@@ -61,7 +69,7 @@ export function registerGalleryRoutes(router: Router) {
 
         // Validate required fields
         if (!imageUrl || !studentName || missionNumber === undefined) {
-          return res.status(400).json({ error: "Missing required fields" });
+          return sendBadRequest(res, "Missing required fields");
         }
 
         // Create a new gallery image
@@ -84,15 +92,13 @@ export function registerGalleryRoutes(router: Router) {
           device_id: deviceId || null,
         });
 
-        return res.status(201).json(galleryImage);
+        return sendCreated(res, galleryImage);
       } catch (error) {
         logError(
           "gallery_upload",
           error instanceof Error ? error : "Unknown error",
         );
-        return res
-          .status(500)
-          .json({ error: "Failed to upload image to gallery" });
+        return sendServerError(res, "Failed to upload image to gallery");
       }
     },
   );
@@ -105,10 +111,7 @@ export function registerGalleryRoutes(router: Router) {
         // Validate request with Zod
         const validation = likeImageSchema.safeParse(req.body);
         if (!validation.success) {
-          return res.status(400).json({
-            error: "Invalid request data",
-            details: validation.error.format(),
-          });
+          return sendBadRequest(res, "Invalid request data");
         }
 
         const { imageId, firebaseUid } = req.body;
@@ -125,7 +128,7 @@ export function registerGalleryRoutes(router: Router) {
         // If already liked, return the current image without incrementing
         if (hasLiked) {
           const image = await storage.getGalleryImage(imageId);
-          return res.json(image);
+          return sendSuccess(res, image);
         }
 
         // Increment the like count using the session ID and Firebase UID
@@ -136,7 +139,7 @@ export function registerGalleryRoutes(router: Router) {
         );
 
         if (!updatedImage) {
-          return res.status(404).json({ error: "Image not found" });
+          return sendNotFound(res, "Image not found");
         }
 
         // Log the like
@@ -146,13 +149,13 @@ export function registerGalleryRoutes(router: Router) {
           firebase_uid: firebaseUid || null,
         });
 
-        return res.json(updatedImage);
+        return sendSuccess(res, updatedImage);
       } catch (error) {
         logError(
           "gallery_like",
           error instanceof Error ? error : "Unknown error",
         );
-        return res.status(500).json({ error: "Failed to like image" });
+        return sendServerError(res, "Failed to like image");
       }
     },
   );
@@ -177,10 +180,7 @@ export function registerGalleryRoutes(router: Router) {
             "🔍 DEBUG - Gallery Share: Validation failed",
             validation.error.format(),
           );
-          return res.status(400).json({
-            error: "Invalid request data",
-            details: validation.error.format(),
-          });
+          return sendBadRequest(res, "Invalid request data");
         }
 
         const { imageUrl, studentName, prompt, missionNumber } =
@@ -197,7 +197,7 @@ export function registerGalleryRoutes(router: Router) {
         // Verify that the imageUrl is valid
         if (!imageUrl || imageUrl.trim() === "") {
           console.log("🔍 DEBUG - Gallery Share: Empty image URL provided");
-          return res.status(400).json({ error: "Empty image URL provided" });
+          return sendBadRequest(res, "Empty image URL provided");
         }
 
         console.log(
@@ -242,18 +242,14 @@ export function registerGalleryRoutes(router: Router) {
         console.log(
           `🔍 DEBUG - Gallery Share: Returning gallery image with ID=${galleryImage.id}`,
         );
-        return res.status(201).json(galleryImage);
+        return sendCreated(res, galleryImage);
       } catch (error) {
         console.error("🔍 DEBUG - Gallery Share: Unhandled error", error);
         logError(
           "gallery_share",
           error instanceof Error ? error : "Unknown error",
         );
-        return res.status(500).json({
-          error: "Failed to share image to gallery",
-          message:
-            error instanceof Error ? error.message : "Unknown error occurred",
-        });
+        return sendServerError(res, "Failed to share image to gallery");
       }
     },
   );
@@ -277,9 +273,12 @@ export function registerGalleryRoutes(router: Router) {
         nameFilter: nameFilter || "none",
       });
 
-      // Fetch images directly from the database
+      // Calculate offset for database query
+      const offset = (page - 1) * limit;
+
+      // Fetch images directly from the database with pagination
       console.log(`🔍 DEBUG - Gallery All: Fetching images from database`);
-      const dbImages = await storage.getAllGalleryImages();
+      const dbImages = await storage.getAllGalleryImages(limit * 10, 0); // Fetch more for filtering
 
       console.log(
         `🔍 DEBUG - Gallery All: Database returned ${dbImages.length} images`,
@@ -299,10 +298,9 @@ export function registerGalleryRoutes(router: Router) {
       );
 
       // Apply pagination manually (simple offset-based pagination)
-      const startIndex = (page - 1) * limit;
       const paginatedImages = filteredImages.slice(
-        startIndex,
-        startIndex + limit,
+        offset,
+        offset + limit,
       );
 
       console.log(
@@ -315,13 +313,13 @@ export function registerGalleryRoutes(router: Router) {
         "Fetched gallery images from database",
         {
           image_count: paginatedImages.length,
-          total_count: dbImages.length,
+          total_count: filteredImages.length,
           filter: nameFilter ? true : false,
         },
       );
 
       // Return the images with pagination info
-      return res.json({
+      return sendSuccess(res, {
         images: paginatedImages,
         pagination: {
           totalCount: filteredImages.length,
@@ -337,18 +335,7 @@ export function registerGalleryRoutes(router: Router) {
         error instanceof Error ? error : "Unknown error",
       );
 
-      // Always return some sort of response, even if empty, to avoid client-side errors
-      return res.status(500).json({
-        error: "Failed to fetch gallery images",
-        message: error instanceof Error ? error.message : "Unknown error",
-        images: [],
-        pagination: {
-          totalCount: 0,
-          currentPage: 1,
-          totalPages: 0,
-          limit: 20,
-        },
-      });
+      return sendServerError(res, "Failed to fetch gallery images");
     }
   });
 
@@ -356,17 +343,17 @@ export function registerGalleryRoutes(router: Router) {
     const { imageId } = req.body;
 
     if (!imageId) {
-      return res.status(400).json({ error: "Missing imageId" });
+      return sendBadRequest(res, "Missing imageId");
     }
 
     try {
       await storage.deleteGalleryImage(imageId);
 
-      return res.status(200).json({ message: "Image deleted successfully" });
+      return sendSuccess(res, { message: "Image deleted successfully" });
     } catch (error) {
       console.error("Failed to delete image: ", error);
 
-      return res.status(500).json({ error: "Failed to delete image" });
+      return sendServerError(res, "Failed to delete image");
     }
   });
 
@@ -374,13 +361,14 @@ export function registerGalleryRoutes(router: Router) {
   galleryRoutes.get("/search", async (req: Request, res: Response) => {
     try {
       const nameFilter = req.query.name as string;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
 
       if (!nameFilter) {
         return res.status(400).json({ error: "Name filter is required" });
       }
 
-      // Get all images
-      const images = await storage.getAllGalleryImages();
+      // Get images with pagination
+      const images = await storage.getAllGalleryImages(limit);
 
       // Filter images by student name
       const filteredImages = images.filter((img) => {
@@ -395,13 +383,13 @@ export function registerGalleryRoutes(router: Router) {
         total_count: images.length,
       });
 
-      return res.json(filteredImages);
+      return sendSuccess(res, filteredImages);
     } catch (error) {
       logError(
         "gallery_search",
         error instanceof Error ? error : "Unknown error",
       );
-      return res.status(500).json({ error: "Failed to search gallery images" });
+      return sendServerError(res, "Failed to search gallery images");
     }
   });
 
@@ -413,10 +401,7 @@ export function registerGalleryRoutes(router: Router) {
         // Validate request with Zod
         const validation = likeImageSchema.safeParse(req.body);
         if (!validation.success) {
-          return res.status(400).json({
-            error: "Invalid request data",
-            details: validation.error.format(),
-          });
+          return sendBadRequest(res, "Invalid request data");
         }
 
         const { imageId, firebaseUid } = req.body;
@@ -434,9 +419,7 @@ export function registerGalleryRoutes(router: Router) {
 
         // If not liked, return an error
         if (!hasLiked) {
-          return res
-            .status(400)
-            .json({ error: "You have not liked this image" });
+          return sendBadRequest(res, "You have not liked this image");
         }
 
         // Decrement the like count
@@ -447,7 +430,7 @@ export function registerGalleryRoutes(router: Router) {
         );
 
         if (!updatedImage) {
-          return res.status(404).json({ error: "Image not found" });
+          return sendNotFound(res, "Image not found");
         }
 
         // Log the unlike
@@ -457,13 +440,13 @@ export function registerGalleryRoutes(router: Router) {
           firebase_uid: firebaseUid || null,
         });
 
-        return res.json(updatedImage);
+        return sendSuccess(res, updatedImage);
       } catch (error) {
         logError(
           "gallery_unlike",
           error instanceof Error ? error : "Unknown error",
         );
-        return res.status(500).json({ error: "Failed to unlike image" });
+        return sendServerError(res, "Failed to unlike image");
       }
     },
   );
@@ -481,8 +464,7 @@ export function registerGalleryRoutes(router: Router) {
         timestamp: new Date().toISOString(),
       });
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         message: "All gallery data has been deleted successfully",
       });
     } catch (error) {
@@ -490,7 +472,7 @@ export function registerGalleryRoutes(router: Router) {
         "gallery_data_delete",
         error instanceof Error ? error : "Unknown error",
       );
-      return res.status(500).json({ error: "Failed to delete gallery data" });
+      return sendServerError(res, "Failed to delete gallery data");
     }
   });
 

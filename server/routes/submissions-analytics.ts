@@ -99,6 +99,39 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
       }
     });
 
+    // Pre-build maps for supervisor/school/grade/gender students to avoid O(N²) filtering
+    const supervisorStudentsMap = new Map<string, typeof students>();
+    const schoolStudentsMap = new Map<string, typeof students>();
+    const gradeStudentsMap = new Map<string, typeof students>();
+    const genderStudentsMap = new Map<string, typeof students>();
+
+    students.forEach((student) => {
+      const supervisor = student.supervisor || "Unknown";
+      const school = student.school || "Unknown";
+      const grade = student.grade || "Unknown";
+      const gender = student.gender || "Unknown";
+
+      if (!supervisorStudentsMap.has(supervisor)) {
+        supervisorStudentsMap.set(supervisor, []);
+      }
+      supervisorStudentsMap.get(supervisor)!.push(student);
+
+      if (!schoolStudentsMap.has(school)) {
+        schoolStudentsMap.set(school, []);
+      }
+      schoolStudentsMap.get(school)!.push(student);
+
+      if (!gradeStudentsMap.has(grade)) {
+        gradeStudentsMap.set(grade, []);
+      }
+      gradeStudentsMap.get(grade)!.push(student);
+
+      if (!genderStudentsMap.has(gender)) {
+        genderStudentsMap.set(gender, []);
+      }
+      genderStudentsMap.get(gender)!.push(student);
+    });
+
     // Track unique emails per project type to enforce one submission per student per type
     const videoEmailsSeen = new Set<string>();
     const lovableEmailsSeen = new Set<string>();
@@ -118,6 +151,18 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
 
     const uniqueEmails = new Set<string>();
 
+    // Helper function to compute gender demographics
+    const computeGenderDemographics = (
+      studentList: typeof students,
+    ): { hasMale: boolean; hasFemale: boolean } => {
+      const genders = studentList.map((s) =>
+        (s.gender || "").toLowerCase(),
+      );
+      const hasMale = genders.some((g) => g === "male" || g === "ذكر");
+      const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+      return { hasMale, hasFemale };
+    };
+
     // Helper function to aggregate data
     const addToAggregation = (
       student: any,
@@ -133,14 +178,8 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
       // Aggregate by supervisor
       const supervisor = student.supervisor || "Unknown";
       if (!aggregated.bySupervisor[supervisor]) {
-        const supervisorStudents = students.filter(
-          (s) => (s.supervisor || "Unknown") === supervisor,
-        );
-        const genders = supervisorStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const supervisorStudents = supervisorStudentsMap.get(supervisor) || [];
+        const genderData = computeGenderDemographics(supervisorStudents);
 
         aggregated.bySupervisor[supervisor] = {
           total: 0,
@@ -148,7 +187,7 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: SUPERVISOR_MAX_LIMITS[supervisor] || 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
       aggregated.bySupervisor[supervisor].total++;
@@ -163,14 +202,8 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
       // Aggregate by school
       const school = student.school || "Unknown";
       if (!aggregated.bySchool[school]) {
-        const schoolStudents = students.filter(
-          (s) => (s.school || "Unknown") === school,
-        );
-        const genders = schoolStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const schoolStudents = schoolStudentsMap.get(school) || [];
+        const genderData = computeGenderDemographics(schoolStudents);
 
         aggregated.bySchool[school] = {
           total: 0,
@@ -178,7 +211,7 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
       aggregated.bySchool[school].total++;
@@ -193,14 +226,8 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
       // Aggregate by grade
       const grade = student.grade || "Unknown";
       if (!aggregated.byGrade[grade]) {
-        const gradeStudents = students.filter(
-          (s) => (s.grade || "Unknown") === grade,
-        );
-        const genders = gradeStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const gradeStudents = gradeStudentsMap.get(grade) || [];
+        const genderData = computeGenderDemographics(gradeStudents);
 
         aggregated.byGrade[grade] = {
           total: 0,
@@ -208,7 +235,7 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
       aggregated.byGrade[grade].total++;
@@ -298,19 +325,9 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
     aggregated.uniqueStudents = uniqueEmails.size;
 
     // Get all unique supervisors from students table (even those with 0 submissions)
-    const allSupervisors = new Set(
-      students.map((s) => s.supervisor || "Unknown"),
-    );
-    allSupervisors.forEach((supervisor) => {
+    supervisorStudentsMap.forEach((supervisorStudents, supervisor) => {
       if (!aggregated.bySupervisor[supervisor]) {
-        const supervisorStudents = students.filter(
-          (s) => (s.supervisor || "Unknown") === supervisor,
-        );
-        const genders = supervisorStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const genderData = computeGenderDemographics(supervisorStudents);
 
         aggregated.bySupervisor[supervisor] = {
           total: 0,
@@ -318,23 +335,15 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: SUPERVISOR_MAX_LIMITS[supervisor] || 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
     });
 
     // Get all unique schools
-    const allSchools = new Set(students.map((s) => s.school || "Unknown"));
-    allSchools.forEach((school) => {
+    schoolStudentsMap.forEach((schoolStudents, school) => {
       if (!aggregated.bySchool[school]) {
-        const schoolStudents = students.filter(
-          (s) => (s.school || "Unknown") === school,
-        );
-        const genders = schoolStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const genderData = computeGenderDemographics(schoolStudents);
 
         aggregated.bySchool[school] = {
           total: 0,
@@ -342,23 +351,15 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
     });
 
     // Get all unique grades
-    const allGrades = new Set(students.map((s) => s.grade || "Unknown"));
-    allGrades.forEach((grade) => {
+    gradeStudentsMap.forEach((gradeStudents, grade) => {
       if (!aggregated.byGrade[grade]) {
-        const gradeStudents = students.filter(
-          (s) => (s.grade || "Unknown") === grade,
-        );
-        const genders = gradeStudents.map((s) =>
-          (s.gender || "").toLowerCase(),
-        );
-        const hasMale = genders.some((g) => g === "male" || g === "ذكر");
-        const hasFemale = genders.some((g) => g === "female" || g === "أنثى");
+        const genderData = computeGenderDemographics(gradeStudents);
 
         aggregated.byGrade[grade] = {
           total: 0,
@@ -366,14 +367,13 @@ export async function getSubmissionsAnalytics(req: Request, res: Response) {
           videoCount: 0,
           lovableCount: 0,
           maxLimit: 0,
-          supervisorGender: hasMale ? "male" : hasFemale ? "female" : "unknown",
+          supervisorGender: genderData.hasMale ? "male" : genderData.hasFemale ? "female" : "unknown",
         };
       }
     });
 
     // Get all unique genders
-    const allGenders = new Set(students.map((s) => s.gender || "Unknown"));
-    allGenders.forEach((gender) => {
+    genderStudentsMap.forEach((_genderStudents, gender) => {
       if (!aggregated.byGender[gender]) {
         aggregated.byGender[gender] = {
           total: 0,

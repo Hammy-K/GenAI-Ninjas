@@ -8,6 +8,7 @@ import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
+import { CONFIG } from "../config";
 import { logEvent, logError } from "../services";
 import {
   validateChatHistory,
@@ -42,13 +43,13 @@ export function registerAIImageRoutes(router: Router, openai: OpenAI) {
         // Use GPT-4.1-mini to enhance the user's prompt
         // Call GPT-4.1-mini to enhance the prompt with proper typing
         const promptEnhancementResponse = await openai.chat.completions.create({
-          model: "gpt-4.1-mini",
+          model: CONFIG.ai.openai.models.GPT_4_1_MINI,
           messages: [
             {
               role: "system",
-              content: `You are an expert at writing beautiful, high-quality prompts for image generation. 
-Your job is to convert short or vague user inputs into detailed, vivid, and specific prompts 
-that create stunning and useful images. Avoid adding any text or writing in the image unless the student clearly asks for it. 
+              content: `You are an expert at writing beautiful, high-quality prompts for image generation.
+Your job is to convert short or vague user inputs into detailed, vivid, and specific prompts
+that create stunning and useful images. Avoid adding any text or writing in the image unless the student clearly asks for it.
 Your reply should only include the final image prompt — no explanations or extra commentary.`,
             },
             {
@@ -57,7 +58,7 @@ Your reply should only include the final image prompt — no explanations or ext
             },
           ],
           temperature: 0.7,
-          max_tokens: 300,
+          max_tokens: CONFIG.tokens.IMAGE_DESCRIPTION_MAX_TOKENS,
         });
 
         // Extract the enhanced prompt
@@ -68,7 +69,7 @@ Your reply should only include the final image prompt — no explanations or ext
         logEvent("prompt_enhancement", prompt, {
           original_length: prompt.length,
           enhanced_length: enhancedPrompt.length,
-          model: "gpt-4.1-mini",
+          model: CONFIG.ai.openai.models.GPT_4_1_MINI,
         });
 
         // Generate image with GPT Image using direct API call to handle base64 response

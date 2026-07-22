@@ -513,9 +513,9 @@ export default function GameDevMission() {
                         <div 
                           key={index} 
                           className={`p-3 rounded-lg max-w-[85%] ${
-                            message.role === "assistant" 
-                              ? "bg-primary/10 self-start rounded-bl-none ml-auto" 
-                              : "bg-muted self-end rounded-br-none mr-auto"
+                            message.role === "assistant"
+                              ? "bg-primary/10 self-start rounded-bl-none"
+                              : "bg-muted self-end rounded-br-none"
                           }`}
                         >
                           {message.role === "assistant" && (

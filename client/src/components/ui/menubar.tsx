@@ -60,7 +60,7 @@ const MenubarSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronLeft className="mr-auto h-4 w-4" />
+    <ChevronLeft className="me-auto h-4 w-4" />
   </MenubarPrimitive.SubTrigger>
 ))
 MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName
@@ -205,7 +205,7 @@ const MenubarShortcut = ({
   return (
     <span
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground",
+        "ms-auto text-xs tracking-widest text-muted-foreground",
         className
       )}
       {...props}
