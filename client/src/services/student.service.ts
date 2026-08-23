@@ -13,7 +13,7 @@ export class StudentService {
       const response: StudentResponse =
         await StudentModel.createStudent(studentData);
 
-      Cookies.set("studentId", response.id, { expires: 3 });
+      Cookies.set("studentId", response.id, { expires: 30, path: "/" });
 
       return response.id;
     } catch (error) {

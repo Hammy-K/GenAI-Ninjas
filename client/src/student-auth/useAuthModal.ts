@@ -25,7 +25,7 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
   const [manualErrors, setManualErrors] = useState<ManualFormErrors>({});
 
   // email step
-  const [email, setEmail] = useState("");
+  const [email, setEmailState] = useState(() => ls.get(storageKeys.email));
   const [emailLoading, setEmailLoading] = useState(false);
 
   // manual step
@@ -40,6 +40,14 @@ export function useAuthModal({ onAuthed }: UseAuthModalParams = {}) {
   // general
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const setEmail = (value: string) => {
+    setEmailState(value);
+
+    if (value.trim()) {
+      ls.set(storageKeys.email, value.trim());
+    }
+  };
 
   useEffect(() => {
     const studentId = getStudentIdCookie();

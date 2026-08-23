@@ -9,7 +9,8 @@ export function setStudentIdCookie(id: string | number) {
   Cookies.set(AUTH_COOKIE_KEYS.studentId, String(id), {
     expires: AUTH_COOKIE_DEFAULTS.expiresDays,
     path: AUTH_COOKIE_DEFAULTS.path,
-    secure: AUTH_COOKIE_DEFAULTS.secure,
+    secure:
+      typeof window !== "undefined" && window.location.protocol === "https:",
     sameSite: AUTH_COOKIE_DEFAULTS.sameSite,
   });
 }

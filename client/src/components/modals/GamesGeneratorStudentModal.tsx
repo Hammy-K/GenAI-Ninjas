@@ -93,7 +93,7 @@ export default function HtmlGeneratorStudentModal() {
         throw new Error("لم يتم العثور على معرف الطالب.");
       }
 
-      Cookies.set("studentId", data.id, { expires: 3 });
+      Cookies.set("studentId", data.id, { expires: 30, path: "/" });
 
       localStorage.setItem("studentName", fullName);
       localStorage.setItem("studentGrade", studentGrade);

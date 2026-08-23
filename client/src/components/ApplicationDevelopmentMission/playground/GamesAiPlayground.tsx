@@ -8,6 +8,7 @@ import {
   Mic,
   Loader,
   ArrowRight,
+  Home,
 } from "lucide-react";
 import {
   Card,
@@ -22,6 +23,7 @@ import Cookies from "js-cookie";
 import { celebrate } from "@/lib/celebrate";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useLocation } from "wouter";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
 import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/GamesGeneratorStudentModal";
@@ -88,6 +90,7 @@ export default function AppDevAiPlayground({
     string | undefined
   >(undefined);
   const organization = useOrganization();
+  const [, navigate] = useLocation();
 
   // youtube tutorial
   const [showYoutubeTutorialGate, setShowYoutubeTutorialGate] = useState(
@@ -625,20 +628,36 @@ export default function AppDevAiPlayground({
                         alt="د. بنجي"
                         className="h-8 w-8 rounded-full mr-2"
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          const url = organization.isMain
-                            ? "/missions/app-development/frontend-foundation"
-                            : `/${organization.name}/missions/app-development/frontend-foundation`;
-                          window.location.href = url;
-                        }}
-                        className="flex items-center gap-1"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        <span>رجوع</span>
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            const url = organization.isMain
+                              ? "/missions/app-development/frontend-foundation"
+                              : `/${organization.name}/missions/app-development/frontend-foundation`;
+                            navigate(url);
+                          }}
+                          className="flex items-center gap-1"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                          <span>رجوع</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            navigate(
+                              organization.isMain ? "/" : `/${organization.name}/`,
+                            )
+                          }
+                          title="الرئيسية"
+                          aria-label="الرئيسية"
+                        >
+                          <Home className="h-4 w-4 text-violet-700" />
+                        </Button>
+                      </div>
                     </CardHeader>
 
                     <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">

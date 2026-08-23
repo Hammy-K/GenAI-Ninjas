@@ -6,6 +6,7 @@ import {
   Mic,
   Loader,
   ArrowRight,
+  Home,
   Menu,
   Database,
   Youtube,
@@ -17,6 +18,7 @@ import { celebrate } from "@/lib/celebrate";
 import Cookies from "js-cookie";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useLocation } from "wouter";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
 import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/HtmlGeneratorStudentModal ";
@@ -81,6 +83,7 @@ export default function AppDevAiPlayground({
   >(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const organization = useOrganization();
+  const [, navigate] = useLocation();
 
   // youtube tutorial
   const [showYoutubeTutorialGate, setShowYoutubeTutorialGate] = useState(
@@ -457,18 +460,29 @@ export default function AppDevAiPlayground({
       )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <button
-          onClick={() => {
-            const url = organization.isMain
-              ? "/missions/app-development/frontend-foundation"
-              : `/${organization.name}/missions/app-development/frontend-foundation`;
-            window.location.href = url;
-          }}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <ArrowRight className="w-5 h-5" />
-          <span className="font-medium">رجوع</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              const url = organization.isMain
+                ? "/missions/app-development/frontend-foundation"
+                : `/${organization.name}/missions/app-development/frontend-foundation`;
+              navigate(url);
+            }}
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <ArrowRight className="w-5 h-5" />
+            <span className="font-medium">رجوع</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(organization.isMain ? "/" : `/${organization.name}/`)}
+            className="rounded-lg p-2 text-violet-700 transition-colors hover:bg-violet-50"
+            title="الرئيسية"
+            aria-label="الرئيسية"
+          >
+            <Home className="h-5 w-5" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
           <img

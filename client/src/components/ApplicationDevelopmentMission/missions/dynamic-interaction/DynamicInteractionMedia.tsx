@@ -9,6 +9,7 @@ import {
   Brain,
 } from "lucide-react";
 import { FrontendMissionTrack } from "../frontend-foundation/FrontendMissionTrack";
+import { AppDevelopmentNavigation } from "../../AppDevelopmentNavigation";
 
 export default function DynamicInteractionMedia() {
   const { xp } = useQuest();
@@ -76,13 +77,11 @@ export default function DynamicInteractionMedia() {
       <Header xp={xp} />
 
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-8 transition-colors"
-        >
-          <ArrowRight className="w-4 h-4" />
-          العودة إلى مهام تطوير التطبيقات
-        </button>
+        <AppDevelopmentNavigation
+          parentPath="/missions/app-development"
+          parentLabel="مسار تطوير التطبيقات"
+          className="mb-8"
+        />
 
         <div className="text-center mb-12">
           <div className="flex justify-center items-center gap-3 mb-6">

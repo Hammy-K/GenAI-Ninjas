@@ -7,6 +7,7 @@ import { useVaultProgress } from "@/hooks/useVaultProgress";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useSupervisorLeaderboard } from "@/hooks/useSupervisorLeaderboard";
 import { SupervisorLeaderboard } from "@/components/ApplicationDevelopmentMission/missions/frontend-foundation/SupervisorLeaderboard";
+import { AppDevelopmentNavigation } from "@/components/ApplicationDevelopmentMission/AppDevelopmentNavigation";
 import { useMemo } from "react";
 
 export default function FrontendFoundation() {
@@ -47,19 +48,11 @@ export default function FrontendFoundation() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-[60%] mx-auto px-3 py-3">
-        {/* Back Button */}
-        <button
-          onClick={() => {
-            const url = organization.isMain
-              ? "/missions/app-development/"
-              : `/${organization.name}/missions/app-development/`;
-            window.location.href = url;
-          }}
-          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 mb-3 transition-colors font-medium text-sm"
-        >
-          <ArrowRight className="w-3.5 h-3.5" />
-          العودة
-        </button>
+        <AppDevelopmentNavigation
+          parentPath="/missions/app-development"
+          parentLabel="مسار تطوير التطبيقات"
+          className="mb-3"
+        />
 
         {/* Header - Compact */}
         <div className="text-center mb-4">

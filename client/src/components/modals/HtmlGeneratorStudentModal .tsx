@@ -20,7 +20,7 @@ export default function HtmlGeneratorStudentModal() {
   const [step, setStep] = useState<"email" | "manual">("email");
 
   // Email step
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("email") || "");
   const [emailLoading, setEmailLoading] = useState(false);
 
   // Manual step
@@ -132,7 +132,7 @@ export default function HtmlGeneratorStudentModal() {
       const student = await studentRes.json();
 
       // 3. Set cookie and localStorage
-      Cookies.set("studentId", student.id, { expires: 30 });
+      Cookies.set("studentId", student.id, { expires: 30, path: "/" });
 
       localStorage.setItem("studentName", trackStudent.studentName || email);
       localStorage.setItem("schoolName", trackStudent.school || "");
@@ -180,7 +180,7 @@ export default function HtmlGeneratorStudentModal() {
         throw new Error("لم يتم العثور على معرف الطالب.");
       }
 
-      Cookies.set("studentId", data.id, { expires: 30 });
+      Cookies.set("studentId", data.id, { expires: 30, path: "/" });
 
       localStorage.setItem("studentName", fullName);
       localStorage.setItem("studentGrade", studentGrade);
@@ -225,7 +225,10 @@ export default function HtmlGeneratorStudentModal() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  localStorage.setItem("email", e.target.value);
+                }}
                 placeholder="example@gmail.com"
                 className={`bg-white border-gray-300 rounded-lg ${
                   email && !isValidEmail(email) ? "border-red-500" : ""
@@ -290,7 +293,10 @@ export default function HtmlGeneratorStudentModal() {
                 id="manualEmail"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  localStorage.setItem("email", e.target.value);
+                }}
                 className={`col-span-3 bg-white border-gray-300 rounded-lg ${
                   email && !isValidEmail(email) ? "border-red-500" : ""
                 }`}
