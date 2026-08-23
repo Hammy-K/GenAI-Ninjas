@@ -3,7 +3,7 @@ import {
   StudentModel,
   StudentResponse,
 } from "@/models/student.model";
-import Cookies from "js-cookie";
+import { setStudentIdCookie, getStudentIdCookie, clearStudentIdCookie } from "@/student-auth/cookies.utils";
 
 export class StudentService {
   static async saveStudentAndSetCookie(
@@ -13,7 +13,7 @@ export class StudentService {
       const response: StudentResponse =
         await StudentModel.createStudent(studentData);
 
-      Cookies.set("studentId", response.id, { expires: 30, path: "/" });
+      setStudentIdCookie(response.id);
 
       return response.id;
     } catch (error) {
@@ -22,10 +22,10 @@ export class StudentService {
   }
 
   static getStudentIdFromCookie(): string | undefined {
-    return Cookies.get("studentId");
+    return getStudentIdCookie();
   }
 
   static clearStudentCookie(): void {
-    Cookies.remove("studentId");
+    clearStudentIdCookie();
   }
 }

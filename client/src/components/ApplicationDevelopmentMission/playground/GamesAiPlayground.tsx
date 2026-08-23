@@ -24,6 +24,7 @@ import { celebrate } from "@/lib/celebrate";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useLocation } from "wouter";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
 import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/GamesGeneratorStudentModal";
@@ -647,11 +648,12 @@ export default function AppDevAiPlayground({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
+                          onClick={() => {
+                            getStudentIdCookie();
                             navigate(
                               organization.isMain ? "/" : `/${organization.name}/`,
-                            )
-                          }
+                            );
+                          }}
                           title="الرئيسية"
                           aria-label="الرئيسية"
                         >

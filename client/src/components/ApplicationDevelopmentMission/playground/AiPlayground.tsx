@@ -19,6 +19,7 @@ import Cookies from "js-cookie";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useLocation } from "wouter";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 import { AiResponse, Message } from "@/components/AiHtmlGenerator/types";
 import { transcribeAudio } from "@/components/AiHtmlGenerator/ai-html-api";
 import HtmlGeneratorStudentModal from "@/components/modals/HtmlGeneratorStudentModal ";
@@ -475,7 +476,10 @@ export default function AppDevAiPlayground({
           </button>
           <button
             type="button"
-            onClick={() => navigate(organization.isMain ? "/" : `/${organization.name}/`)}
+            onClick={() => {
+              getStudentIdCookie();
+              navigate(organization.isMain ? "/" : `/${organization.name}/`);
+            }}
             className="rounded-lg p-2 text-violet-700 transition-colors hover:bg-violet-50"
             title="الرئيسية"
             aria-label="الرئيسية"

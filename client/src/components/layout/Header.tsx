@@ -3,6 +3,7 @@ import { Home, ImageIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useOrganization } from "@/hooks/useOrganization";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 import logoImage from "../../assets/logo.png";
 import MCITWhiteLogo from "@/assets/MCIT-white-logo.png";
 
@@ -19,6 +20,8 @@ export function Header({ xp }: HeaderProps) {
   const handleHomeClick = () => {
     const destinationUrl = organization.isMain ? "/" : `/${organization.name}/`;
 
+    // Promote legacy route-scoped sessions before leaving the current mission.
+    getStudentIdCookie();
     navigate(destinationUrl);
   };
 

@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import {
   CustomDialog,
   DialogContent,
@@ -14,6 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast, useToast } from "@/hooks/use-toast";
 import { SchoolSelect } from "../common/SelectSchool";
+import {
+  getStudentIdCookie,
+  setStudentIdCookie,
+} from "@/student-auth/cookies.utils";
 
 export default function HtmlGeneratorStudentModal() {
   const [open, setOpen] = useState(false);
@@ -52,7 +55,7 @@ export default function HtmlGeneratorStudentModal() {
   }, [schoolName]);
 
   useEffect(() => {
-    const studentId = Cookies.get("studentId");
+    const studentId = getStudentIdCookie();
     if (!studentId) {
       setOpen(true);
     }
@@ -132,7 +135,7 @@ export default function HtmlGeneratorStudentModal() {
       const student = await studentRes.json();
 
       // 3. Set cookie and localStorage
-      Cookies.set("studentId", student.id, { expires: 30, path: "/" });
+      setStudentIdCookie(student.id);
 
       localStorage.setItem("studentName", trackStudent.studentName || email);
       localStorage.setItem("schoolName", trackStudent.school || "");
@@ -180,7 +183,7 @@ export default function HtmlGeneratorStudentModal() {
         throw new Error("لم يتم العثور على معرف الطالب.");
       }
 
-      Cookies.set("studentId", data.id, { expires: 30, path: "/" });
+      setStudentIdCookie(data.id);
 
       localStorage.setItem("studentName", fullName);
       localStorage.setItem("studentGrade", studentGrade);

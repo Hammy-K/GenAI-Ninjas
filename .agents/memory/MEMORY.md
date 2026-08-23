@@ -1,0 +1,1 @@
+- [Student session navigation](student-session-navigation.md) — promote legacy mission sessions to the shared root session before navigating Home.

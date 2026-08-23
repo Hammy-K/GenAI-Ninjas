@@ -1,6 +1,7 @@
 import { ArrowRight, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { useOrganization } from "@/hooks/useOrganization";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 
 type AppDevelopmentNavigationProps = {
   parentPath?: string;
@@ -40,7 +41,10 @@ export function AppDevelopmentNavigation({
 
       <button
         type="button"
-        onClick={() => navigate(organization.isMain ? "/" : `/${organization.name}/`)}
+        onClick={() => {
+          getStudentIdCookie();
+          navigate(organization.isMain ? "/" : `/${organization.name}/`);
+        }}
         className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-violet-700 shadow-sm transition-colors hover:bg-violet-50"
       >
         <Home className="h-4 w-4" />

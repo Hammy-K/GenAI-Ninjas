@@ -1,6 +1,7 @@
 import React from "react";
 import { Home } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
+import { getStudentIdCookie } from "@/student-auth/cookies.utils";
 
 export default function HomeButton() {
   const organization = useOrganization();
@@ -8,6 +9,7 @@ export default function HomeButton() {
   const handleClick = () => {
     const destinationUrl = organization.isMain ? "/" : `/${organization.name}`;
 
+    getStudentIdCookie();
     window.location.href = destinationUrl;
   };
 
