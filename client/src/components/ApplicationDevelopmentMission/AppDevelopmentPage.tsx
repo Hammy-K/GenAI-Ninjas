@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { ApplicationDevelopmentProgressBadge } from "./ApplicationDevelopmentProgressBadge";
-import { ApplicationDevelopmentMissionCard } from "./ApplicationDevelopmentMissionCard";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useLocation } from "wouter";
 
@@ -23,7 +22,6 @@ const missions = [
     path: "/missions/lovable",
     colorVar: "var(--color-success)",
     missions: 2,
-    isLocked: false,
     step: 1,
   },
   {
@@ -33,7 +31,6 @@ const missions = [
     path: "/missions/app-development/frontend-foundation",
     colorVar: "var(--color-info)",
     missions: 6,
-    isLocked: false,
     step: 2,
   },
   {
@@ -43,7 +40,6 @@ const missions = [
     path: "/missions/app-development/dynamic-interaction-media",
     colorVar: "var(--color-warning)",
     missions: 4,
-    isLocked: false,
     step: 3,
   },
   {
@@ -53,7 +49,6 @@ const missions = [
     path: "/missions/app-development/backend-ai-integration",
     colorVar: "var(--color-primary)",
     missions: 4,
-    isLocked: false,
     step: 4,
   },
   {
@@ -63,7 +58,6 @@ const missions = [
     path: "/missions/app-development/masterpiece-creation",
     colorVar: "var(--color-danger)",
     missions: 1,
-    isLocked: false,
     step: 5,
   },
 ];

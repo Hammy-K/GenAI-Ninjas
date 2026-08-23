@@ -1,7 +1,7 @@
 import { useOrganization } from "@/hooks/useOrganization";
 import React from "react";
 import { useLocation } from "wouter";
-import { Lock, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface ApplicationDevelopmentMissionCardPropsType {
   icon: any;
@@ -11,7 +11,6 @@ interface ApplicationDevelopmentMissionCardPropsType {
   path: string;
   colorVar: string;
   missions: number;
-  isLocked: boolean;
 }
 
 export const ApplicationDevelopmentMissionCard = ({
@@ -22,28 +21,21 @@ export const ApplicationDevelopmentMissionCard = ({
   path,
   colorVar,
   missions,
-  isLocked = false,
 }: ApplicationDevelopmentMissionCardPropsType) => {
   const [location, navigate] = useLocation();
   const organization = useOrganization();
 
   const handleClick = () => {
-    if (!isLocked) {
-      const destinationUrl = organization.isMain
-        ? path
-        : `/${organization.name}${path}`;
-      navigate(destinationUrl);
-    }
+    const destinationUrl = organization.isMain
+      ? path
+      : `/${organization.name}${path}`;
+    navigate(destinationUrl);
   };
 
   return (
     <div
-      className={`bg-card/80 backdrop-blur-sm rounded-2xl shadow-normal border transition-all duration-300 overflow-hidden ${
-        isLocked
-          ? "opacity-60 cursor-not-allowed"
-          : "cursor-pointer hover:shadow-elevated hover:-translate-y-1"
-      }`}
-      style={{ borderColor: isLocked ? "var(--color-border)" : colorVar }}
+      className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-normal border cursor-pointer transition-all duration-300 overflow-hidden hover:shadow-elevated hover:-translate-y-1"
+      style={{ borderColor: colorVar }}
       onClick={handleClick}
     >
       {/* Header Section */}
@@ -62,11 +54,7 @@ export const ApplicationDevelopmentMissionCard = ({
             </div>
           </div>
 
-          {isLocked ? (
-            <Lock className="w-5 h-5 text-muted" />
-          ) : (
-            <ArrowRight className="w-5 h-5 text-muted group-hover:text-primary transition-colors" />
-          )}
+          <ArrowRight className="w-5 h-5 text-muted group-hover:text-primary transition-colors" />
         </div>
 
         <p className="text-muted text-sm leading-relaxed mb-4">

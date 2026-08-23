@@ -1,11 +1,9 @@
 import { Concept } from "../../playground/config/types";
-import { Lock } from "lucide-react";
 
 interface FrontendConceptCardProps {
   concept: Concept;
   color: string;
   isCompleted: boolean;
-  isLocked: boolean;
   isActive: boolean;
 }
 
@@ -13,11 +11,9 @@ export const FrontendConceptCard = ({
   concept,
   color,
   isCompleted,
-  isLocked,
   isActive,
 }: FrontendConceptCardProps) => {
   const handleClick = () => {
-    if (isLocked) return;
     window.location.href = concept.url;
   };
 
@@ -25,7 +21,7 @@ export const FrontendConceptCard = ({
     <div
       onClick={handleClick}
       className={`relative group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden
-        ${isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+        cursor-pointer
         ${isActive ? "ring-2 ring-blue-400" : ""}
         ${isCompleted ? "border-2 border-green-400" : "border-2 border-transparent"}
       `}
@@ -55,31 +51,23 @@ export const FrontendConceptCard = ({
                   🎯 المهمة النشطة
                 </span>
               )}
-              {isLocked && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                  <Lock className="w-3 h-3" />
-                  مقفل
-                </span>
-              )}
             </div>
           </div>
 
-          <div className={`flex-shrink-0 ${isLocked ? "opacity-30" : ""}`}>
+          <div className="flex-shrink-0">
             <concept.Icon className="w-10 h-10" style={{ color }} />
           </div>
         </div>
 
-        {!isLocked && (
-          <button
-            className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-              isCompleted
-                ? "bg-green-500 hover:bg-green-600 text-white"
-                : "bg-blue-500 hover:bg-blue-600 text-white"
-            }`}
-          >
-            {isCompleted ? "إعادة الزيارة" : "ابدأ"}
-          </button>
-        )}
+        <button
+          className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+            isCompleted
+              ? "bg-green-500 hover:bg-green-600 text-white"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
+        >
+          {isCompleted ? "إعادة الزيارة" : "ابدأ"}
+        </button>
       </div>
     </div>
   );

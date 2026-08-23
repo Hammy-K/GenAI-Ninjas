@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { useQuest } from "@/hooks/useQuest";
-import { ArrowRight, Target, Cloud, Bot, Database, Lock } from "lucide-react";
+import { ArrowRight, Target, Cloud, Bot, Database, ShieldCheck } from "lucide-react";
 import { FrontendMissionTrack } from "../frontend-foundation/FrontendMissionTrack";
 
 export default function BackendAiIntegration() {
@@ -48,7 +48,7 @@ export default function BackendAiIntegration() {
       url: "/missions/app-development/backend-ai-integration/persistence",
     },
     {
-      Icon: Lock,
+      Icon: ShieldCheck,
       title: "مصادقة بسيطة أو تخصيص المستخدم",
       description: "محاكاة تسجيل دخول أو تعريف مستخدم لعرض تجربة مخصصة.",
       examples: [

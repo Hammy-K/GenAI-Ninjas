@@ -1,7 +1,7 @@
 // src/components/FrontendMissionTrack.tsx
 import { Concept } from "../../playground/config/types";
 import { FrontendConceptCard } from "./FrontendConceptCard";
-import { Lock, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 interface ConceptCardProps {
   weekRange: string;
@@ -33,10 +33,9 @@ export const FrontendMissionTrack = ({
           const missionSlug = concept.url.split("/").pop() as string;
           const isCompleted = progress?.[missionSlug] || false;
           const isActive = index === currentVaultIndex;
-          const isLocked = index > currentVaultIndex;
 
           return (
-            <div key={concept.slug} className="relative">
+            <div key={`${missionSlug}-${index}`} className="relative">
               {/* Step Circle */}
               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
                 <div
@@ -51,8 +50,6 @@ export const FrontendMissionTrack = ({
                 >
                   {isCompleted ? (
                     <CheckCircle2 className="w-8 h-8" />
-                  ) : isLocked ? (
-                    <Lock className="w-6 h-6" />
                   ) : (
                     index + 1
                   )}
@@ -67,7 +64,6 @@ export const FrontendMissionTrack = ({
                   concept={concept}
                   color={color}
                   isCompleted={isCompleted}
-                  isLocked={isLocked}
                   isActive={isActive}
                 />
               </div>

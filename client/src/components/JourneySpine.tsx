@@ -11,16 +11,15 @@ import {
 import { MissionNode, type MissionState } from "@/components/ui/mission-node";
 import { useQuest } from "@/hooks/useQuest";
 import { useOrganization } from "@/hooks/useOrganization";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 /**
  * JourneySpine — the dashboard's single scrollable path (GAMIFIED_UX §2).
  *
  * The journey is a spine, not a grid: one column of nodes in learning order with
- * exactly one active node (the obvious "what do I do next"). The only gate is the
- * intro mission — a real, satisfiable unlock, not a permanent lock. Completed nodes
- * stay visible so scrolling past finished work renders the macro loop.
+ * exactly one active node (the obvious "what do I do next"). Every mission is
+ * available from the start; completion only affects the progress presentation.
+ * Completed nodes stay visible so scrolling past finished work renders the macro loop.
  */
 
 interface JourneyItem {
@@ -84,13 +83,10 @@ const JOURNEY: JourneyItem[] = [
   },
 ];
 
-const LOCK_HINT = "أكمل المهمة التعريفية أولاً لفتح بقية الرحلة.";
-
 export function JourneySpine() {
   const [, navigate] = useLocation();
   const organization = useOrganization();
   const { isMissionCompleted } = useQuest();
-  const { toast } = useToast();
   const reduce = useReducedMotion();
   const activeRef = useRef<HTMLDivElement>(null);
 
@@ -99,23 +95,17 @@ export function JourneySpine() {
     [organization.isMain]
   );
 
-  const introDone = isMissionCompleted(1);
-
   // Exactly one active node: the first mission the learner hasn't finished yet.
   const activeId = useMemo(() => {
     const firstOpen = items.find(
       (it) => !(it.missionId && isMissionCompleted(it.missionId))
     );
     return firstOpen?.id ?? null;
-    // introDone is derived from the same source, listed so the memo tracks completion.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, introDone]);
+  }, [items, isMissionCompleted]);
 
   const stateFor = (item: JourneyItem): MissionState => {
     if (item.missionId && isMissionCompleted(item.missionId)) return "completed";
     if (item.id === activeId) return "active";
-    // Everything past the intro is gated behind it — a real, satisfiable unlock.
-    if (item.id !== "intro" && !introDone) return "locked";
     return "available";
   };
 
@@ -129,11 +119,7 @@ export function JourneySpine() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSelect = (item: JourneyItem, state: MissionState) => {
-    if (state === "locked") {
-      toast({ title: "مقفلة 🔒", description: LOCK_HINT });
-      return;
-    }
+  const handleSelect = (item: JourneyItem) => {
     const dest = organization.isMain
       ? item.path
       : `/${organization.name}${item.path}`;
@@ -168,8 +154,7 @@ export function JourneySpine() {
                 description={item.description}
                 icon={item.icon}
                 actionLabel={state === "active" ? item.actionLabel : undefined}
-                lockedHint={LOCK_HINT}
-                onSelect={() => handleSelect(item, state)}
+                onSelect={() => handleSelect(item)}
               />
             </div>
           </React.Fragment>
